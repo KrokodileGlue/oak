@@ -1,7 +1,7 @@
-src = $(wildcard *.c)
+src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 
-CFLAGS = -std=c11 -Wall -Wextra -pedantic -Wunused
+CFLAGS = -g -std=c11 -Wall -Wextra -pedantic -Wunused -I include/
 
 woodwinds: $(obj)
 	$(CC) -o $@ $^ $(LDFLAGS)
