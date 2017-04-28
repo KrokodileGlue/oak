@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "lexer.h"
+#include "error.h"
 
 void* oak_malloc(size_t size)
 {
@@ -49,11 +50,8 @@ int main(int argc, char** argv)
 
 	if (text) {
 		struct Token* tok = lexer_tokenize(text);
-		if (lexer_error()) {
-			printf("%s", lexer_error());
-		} else {
-			printf("%s", lexer_dump(tok));
-		}
+		write_errors(stderr);
+		lexer_dump(tok);
 
 		free(text);
 	}

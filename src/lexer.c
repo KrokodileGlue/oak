@@ -1,28 +1,10 @@
 #include "lexer.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-
-char* lexer_error_str = NULL;
-static void lexer_push_error(const char* text, size_t location, const char* str)
-{
-	if (!lexer_error_str) {
-		lexer_error_str = malloc(1);
-		*lexer_error_str = 0;
-	}
-
-	printf("%s: %s", text + location, str);
-	lexer_error_str = realloc(lexer_error_str, strlen(lexer_error_str) + strlen(str) + 1);
-
-	strcpy(lexer_error_str + strlen(str), str);
-}
-
-char* lexer_error()
-{
-	return lexer_error_str;
-}
 
 char token_type[][64] = {
 	"IDENTIFIER",
@@ -48,17 +30,17 @@ static char operators[][3] = {
 	">>", "<<", ">>=", "<<="
 };
 
-#define is_whitespace(is_whitespace_c) \
-        (is_whitespace_c == ' ' || is_whitespace_c == '\t' || is_whitespace_c == '\n')
+#define is_whitespace(c) \
+        (c == ' ' || c == '\t' || c == '\n')
 
-#define is_identifier_start(is_identifier_c) \
-        ((is_identifier_c >= 'a' && is_identifier_c <= 'z') || (is_identifier_c >= 'A' && is_identifier_c <= 'Z') || is_identifier_c == '_')
+#define is_identifier_start(c) \
+        ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_')
 
-#define is_legal_in_identifier(is_legal_in_identifier_c) \
-        ((is_legal_in_identifier_c >= 'a' && is_legal_in_identifier_c <= 'z') \
-        || (is_legal_in_identifier_c >= 'A' && is_legal_in_identifier_c <= 'Z') \
-        || is_legal_in_identifier_c == '_' \
-        || (is_legal_in_identifier_c >= '0' && is_legal_in_identifier_c <= '9'))
+#define is_legal_in_identifier(c) \
+        ((c >= 'a' && c <= 'z') \
+        || (c >= 'A' && c <= 'Z') \
+        || c == '_' \
+        || (c >= '0' && c <= '9'))
 
 static void construct_token(int type, size_t origin, char* start, char* end, struct Token** prev)
 {
@@ -81,18 +63,20 @@ static void construct_token(int type, size_t origin, char* start, char* end, str
 	current = current->next;
 }
 
-struct Token* lexer_tokenize(char* in)
+struct Token* lexer_tokenize(char* str)
 {
 	struct Token *prev = NULL;
 
-	char *start = in, *end = in;
+	char *start = str, *end = str;
 	size_t origin = 0;
 
-	lexer_push_error(in, 0, "deadbeef");
+	push_error(str, "deadbeef", 0);
+	push_error(str, "other error", 5);
+	push_error(str, "bad thing", 15);
 	
 	while (*start) {
 		end = start;
-		origin = start - in;
+		origin = start - str;
 		
 		if (is_whitespace(*start)) {
 			while (is_whitespace(*start) && *start) {
