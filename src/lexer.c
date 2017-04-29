@@ -76,6 +76,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 			case '\\': a = '\\'; break;
 			case '\'': a = '\''; break;
 			case '"': a = '"'; break;
+			case '\n': continue; break; /* ignore */
 
 			case '0': case '1': case '2': case '3':
 			case '4': case '5': case '6': case '7': {
@@ -108,7 +109,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 			} break;
 			default:
 				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, "unrecognized escape sequence");
-				a = str[++i];
+				continue;
 				break;
 			}
 		}
@@ -171,6 +172,49 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	return end + delim_len;
 }
 
+/*
+ * Whenever we have two adjacent string tokens like "foo" "bar",
+ * they ought to be combined into a new token that has
+ * the data fields of the leftmost token, but which has
+ * a body composed of both strings concatenated ("foobar").
+ *
+ * This function is recursive, and does multiple passes.
+ *
+ * Returns true if it found any strings to concatenate,
+ * otherwise returns false.
+ */
+static bool concatenate_strings(struct Token* tok)
+{
+	bool ret = false;
+
+	while (tok && tok->next) {
+		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
+			ret = true;
+			size_t end = strlen(tok->value) + strlen(tok->next->value);
+			tok->value = realloc(tok->value, strlen(tok->value) + strlen(tok->next->value) + 1);
+			strcpy(tok->value + strlen(tok->value), tok->next->value);
+			tok->value[end] = 0;
+
+			/* now delete the token */
+			/* TODO: make this into a function e.g. delete_token() */
+			struct Token* third = tok->next->next;
+			if (third) third->prev = tok;
+			free(tok->next->value);
+			free(tok->next);
+			tok->next = third;
+		}
+		tok = tok->next;
+	}
+
+	/* rewind the token stream */
+	if (tok)
+		while (tok->prev) tok = tok->prev;
+	
+	if (ret) concatenate_strings(tok);
+
+	return ret;
+}
+
 struct Token* tokenize(char* code, char* filename)
 {
 	struct Token *tok = NULL;
@@ -220,8 +264,28 @@ struct Token* tokenize(char* code, char* filename)
 	/* rewind the token stream */
 	if (tok)
 		while (tok->prev) tok = tok->prev;
+	concatenate_strings(tok);
 
 	return tok;
+}
+
+void delete_tokens(struct Token* tok)
+{
+	/* rewind the token stream */
+	if (tok)
+		while (tok->prev) tok = tok->prev;
+
+	while (tok) {
+		if (tok->next) {
+			free(tok->value);
+			tok = tok->next;
+			if (tok && tok->prev) free(tok->prev);
+		} else {
+			free(tok->value);
+			free(tok);
+			tok = NULL;
+		}
+	}
 }
 
 void write_tokens(FILE* fp, struct Token* tok)

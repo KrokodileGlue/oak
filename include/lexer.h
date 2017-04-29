@@ -44,5 +44,6 @@ struct Token {
 
 struct Token* tokenize(char* code, char* filename);
 void write_tokens(FILE* fp, struct Token* tok);
+void delete_tokens(struct Token* tok);
 
 #endif
