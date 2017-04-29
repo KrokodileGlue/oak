@@ -33,16 +33,24 @@ static char operators[][3] = {
 #define is_whitespace(c) \
         (c == ' ' || c == '\t' || c == '\n')
 
-#define is_identifier_start(c) \
+#define is_identifier_start(c)                                        \
         ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_')
 
 #define is_legal_in_identifier(c) \
-        ((c >= 'a' && c <= 'z') \
+        ((c >= 'a' && c <= 'z')   \
         || (c >= 'A' && c <= 'Z') \
-        || c == '_' \
+        || c == '_'               \
         || (c >= '0' && c <= '9'))
 
-static void construct_token(int type, size_t origin, char* start, char* end, struct Token** prev)
+#define is_hex_char(c)            \
+        ((c >= 'a' && c <= 'z')   \
+        || (c >= 'A' && c <= 'Z'))\
+	|| (c >= '0' && c <= '9')
+
+#define is_oct_char(c)        \
+	(c >= '0' && c <= '7')
+
+static void make_token(int type, size_t origin, char* start, char* end, struct Token** prev)
 {
 	/* type, origin, data, value, next, prev */
 	struct Token* current = malloc(sizeof (struct Token));
@@ -61,6 +69,68 @@ static void construct_token(int type, size_t origin, char* start, char* end, str
 
 	*prev = current;
 	current = current->next;
+}
+
+#define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
+#define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
+
+static void parse_escape_sequences(const char* code, struct Token* tok, char* str)
+{
+	char* out = str;
+	size_t i = 0;
+	do {
+		char a = str[i];
+
+		if (a == '\\') {
+			a = str[++i];
+			switch (a) {
+			case 'a': a = '\a'; break;
+			case 'b': a = '\b'; break;
+			case 'f': a = '\f'; break;
+			case 'n': a = '\n'; break;
+			case 'r': a = '\r'; break;
+			case 't': a = '\t'; break;
+			case 'v': a = '\v'; break;
+			case '\\': a = '\\'; break;
+			case '\'': a = '\''; break;
+			case '"': a = '"'; break;
+			case '?': a = '?'; break;
+
+			case '0': case '1': case '2': case '3':
+			case '4': case '5': case '6': case '7': {
+				size_t j = 0;
+				char octal_sequence[MAX_OCT_ESCAPE_SEQUENCE_LEN + 1]; /* a string */
+
+				a = str[++i];
+				while (is_oct_char(a) && a && j <= MAX_OCT_ESCAPE_SEQUENCE_LEN) {
+					octal_sequence[j++] = a;
+					a = str[++i];
+				}
+				
+				octal_sequence[j] = 0;
+				printf("found octal escape sequence: %s\n", octal_sequence);
+				a = (char)strtol(octal_sequence, NULL, 8);
+			} break;
+			case 'x': {
+				size_t j = 0;
+				char hex_sequence[MAX_HEX_ESCAPE_SEQUENCE_LEN + 1]; /* a string */
+
+				a = str[++i];
+				while (is_hex_char(a) && a && j <= MAX_HEX_ESCAPE_SEQUENCE_LEN) {
+					hex_sequence[j++] = a;
+					a = str[++i];
+				}
+				
+				hex_sequence[j] = 0;
+				printf("found hex escape sequence: %s\n", hex_sequence);
+				a = (char)strtol(hex_sequence, NULL, 16);
+			} break;
+			default: push_error(code, tok->origin, "unrecognized escape sequence"); break;
+			}
+		}
+		
+		*out++ = a;
+	} while (str[i++]);
 }
 
 struct Token* lexer_tokenize(char* str)
@@ -87,17 +157,21 @@ struct Token* lexer_tokenize(char* str)
 
 		if (is_identifier_start(*start)) {
 			while (is_legal_in_identifier(*end) && *end) end++;
-			construct_token(TOK_IDENTIFIER, origin, start, end, &prev);
+			make_token(TOK_IDENTIFIER, origin, start, end, &prev);
 			start = end;
 		} else if (*start == '\"') {
 			start++;
-			do { end++; } while (*end != '\"' && *end);
-			construct_token(TOK_STRING, origin, start, end, &prev);
+			do {
+				if (*end == '\\') end++;
+				end++;
+			} while (*end != '\"' && *end);
+			make_token(TOK_STRING, origin, start, end, &prev);
+			parse_escape_sequences(str, prev, prev->value);
 			end++;
 			start = end;
 		} else {
 			end++;
-			construct_token(TOK_SYMBOL, origin, start, end, &prev);
+			make_token(TOK_SYMBOL, origin, start, end, &prev);
 			start = end;
 		}
 	}
