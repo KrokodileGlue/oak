@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include <string.h>
+
 size_t line_number(const char* str, size_t location)
 {
 	size_t line_num = 1;

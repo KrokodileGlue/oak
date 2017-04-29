@@ -26,7 +26,7 @@ void push_error(char* str, char* message, size_t location)
 void write_errors(FILE* fp)
 {
 	for (size_t i = 0; i < num_errors; i++) {
-		fprintf(fp, "%d:%d: %s\n", line_number(errors[i].str, errors[i].location),
+		fprintf(fp, "%zd:%zd: %s\n", line_number(errors[i].str, errors[i].location),
 			column_number(errors[i].str, errors[i].location), errors[i].message);
 		fprintf(fp, "\t%s\n", get_line(errors[i].str, errors[i].location));
 	}

@@ -1,2 +1,4 @@
 __foo = 4;
 "test\n"
+
+"\nfoo\n\tbar\n\t\tbaz\n"
