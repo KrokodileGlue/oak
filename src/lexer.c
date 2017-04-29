@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "error.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +10,7 @@
 
 static char token_type[][64] = {
 	"IDENTIFIER",
-	"INTEGER   ",
+	"NUMBER    ",
 	"STRING    ",
 	"OPERATOR  ",
 	"SYMBOL    ",
@@ -30,36 +31,6 @@ static char operators[][64] = {
 
 	">>", "<<", ">>=", "<<="
 };
-
-static inline bool is_whitespace(char c)
-{
-	return (c == ' ' || c == '\t' || c == '\n');
-}
-
-static inline bool is_identifier_start(char c)
-{
-	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
-}
-
-static inline bool is_legal_in_identifier(char c)
-{
-	return ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z')
-		|| c == '_'
-		|| (c >= '0' && c <= '9'));
-}
-
-static inline bool is_hex_digit(char c)
-{
-	return ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z'))
-		|| (c >= '0' && c <= '9');
-}
-
-static inline bool is_oct_digit(char c)
-{
-	return (c >= '0' && c <= '7');
-}
 
 static void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev)
 {
@@ -135,7 +106,10 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				//printf("found hex escape sequence: %s\n", hex_sequence);
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
-			default: push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, "unrecognized escape sequence"); break;
+			default:
+				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, "unrecognized escape sequence");
+				a = str[++i];
+				break;
 			}
 		}
 		
@@ -197,9 +171,14 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	return end + delim_len;
 }
 
-static char* skip_comments_and_whitspace(char* ch)
+struct Token* tokenize(char* code, char* filename)
 {
-	while (true) {
+	struct Token *tok = NULL;
+	char* ch = code;
+	
+	while (*ch) {
+		struct Location loc = (struct Location){code, filename, ch - code};
+
 		if (is_whitespace(*ch)) {
 			while (is_whitespace(*ch) && *ch) {
 				ch++;
@@ -208,8 +187,16 @@ static char* skip_comments_and_whitspace(char* ch)
 		}
 
 		if (!strncmp(ch, "/*", 2)) {
-			while (strncmp(ch, "*/", 2) && *ch) ch++;
 			ch += 2;
+			char* end = ch;
+
+			while ((strncmp(end, "*/", 2) && strncmp(end, "/*", 2)) && *end) end++;
+
+			if (*end == 0 || !strncmp(end, "/*", 2)) {
+				push_error(loc, ERR_FATAL, "unterminated comment");
+				while (*ch != '\n' && *ch) ch++;
+			}
+			else ch = end + 2;
 			continue;
 		}
 
@@ -218,19 +205,6 @@ static char* skip_comments_and_whitspace(char* ch)
 			continue;
 		}
 
-		break;
-	}
-
-	return ch;
-}
-
-struct Token* tokenize(char* code, char* filename)
-{
-	struct Token *tok = NULL;
-	char* ch = code;
-	
-	while (*(ch = skip_comments_and_whitspace(ch))) {
-		struct Location loc = (struct Location){code, filename, ch - code};
 		if (!strncmp(ch, "R(", 2)) {
 			ch = parse_raw_string_literal(ch, loc, &tok);
 		} else if (is_identifier_start(*ch)) {

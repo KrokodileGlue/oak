@@ -5,17 +5,16 @@ __foo = 4;
 a comment!
 */
 "\nfoo\n\tbar\n\t\tbaz\n"
-
 /* moar comments */
 /* too many comments */
 "/* not a comment */"
-		"string \mconcatenation!"
+		"string concatenation!"
 
-R($$$$$)
-we are allowed to do anything we want in here! \n
-\n\n\n\t\t\t\t woo hooo no escape sequences! SICK
-	 free things
-$$$$$
+R($)
+raw
+	string
+		literal
+$
 
 // this will not be tokenized
 // neither will this

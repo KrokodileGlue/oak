@@ -4,7 +4,7 @@
 #include "location.h"
 
 enum ErrorLevel {
-	ERR_NOTE, ERR_WARN, ERR_FATAL
+	ERR_NOTE = 0, ERR_WARN = 1, ERR_FATAL = 2
 };
 
 void push_error(struct Location loc, enum ErrorLevel level, char* message);
