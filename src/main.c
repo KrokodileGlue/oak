@@ -13,6 +13,7 @@ int main(int argc, char** argv)
 		struct Token* tok = tokenize(text, argv[1]);
 		write_errors(stderr);
 		write_tokens(stderr, tok);
+		delete_tokens(tok);
 
 		free(text);
 	}

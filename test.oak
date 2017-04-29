@@ -8,13 +8,10 @@ a comment!
 /* moar comments */
 /* too many comments */
 "/* not a comment */"
-		"string concatenation!"
+		"string \n\
+concatenation!"
 
-R($)
-raw
-	string
-		literal
-$
+R(Δ)raw string literalΔ
 
 // this will not be tokenized
 // neither will this
