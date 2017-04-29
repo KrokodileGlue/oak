@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-char token_type[][64] = {
+static char token_type[][64] = {
 	"IDENTIFIER",
 	"INTEGER   ",
 	"STRING    ",
@@ -61,14 +61,14 @@ static inline bool is_oct_digit(char c)
 	return (c >= '0' && c <= '7');
 }
 
-static void add_token(int type, char* code, char* start, char* end, struct Token** prev)
+static void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev)
 {
 	/* type, origin, data, value, next, prev */
 	struct Token* current = malloc(sizeof (struct Token));
 	if (*prev) (*prev)->next = current;
 
 	current->type = type;
-	current->origin = (size_t)(code - start);
+	current->loc = loc;
 	current->fData = 0.05;
 
 	current->value = malloc(end - start + 1);
@@ -85,7 +85,7 @@ static void add_token(int type, char* code, char* start, char* end, struct Token
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
-static void parse_escape_sequences(char* code, struct Token* tok, char* str)
+static void parse_escape_sequences(struct Location loc, char* str)
 {
 	char* out = str;
 	size_t i = 0;
@@ -135,7 +135,7 @@ static void parse_escape_sequences(char* code, struct Token* tok, char* str)
 				//printf("found hex escape sequence: %s\n", hex_sequence);
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
-			default: push_error(code, tok->origin, "unrecognized escape sequence"); break;
+			default: push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, "unrecognized escape sequence"); break;
 			}
 		}
 		
@@ -143,17 +143,17 @@ static void parse_escape_sequences(char* code, struct Token* tok, char* str)
 	} while (str[i++]);
 }
 
-char* parse_identifier(char* ch, char* code, struct Token** tok)
+static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 {
 	char* end = ch;
 	while (is_legal_in_identifier(*end) && *end) end++;
 
-	add_token(TOK_IDENTIFIER, code, ch, end, tok);
+	push_token(loc, TOK_IDENTIFIER, ch, end, tok);
 
 	return end;
 }
 
-char* parse_string_literal(char* ch, char* code, struct Token** tok)
+static char* parse_string_literal(char* ch, struct Location loc, struct Token** tok)
 {
 	char* end = ch++;
 	do {
@@ -161,18 +161,45 @@ char* parse_string_literal(char* ch, char* code, struct Token** tok)
 		end++;
 	} while (*end != '\"' && *end);
 
-	add_token(TOK_STRING, code, ch, end, tok);
-	parse_escape_sequences(code, *tok, (*tok)->value);
+	push_token(loc, TOK_STRING, ch, end, tok);
+	parse_escape_sequences(loc, (*tok)->value);
 
 	return end + 1;
 }
 
-struct Token* tokenize(char* code)
+static char* parse_raw_string_literal(char* ch, struct Location loc, struct Token** tok)
 {
-	struct Token *tok = NULL;
-	char* ch = code;
+	ch += 2; /* skip the R( */
+	char* end = ch;
+	while (*end != ')' && *end) end++;
+	if (*end == 0) {
+		push_error(loc, ERR_FATAL, "unterminated delimiter specification");
+		return end;
+	}
+
+	char* delim = malloc(end - ch + 1);
+	strncpy(delim, ch, end - ch);
+	delim[end - ch] = 0;
+	size_t delim_len = strlen(delim);
+
+	end++; /* skip the ) */
+	ch = end;
+	while (strncmp(end, delim, delim_len) && *end) end++;
+
+	if (*end == 0) {
+		push_error(loc, ERR_FATAL, "unterminated raw string literal");
+		return end;
+	}
+
+	push_token(loc, TOK_STRING, ch, end, tok);
+	free(delim);
 	
-	while (*ch) {
+	return end + delim_len;
+}
+
+static char* skip_comments_and_whitspace(char* ch)
+{
+	while (true) {
 		if (is_whitespace(*ch)) {
 			while (is_whitespace(*ch) && *ch) {
 				ch++;
@@ -191,12 +218,27 @@ struct Token* tokenize(char* code)
 			continue;
 		}
 
-		if (is_identifier_start(*ch)) {
-			ch = parse_identifier(ch, code, &tok);
+		break;
+	}
+
+	return ch;
+}
+
+struct Token* tokenize(char* code, char* filename)
+{
+	struct Token *tok = NULL;
+	char* ch = code;
+	
+	while (*(ch = skip_comments_and_whitspace(ch))) {
+		struct Location loc = (struct Location){code, filename, ch - code};
+		if (!strncmp(ch, "R(", 2)) {
+			ch = parse_raw_string_literal(ch, loc, &tok);
+		} else if (is_identifier_start(*ch)) {
+			ch = parse_identifier(ch, loc, &tok);
 		} else if (*ch == '\"') {
-			ch = parse_string_literal(ch, code, &tok);
+			ch = parse_string_literal(ch, loc, &tok);
 		} else {
-			add_token(TOK_SYMBOL, code, ch, ch + 1, &tok);
+			push_token(loc, TOK_SYMBOL, ch, ch + 1, &tok);
 			ch++;
 		}
 	}

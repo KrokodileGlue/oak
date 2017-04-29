@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include "location.h"
+
 struct Token {
 	enum {
 		TOK_IDENTIFIER, TOK_INTEGER,
@@ -13,7 +15,8 @@ struct Token {
 		TOK_SYMBOL,     TOK_INVALID
 	} type;
 
-	size_t origin; /* the index of the token's original location in the source file */
+	struct Location loc;
+	
 	union {
 		double fData;
 		enum {
@@ -39,7 +42,7 @@ struct Token {
 	struct Token* prev;
 };
 
-struct Token* tokenize(char* code);
+struct Token* tokenize(char* code, char* filename);
 void write_tokens(FILE* fp, struct Token* tok);
 
 #endif

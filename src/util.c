@@ -2,39 +2,42 @@
 
 #include <string.h>
 
-size_t line_number(const char* str, size_t location)
+size_t line_number(struct Location loc)
 {
 	size_t line_num = 1;
-	for (size_t i = 0; i < strlen(str); i++) {
-		if (str[i] == '\n') line_num++;
-		if (i >= location) break;
+	for (size_t i = 0; i < strlen(loc.text); i++) {
+		if (loc.text[i] == '\n') line_num++;
+		if (i >= loc.index) break;
 	}
 	return line_num;
 }
 
-size_t column_number(const char* str, size_t location)
+size_t column_number(struct Location loc)
 {
 	size_t column_num = 1;
-	for (size_t i = 0; i < strlen(str); i++) {
-		if (str[i] == '\n') column_num = 1;
+	for (size_t i = 0; i < strlen(loc.text); i++) {
+		if (loc.text[i] == '\n') column_num = 1;
 		else column_num++;
-		if (i >= location) break;
+		if (i >= loc.index) break;
 	}
 	return column_num;
 }
 
-char* get_line(const char* str, size_t location)
+char* get_line(struct Location loc)
 {
-	char* line = NULL;
-	size_t line_end = 0;
-	for (size_t i = location; i < strlen(str); i++)
-		if (str[i] == '\n' || str[i] == 0) {
-			line_end = i;
+	size_t start = loc.index, end = loc.index;
+	while (start) { /* find the beginning of the line we're in */
+		if (loc.text[start] == '\n') {
+			start++;
 			break;
 		}
-	line = malloc(line_end - location + 1);
-	strncpy(line, str + location, line_end - location);
-	line[line_end - location] = 0;
+		start--;
+	}
+	while (loc.text[end] != '\n' && loc.text[end]) { end++; } /* find the end */
+
+	char* line = malloc(end - start + 1);
+	strncpy(line, loc.text + start, end - start);
+	line[end - start] = 0;
 	return line;
 }
 
