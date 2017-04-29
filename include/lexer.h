@@ -35,12 +35,11 @@ struct Token {
 
 	char* value; /* the body of the token */
 	
-	struct Token* next; /* all tokens are part of a linked list */
+	struct Token* next; /* doubly-linked list */
 	struct Token* prev;
 };
 
-struct Token* lexer_tokenize(char* in);
-char* lexer_dump(struct Token* tok);
-char* lexer_error();
+struct Token* tokenize(char* code);
+void write_tokens(FILE* fp, struct Token* tok);
 
 #endif
