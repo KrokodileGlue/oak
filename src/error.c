@@ -5,29 +5,28 @@
 #include "util.h"
 
 struct Error {
-	char* str;
+	struct Location loc;
+	enum ErrorLevel level;
 	char* message;
-	size_t location;
 };
 
 static struct Error* errors = NULL;
 static size_t num_errors = 0;
 
-void push_error(char* str, size_t location, char* message)
+static char error_level_strs[][32] = { "note", "warning", "error" };
+
+void push_error(struct Location loc, enum ErrorLevel level, char* message)
 {
 	if (!errors) errors = malloc(sizeof (struct Error));
 	else errors = realloc(errors, sizeof (struct Error) * (num_errors + 1));
 
-	errors[num_errors].str = str;
-	errors[num_errors].message = message;
-	errors[num_errors++].location = location;
+	errors[num_errors++] = (struct Error){loc, level, message};
 }
 
 void write_errors(FILE* fp)
 {
 	for (size_t i = 0; i < num_errors; i++) {
-		fprintf(fp, "%zd:%zd: %s\n", line_number(errors[i].str, errors[i].location),
-			column_number(errors[i].str, errors[i].location), errors[i].message);
-		fprintf(fp, "\t%s\n", get_line(errors[i].str, errors[i].location));
+		fprintf(fp, "%s:%zd:%zd: %s: %s\n", errors[i].loc.file, line_number(errors[i].loc), column_number(errors[i].loc), error_level_strs[errors[i].level], errors[i].message);
+		fprintf(fp, "\t%s\n", get_line(errors[i].loc));
 	}
 }

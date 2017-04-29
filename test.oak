@@ -9,6 +9,13 @@ a comment!
 /* moar comments */
 /* too many comments */
 "/* not a comment */"
+		"string \mconcatenation!"
+
+R($$$$$)
+we are allowed to do anything we want in here! \n
+\n\n\n\t\t\t\t woo hooo no escape sequences! SICK
+	 free things
+$$$$$
 
 // this will not be tokenized
 // neither will this
