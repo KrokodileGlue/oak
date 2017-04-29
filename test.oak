@@ -1,17 +1,4 @@
-__foo = 4;
-"test\n"
-
-/*
-a comment!
-*/
-"\nfoo\n\tbar\n\t\tbaz\n"
-/* moar comments */
-/* too many comments */
-"/* not a comment */"
-		"string \n\
-concatenation!"
-
-R(Δ)raw string literalΔ
-
-// this will not be tokenized
-// neither will this
+0xFF
+.1e4f
+256
+0.25

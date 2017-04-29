@@ -22,7 +22,7 @@ static inline bool is_whitespace(char c)
 
 static inline bool is_identifier_start(char c)
 {
-	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
+	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'));
 }
 
 static inline bool is_legal_in_identifier(char c)
@@ -43,6 +43,11 @@ static inline bool is_hex_digit(char c)
 static inline bool is_oct_digit(char c)
 {
 	return (c >= '0' && c <= '7');
+}
+
+static inline bool is_dec_digit(char c)
+{
+	return (c >= '0' && c <= '9');
 }
 
 #endif /* UTIL_H */
