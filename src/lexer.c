@@ -40,7 +40,7 @@ static void push_token(struct Location loc, int type, char* start, char* end, st
 
 	current->type = type;
 	current->loc = loc;
-	current->fData = 0.05;
+	current->data = 0.0;
 
 	current->value = malloc(end - start + 1);
 	strncpy(current->value, start, end - start);
@@ -124,6 +124,18 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 	while (is_legal_in_identifier(*end) && *end) end++;
 
 	push_token(loc, TOK_IDENTIFIER, ch, end, tok);
+
+	return end;
+}
+
+static char* parse_number(char* ch, struct Location loc, struct Token** tok)
+{
+	char* end = ch;
+	while ((*end == '.' || *end == 'x' || *end == '-'
+		|| is_hex_digit(*end)) && *end) end++;
+
+	push_token(loc, TOK_NUMBER, ch, end, tok);
+	(*tok)->data = atof((*tok)->value);
 
 	return end;
 }
@@ -255,6 +267,8 @@ struct Token* tokenize(char* code, char* filename)
 			ch = parse_identifier(ch, loc, &tok);
 		} else if (*ch == '\"') {
 			ch = parse_string_literal(ch, loc, &tok);
+		} else if (is_dec_digit(*ch) || *ch == '.') {
+			ch = parse_number(ch, loc, &tok);
 		} else {
 			push_token(loc, TOK_SYMBOL, ch, ch + 1, &tok);
 			ch++;
@@ -291,7 +305,9 @@ void delete_tokens(struct Token* tok)
 void write_tokens(FILE* fp, struct Token* tok)
 {
 	while (tok) {
-		fprintf(fp, "[%s][%s]\n", token_type[tok->type], tok->value);
+		fprintf(fp, "[%s][%s]", token_type[tok->type], tok->value);
+		if (tok->type == TOK_NUMBER) fprintf(fp, " data: %4.8f", tok->data);
+		fprintf(fp, "\n");
 		tok = tok->next;
 	}
 }
