@@ -23,6 +23,19 @@ size_t column_number(struct Location loc)
 	return column_num;
 }
 
+size_t index_in_line(struct Location loc)
+{
+	size_t start = loc.index, end = loc.index;
+	while (start) { /* find the beginning of the line we're in */
+		if (loc.text[start] == '\n') {
+			start++;
+			break;
+		}
+		start--;
+	}
+	return loc.index - start;
+}
+
 char* get_line(struct Location loc)
 {
 	size_t start = loc.index, end = loc.index;
@@ -33,6 +46,7 @@ char* get_line(struct Location loc)
 		}
 		start--;
 	}
+	while (is_whitespace(loc.text[start])) { start++; } /* skip any leading whitespace */
 	while (loc.text[end] != '\n' && loc.text[end]) { end++; } /* find the end */
 
 	char* line = malloc(end - start + 1);

@@ -10,7 +10,7 @@
 
 struct Token {
 	enum {
-		TOK_IDENTIFIER, TOK_INTEGER,
+		TOK_IDENTIFIER, TOK_NUMBER,
 		TOK_STRING,     TOK_OPERATOR,
 		TOK_SYMBOL,     TOK_INVALID
 	} type;
