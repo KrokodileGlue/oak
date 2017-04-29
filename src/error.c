@@ -4,19 +4,19 @@
 #include "error.h"
 #include "util.h"
 
-struct error {
+struct Error {
 	char* str;
 	char* message;
 	size_t location;
 };
 
-static struct error* errors = NULL;
+static struct Error* errors = NULL;
 static size_t num_errors = 0;
 
-void push_error(char* str, char* message, size_t location)
+void push_error(char* str, size_t location, char* message)
 {
-	if (!errors) errors = malloc(sizeof (struct error));
-	else errors = realloc(errors, sizeof (struct error) * (num_errors + 1));
+	if (!errors) errors = malloc(sizeof (struct Error));
+	else errors = realloc(errors, sizeof (struct Error) * (num_errors + 1));
 
 	errors[num_errors].str = str;
 	errors[num_errors].message = message;
