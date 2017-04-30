@@ -10,6 +10,7 @@ struct Error {
 	struct Location loc;
 	enum ErrorLevel level;
 	char* message;
+	size_t len;
 };
 
 static struct Error* errors = NULL;
@@ -19,7 +20,7 @@ static char error_level_strs[][32] = { "note", "warning", "error" };
 
 #define MAX_ERROR_MESSAGE_LEN 512 /* probably enough */
 
-void push_error(struct Location loc, enum ErrorLevel level, char* fmt, ...)
+void push_error(struct Location loc, enum ErrorLevel level, size_t len, char* fmt, ...)
 {
 	if (!errors) errors = malloc(sizeof (struct Error));
 	else errors = realloc(errors, sizeof (struct Error) * (num_errors + 1));
@@ -33,7 +34,7 @@ void push_error(struct Location loc, enum ErrorLevel level, char* fmt, ...)
 		va_end(args);
 	}
 	
-	errors[num_errors++] = (struct Error){loc, level, message};
+	errors[num_errors++] = (struct Error){loc, level, message, len};
 }
 
 void write_errors(FILE* fp)
@@ -45,7 +46,13 @@ void write_errors(FILE* fp)
 		for (size_t j = 0; j < index_in_line(errors[i].loc); j++) {
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
 		}
-		fprintf(fp, "^\n");
+		fputc('^', fp);
+		size_t j = 0;
+		while (j < (size_t)((errors[i].len <= 1) ? 1 : errors[i].len - 1)) {
+			fputc('~', fp);
+			j++;
+		}
+		fputc('\n', fp);
 		free(line);
 	}
 }

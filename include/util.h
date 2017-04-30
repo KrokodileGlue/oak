@@ -9,7 +9,10 @@
 
 size_t line_number(struct Location loc);
 size_t column_number(struct Location loc);
+
+size_t line_len(struct Location loc);
 size_t index_in_line(struct Location loc);
+
 char* get_line(struct Location loc);
 
 void* oak_malloc(size_t size);
