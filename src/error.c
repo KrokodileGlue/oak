@@ -35,7 +35,7 @@ void push_error(struct Location loc, enum ErrorLevel level, size_t len, char* fm
 		va_end(args);
 	}
 	
-	errors[num_errors++] = (struct Error){loc, level, message, len};
+	errors[num_errors++] = (struct Error){loc, level, message, len == ERR_EOL ? line_len(loc) : len};
 	if (level == ERR_FATAL) should_die = true;
 }
 

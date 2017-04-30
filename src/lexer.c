@@ -8,21 +8,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-static char operators[][64] = {
-	"+",  "-",  "*",  "/",
-	"+=", "-=", "*=", "/=",
-
-	">",  "<",
-	">=", "<=", "==",
-
-	"&",  "|",  "^",  "~",
-	"&=", "|=", "^=", "~=",
-
-	"&&", "||",
-
-	">>", "<<", ">>=", "<<="
-};
-
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
@@ -46,7 +31,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 			case '\\': a = '\\'; break;
 			case '\'': a = '\''; break;
 			case '"': a = '"'; break;
-			case '\n': continue; break; /* ignore */
+			case '\n': continue; /* ignore */
 
 			case '0': case '1': case '2': case '3':
 			case '4': case '5': case '6': case '7': {
@@ -79,10 +64,11 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				//printf("found hex escape sequence: %s\n", hex_sequence);
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
-			default:
-				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_WARN, strlen(str) - i + 2, "unrecognized escape sequence: '\\%c'", a);
+			default: {
+				struct Location err_loc = (struct Location){loc.text, loc.file, loc.index + i};
+				push_error(err_loc, ERR_WARN, ERR_EOL, "unrecognized escape sequence: '\\%c'", a);
 				continue;
-				break;
+			}
 			}
 		}
 		
@@ -132,7 +118,7 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	char* end = ch;
 	while (*end != ')' && *end) end++;
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, line_len(loc), "unterminated delimiter specification");
+		push_error(loc, ERR_FATAL, ERR_EOL, "unterminated delimiter specification");
 		return end;
 	}
 
@@ -146,7 +132,7 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	while (strncmp(end, delim, delim_len) && *end) end++;
 
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, line_len(loc), "unterminated raw string literal");
+		push_error(loc, ERR_FATAL, ERR_EOL, "unterminated raw string literal");
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		return end;
@@ -221,7 +207,7 @@ struct Token* tokenize(char* code, char* filename)
 			while ((strncmp(end, "*/", 2) && strncmp(end, "/*", 2)) && *end) end++;
 
 			if (*end == 0 || !strncmp(end, "/*", 2)) {
-				push_error(loc, ERR_FATAL, strlen(tok->value), "unterminated comment");
+				push_error(loc, ERR_FATAL, ERR_EOL, "unterminated comment");
 				while (*ch != '\n' && *ch) ch++;
 			}
 			else ch = end + 2;

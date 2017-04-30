@@ -5,6 +5,21 @@
 
 #include "location.h"
 
+static char operators[][64] = {
+	"+",  "-",  "*",  "/",
+	"+=", "-=", "*=", "/=",
+
+	">",  "<", "%",
+	">=", "<=", "%=", "==",
+
+	"&",  "|",  "^",  "~",
+	"&=", "|=", "^=", "~=",
+
+	"&&", "||",
+
+	">>", "<<", ">>=", "<<="
+};
+
 struct Token {
 	struct Location loc;
 	double data;
@@ -22,8 +37,8 @@ struct Token {
 		OP_ADD,    OP_SUB,    OP_MUL,    OP_DIV,
 		OP_ADD_EQ, OP_SUB_EQ, OP_MUL_EQ, OP_DIV_EQ,
 
-		OP_GREATER,    OP_LESSER,
-		OP_GREATER_EQ, OP_LESSER_EQ,
+		OP_GREATER,    OP_LESSER,    OP_MOD,
+		OP_GREATER_EQ, OP_LESSER_EQ, OP_MOD_EQ, OP_EQ_EQ,
 
 		OP_AND,    OP_OR,    OP_XOR,    OP_NOT,
 		OP_AND_EQ, OP_OR_EQ, OP_XOR_EQ, OP_NOT_EQ,
