@@ -8,15 +8,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-static char token_type[][64] = {
-	"IDENTIFIER",
-	"NUMBER    ",
-	"STRING    ",
-	"OPERATOR  ",
-	"SYMBOL    ",
-	"INVALID   "
-};
-
 static char operators[][64] = {
 	"+",  "-",  "*",  "/",
 	"+=", "-=", "*=", "/=",
@@ -31,27 +22,6 @@ static char operators[][64] = {
 
 	">>", "<<", ">>=", "<<="
 };
-
-static void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev)
-{
-	/* type, origin, data, value, next, prev */
-	struct Token* current = malloc(sizeof (struct Token));
-	if (*prev) (*prev)->next = current;
-
-	current->type = type;
-	current->loc = loc;
-	current->data = 0.0;
-
-	current->value = malloc(end - start + 1);
-	strncpy(current->value, start, end - start);
-	current->value[end - start] = 0;
-
-	current->next = NULL;
-	current->prev = *prev;
-
-	*prev = current;
-	current = current->next;
-}
 
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
@@ -175,6 +145,8 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 
 	if (*end == 0) {
 		push_error(loc, ERR_FATAL, "unterminated raw string literal");
+		end = ch;
+		while (*end != '\n' && *end) end++;
 		return end;
 	}
 
@@ -283,31 +255,3 @@ struct Token* tokenize(char* code, char* filename)
 	return tok;
 }
 
-void delete_tokens(struct Token* tok)
-{
-	/* rewind the token stream */
-	if (tok)
-		while (tok->prev) tok = tok->prev;
-
-	while (tok) {
-		if (tok->next) {
-			free(tok->value);
-			tok = tok->next;
-			if (tok && tok->prev) free(tok->prev);
-		} else {
-			free(tok->value);
-			free(tok);
-			tok = NULL;
-		}
-	}
-}
-
-void write_tokens(FILE* fp, struct Token* tok)
-{
-	while (tok) {
-		fprintf(fp, "[%s][%s]", token_type[tok->type], tok->value);
-		if (tok->type == TOK_NUMBER) fprintf(fp, " data: %4.8f", tok->data);
-		fprintf(fp, "\n");
-		tok = tok->next;
-	}
-}
