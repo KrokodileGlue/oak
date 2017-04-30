@@ -15,6 +15,7 @@ struct Error {
 
 static struct Error* errors = NULL;
 static size_t num_errors = 0;
+static bool should_die = false;
 
 static char error_level_strs[][32] = { "note", "warning", "error" };
 
@@ -35,6 +36,13 @@ void push_error(struct Location loc, enum ErrorLevel level, size_t len, char* fm
 	}
 	
 	errors[num_errors++] = (struct Error){loc, level, message, len};
+	if (level == ERR_FATAL) should_die = true;
+}
+
+void check_errors(FILE* fp)
+{
+	write_errors(fp);
+	if (should_die) exit(EXIT_FAILURE);
 }
 
 void write_errors(FILE* fp)

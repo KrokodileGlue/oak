@@ -80,7 +80,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
 			default:
-				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, 1, "unrecognized escape sequence");
+				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_WARN, 1, "unrecognized escape sequence");
 				continue;
 				break;
 			}
