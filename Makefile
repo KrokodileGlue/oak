@@ -1,11 +1,12 @@
 src = $(wildcard src/*.c)
+src += $(wildcard *.c)
 obj = $(src:.c=.o)
 
 CFLAGS = -g -std=c11 -Wall -Wextra -pedantic -Wunused -I include/
 
-woodwinds: $(obj)
+oak: $(obj)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) woodwinds
+	rm -f $(obj) oak
