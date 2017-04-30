@@ -38,5 +38,7 @@ struct Token {
 void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev);
 void delete_tokens(struct Token* tok);
 void write_tokens(FILE* fp, struct Token* tok);
+void delete_token(struct Token* tok);
+struct Token* rewind_token(struct Token* tok);
 
 #endif
