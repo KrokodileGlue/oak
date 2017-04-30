@@ -12,6 +12,23 @@ static char token_type_str[][64] = {
 	"INVALID   "
 };
 
+struct Token* rewind_token(struct Token* tok)
+{
+	if (tok)
+		while (tok->prev) tok = tok->prev;
+	return tok;
+}
+
+void delete_token(struct Token* tok)
+{
+	struct Token* prev = tok->prev;
+	struct Token* next = tok->next;
+	if (prev) prev->next = next;
+	if (next) next->prev = prev;
+	free(tok->value);
+	free(tok);
+}
+
 void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev)
 {
 	/* type, origin, data, value, next, prev */

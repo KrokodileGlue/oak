@@ -35,8 +35,8 @@ static inline bool is_legal_in_identifier(char c)
 
 static inline bool is_hex_digit(char c)
 {
-	return ((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z'))
+	return ((c >= 'a' && c <= 'f')
+		|| (c >= 'A' && c <= 'F'))
 		|| (c >= '0' && c <= '9');
 }
 

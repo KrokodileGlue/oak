@@ -53,11 +53,12 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				size_t j = 0;
 				char oct_sequence[MAX_OCT_ESCAPE_SEQUENCE_LEN + 1]; /* a string */
 
-				a = str[++i];
+				a = str[i];
 				while (is_oct_digit(a) && a && j <= MAX_OCT_ESCAPE_SEQUENCE_LEN) {
 					oct_sequence[j++] = a;
 					a = str[++i];
 				}
+				i--;
 				
 				oct_sequence[j] = 0;
 				//printf("found octal escape sequence: %s\n", oct_sequence);
@@ -72,6 +73,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 					hex_sequence[j++] = a;
 					a = str[++i];
 				}
+				i--;
 				
 				hex_sequence[j] = 0;
 				//printf("found hex escape sequence: %s\n", hex_sequence);
@@ -156,6 +158,18 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	return end + delim_len;
 }
 
+static char* smart_cat(char* first, char* second)
+{
+	size_t len = strlen(first) + strlen(second);
+	
+	first = realloc(first, len + 1);
+	strcpy(first + strlen(first), second);
+
+	first[len] = 0;
+
+	return first;
+}
+
 /*
  * Whenever we have two adjacent string tokens like "foo" "bar",
  * they ought to be combined into a new token that has
@@ -170,33 +184,19 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 static bool concatenate_strings(struct Token* tok)
 {
 	bool ret = false;
-
+	tok = rewind_token(tok);
+	
 	while (tok && tok->next) {
 		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
 			ret = true;
-			size_t end = strlen(tok->value) + strlen(tok->next->value);
-			tok->value = realloc(tok->value, strlen(tok->value) + strlen(tok->next->value) + 1);
-			strcpy(tok->value + strlen(tok->value), tok->next->value);
-			tok->value[end] = 0;
-
-			/* now delete the token */
-			/* TODO: make this into a function e.g. delete_token() */
-			struct Token* third = tok->next->next;
-			if (third) third->prev = tok;
-			free(tok->next->value);
-			free(tok->next);
-			tok->next = third;
+			tok->value = smart_cat(tok->value, tok->next->value);
+			delete_token(tok->next);
 		}
 		tok = tok->next;
 	}
 
-	/* rewind the token stream */
-	if (tok)
-		while (tok->prev) tok = tok->prev;
-	
 	if (ret) concatenate_strings(tok);
-
-	return ret;
+	else return ret;
 }
 
 struct Token* tokenize(char* code, char* filename)
