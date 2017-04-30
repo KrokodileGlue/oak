@@ -80,7 +80,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
 			default:
-				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, "unrecognized escape sequence");
+				push_error((struct Location){loc.text, loc.file, loc.index + i}, ERR_FATAL, 1, "unrecognized escape sequence");
 				continue;
 				break;
 			}
@@ -132,7 +132,7 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	char* end = ch;
 	while (*end != ')' && *end) end++;
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, "unterminated delimiter specification");
+		push_error(loc, ERR_FATAL, line_len(loc), "unterminated delimiter specification");
 		return end;
 	}
 
@@ -146,7 +146,7 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	while (strncmp(end, delim, delim_len) && *end) end++;
 
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, "unterminated raw string literal");
+		push_error(loc, ERR_FATAL, line_len(loc), "unterminated raw string literal");
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		return end;
@@ -221,7 +221,7 @@ struct Token* tokenize(char* code, char* filename)
 			while ((strncmp(end, "*/", 2) && strncmp(end, "/*", 2)) && *end) end++;
 
 			if (*end == 0 || !strncmp(end, "/*", 2)) {
-				push_error(loc, ERR_FATAL, "unterminated comment");
+				push_error(loc, ERR_FATAL, strlen(tok->value), "unterminated comment");
 				while (*ch != '\n' && *ch) ch++;
 			}
 			else ch = end + 2;

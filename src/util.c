@@ -2,6 +2,13 @@
 
 #include <string.h>
 
+size_t line_len(struct Location loc)
+{
+	size_t i;
+	for (i = loc.index; loc.text[i] && loc.text[i] != '\n'; i++);
+	return i - loc.index;
+}
+
 size_t line_number(struct Location loc)
 {
 	size_t line_num = 1;

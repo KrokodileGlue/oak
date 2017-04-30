@@ -1,7 +1,8 @@
-/*R($)this is a raw string literal"foo" oisgen 1254 ;$
+R($)this is a raw string literal"foo"
+oisgen 1254 ;
 gri 3523j ;3'23 
 0xFFFF
 .1e4f
 256
-0.25*/
-"\146\157\157\40\142\141\162\40\142\141\172"
+0.25
+"things n stuff \m this should break"
