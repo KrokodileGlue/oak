@@ -25,7 +25,7 @@ size_t column_number(struct Location loc)
 
 size_t index_in_line(struct Location loc)
 {
-	size_t start = loc.index, end = loc.index;
+	size_t start = loc.index;
 	while (start) { /* find the beginning of the line we're in */
 		if (loc.text[start] == '\n') {
 			start++;

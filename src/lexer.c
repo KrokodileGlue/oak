@@ -196,7 +196,7 @@ static bool concatenate_strings(struct Token* tok)
 	}
 
 	if (ret) concatenate_strings(tok);
-	else return ret;
+	return ret;
 }
 
 struct Token* tokenize(char* code, char* filename)
