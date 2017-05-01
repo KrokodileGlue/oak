@@ -12,11 +12,10 @@ int main(int argc, char** argv)
 	if (text) {
 		struct Token* tok = tokenize(text, argv[1]);
 		write_tokens(stderr, tok);
-
 		delete_tokens(tok);
-		free(text);
-		
 		check_errors(stderr);
+		free(text);
+		if (encountered_error()) exit(EXIT_FAILURE);
 	}
 
 	return EXIT_SUCCESS;

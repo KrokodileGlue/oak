@@ -1,4 +1,11 @@
 R($)This is a raw string literal
-/* /* comments don't nest! */ */
+/* /* multiline comments don't nest! */ */
 "invalid escape sequence: \m"
-0xdeadbeef
+0xFF
+==
++
++=
+-=
+>>=
+&&
+---
