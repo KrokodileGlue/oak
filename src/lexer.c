@@ -66,7 +66,7 @@ static void parse_escape_sequences(struct Location loc, char* str)
 			} break;
 			default: {
 				struct Location err_loc = (struct Location){loc.text, loc.file, loc.index + i};
-				push_error(err_loc, ERR_WARN, ERR_EOL, "unrecognized escape sequence: '\\%c'", a);
+				push_error(err_loc, ERR_WARN, 1, "unrecognized escape sequence: '\\%c'", a);
 				continue;
 			}
 			}
@@ -118,7 +118,9 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	char* end = ch;
 	while (*end != ')' && *end) end++;
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, ERR_EOL, "unterminated delimiter specification");
+		push_error((struct Location){loc.text, loc.file, loc.index + 2}, ERR_FATAL, ERR_EOL, "unterminated delimiter specification");
+		end = ch;
+		while (*end != '\n' && *end) end++;
 		return end;
 	}
 
@@ -135,6 +137,7 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 		push_error(loc, ERR_FATAL, ERR_EOL, "unterminated raw string literal");
 		end = ch;
 		while (*end != '\n' && *end) end++;
+		free(delim);
 		return end;
 	}
 
@@ -185,6 +188,17 @@ static bool concatenate_strings(struct Token* tok)
 	return ret;
 }
 
+static char* parse_operator(char* ch, struct Location loc, struct Token** tok)
+{
+	enum OpType op_type = match_operator(ch);
+	size_t len = get_op_len(op_type);
+
+	push_token(loc, TOK_OPERATOR, ch, ch + len, tok);
+
+	(*tok)->op_type = op_type;
+	return ch + len;
+}
+
 struct Token* tokenize(char* code, char* filename)
 {
 	struct Token *tok = NULL;
@@ -204,13 +218,19 @@ struct Token* tokenize(char* code, char* filename)
 			ch += 2;
 			char* end = ch;
 
-			while ((strncmp(end, "*/", 2) && strncmp(end, "/*", 2)) && *end) end++;
+			while (strncmp(end, "*/", 2) && *end) end++;
 
-			if (*end == 0 || !strncmp(end, "/*", 2)) {
+			if (*end == 0) {
 				push_error(loc, ERR_FATAL, ERR_EOL, "unterminated comment");
 				while (*ch != '\n' && *ch) ch++;
 			}
 			else ch = end + 2;
+			continue;
+		}
+
+		if (!strncmp(ch, "*/", 2)) {
+			push_error(loc, ERR_FATAL, 1, "unmatched comment terminator");
+			ch += 2;
 			continue;
 		}
 
@@ -227,6 +247,8 @@ struct Token* tokenize(char* code, char* filename)
 			ch = parse_string_literal(ch, loc, &tok);
 		} else if (is_dec_digit(*ch) || *ch == '.') {
 			ch = parse_number(ch, loc, &tok);
+		} else if (match_operator(ch) != OP_INVALID) {
+			ch = parse_operator(ch, loc, &tok);
 		} else {
 			push_token(loc, TOK_SYMBOL, ch, ch + 1, &tok);
 			ch++;

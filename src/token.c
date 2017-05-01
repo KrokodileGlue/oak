@@ -1,4 +1,5 @@
 #include "token.h"
+#include "operator.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@ void push_token(struct Location loc, int type, char* start, char* end, struct To
 	current->type = type;
 	current->loc = loc;
 	current->data = 0.0;
+	current->op_type = OP_INVALID;
 
 	current->value = malloc(end - start + 1);
 	strncpy(current->value, start, end - start);
@@ -72,8 +74,10 @@ void delete_tokens(struct Token* tok)
 void write_tokens(FILE* fp, struct Token* tok)
 {
 	while (tok) {
-		fprintf(fp, "[%s][%s]", token_type_str[tok->type], tok->value);
-		if (tok->type == TOK_NUMBER) fprintf(fp, " data: %4.8f", tok->data);
+		fprintf(fp, "[%s]", token_type_str[tok->type]);
+		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%16s]", get_op_str(tok->op_type));
+		if (tok->type == TOK_NUMBER) fprintf(fp, "[%16.8f]", tok->data);
+		fprintf(fp, "[%s]", tok->value);
 		fprintf(fp, "\n");
 		tok = tok->next;
 	}
