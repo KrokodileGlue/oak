@@ -1,8 +1,4 @@
-R($)this is a raw string literal"foo"
-oisgen 1254 ;
-gri 3523j ;3'23 
-0xFFFF
-.1e4f
-256  /* things!
-0.25
-so yeah "things n stuff \m this should break"
+R($)This is a raw string literal
+/* /* comments don't nest! */ */
+"invalid escape sequence: \m"
+0xdeadbeef
