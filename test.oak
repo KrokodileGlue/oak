@@ -2,10 +2,7 @@ R($)This is a raw string literal
 /* /* multiline comments don't nest! */ */
 "invalid escape sequence: \m"
 0xFF
-==
-+
-+=
--=
->>=
-&&
----
+1.0
+.1e-3
+>>=---+=
+"

@@ -4,15 +4,22 @@
 #include "location.h"
 #include <stdbool.h>
 
-enum ErrorLevel {
-	ERR_NOTE = 0, ERR_WARN = 1, ERR_FATAL = 2
+struct Error {
+	struct Location loc;
+	enum ErrorLevel {
+		ERR_NOTE, ERR_WARNING, ERR_FATAL
+	} sev;
+	char* msg;
 };
 
-#define ERR_EOL (size_t)(-1)
+struct ErrorState {
+	struct Error* err;
+	size_t num;
+	bool pending, fatal;
+};
 
-bool encountered_error();
-void check_errors(FILE* fp);
-void push_error(struct Location loc, enum ErrorLevel level, size_t len, char* fmt, ...);
-void write_errors(FILE* fp);
+void error_push (struct ErrorState* es, struct Error err, char* fmt, ...);
+void error_write(struct ErrorState* es, FILE* fp);
+void error_clear(struct ErrorState* es);
 
 #endif

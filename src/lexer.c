@@ -1,5 +1,4 @@
 #include "lexer.h"
-#include "error.h"
 #include "util.h"
 
 #include <stdlib.h>
@@ -11,7 +10,7 @@
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
-static void parse_escape_sequences(struct Location loc, char* str)
+static void parse_escape_sequences(struct ErrorState* es, struct Location loc, char* str)
 {
 	char* out = str;
 	size_t i = 0;
@@ -65,8 +64,8 @@ static void parse_escape_sequences(struct Location loc, char* str)
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
 			default: {
-				struct Location err_loc = (struct Location){loc.text, loc.file, loc.index + i};
-				push_error(err_loc, ERR_WARN, 1, "unrecognized escape sequence: '\\%c'", a);
+				loc.index += i; loc.len = 1;
+				error_push(es, (struct Error){loc, ERR_WARNING, NULL}, "unrecognized escape sequence: '\\%c'", a);
 				continue;
 			}
 			}
@@ -81,7 +80,7 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 	char* end = ch;
 	while (is_legal_in_identifier(*end) && *end) end++;
 
-	push_token(loc, TOK_IDENTIFIER, ch, end, tok);
+	token_push(loc, TOK_IDENTIFIER, ch, end, tok);
 
 	return end;
 }
@@ -89,38 +88,54 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 static char* parse_number(char* ch, struct Location loc, struct Token** tok)
 {
 	char* end = ch;
-	while ((*end == '.' || *end == 'x' || *end == '-'
-		|| is_hex_digit(*end)) && *end) end++;
 
-	push_token(loc, TOK_NUMBER, ch, end, tok);
-	(*tok)->data = atof((*tok)->value);
+	if (!strncmp(ch, "0x", 2)) {
+		end += 2;
+		while (is_hex_digit(*end)) end++;
+		token_push(loc, TOK_INTEGER, ch, end, tok);
+		(*tok)->iData = (int64_t)atof((*tok)->value);
+	} else if (*ch == '.') {
+		end += 1;
+		while (is_dec_digit(*end) || *end == 'e') end++;
+		token_push(loc, TOK_FLOAT, ch, end, tok);
+		(*tok)->fData = (double)atof((*tok)->value);
+	} else { end += 1; }
 
 	return end;
 }
 
-static char* parse_string_literal(char* ch, struct Location loc, struct Token** tok)
+static char* parse_string_literal(struct ErrorState* es, struct Location loc, char* ch, struct Token** tok)
 {
 	char* end = ch++;
 	do {
 		if (*end == '\\') end++;
 		end++;
-	} while (*end != '\"' && *end);
+	} while (*end != '\"' && *end != '\n' && *end);
 
-	push_token(loc, TOK_STRING, ch, end, tok);
-	parse_escape_sequences(loc, (*tok)->value);
+	if (*end == 0 || *end == '\n') {
+		end = ch;
+		while (*end != '\n' && *end) end++;
+		loc.len = end - ch;
+		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unmatched string literal initializer");
+		return ch;
+	}
+
+	token_push(loc, TOK_STRING, ch, end, tok);
+	parse_escape_sequences(es, loc, (*tok)->value);
 
 	return end + 1;
 }
 
-static char* parse_raw_string_literal(char* ch, struct Location loc, struct Token** tok)
+static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Location loc, struct Token** tok)
 {
 	ch += 2; /* skip the R( */
 	char* end = ch;
 	while (*end != ')' && *end) end++;
 	if (*end == 0) {
-		push_error((struct Location){loc.text, loc.file, loc.index + 2}, ERR_FATAL, ERR_EOL, "unterminated delimiter specification");
 		end = ch;
 		while (*end != '\n' && *end) end++;
+		loc.len = end - ch;
+		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated delimiter specification");
 		return end;
 	}
 
@@ -134,14 +149,14 @@ static char* parse_raw_string_literal(char* ch, struct Location loc, struct Toke
 	while (strncmp(end, delim, delim_len) && *end) end++;
 
 	if (*end == 0) {
-		push_error(loc, ERR_FATAL, ERR_EOL, "unterminated raw string literal");
+		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated raw string literal");
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		free(delim);
 		return end;
 	}
 
-	push_token(loc, TOK_STRING, ch, end, tok);
+	token_push(loc, TOK_STRING, ch, end, tok);
 	free(delim);
 	
 	return end + delim_len;
@@ -170,21 +185,21 @@ static char* smart_cat(char* first, char* second)
  * Returns true if it found any strings to concatenate,
  * otherwise returns false.
  */
-static bool concatenate_strings(struct Token* tok)
+static bool cat_strings(struct Token* tok)
 {
 	bool ret = false;
-	tok = rewind_token(tok);
+	token_rewind(&tok);
 	
 	while (tok && tok->next) {
 		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
 			ret = true;
 			tok->value = smart_cat(tok->value, tok->next->value);
-			delete_token(tok->next);
+			token_delete(tok->next);
 		}
 		tok = tok->next;
 	}
 
-	if (ret) concatenate_strings(tok);
+	if (ret) cat_strings(tok);
 	return ret;
 }
 
@@ -193,19 +208,19 @@ static char* parse_operator(char* ch, struct Location loc, struct Token** tok)
 	enum OpType op_type = match_operator(ch);
 	size_t len = get_op_len(op_type);
 
-	push_token(loc, TOK_OPERATOR, ch, ch + len, tok);
-
+	token_push(loc, TOK_OPERATOR, ch, ch + len, tok);
 	(*tok)->op_type = op_type;
+
 	return ch + len;
 }
 
-struct Token* tokenize(char* code, char* filename)
+struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
 {
 	struct Token *tok = NULL;
 	char* ch = code;
 	
 	while (*ch) {
-		struct Location loc = (struct Location){code, filename, ch - code};
+		struct Location loc = (struct Location){code, filename, ch - code, -1};
 
 		if (is_whitespace(*ch)) {
 			while (is_whitespace(*ch) && *ch) {
@@ -221,7 +236,8 @@ struct Token* tokenize(char* code, char* filename)
 			while (strncmp(end, "*/", 2) && *end) end++;
 
 			if (*end == 0) {
-				push_error(loc, ERR_FATAL, ERR_EOL, "unterminated comment");
+				loc.len = index_in_line(loc);
+				error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated comment");
 				while (*ch != '\n' && *ch) ch++;
 			}
 			else ch = end + 2;
@@ -229,7 +245,8 @@ struct Token* tokenize(char* code, char* filename)
 		}
 
 		if (!strncmp(ch, "*/", 2)) {
-			push_error(loc, ERR_FATAL, 1, "unmatched comment terminator");
+			loc.len = 2;
+			error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unmatched comment terminator");
 			ch += 2;
 			continue;
 		}
@@ -240,26 +257,23 @@ struct Token* tokenize(char* code, char* filename)
 		}
 
 		if (!strncmp(ch, "R(", 2)) {
-			ch = parse_raw_string_literal(ch, loc, &tok);
+			ch = parse_raw_string_literal(es, ch, loc, &tok);
 		} else if (is_identifier_start(*ch)) {
 			ch = parse_identifier(ch, loc, &tok);
 		} else if (*ch == '\"') {
-			ch = parse_string_literal(ch, loc, &tok);
+			ch = parse_string_literal(es, loc, ch, &tok);
 		} else if (is_dec_digit(*ch) || *ch == '.') {
 			ch = parse_number(ch, loc, &tok);
 		} else if (match_operator(ch) != OP_INVALID) {
 			ch = parse_operator(ch, loc, &tok);
 		} else {
-			push_token(loc, TOK_SYMBOL, ch, ch + 1, &tok);
+			token_push(loc, TOK_SYMBOL, ch, ch + 1, &tok);
 			ch++;
 		}
 	}
 
-	/* rewind the token stream */
-	if (tok)
-		while (tok->prev) tok = tok->prev;
-	concatenate_strings(tok);
+	cat_strings(tok);
+	token_rewind(&tok);
 
 	return tok;
 }
-

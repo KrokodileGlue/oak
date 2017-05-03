@@ -5,58 +5,35 @@
 #include <string.h>
 
 static char token_type_str[][64] = {
-	"IDENTIFIER",
-	"NUMBER    ",
-	"STRING    ",
-	"OPERATOR  ",
-	"SYMBOL    ",
-	"INVALID   "
+	"IDENTIFIER", "KEYWORD",
+	"STRING",     "SYMBOL",
+	"INTEGER",    "FLOAT",
+	"OPERATOR",
+	"INVALID"
 };
 
-struct Token* rewind_token(struct Token* tok)
+void token_rewind(struct Token** tok)
 {
-	if (tok)
-		while (tok->prev) tok = tok->prev;
-	return tok;
+	if (*tok)
+		while ((*tok)->prev)
+			(*tok) = (*tok)->prev;
 }
 
-void delete_token(struct Token* tok)
+void token_delete(struct Token* tok)
 {
 	struct Token* prev = tok->prev;
 	struct Token* next = tok->next;
+
 	if (prev) prev->next = next;
 	if (next) next->prev = prev;
+
 	free(tok->value);
 	free(tok);
 }
 
-void push_token(struct Location loc, int type, char* start, char* end, struct Token** prev)
+void token_clear(struct Token* tok)
 {
-	/* type, origin, data, value, next, prev */
-	struct Token* current = malloc(sizeof (struct Token));
-	if (*prev) (*prev)->next = current;
-
-	current->type = type;
-	current->loc = loc;
-	current->data = 0.0;
-	current->op_type = OP_INVALID;
-
-	current->value = malloc(end - start + 1);
-	strncpy(current->value, start, end - start);
-	current->value[end - start] = 0;
-
-	current->next = NULL;
-	current->prev = *prev;
-
-	*prev = current;
-	current = current->next;
-}
-
-void delete_tokens(struct Token* tok)
-{
-	/* rewind the token stream */
-	if (tok)
-		while (tok->prev) tok = tok->prev;
+	token_rewind(&tok);
 
 	while (tok) {
 		if (tok->next) {
@@ -71,12 +48,37 @@ void delete_tokens(struct Token* tok)
 	}
 }
 
-void write_tokens(FILE* fp, struct Token* tok)
+void token_push(struct Location loc, enum TokType type, char* start, char* end, struct Token** prev)
+{
+	/* type, origin, data, value, next, prev */
+	struct Token* current = malloc(sizeof (struct Token));
+	if (*prev) (*prev)->next = current;
+
+	current->type = type;
+	current->loc = loc;
+	current->iData = 0;
+	current->op_type = OP_INVALID;
+
+	current->value = malloc(end - start + 1);
+	strncpy(current->value, start, end - start);
+	current->value[end - start] = 0;
+
+	current->next = NULL;
+	current->prev = *prev;
+
+	*prev = current;
+	current = current->next;
+}
+
+void token_write(struct Token* tok, FILE* fp)
 {
 	while (tok) {
-		fprintf(fp, "[%s]", token_type_str[tok->type]);
+		fprintf(fp, "[%9s]", token_type_str[(size_t)tok->type]);
+
 		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%16s]", get_op_str(tok->op_type));
-		if (tok->type == TOK_NUMBER) fprintf(fp, "[%16.8f]", tok->data);
+		if (tok->type == TOK_FLOAT) fprintf(fp, "[%16.4f]", tok->fData);
+		if (tok->type == TOK_INTEGER) fprintf(fp, "[%16zd]", tok->iData);
+
 		fprintf(fp, "[%s]", tok->value);
 		fprintf(fp, "\n");
 		tok = tok->next;
