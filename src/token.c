@@ -50,7 +50,6 @@ void token_clear(struct Token* tok)
 
 void token_push(struct Location loc, enum TokType type, char* start, char* end, struct Token** prev)
 {
-	/* type, origin, data, value, next, prev */
 	struct Token* current = malloc(sizeof (struct Token));
 	if (*prev) (*prev)->next = current;
 
@@ -75,9 +74,9 @@ void token_write(struct Token* tok, FILE* fp)
 	while (tok) {
 		fprintf(fp, "[%9s]", token_type_str[(size_t)tok->type]);
 
-		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%16s]", get_op_str(tok->op_type));
-		if (tok->type == TOK_FLOAT) fprintf(fp, "[%16.4f]", tok->fData);
-		if (tok->type == TOK_INTEGER) fprintf(fp, "[%16zd]", tok->iData);
+		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%17s]", get_op_str(tok->op_type));
+		if (tok->type == TOK_FLOAT) fprintf(fp, "[%17.4f]", tok->fData);
+		if (tok->type == TOK_INTEGER) fprintf(fp, "[%17zd]", tok->iData);
 
 		fprintf(fp, "[%s]", tok->value);
 		fprintf(fp, "\n");

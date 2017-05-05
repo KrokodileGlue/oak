@@ -11,20 +11,22 @@ static char error_level_strs[][32] = { "note", "warning", "error" };
 
 void error_push(struct ErrorState* es, struct Error err, char* fmt, ...)
 {
-	es->err = es->err
-		? malloc(sizeof *(es->err) * ++es->num)
-		: realloc(es->err, sizeof *(es->err) * es->num++);
+	es->pending = true;
+	es->err = !(es->err)
+		? malloc(sizeof *(es->err) * ++(es->num))
+		: realloc(es->err, sizeof *(es->err) * ++(es->num));
 
 	char* message = malloc(ERR_MAX_MESSAGE_LEN + 1);
 
 	if (fmt) {
 		va_list args;
 		va_start(args, fmt);
-		vsnprintf(message,ERR_MAX_MESSAGE_LEN, fmt, args);
+		vsnprintf(message, ERR_MAX_MESSAGE_LEN, fmt, args);
 		va_end(args);
 	}
-	
-	es->err[es->num++] = err;
+
+	err.msg = message;
+	es->err[es->num - 1] = err;
 	if (err.sev == ERR_FATAL) es->fatal = true;
 }
 
@@ -49,6 +51,7 @@ void error_write(struct ErrorState* es, FILE* fp)
 
 		size_t j = 0;
 		while (j < (size_t)((err.loc.len <= 1) ? 1 : err.loc.len - 1)) {
+			if (err.loc.len == (size_t)-1) break;
 			fputc('~', fp);
 			j++;
 		}
