@@ -1,8 +1,8 @@
-R($)This is a raw string literal
-/* /* multiline comments don't nest! */ */
-"invalid escape sequence: \m"
+R($)This is a raw string literal$
+/* multiline comment! */
+"valid escape sequence: \n"
 0xFF
 1.0
 .1e-3
 >>=---+=
-"
+things and things n _Stuff

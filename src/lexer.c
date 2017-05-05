@@ -64,8 +64,8 @@ static void parse_escape_sequences(struct ErrorState* es, struct Location loc, c
 				a = (char)strtol(hex_sequence, NULL, 16);
 			} break;
 			default: {
-				loc.index += i; loc.len = 1;
-				error_push(es, (struct Error){loc, ERR_WARNING, NULL}, "unrecognized escape sequence: '\\%c'", a);
+				loc.index += i; loc.len = 2;
+				error_push(es, loc, ERR_WARNING, "unrecognized escape sequence: '\\%c'", a);
 				continue;
 			}
 			}
@@ -116,7 +116,7 @@ static char* parse_string_literal(struct ErrorState* es, struct Location loc, ch
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		loc.len = end - ch;
-		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unmatched string literal initializer");
+		error_push(es, loc, ERR_FATAL, "unterminated string literal");
 		return ch;
 	}
 
@@ -135,7 +135,7 @@ static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Lo
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		loc.len = end - ch;
-		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated delimiter specification");
+		error_push(es, loc, ERR_FATAL, "unterminated delimiter specification");
 		return end;
 	}
 
@@ -149,7 +149,8 @@ static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Lo
 	while (strncmp(end, delim, delim_len) && *end) end++;
 
 	if (*end == 0) {
-		error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated raw string literal");
+		loc.len = strlen(delim) + 3;
+		error_push(es, loc, ERR_FATAL, "unterminated raw string literal");
 		end = ch;
 		while (*end != '\n' && *end) end++;
 		free(delim);
@@ -236,8 +237,8 @@ struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
 			while (strncmp(end, "*/", 2) && *end) end++;
 
 			if (*end == 0) {
-				loc.len = index_in_line(loc);
-				error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unterminated comment");
+				loc.len = 2;
+				error_push(es, loc, ERR_FATAL, "unmatched comment initializer");
 				while (*ch != '\n' && *ch) ch++;
 			}
 			else ch = end + 2;
@@ -246,7 +247,7 @@ struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
 
 		if (!strncmp(ch, "*/", 2)) {
 			loc.len = 2;
-			error_push(es, (struct Error){loc, ERR_FATAL, NULL}, "unmatched comment terminator");
+			error_push(es, loc, ERR_FATAL, "unmatched comment terminator");
 			ch += 2;
 			continue;
 		}
