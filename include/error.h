@@ -18,7 +18,8 @@ struct ErrorState {
 	bool pending, fatal;
 };
 
-void error_push (struct ErrorState* es, struct Error err, char* fmt, ...);
+void error_new  (struct ErrorState** es);
+void error_push (struct ErrorState* es, struct Location loc, enum ErrorLevel sev, char* fmt, ...);
 void error_write(struct ErrorState* es, FILE* fp);
 void error_clear(struct ErrorState* es);
 

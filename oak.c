@@ -10,10 +10,8 @@ int main(int argc, char** argv)
 	char* text = load_file(argv[1]);
 
 	if (text) {
-		struct ErrorState* es = malloc(sizeof *es);
-		*es = (struct ErrorState){
-			.err = NULL,      .num = 0,
-			.pending = false, .fatal = false};
+		struct ErrorState* es;
+		error_new(&es);
 		struct Token* tok = tokenize(es, text, argv[1]);
 
 		token_write(tok, stderr);
@@ -21,11 +19,14 @@ int main(int argc, char** argv)
 
 		if (es->pending) {
 			error_write(es, stderr);
-			error_clear(es);
 		}
 		free(text);
 
-		if (es->fatal) exit(EXIT_FAILURE);
+		if (es->fatal) {
+			error_clear(es);
+			exit(EXIT_FAILURE);
+		}
+		error_clear(es);
 	}
 
 	return EXIT_SUCCESS;

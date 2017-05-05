@@ -9,25 +9,34 @@
 static char error_level_strs[][32] = { "note", "warning", "error" };
 #define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
 
-void error_push(struct ErrorState* es, struct Error err, char* fmt, ...)
+void error_new(struct ErrorState** es)
+{
+	*es = malloc(sizeof **es);
+
+	**es = (struct ErrorState) {
+		.err = NULL,      .num = 0,
+		.pending = false, .fatal = false
+	};
+}
+
+void error_push(struct ErrorState* es, struct Location loc, enum ErrorLevel sev, char* fmt, ...)
 {
 	es->pending = true;
-	es->err = !(es->err)
+	es->err = (es-> err == NULL)
 		? malloc(sizeof *(es->err) * ++(es->num))
 		: realloc(es->err, sizeof *(es->err) * ++(es->num));
 
-	char* message = malloc(ERR_MAX_MESSAGE_LEN + 1);
+	char* msg = malloc(ERR_MAX_MESSAGE_LEN + 1);
 
 	if (fmt) {
 		va_list args;
 		va_start(args, fmt);
-		vsnprintf(message, ERR_MAX_MESSAGE_LEN, fmt, args);
+		vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
 		va_end(args);
 	}
 
-	err.msg = message;
-	es->err[es->num - 1] = err;
-	if (err.sev == ERR_FATAL) es->fatal = true;
+	es->err[es->num - 1] = (struct Error){loc, sev, msg};
+	if (sev == ERR_FATAL) es->fatal = true;
 }
 
 void error_write(struct ErrorState* es, FILE* fp)
@@ -41,20 +50,18 @@ void error_write(struct ErrorState* es, FILE* fp)
 
 		char* line = get_line(err.loc);
 		fprintf(fp, "\t%s\n\t", line);
-		free(line);
 		
 		for (size_t j = 0; j < index_in_line(err.loc); j++) {
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
 		}
+		
+		free(line);
 
 		fputc('^', fp);
 
-		size_t j = 0;
-		while (j < (size_t)((err.loc.len <= 1) ? 1 : err.loc.len - 1)) {
-			if (err.loc.len == (size_t)-1) break;
+		size_t j = 1;
+		while (j++ < err.loc.len && err.loc.len != (size_t)-1)
 			fputc('~', fp);
-			j++;
-		}
 
 		fputc('\n', fp);
 	}
