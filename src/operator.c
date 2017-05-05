@@ -31,8 +31,8 @@ static char operator_type_str[][64] = {
 
 	"OP_LOGICAL_AND", "OP_LOGICAL_OR",
 
-	"OP_SHIFT_LEFT",    "OP_SHIFT_RIGHT",
-	"OP_SHIFT_LEFT_EQ", "OP_SHIFT_RIGHT_EQ",
+	"OP_SHIFT_RIGHT",    "OP_SHIFT_LEFT",
+	"OP_SHIFT_RIGHT_EQ", "OP_SHIFT_LEFT_EQ",
 	"OP_INVALID"
 };
 
