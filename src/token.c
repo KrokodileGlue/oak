@@ -12,17 +12,17 @@ static char token_type_str[][64] = {
 	"INVALID"
 };
 
-void token_rewind(struct Token** tok)
+void token_rewind(struct Token **tok)
 {
 	if (*tok)
 		while ((*tok)->prev)
 			(*tok) = (*tok)->prev;
 }
 
-void token_delete(struct Token* tok)
+void token_delete(struct Token *tok)
 {
-	struct Token* prev = tok->prev;
-	struct Token* next = tok->next;
+	struct Token *prev = tok->prev;
+	struct Token *next = tok->next;
 
 	if (prev) prev->next = next;
 	if (next) next->prev = prev;
@@ -31,7 +31,7 @@ void token_delete(struct Token* tok)
 	free(tok);
 }
 
-void token_clear(struct Token* tok)
+void token_clear(struct Token *tok)
 {
 	token_rewind(&tok);
 
@@ -48,9 +48,9 @@ void token_clear(struct Token* tok)
 	}
 }
 
-void token_push(struct Location loc, enum TokType type, char* start, char* end, struct Token** prev)
+void token_push(struct Location loc, enum TokType type, char *start, char *end, struct Token **prev)
 {
-	struct Token* current = malloc(sizeof (struct Token));
+	struct Token *current = malloc(sizeof (struct Token));
 	if (*prev) (*prev)->next = current;
 
 	current->type = type;
@@ -69,7 +69,7 @@ void token_push(struct Location loc, enum TokType type, char* start, char* end, 
 	current = current->next;
 }
 
-void token_write(struct Token* tok, FILE* fp)
+void token_write(struct Token *tok, FILE *fp)
 {
 	while (tok) {
 		fprintf(fp, "[%10s]", token_type_str[(size_t)tok->type]);

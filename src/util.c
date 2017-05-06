@@ -43,7 +43,7 @@ size_t index_in_line(struct Location loc)
 	return loc.index - start;
 }
 
-char* get_line(struct Location loc)
+char *get_line(struct Location loc)
 {
 	size_t start = loc.index, end = loc.index;
 	while (start) { /* find the beginning of the line we're in */
@@ -56,15 +56,15 @@ char* get_line(struct Location loc)
 
 	while (loc.text[end] != '\n' && loc.text[end]) { end++; } /* find the end */
 
-	char* line = malloc(end - start + 1);
+	char *line = malloc(end - start + 1);
 	strncpy(line, loc.text + start, end - start);
 	line[end - start] = 0;
 	return line;
 }
 
-void* oak_malloc(size_t size)
+void *oak_malloc(size_t size)
 {
-	void* ptr = malloc(size);
+	void *ptr = malloc(size);
 	if (!ptr) {
 		fprintf(stderr, "out of memory\n");
 		exit(EXIT_FAILURE);
@@ -72,10 +72,10 @@ void* oak_malloc(size_t size)
 	return ptr;
 }
 
-char* load_file(const char* path)
+char *load_file(const char* path)
 {
-	char* buf = NULL;
-	FILE* file = fopen(path, "r");
+	char *buf = NULL;
+	FILE *file = fopen(path, "r");
 	
 	if (!file) return NULL;
 

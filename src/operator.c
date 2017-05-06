@@ -46,7 +46,7 @@ size_t get_op_len(enum OpType op_type)
 	return strlen(operators[(size_t)op_type]);
 }
 
-enum OpType match_operator(char* str)
+enum OpType match_operator(char *str)
 {
 	size_t ret = OP_INVALID, ret_len = 0;
 	for (size_t i = 0; i < sizeof *operators; i++) {
