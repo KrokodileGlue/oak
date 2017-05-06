@@ -25,8 +25,8 @@ enum OpType {
 	OP_INVALID
 };
 
-char* get_op_str(enum OpType op_type);
+char *get_op_str(enum OpType op_type);
 size_t get_op_len(enum OpType op_type);
-enum OpType match_operator(char* str);
+enum OpType match_operator(char *str);
 
 #endif

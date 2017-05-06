@@ -9,7 +9,7 @@
 static char error_level_strs[][32] = { "note", "warning", "error" };
 #define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
 
-void error_new(struct ErrorState** es)
+void error_new(struct ErrorState **es)
 {
 	*es = malloc(sizeof **es);
 
@@ -19,7 +19,7 @@ void error_new(struct ErrorState** es)
 	};
 }
 
-void error_push(struct ErrorState* es, struct Location loc, enum ErrorLevel sev, char* fmt, ...)
+void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev, char *fmt, ...)
 {
 	es->pending = true;
 	es->err = (es-> err == NULL)
@@ -39,16 +39,16 @@ void error_push(struct ErrorState* es, struct Location loc, enum ErrorLevel sev,
 	if (sev == ERR_FATAL) es->fatal = true;
 }
 
-void error_write(struct ErrorState* es, FILE* fp)
+void error_write(struct ErrorState *es, FILE *fp)
 {
-	struct Error* errors = es->err;
+	struct Error *errors = es->err;
 	for (size_t i = 0; i < es->num; i++) {
 		struct Error err = errors[i];
 		
 		fprintf(fp, "%s:%zd:%zd: ", err.loc.file, line_number(err.loc), column_number(err.loc));
 		fprintf(fp, "%s: %s\n", error_level_strs[err.sev], err.msg);
 
-		char* line = get_line(err.loc);
+		char *line = get_line(err.loc);
 		fprintf(fp, "\t%s\n\t", line);
 		
 		for (size_t j = 0; j < index_in_line(err.loc); j++) {
@@ -58,9 +58,10 @@ void error_write(struct ErrorState* es, FILE* fp)
 		fputc('^', fp);
 
 		size_t j = 1;
-		size_t len = err.loc.len > strlen(line) - index_in_line(err.loc) ? strlen(line) - index_in_line(err.loc) : err.loc.len;
-		while (j++ < len)
-			fputc('~', fp);
+		size_t len = (err.loc.len > strlen(line) - index_in_line(err.loc))
+			? strlen(line) - index_in_line(err.loc)
+			: err.loc.len;
+		while (j++ < len) fputc('~', fp);
 
 		free(line);
 
@@ -73,7 +74,7 @@ static void error_delete(struct Error err)
 	free(err.msg);
 }
 
-void error_clear(struct ErrorState* es)
+void error_clear(struct ErrorState *es)
 {
 	for (size_t i = 0; i < es->num; i++) {
 		error_delete(es->err[i]);

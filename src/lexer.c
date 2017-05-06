@@ -10,9 +10,9 @@
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
-static void parse_escape_sequences(struct ErrorState* es, struct Location loc, char* str)
+static void parse_escape_sequences(struct ErrorState *es, struct Location loc, char *str)
 {
-	char* out = str;
+	char *out = str;
 	size_t i = 0;
 	do {
 		char a = str[i];
@@ -75,9 +75,9 @@ static void parse_escape_sequences(struct ErrorState* es, struct Location loc, c
 	} while (str[i++]);
 }
 
-static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
+static char *parse_identifier(char *ch, struct Location loc, struct Token **tok)
 {
-	char* end = ch;
+	char *end = ch;
 	while (is_legal_in_identifier(*end) && *end) end++;
 
 	loc.len = end - ch;
@@ -86,9 +86,9 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 	return end;
 }
 
-static char* parse_number(struct ErrorState* es, char* ch, struct Location loc, struct Token** tok)
+static char *parse_number(struct ErrorState *es, char *ch, struct Location loc, struct Token **tok)
 {
-	char* end = ch;
+	char *end = ch;
 
 	if (!strncmp(ch, "0x", 2)) {
 		end += 2;
@@ -146,10 +146,10 @@ static char* parse_number(struct ErrorState* es, char* ch, struct Location loc, 
 	return end;
 }
 
-static char* parse_string_literal(struct ErrorState* es, struct Location loc, char* ch, struct Token** tok)
+static char *parse_string_literal(struct ErrorState *es, struct Location loc, char *ch, struct Token **tok)
 {
 	ch += 1;
-	char* end = ch;
+	char *end = ch;
 	do {
 		if (*end == '\\') end++;
 		end++;
@@ -171,10 +171,10 @@ static char* parse_string_literal(struct ErrorState* es, struct Location loc, ch
 	return end + 1;
 }
 
-static char* parse_character_literal(struct ErrorState* es, struct Location loc, char* ch, struct Token** tok)
+static char *parse_character_literal(struct ErrorState *es, struct Location loc, char *ch, struct Token **tok)
 {
 	ch += 1;
-	char* end = ch;
+	char *end = ch;
 	do {
 		if (*end == '\\') end++;
 		end++;
@@ -206,10 +206,10 @@ static char* parse_character_literal(struct ErrorState* es, struct Location loc,
 	return end + 1;
 }
 
-static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Location loc, struct Token** tok)
+static char *parse_raw_string_literal(struct ErrorState *es, char *ch, struct Location loc, struct Token **tok)
 {
 	ch += 2; /* skip the R( */
-	char* end = ch;
+	char *end = ch;
 	while (*end != ')' && *end) end++;
 	if (*end == 0) {
 		end = ch;
@@ -219,7 +219,7 @@ static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Lo
 		return end;
 	}
 
-	char* delim = malloc(end - ch + 1);
+	char *delim = malloc(end - ch + 1);
 	strncpy(delim, ch, end - ch);
 	delim[end - ch] = 0;
 	size_t delim_len = strlen(delim);
@@ -243,7 +243,7 @@ static char* parse_raw_string_literal(struct ErrorState* es, char* ch, struct Lo
 	return end + delim_len;
 }
 
-static char* smart_cat(char* first, char* second)
+static char *smart_cat(char *first, char *second)
 {
 	size_t len = strlen(first) + strlen(second);
 	
@@ -266,7 +266,7 @@ static char* smart_cat(char* first, char* second)
  * Returns true if it found any strings to concatenate,
  * otherwise returns false.
  */
-static bool cat_strings(struct Token* tok)
+static bool cat_strings(struct Token *tok)
 {
 	bool ret = false;
 	token_rewind(&tok);
@@ -284,7 +284,7 @@ static bool cat_strings(struct Token* tok)
 	return ret;
 }
 
-static char* parse_operator(char* ch, struct Location loc, struct Token** tok)
+static char *parse_operator(char *ch, struct Location loc, struct Token **tok)
 {
 	enum OpType op_type = match_operator(ch);
 	size_t len = get_op_len(op_type);
@@ -295,10 +295,10 @@ static char* parse_operator(char* ch, struct Location loc, struct Token** tok)
 	return ch + len;
 }
 
-struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
+struct Token *tokenize(struct ErrorState *es, char *code, char *filename)
 {
 	struct Token *tok = NULL;
-	char* ch = code;
+	char *ch = code;
 	
 	while (*ch) {
 		struct Location loc = (struct Location){code, filename, ch - code, -1};
@@ -312,7 +312,7 @@ struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
 
 		if (!strncmp(ch, "/*", 2)) {
 			ch += 2;
-			char* end = ch;
+			char *end = ch;
 
 			while (strncmp(end, "*/", 2) && *end) end++;
 

@@ -42,15 +42,13 @@ static inline bool is_dec_digit(char c)
 	return (c >= '0' && c <= '9');
 }
 
-size_t line_number(struct Location loc);
+size_t line_number  (struct Location loc);
 size_t column_number(struct Location loc);
-
-size_t line_len(struct Location loc);
+size_t line_len     (struct Location loc);
 size_t index_in_line(struct Location loc);
+char *get_line      (struct Location loc);
 
-char* get_line(struct Location loc);
-
-void* oak_malloc(size_t size);
-char* load_file(const char* path);
+void *oak_malloc(size_t size);
+char *load_file(const char *path);
 
 #endif

@@ -10,6 +10,6 @@
 #include "token.h"
 #include "error.h"
 
-struct Token* tokenize(struct ErrorState* es, char* code, char* filename);
+struct Token *tokenize(struct ErrorState *es, char *code, char *filename);
 
 #endif
