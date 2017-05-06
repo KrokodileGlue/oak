@@ -1,8 +1,29 @@
-R($)This is a raw string literal$
-/* multiline comment! */
-"valid escape sequence: \n"
-0xFF
-1.0
-.1e-3
+R($)This is a raw string literal
+
+/*
+multiline comment!
+*/ */
+
+// number tests
+
+0xFFFF
+1.0000
+-.1e-3e3e3e3333
+1.1.1.1.1
+
+// operators
+
 >>=---+=
-things and things n _Stuff
+
+// identifiers
+
+foo, bar, baz
+
+// misc
+
+-5+ 5+ 4- 5-+5 "
+
+"invalid escape sequence: \m"
+'an exceedingly long character literal'
+
+an ' unterminated string: " ::

@@ -53,7 +53,7 @@ char* get_line(struct Location loc)
 		}
 		start--;
 	}
-	while (is_whitespace(loc.text[start])) { start++; } /* skip any leading whitespace */
+
 	while (loc.text[end] != '\n' && loc.text[end]) { end++; } /* find the end */
 
 	char* line = malloc(end - start + 1);

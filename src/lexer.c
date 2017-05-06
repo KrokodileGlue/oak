@@ -85,28 +85,70 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 	return end;
 }
 
-static char* parse_number(char* ch, struct Location loc, struct Token** tok)
+static char* parse_number(struct ErrorState* es, char* ch, struct Location loc, struct Token** tok)
 {
 	char* end = ch;
 
 	if (!strncmp(ch, "0x", 2)) {
 		end += 2;
 		while (is_hex_digit(*end)) end++;
+
 		token_push(loc, TOK_INTEGER, ch, end, tok);
-		(*tok)->iData = (int64_t)atof((*tok)->value);
-	} else if (*ch == '.') {
-		end += 1;
-		while (is_dec_digit(*end) || *end == 'e') end++;
-		token_push(loc, TOK_FLOAT, ch, end, tok);
-		(*tok)->fData = (double)atof((*tok)->value);
-	} else { end += 1; }
+		(*tok)->iData = (int64_t)strtol((*tok)->value, NULL, 16);
+	} else {
+		bool is_integer = true;
+		bool is_oct = (*ch == '0'), found_exponent = false;
+		
+		while (true) {
+			if (*end == 'e') {
+				if (found_exponent || is_integer) {
+					loc.len = end - ch;
+					error_push(es, loc, ERR_FATAL, "incorrect use of scientific notation in numeric literal");
+					break;
+				}
+				found_exponent = true;
+				end++;
+				if (*end == '-' || *end == '+') end++;
+				continue;
+			}
+			
+			if ((is_oct && is_oct_digit(*end)) || is_dec_digit(*end)) {
+				end++;
+				continue;
+			}
+
+			if (*end == '.') {
+				if (is_integer) {
+					is_integer = false;
+				} else {
+					/* we've run into a second . for this number, e.g. 0.1.2
+					 * we will break, so that example will be parsed as 0.1, 0.2 */
+					break;
+				}
+				
+				end++;
+				continue;
+			}
+
+			break;
+		}
+		
+		if (is_integer) {
+			token_push(loc, TOK_INTEGER, ch, end, tok);
+			(*tok)->iData = (int64_t)strtol((*tok)->value, NULL, 0);
+		} else {
+			token_push(loc, TOK_FLOAT, ch, end, tok);
+			(*tok)->fData = atof((*tok)->value);
+		}
+	}
 
 	return end;
 }
 
 static char* parse_string_literal(struct ErrorState* es, struct Location loc, char* ch, struct Token** tok)
 {
-	char* end = ch++;
+	ch += 1;
+	char* end = ch;
 	do {
 		if (*end == '\\') end++;
 		end++;
@@ -115,13 +157,50 @@ static char* parse_string_literal(struct ErrorState* es, struct Location loc, ch
 	if (*end == 0 || *end == '\n') {
 		end = ch;
 		while (*end != '\n' && *end) end++;
-		loc.len = end - ch;
+		loc.len = end - ch + 1;
+
 		error_push(es, loc, ERR_FATAL, "unterminated string literal");
-		return ch;
+		
+		return end;
 	}
 
 	token_push(loc, TOK_STRING, ch, end, tok);
 	parse_escape_sequences(es, loc, (*tok)->value);
+
+	return end + 1;
+}
+
+static char* parse_character_literal(struct ErrorState* es, struct Location loc, char* ch, struct Token** tok)
+{
+	ch += 1;
+	char* end = ch;
+	do {
+		if (*end == '\\') end++;
+		end++;
+	} while (*end != '\'' && *end != '\n' && *end);
+
+	if (*end == 0 || *end == '\n') {
+		end = ch;
+		while (*end != '\n' && *end) end++;
+		loc.len = end - ch + 1;
+
+		error_push(es, loc, ERR_FATAL, "unterminated character literal");
+		
+		return end;
+	}
+
+	token_push(loc, TOK_STRING, ch, end, tok);
+	parse_escape_sequences(es, loc, (*tok)->value);
+
+	if (strlen((*tok)->value) != 1) {
+		/* add 2 to the length because the body of the token doesn't include the ' characters */
+		loc.len = end - ch + 2;
+
+		error_push(es, loc, ERR_WARNING, "multi-element character literal will be truncated to the first character");
+	}
+
+	(*tok)->type = TOK_INTEGER;
+	(*tok)->iData = (int64_t)(*tok)->value[0];
 
 	return end + 1;
 }
@@ -264,9 +343,11 @@ struct Token* tokenize(struct ErrorState* es, char* code, char* filename)
 		} else if (*ch == '\"') {
 			ch = parse_string_literal(es, loc, ch, &tok);
 		} else if (is_dec_digit(*ch) || *ch == '.') {
-			ch = parse_number(ch, loc, &tok);
+			ch = parse_number(es, ch, loc, &tok);
 		} else if (match_operator(ch) != OP_INVALID) {
 			ch = parse_operator(ch, loc, &tok);
+		} else if (*ch == '\'') {
+			ch = parse_character_literal(es, loc, ch, &tok);
 		} else {
 			token_push(loc, TOK_SYMBOL, ch, ch + 1, &tok);
 			ch++;
