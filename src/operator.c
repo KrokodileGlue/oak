@@ -48,7 +48,7 @@ size_t get_op_len(enum OpType op_type)
 
 enum OpType match_operator(char* str)
 {
-	size_t ret = 0, ret_len = 0;
+	size_t ret = OP_INVALID, ret_len = 0;
 	for (size_t i = 0; i < sizeof *operators; i++) {
 		if (!strncmp(str, operators[i], strlen(operators[i]))) {
 			ret_len = strlen(operators[i]) >= ret_len ? strlen(operators[i]) : ret_len;

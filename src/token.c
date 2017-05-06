@@ -72,7 +72,7 @@ void token_push(struct Location loc, enum TokType type, char* start, char* end, 
 void token_write(struct Token* tok, FILE* fp)
 {
 	while (tok) {
-		fprintf(fp, "[%9s]", token_type_str[(size_t)tok->type]);
+		fprintf(fp, "[%10s]", token_type_str[(size_t)tok->type]);
 
 		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%17s]", get_op_str(tok->op_type));
 		if (tok->type == TOK_FLOAT) fprintf(fp, "[%17.4f]", tok->fData);
