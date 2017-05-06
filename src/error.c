@@ -55,13 +55,14 @@ void error_write(struct ErrorState* es, FILE* fp)
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
 		}
 		
-		free(line);
-
 		fputc('^', fp);
 
 		size_t j = 1;
-		while (j++ < err.loc.len && err.loc.len != (size_t)-1)
+		size_t len = err.loc.len > strlen(line) - index_in_line(err.loc) ? strlen(line) - index_in_line(err.loc) : err.loc.len;
+		while (j++ < len)
 			fputc('~', fp);
+
+		free(line);
 
 		fputc('\n', fp);
 	}

@@ -24,6 +24,7 @@ foo, bar, baz
 -5+ 5+ 4- 5-+5 "
 
 "invalid escape sequence: \m"
-'an exceedingly long character literal'
+'an exceedingly long character\
+ literal'
 
 an ' unterminated string: " ::

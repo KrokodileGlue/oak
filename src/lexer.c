@@ -80,6 +80,7 @@ static char* parse_identifier(char* ch, struct Location loc, struct Token** tok)
 	char* end = ch;
 	while (is_legal_in_identifier(*end) && *end) end++;
 
+	loc.len = end - ch;
 	token_push(loc, TOK_IDENTIFIER, ch, end, tok);
 
 	return end;
@@ -196,7 +197,7 @@ static char* parse_character_literal(struct ErrorState* es, struct Location loc,
 		/* add 2 to the length because the body of the token doesn't include the ' characters */
 		loc.len = end - ch + 2;
 
-		error_push(es, loc, ERR_WARNING, "multi-element character literal will be truncated to the first character");
+		error_push(es, loc, ERR_WARNING, "multi-element character literal will be truncated to the first element");
 	}
 
 	(*tok)->type = TOK_INTEGER;
