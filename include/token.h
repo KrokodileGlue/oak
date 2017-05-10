@@ -6,6 +6,8 @@
 
 #include "location.h"
 #include "operator.h"
+#include "keyword.h"
+#include "error.h"
 
 struct Token {
 	struct Location loc;
@@ -19,12 +21,17 @@ struct Token {
 	struct Token *next; /* doubly-linked list */
 	struct Token *prev;
 
-	enum OpType op_type;
+	union {
+		enum OpType op_type;
+		enum KeywordType keyword_type;
+		bool bool_type;
+	};
+
 	enum TokType {
 		TOK_IDENTIFIER, TOK_KEYWORD,
 		TOK_STRING,     TOK_SYMBOL,
 		TOK_INTEGER,    TOK_FLOAT,
-		TOK_OPERATOR,
+		TOK_OPERATOR,   TOK_BOOL,
 		TOK_INVALID
 	} type;
 };
@@ -36,5 +43,8 @@ void token_delete(struct Token *tok);
 
 void token_write (struct Token *tok, FILE *fp);
 void token_rewind(struct Token **tok);
+
+void token_match(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str);
+void token_expect(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str);
 
 #endif
