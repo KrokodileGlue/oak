@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "util.h"
+#include "keyword.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -94,6 +95,7 @@ static char *parse_number(struct ErrorState *es, char *ch, struct Location loc, 
 		end += 2;
 		while (is_hex_digit(*end)) end++;
 
+		loc.len = end - ch;
 		token_push(loc, TOK_INTEGER, ch, end, tok);
 		(*tok)->iData = (int64_t)strtol((*tok)->value, NULL, 16);
 	} else {
@@ -133,7 +135,8 @@ static char *parse_number(struct ErrorState *es, char *ch, struct Location loc, 
 
 			break;
 		}
-		
+
+		loc.len = end - ch;
 		if (is_integer) {
 			token_push(loc, TOK_INTEGER, ch, end, tok);
 			(*tok)->iData = (int64_t)strtol((*tok)->value, NULL, 0);
@@ -165,6 +168,7 @@ static char *parse_string_literal(struct ErrorState *es, struct Location loc, ch
 		return end;
 	}
 
+	loc.len = end - ch;
 	token_push(loc, TOK_STRING, ch, end, tok);
 	parse_escape_sequences(es, loc, (*tok)->value);
 
@@ -190,6 +194,7 @@ static char *parse_character_literal(struct ErrorState *es, struct Location loc,
 		return end;
 	}
 
+	loc.len = end - ch;
 	token_push(loc, TOK_STRING, ch, end, tok);
 	parse_escape_sequences(es, loc, (*tok)->value);
 
@@ -219,7 +224,7 @@ static char *parse_raw_string_literal(struct ErrorState *es, char *ch, struct Lo
 		return end;
 	}
 
-	char *delim = malloc(end - ch + 1);
+	char *delim = oak_malloc(end - ch + 1);
 	strncpy(delim, ch, end - ch);
 	delim[end - ch] = 0;
 	size_t delim_len = strlen(delim);
@@ -237,6 +242,7 @@ static char *parse_raw_string_literal(struct ErrorState *es, char *ch, struct Lo
 		return end;
 	}
 
+	loc.len = strlen(delim) + 4 + (end - ch);
 	token_push(loc, TOK_STRING, ch, end, tok);
 	free(delim);
 	
@@ -289,6 +295,7 @@ static char *parse_operator(char *ch, struct Location loc, struct Token **tok)
 	enum OpType op_type = match_operator(ch);
 	size_t len = get_op_len(op_type);
 
+	loc.len = len;
 	token_push(loc, TOK_OPERATOR, ch, ch + len, tok);
 	(*tok)->op_type = op_type;
 
@@ -341,6 +348,14 @@ struct Token *tokenize(struct ErrorState *es, char *code, char *filename)
 			ch = parse_raw_string_literal(es, ch, loc, &tok);
 		} else if (is_identifier_start(*ch)) {
 			ch = parse_identifier(ch, loc, &tok);
+			if (keyword_get_type(tok->value) != KEYWORD_INVALID) {
+				tok->type = TOK_KEYWORD;
+				tok->keyword_type = keyword_get_type(tok->value);
+			}
+			if (!strcmp(tok->value, "true") || !strcmp(tok->value, "false")) {
+				tok->type = TOK_BOOL;
+				tok->bool_type = !strcmp(tok->value, "true") ? true : false;
+			}
 		} else if (*ch == '\"') {
 			ch = parse_string_literal(es, loc, ch, &tok);
 		} else if (is_dec_digit(*ch) || *ch == '.') {
@@ -350,7 +365,8 @@ struct Token *tokenize(struct ErrorState *es, char *code, char *filename)
 		} else if (*ch == '\'') {
 			ch = parse_character_literal(es, loc, ch, &tok);
 		} else {
-			token_push(loc, TOK_SYMBOL, ch, ch + 1, &tok);
+			loc.len = 1;
+			token_push(loc, (enum TokType)*ch, ch, ch + 1, &tok);
 			ch++;
 		}
 	}

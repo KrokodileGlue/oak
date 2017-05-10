@@ -1,14 +1,14 @@
-R($)This is a raw string literal
+R($)This is a raw string literal$
 
 /*
 multiline comment!
-*/ */
+*/
 
-// number tests
+// number
 
 0xFFFF
 1.0000
--.1e-3e3e3e3333
+-.1e-3
 1.1.1.1.1
 
 // operators
@@ -21,10 +21,13 @@ foo, bar, baz
 
 // misc
 
--5+ 5+ 4- 5-+5 "
+-5+ 5+ 4- 5-+5
 
 "invalid escape sequence: \m"
 'an exceedingly long character\
  literal'
 
-an ' unterminated string: " ::
+// some parsing tests
+
+// for var i = 0 -> 9: writeln("Hello, world!");
+for (var i = 0; i < 10; i++) writeln("Hello, world!");

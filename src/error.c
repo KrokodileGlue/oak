@@ -9,24 +9,26 @@
 static char error_level_strs[][32] = { "note", "warning", "error" };
 #define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
 
-void error_new(struct ErrorState **es)
+struct ErrorState *error_new()
 {
-	*es = malloc(sizeof **es);
+	struct ErrorState *es = oak_malloc(sizeof *es);
 
-	**es = (struct ErrorState) {
+	*es = (struct ErrorState) {
 		.err = NULL,      .num = 0,
 		.pending = false, .fatal = false
 	};
+
+	return es;
 }
 
 void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev, char *fmt, ...)
 {
 	es->pending = true;
 	es->err = (es-> err == NULL)
-		? malloc(sizeof *(es->err) * ++(es->num))
+		? oak_malloc(sizeof *(es->err) * ++(es->num))
 		: realloc(es->err, sizeof *(es->err) * ++(es->num));
 
-	char* msg = malloc(ERR_MAX_MESSAGE_LEN + 1);
+	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
 	if (fmt) {
 		va_list args;

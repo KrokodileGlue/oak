@@ -1,5 +1,6 @@
 #include "token.h"
 #include "operator.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +9,7 @@ static char token_type_str[][64] = {
 	"IDENTIFIER", "KEYWORD",
 	"STRING",     "SYMBOL",
 	"INTEGER",    "FLOAT",
-	"OPERATOR",
+	"OPERATOR",   "BOOL",
 	"INVALID"
 };
 
@@ -50,7 +51,7 @@ void token_clear(struct Token *tok)
 
 void token_push(struct Location loc, enum TokType type, char *start, char *end, struct Token **prev)
 {
-	struct Token *current = malloc(sizeof (struct Token));
+	struct Token *current = oak_malloc(sizeof (struct Token));
 	if (*prev) (*prev)->next = current;
 
 	current->type = type;
@@ -78,8 +79,30 @@ void token_write(struct Token *tok, FILE *fp)
 		if (tok->type == TOK_FLOAT) fprintf(fp, "[%17.4f]", tok->fData);
 		if (tok->type == TOK_INTEGER) fprintf(fp, "[%17zd]", tok->iData);
 
-		fprintf(fp, "[%s]", tok->value);
-		fprintf(fp, "\n");
+		fprintf(fp, "[%s][%zd]\n", tok->value, tok->loc.len);
 		tok = tok->next;
 	}
+}
+
+void token_match(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str)
+{
+	struct Token *tok = *token;
+	if (tok->type != tok_type || strcmp(tok->value, str)) {
+		error_push(es, tok->loc, ERR_FATAL, "unexpected token \"%s\", expected \"%s\"", tok->value, str);
+	}
+
+	tok = tok->next;
+	*token = tok;
+}
+
+void token_expect(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str)
+{
+	struct Token *tok = *token;
+
+	tok = tok->next;
+	if (tok->type != tok_type || strcmp(tok->value, str)) {
+		error_push(es, tok->loc, ERR_FATAL, "unexpected token \"%s\", expected \"%s\"", tok->value, str);
+	}
+
+	*token = tok;
 }
