@@ -35,12 +35,14 @@ struct LexState *lexer_new(char *text, char *file)
 
 static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt, ...)
 {
+       	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
+
 	va_list args;
 	va_start(args, fmt);
-	
-	error_push(ls->es, ls->loc, sev, fmt, args);
-
+	vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
 	va_end(args);
+	
+	error_push(ls->es, ls->loc, sev, msg);
 }
 
 static void parse_escape_sequences(struct LexState *ls, char *str)
@@ -51,7 +53,8 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 		char a = str[i];
 
 		if (a == '\\') {
-			a = str[++i];
+			i++;
+			a = str[i];
 			switch (a) {
 			case 'a': a = '\a'; break;
 			case 'b': a = '\b'; break;
