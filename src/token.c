@@ -73,13 +73,21 @@ void token_push(struct Location loc, enum TokType type, char *start, char *end, 
 void token_write(struct Token *tok, FILE *fp)
 {
 	while (tok) {
-		fprintf(fp, "[%10s]", token_type_str[(size_t)tok->type]);
+		if (tok->type <= TOK_INVALID)
+			fprintf(fp, "[type:%10s]", token_type_str[(size_t)tok->type]);
+		else
+			fprintf(fp, "[type:%10c]", tok->type);
 
-		if (tok->type == TOK_OPERATOR) fprintf(fp, "[%17s]", get_op_str(tok->op_type));
-		if (tok->type == TOK_FLOAT) fprintf(fp, "[%17.4f]", tok->fData);
-		if (tok->type == TOK_INTEGER) fprintf(fp, "[%17zd]", tok->iData);
+		if (tok->type == TOK_OPERATOR)
+			fprintf(fp, "[data:%17s]", get_op_str(tok->op_type));
+		else if (tok->type == TOK_FLOAT)
+			fprintf(fp, "[data:%17.4f]", tok->fData);
+		else if (tok->type == TOK_INTEGER)
+			fprintf(fp, "[data:%17zd]", tok->iData);
+		else
+			fprintf(fp, "[data:%17s]", "");
 
-		fprintf(fp, "[%s][%zd]\n", tok->value, tok->loc.len);
+		fprintf(fp, "[len:%5zd][value:%s]\n", tok->loc.len, tok->value);
 		tok = tok->next;
 	}
 }
