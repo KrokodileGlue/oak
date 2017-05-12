@@ -7,7 +7,6 @@
 #include "util.h"
 
 static char error_level_strs[][32] = { "note", "warning", "error" };
-#define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
 
 struct ErrorState *error_new()
 {
@@ -30,12 +29,10 @@ void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev,
 
 	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
-	if (fmt) {
-		va_list args;
-		va_start(args, fmt);
-		vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
-		va_end(args);
-	}
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
+	va_end(args);
 
 	es->err[es->num - 1] = (struct Error){loc, sev, msg};
 	if (sev == ERR_FATAL) es->fatal = true;

@@ -4,6 +4,8 @@
 #include "location.h"
 #include <stdbool.h>
 
+#define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
+
 struct Error {
 	struct Location loc;
 	enum ErrorLevel {

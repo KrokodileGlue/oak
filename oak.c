@@ -6,48 +6,55 @@
 #include "util.h"
 #include "parser.h"
 
-int main(int argc, char **argv)
+int do_file(char *filename)
 {
-	char *text = load_file(argv[1]);
+	/* load */
+	char *text = load_file(filename);
+	if (!text) return EXIT_FAILURE;
+	
+	/* lex */
+	struct LexState *ls = lexer_new(text, filename);
+	struct Token *tok = tokenize(ls);
 
-	if (text) {
-		struct ErrorState *es = error_new();
-		struct Token *tok = tokenize(es, text, argv[1]);
+	token_write(tok, stderr); /* for debugging */
 
-		token_write(tok, stderr);
-		
-		if (es->pending) {
-			error_write(es, stderr);
-		}
+	if (ls->es->fatal) {
+		error_write(ls->es, stderr);
+		lexer_clear(ls);
+		goto error;
+	} else if (ls->es->pending) {
+		error_write(ls->es, stderr);
+	}
+	
+	lexer_clear(ls);
 
-		if (es->fatal) {
-			token_clear(tok);
-			free(text);
-			error_clear(es);
-			exit(EXIT_FAILURE);
-		}
+	/* parse */
+	struct ParseState *ps = parser_new(tok);
+	struct Statement **module = parse(ps);
 
-		error_clear(es);
-		es = error_new();
-
-		/* parse stuff */
-		struct Statement **module = parse(es, tok);
-		
-		if (es->pending) {
-			error_write(es, stderr);
-		}
-
-		if (es->fatal) {
-			token_clear(tok);
-			free(text);
-			error_clear(es);
-			exit(EXIT_FAILURE);
-		}
-
-		token_clear(tok);
-		free(text);
-		error_clear(es);
+	if (ps->es->fatal) {
+		error_write(ps->es, stderr);
+		parser_clear(ps);
+		goto error;
+	} else if (ps->es->pending) {
+		error_write(ps->es, stderr);
 	}
 
+	parser_clear(ps);
+
+	/* TODO: compile and run */
+
+	token_clear(tok);
+	free(text);
 	return EXIT_SUCCESS;
+
+error:
+	token_clear(tok);
+	free(text);
+	return EXIT_FAILURE;
+}
+
+int main(int argc, char **argv)
+{
+	return do_file(argv[1]);
 }

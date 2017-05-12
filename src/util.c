@@ -72,6 +72,18 @@ void *oak_malloc(size_t size)
 	return ptr;
 }
 
+void *oak_realloc(void *mem, size_t size)
+{
+	void *ptr = realloc(mem, size);
+
+	if (!ptr) {
+		fprintf(stderr, "out of memory\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return ptr;
+}
+
 char *load_file(const char* path)
 {
 	char *buf = NULL;

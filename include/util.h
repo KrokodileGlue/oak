@@ -21,7 +21,7 @@ static inline bool is_legal_in_identifier(char c)
 {
 	return ((c >= 'a' && c <= 'z')
 		|| (c >= 'A' && c <= 'Z')
-		|| c == '_'
+		|| c == '_' || c == '-'
 		|| (c >= '0' && c <= '9'));
 }
 
@@ -49,6 +49,7 @@ size_t index_in_line(struct Location loc);
 char *get_line      (struct Location loc);
 
 void *oak_malloc(size_t size);
+void *oak_realloc(void *mem, size_t size);
 char *load_file(const char *path);
 
 #endif
