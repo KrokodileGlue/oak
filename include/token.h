@@ -15,17 +15,14 @@ struct Token {
 	union {
 		double fData;
 		int64_t iData;
+		enum OpType op_type;
+		enum KeywordType keyword_type;
+		bool bool_type;
 	};
 	
 	char *value; /* the body of the token */
 	struct Token *next; /* doubly-linked list */
 	struct Token *prev;
-
-	union {
-		enum OpType op_type;
-		enum KeywordType keyword_type;
-		bool bool_type;
-	};
 
 	enum TokType {
 		TOK_IDENTIFIER, TOK_KEYWORD,

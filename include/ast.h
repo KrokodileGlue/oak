@@ -24,7 +24,7 @@ struct Statement {
 		struct {
 			struct Statement *init;
 			struct Expression *cond;
-			struct Expression **action; /* array of actions */
+			struct Expression **action;
 			struct Statement *body;
 		} for_loop;
 

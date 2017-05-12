@@ -28,6 +28,7 @@ static struct Expression *parse_expr(struct ParseState *ps);
 static struct Statement *parse_var_decl(struct ParseState *ps)
 {
 	token_match(ps->es, &ps->tok, TOK_KEYWORD, "var"); /* hardcoding keywords is a bad idea... */
+	
 	struct Statement *stmt = oak_malloc(sizeof *stmt);
 	stmt->type = STMT_VAR_DECL;
 	stmt->var_decl.name = oak_malloc(strlen(ps->tok->value) + 1);
