@@ -1,5 +1,7 @@
 R($)This is a raw string literal$
 
+"testing long escape sequences: \77774567, \xFFAB59238FF"
+
 /*
 multiline comment!
 */

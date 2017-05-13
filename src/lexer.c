@@ -45,13 +45,19 @@ static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt
 	error_push(ls->es, ls->loc, sev, msg);
 }
 
+static void lexer_push_token(struct LexState *ls, enum TokType type, char *a, char *b)
+{
+	token_push(ls->loc, type, a, b, &ls->tok);
+}
+
 static void parse_escape_sequences(struct LexState *ls, char *str)
 {
 	char *out = str;
 	size_t i = 0;
 	do {
 		char a = str[i];
-
+		//ls->loc.index += 1;
+		
 		if (a == '\\') {
 			i++;
 			a = str[i];
@@ -82,7 +88,16 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 				
 				oct_sequence[j] = 0;
 				//printf("found octal escape sequence: %s\n", oct_sequence);
-				a = (char)strtol(oct_sequence, NULL, 8);
+
+				long int data = strtol(oct_sequence, NULL, 8);
+				if (data > 0xFF) {
+					ls->loc.index += i - j + 1;
+					ls->loc.len = j + 1; /* add 1 for the \ */
+					lexer_push_error(ls, ERR_WARNING, "octal value %ld is too large and will be masked to the lowest byte", data);
+					ls->loc.index -= i - j + 1;
+				}
+
+				a = (char)(data & 0xFF);
 			} break;
 			case 'x': {
 				size_t j = 0;
@@ -97,12 +112,22 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 				
 				hex_sequence[j] = 0;
 				//printf("found hex escape sequence: %s\n", hex_sequence);
-				a = (char)strtol(hex_sequence, NULL, 16);
+
+				long int data = strtol(hex_sequence, NULL, 16);
+				if (data > 0xFF) {
+					ls->loc.index += i - j;
+					ls->loc.len = j + 2; /* add two for the \x */
+					lexer_push_error(ls, ERR_WARNING, "hexadecimal value %ld is too large and will be masked to the lowest byte", data);
+					ls->loc.index -= i - j;
+				}
+
+				a = (char)(data & 0xFF);
 			} break;
 			default: {
 				ls->loc.index += i;
 				ls->loc.len = 2;
 				lexer_push_error(ls, ERR_WARNING, "unrecognized escape sequence: '\\%c'", a);
+				ls->loc.index -= i;
 				continue;
 			}
 			}
@@ -112,52 +137,52 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 	} while (str[i++]);
 }
 
-static char *parse_identifier(struct LexState *ls, char *ch)
+static char *parse_identifier(struct LexState *ls, char *a)
 {
-	char *end = ch;
-	while (is_legal_in_identifier(*end) && *end) end++;
+	char *b = a;
+	while (is_legal_in_identifier(*b) && *b) b++;
 
-	ls->loc.len = end - ch;
-	token_push(ls->loc, TOK_IDENTIFIER, ch, end, &ls->tok);
+	ls->loc.len = b - a;
+	lexer_push_token(ls, TOK_IDENTIFIER, a, b);
 
-	return end;
+	return b;
 }
 
-static char *parse_number(struct LexState *ls, char *ch)
+static char *parse_number(struct LexState *ls, char *a)
 {
-	char *end = ch;
+	char *b = a;
 
-	if (!strncmp(ch, "0x", 2)) {
-		end += 2;
-		while (is_hex_digit(*end)) end++;
+	if (!strncmp(a, "0x", 2)) {
+		b += 2;
+		while (is_hex_digit(*b)) b++;
 
-		ls->loc.len = end - ch;
-		token_push(ls->loc, TOK_INTEGER, ch, end, &ls->tok);
+		ls->loc.len = b - a;
+		lexer_push_token(ls, TOK_INTEGER, a, b);
 		ls->tok->iData = (int64_t)strtol(ls->tok->value, NULL, 16);
 	} else {
 		bool is_integer = true;
-		bool is_oct = (*ch == '0'), found_exponent = false;
+		bool is_oct = (*a == '0'), found_exponent = false;
 		
 		while (true) {
-			if (*end == 'e') {
+			if (*b == 'e') {
 				if (found_exponent || is_integer) {
-					ls->loc.len = end - ch;
+					ls->loc.len = b - a;
 					lexer_push_error(ls, ERR_FATAL, "incorrect use of scientific notation in numeric literal");
 					break;
 				}
 
 				found_exponent = true;
-				end++;
-				if (*end == '-' || *end == '+') end++;
+				b++;
+				if (*b == '-' || *b == '+') b++;
 				continue;
 			}
 			
-			if ((is_oct && is_oct_digit(*end)) || is_dec_digit(*end)) {
-				end++;
+			if ((is_oct && is_oct_digit(*b)) || is_dec_digit(*b)) {
+				b++;
 				continue;
 			}
 
-			if (*end == '.') {
+			if (*b == '.') {
 				if (is_integer) {
 					is_integer = false;
 				} else {
@@ -166,76 +191,76 @@ static char *parse_number(struct LexState *ls, char *ch)
 					break;
 				}
 				
-				end++;
+				b++;
 				continue;
 			}
 
 			break;
 		}
 
-		ls->loc.len = end - ch;
+		ls->loc.len = b - a;
 		if (is_integer) {
-			token_push(ls->loc, TOK_INTEGER, ch, end, &ls->tok);
+			lexer_push_token(ls, TOK_INTEGER, a, b);
 			ls->tok->iData = (int64_t)strtol(ls->tok->value, NULL, 0);
 		} else {
-			token_push(ls->loc, TOK_FLOAT, ch, end, &ls->tok);
+			lexer_push_token(ls, TOK_FLOAT, a, b);
 			ls->tok->fData = atof(ls->tok->value);
 		}
 	}
 
-	return end;
+	return b;
 }
 
-static char *parse_string_literal(struct LexState *ls, char *ch)
+static char *parse_string_literal(struct LexState *ls, char *a)
 {
-	ch += 1;
-	char *end = ch;
+	a += 1;
+	char *b = a;
 	do {
-		if (*end == '\\') end++;
-		end++;
-	} while (*end != '\"' && *end != '\n' && *end);
+		if (*b == '\\') b++;
+		b++;
+	} while (*b != '\"' && *b != '\n' && *b);
 
-	if (*end == 0 || *end == '\n') {
-		SKIP_TO_END_OF_LINE(ch, end);
+	if (*b == 0 || *b == '\n') {
+		SKIP_TO_END_OF_LINE(a, b);
 
-		ls->loc.len = end - ch + 1;
+		ls->loc.len = b - a + 1;
 		lexer_push_error(ls, ERR_FATAL, "unterminated string literal");
 		
-		return end;
+		return b;
 	}
 
-	ls->loc.len = end - ch;
-	token_push(ls->loc, TOK_STRING, ch, end, &ls->tok);
+	ls->loc.len = b - a;
+	lexer_push_token(ls, TOK_STRING, a, b);
 	parse_escape_sequences(ls, ls->tok->value);
 
-	return end + 1;
+	return b + 1;
 }
 
-static char *parse_character_literal(struct LexState *ls, char *ch)
+static char *parse_character_literal(struct LexState *ls, char *a)
 {
-	ch += 1; /* skip the ' */
-	char *end = ch;
+	a += 1; /* skip the ' */
+	char *b = a;
 	do {
-		if (*end == '\\') end++;
-		if (*end) end++; /* we might skip over the end of the string without the conditional */
-	} while (*end != '\'' && *end != '\n' && *end);
+		if (*b == '\\') b++;
+		if (*b) b++; /* we might skip over the end of the string without the conditional */
+	} while (*b != '\'' && *b != '\n' && *b);
 
-	if (*end == 0 || *end == '\n') {
-		SKIP_TO_END_OF_LINE(ch, end);
+	if (*b == 0 || *b == '\n') {
+		SKIP_TO_END_OF_LINE(a, b);
 
-		ls->loc.len = end - ch + 1;
+		ls->loc.len = b - a + 1;
 		lexer_push_error(ls, ERR_FATAL, "unterminated character literal");
 		
-		return end;
+		return b;
 	}
 
-	ls->loc.len = end - ch;
-	token_push(ls->loc, TOK_STRING, ch, end, &ls->tok);
+	ls->loc.len = b - a;
+	lexer_push_token(ls, TOK_STRING, a, b);
 	parse_escape_sequences(ls, ls->tok->value);
 
 	if (strlen(ls->tok->value) != 1) {
 		/* add 2 to the length because the body of the token doesn't include the ' characters */
-		ls->loc.len = end - ch + 2;
+		ls->loc.len = b - a + 2;
 
 		lexer_push_error(ls, ERR_WARNING, "multi-element character literal will be truncated to the first element");
 	}
@@ -243,50 +268,50 @@ static char *parse_character_literal(struct LexState *ls, char *ch)
 	ls->tok->type = TOK_INTEGER;
 	ls->tok->iData = (int64_t)ls->tok->value[0];
 
-	return end + 1;
+	return b + 1;
 }
 
-static char *parse_raw_string_literal(struct LexState *ls, char *ch)
+static char *parse_raw_string_literal(struct LexState *ls, char *a)
 {
-	ch += 2; /* skip the R( */
-	char *end = ch;
+	a += 2; /* skip the R( */
+	char *b = a;
 
-	while (*end != ')' && *end) end++; /* find the end of the delimiter spec */
+	while (*b != ')' && *b) b++; /* find the end of the delimiter spec */
 
-	if (*end == 0) {
-		SKIP_TO_END_OF_LINE(ch, end)
+	if (*b == 0) {
+		SKIP_TO_END_OF_LINE(a, b)
 
-		ls->loc.len = end - ch;
+		ls->loc.len = b - a;
 		lexer_push_error(ls, ERR_FATAL, "unterminated delimiter specification");
 
-		return end;
+		return b;
 	}
 
-	char *delim = oak_malloc(end - ch + 1);
-	strncpy(delim, ch, end - ch);
-	delim[end - ch] = 0;
+	char *delim = oak_malloc(b - a + 1);
+	strncpy(delim, a, b - a);
+	delim[b - a] = 0;
 	size_t delim_len = strlen(delim);
 
-	end++; /* skip the ) */
-	ch = end;
+	b++; /* skip the ) */
+	a = b;
 	/* find the end of the string with the delimiter */
-	while (strncmp(end, delim, delim_len) && *end) end++;
+	while (strncmp(b, delim, delim_len) && *b) b++;
 
-	if (*end == 0) {
+	if (*b == 0) {
 		ls->loc.len = strlen(delim) + 3;
 		lexer_push_error(ls, ERR_FATAL, "unterminated raw string literal");
 
-		SKIP_TO_END_OF_LINE(ch, end)
+		SKIP_TO_END_OF_LINE(a, b)
 		free(delim);
 
-		return end;
+		return b;
 	}
 
-	ls->loc.len = strlen(delim) + 4 + (end - ch);
-	token_push(ls->loc, TOK_STRING, ch, end, &ls->tok);
+	ls->loc.len = strlen(delim) + 4 + (b - a);
+	lexer_push_token(ls, TOK_STRING, a, b);
 	free(delim);
 	
-	return end + delim_len;
+	return b + delim_len;
 }
 
 static char *smart_cat(char *first, char *second)
@@ -330,68 +355,69 @@ static bool cat_strings(struct Token *tok)
 	return ret;
 }
 
-static char *parse_operator(struct LexState *ls, char *ch)
+static char *parse_operator(struct LexState *ls, char *a)
 {
-	enum OpType op_type = match_operator(ch);
+	enum OpType op_type = match_operator(a);
 	size_t len = get_op_len(op_type);
+	char *b = a + len;
 
 	ls->loc.len = len;
-	token_push(ls->loc, TOK_OPERATOR, ch, ch + len, &ls->tok);
+	lexer_push_token(ls, TOK_OPERATOR, a, b);
 	ls->tok->op_type = op_type;
 
-	return ch + len;
+	return b;
 }
 
 struct Token *tokenize(struct LexState *ls)
 {
-	char *ch = ls->text;
+	char *a = ls->text;
 	
-	while (*ch) {
-		ls->loc = (struct Location){ls->text, ls->file, ch - ls->text, -1};
-
-		if (is_whitespace(*ch)) {
-			while (is_whitespace(*ch) && *ch) {
-				ch++;
+	while (*a) {
+		ls->loc = (struct Location){ls->text, ls->file, a - ls->text, 1};
+		
+		if (is_whitespace(*a)) {
+			while (is_whitespace(*a) && *a) {
+				a++;
 			}
 			continue;
 		}
 
-		if (!strncmp(ch, "/*", 2)) {
-			ch += 2;
-			char *end = ch;
+		if (!strncmp(a, "/*", 2)) {
+			a += 2;
+			char *b = a;
 
-			while (strncmp(end, "*/", 2) && *end) end++;
+			while (strncmp(b, "*/", 2) && *b) b++;
 
-			if (*end == 0) {
+			if (*b == 0) {
 				ls->loc.len = 2;
-				error_push(ls->es, ls->loc, ERR_FATAL, "unmatched comment initializer");
+				lexer_push_error(ls, ERR_FATAL, "unmatched comment initializer");
 
-				while (*ch != '\n' && *ch) ch++;
+				while (*a != '\n' && *a) a++;
 			} else {
-				ch = end + 2;
+				a = b + 2;
 			}
 			
 			continue;
 		}
 
-		if (!strncmp(ch, "*/", 2)) {
+		if (!strncmp(a, "*/", 2)) {
 			ls->loc.len = 2;
-			error_push(ls->es, ls->loc, ERR_FATAL, "unmatched comment terminator");
-			ch += 2;
+			lexer_push_error(ls, ERR_FATAL, "unmatched comment terminator");
+			a += 2;
 
 			continue;
 		}
 
-		if (!strncmp(ch, "//", 2)) {
-			while (*ch != '\n' && *ch) ch++;
+		if (!strncmp(a, "//", 2)) {
+			while (*a != '\n' && *a) a++;
 
 			continue;
 		}
 
-		if (!strncmp(ch, "R(", 2)) {
-			ch = parse_raw_string_literal(ls, ch);
-		} else if (is_identifier_start(*ch)) {
-			ch = parse_identifier(ls, ch);
+		if (!strncmp(a, "R(", 2)) {
+			a = parse_raw_string_literal(ls, a);
+		} else if (is_identifier_start(*a)) {
+			a = parse_identifier(ls, a);
 			
 			if (keyword_get_type(ls->tok->value) != KEYWORD_INVALID) {
 				ls->tok->type = TOK_KEYWORD;
@@ -402,18 +428,18 @@ struct Token *tokenize(struct LexState *ls)
 				ls->tok->type = TOK_BOOL;
 				ls->tok->bool_type = strcmp(ls->tok->value, "true") ? false : true;
 			}
-		} else if (*ch == '\"') {
-			ch = parse_string_literal(ls, ch);
-		} else if (is_dec_digit(*ch) || *ch == '.') {
-			ch = parse_number(ls, ch);
-		} else if (match_operator(ch) != OP_INVALID) {
-			ch = parse_operator(ls, ch);
-		} else if (*ch == '\'') {
-			ch = parse_character_literal(ls, ch);
+		} else if (*a == '\"') {
+			a = parse_string_literal(ls, a);
+		} else if (is_dec_digit(*a) || *a == '.') {
+			a = parse_number(ls, a);
+		} else if (match_operator(a) != OP_INVALID) {
+			a = parse_operator(ls, a);
+		} else if (*a == '\'') {
+			a = parse_character_literal(ls, a);
 		} else {
 			ls->loc.len = 1;
-			token_push(ls->loc, (enum TokType)*ch, ch, ch + 1, &ls->tok);
-			ch++;
+			lexer_push_token(ls, (enum TokType)*a, a, a + 1);
+			a++;
 		}
 	}
 
