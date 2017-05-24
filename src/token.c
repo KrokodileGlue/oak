@@ -91,26 +91,3 @@ void token_write(struct Token *tok, FILE *fp)
 		tok = tok->next;
 	}
 }
-
-void token_match(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str)
-{
-	struct Token *tok = *token;
-	if (tok->type != tok_type || strcmp(tok->value, str)) {
-		error_push(es, tok->loc, ERR_FATAL, "unexpected token \"%s\", expected \"%s\"", tok->value, str);
-	}
-
-	tok = tok->next;
-	*token = tok;
-}
-
-void token_expect(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str)
-{
-	struct Token *tok = *token;
-
-	tok = tok->next;
-	if (tok->type != tok_type || strcmp(tok->value, str)) {
-		error_push(es, tok->loc, ERR_FATAL, "unexpected token \"%s\", expected \"%s\"", tok->value, str);
-	}
-
-	*token = tok;
-}

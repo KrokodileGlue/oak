@@ -41,7 +41,4 @@ void token_delete(struct Token *tok);
 void token_write (struct Token *tok, FILE *fp);
 void token_rewind(struct Token **tok);
 
-void token_match(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str);
-void token_expect(struct ErrorState *es, struct Token **token, enum TokType tok_type, const char *str);
-
 #endif

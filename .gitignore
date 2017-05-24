@@ -33,3 +33,4 @@
 *.su
 
 build/
+.dir-locals.el

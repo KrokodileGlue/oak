@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "lexer.h"
 #include "error.h"
@@ -11,7 +12,7 @@ int do_file(char *filename)
 	/* load */
 	char *text = load_file(filename);
 	if (!text) return EXIT_FAILURE;
-	
+
 	/* lex */
 	struct LexState *ls = lexer_new(text, filename);
 	struct Token *tok = tokenize(ls);
@@ -25,7 +26,7 @@ int do_file(char *filename)
 	} else if (ls->es->pending) {
 		error_write(ls->es, stderr);
 	}
-	
+
 	lexer_clear(ls);
 
 	/* parse */
