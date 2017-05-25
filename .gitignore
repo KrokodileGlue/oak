@@ -34,3 +34,7 @@
 
 build/
 .dir-locals.el
+GPATH
+GSYMS
+GTAGS
+GRTAGS

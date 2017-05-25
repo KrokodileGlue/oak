@@ -18,7 +18,8 @@ struct ParseState *parser_new(struct Token *tok)
 void parser_clear(struct ParseState *ps)
 {
 	error_clear(ps->es);
-	/* the parser is not responsible for the token stream, so we don't have to free it here. */
+	/* the parser is not responsible for the token stream, so we
+	 * don't have to free it here. */
 	free(ps);
 }
 
