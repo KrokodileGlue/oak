@@ -6,10 +6,14 @@
 #include <string.h>
 
 static char token_type_str[][64] = {
-	"IDENTIFIER", "KEYWORD",
-	"STRING",     "SYMBOL",
-	"INTEGER",    "FLOAT",
-	"OPERATOR",   "BOOL",
+	"IDENTIFIER",
+	"KEYWORD",
+	"STRING",
+	"SYMBOL",
+	"INTEGER",
+	"FLOAT",
+	"OPERATOR",
+	"BOOL",
 	"INVALID"
 };
 

@@ -46,13 +46,18 @@ char* get_op_str(enum OpType op_type)
 
 size_t get_op_len(enum OpType op_type)
 {
-	return strlen(operators[op_type].value);
+	for (size_t i = 0; i < sizeof operators / sizeof *operators; i++) {
+		if (operators[i].type == op_type) {
+			return strlen(operators[op_type].value);
+		}
+	}
+	return 0;
 }
 
 enum OpType match_operator(char *str)
 {
 	size_t ret = OP_INVALID, ret_len = 0;
-	for (size_t i = 0; i < sizeof *operators; i++) {
+	for (size_t i = 0; i < sizeof operators / sizeof *operators; i++) {
 		if (!strncmp(str, operators[i].value, strlen(operators[i].value))) {
 			ret_len = strlen(operators[i].value) >= ret_len ? strlen(operators[i].value) : ret_len;
 			ret = ret_len == strlen(operators[i].value) ? i : ret;
