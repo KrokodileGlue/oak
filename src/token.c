@@ -74,6 +74,22 @@ void token_push(struct Location loc, enum TokType type, char *start, char *end, 
 	current = current->next;
 }
 
+char *token_get_str(enum TokType type)
+{
+	char *ret = NULL;
+
+	if (type < TOK_INVALID) {
+		ret = oak_malloc(strlen(token_type_str[type]) + 1);
+		strcpy(ret, token_type_str[type]);
+	} else {
+		ret = oak_malloc(2);
+		ret[1] = 0;
+		ret[0] = (char)type;
+	}
+
+	return ret;
+}
+
 void token_write(struct Token *tok, FILE *fp)
 {
 	while (tok) {

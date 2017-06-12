@@ -2,6 +2,7 @@
 #define AST_H
 
 #include "location.h"
+#include "operator.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,14 +11,15 @@ struct Expression;
 
 struct Statement {
 	struct Location loc;
-	
+
 	enum StmtType {
 		STMT_FN_DEF,
 		STMT_FOR_LOOP,
 		STMT_IF_STMT,
 		STMT_WHILE_LOOP,
 		STMT_EXPR,
-		STMT_VAR_DECL
+		STMT_VAR_DECL,
+		STMT_BLOCK
 	} type;
 
 	union {
@@ -30,13 +32,20 @@ struct Statement {
 
 		struct {
 			struct Expression *cond;
-			struct Stmt *body;
+			struct Statement *body;
 		} if_stmt;
-		
+
 		struct {
 			char *name;
 			struct Expression *init;
 		} var_decl;
+
+		struct {
+			struct Statement **stmts;
+			size_t num;
+		} block;
+
+		struct Expression *expr;
 	};
 };
 
@@ -48,7 +57,9 @@ struct Expression {
 		EXPR_LIST,
 		EXPR_FLOAT,
 		EXPR_IDENTIFIER,
-		EXPR_OP
+		EXPR_OP,
+		EXPR_PREFIX,
+		EXPR_POSTFIX
 	} type;
 
 	union {
@@ -57,6 +68,10 @@ struct Expression {
 		double floating;
 		struct Expression **list;
 		char *identifier;
+		struct {
+			enum OpType op;
+			struct Expression *left, *right;
+		};
 	};
 };
 

@@ -26,14 +26,15 @@ struct Token {
 
 	enum TokType {
 		TOK_IDENTIFIER, TOK_KEYWORD,
-		TOK_STRING,     TOK_SYMBOL,
-		TOK_INTEGER,    TOK_FLOAT,
-		TOK_OPERATOR,   TOK_BOOL,
-		TOK_INVALID
+		TOK_STRING,	TOK_SYMBOL,
+		TOK_INTEGER,	TOK_FLOAT,
+		TOK_OPERATOR,	TOK_BOOL,
+		TOK_END,	TOK_INVALID
 	} type;
 };
 
 void token_push  (struct Location loc, enum TokType type, char *start, char *end, struct Token **prev);
+char *token_get_str(enum TokType type);
 
 void token_clear (struct Token *tok);
 void token_delete(struct Token *tok);
