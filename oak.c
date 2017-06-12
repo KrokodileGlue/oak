@@ -13,6 +13,8 @@ int do_file(char *filename)
 	char *text = load_file(filename);
 	if (!text) return EXIT_FAILURE;
 
+	fprintf(stderr, "oak: now lexing...\n");
+
 	/* lex */
 	struct LexState *ls = lexer_new(text, filename);
 	struct Token *tok = tokenize(ls);
@@ -28,6 +30,8 @@ int do_file(char *filename)
 	}
 
 	lexer_clear(ls);
+
+	fprintf(stderr, "oak: now parsing...\n");
 
 	/* parse */
 	struct ParseState *ps = parser_new(tok);

@@ -11,6 +11,12 @@ enum KeywordType {
 	KEYWORD_INVALID
 };
 
+struct Keyword {
+	enum KeywordType type;
+	char *value;
+};
+
 enum KeywordType keyword_get_type(char *str);
+char *keyword_get_type_str(enum KeywordType type);
 
 #endif

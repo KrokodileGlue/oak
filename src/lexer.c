@@ -443,6 +443,7 @@ struct Token *tokenize(struct LexState *ls)
 		}
 	}
 
+	lexer_push_token(ls, TOK_END, a, a);
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
 
