@@ -2,6 +2,7 @@
 #include "error.h"
 #include "util.h"
 #include "operator.h"
+#include "color.h"
 
 #include <stdbool.h>
 
@@ -38,7 +39,7 @@ static void expect_toktype(struct ParseState *ps, enum TokType type)
 	if (ps->tok->type != type) {
 		char *type_str = token_get_str(type);
 		error_push(ps->es, ps->tok->loc, ERR_FATAL,
-			   "unexpected token '%s', expected '%s'",
+			   "unexpected token '"ERROR_HIGHLIGHT_COLOR"%s"RESET_COLOR"', expected '%s'",
 			   ps->tok->value, type_str);
 		free(type_str);
 	}
@@ -48,9 +49,10 @@ static void expect_operator(struct ParseState *ps, enum OpType type)
 {
 	if (ps->tok->type != TOK_OPERATOR || ps->tok->op_type != type) {
 		error_push(ps->es, ps->tok->loc, ERR_FATAL,
-			   "unexpected token '%s', expected '%s'",
-			   ps->tok->value, get_op(type).value);
+			   "unexpected token '"ERROR_LOCATION_COLOR"%.*s"RESET_COLOR"', expected '%s'",
+			   ps->tok->loc.len, get_line(ps->tok->loc) + index_in_line(ps->tok->loc), get_op(type).value);
 	}
+	ps->tok = ps->tok->next;
 }
 
 static struct Statement *parse_stmt(struct ParseState *ps);
@@ -60,7 +62,7 @@ static struct Expression *parse_expr(struct ParseState *ps, int prec)
 {
 	struct Expression *expr = oak_malloc(sizeof *expr);
 
-	printf("looking at token %s\n", ps->tok->value);
+//	printf("looking at token %s\n", ps->tok->value);
 
 	if (ps->tok->type == TOK_OPERATOR) {
 		/* prefix */
@@ -103,7 +105,8 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		}
 	} else {
 		ret->type = STMT_EXPR;
-		//ret->expr = parse_expr(ps, 0);
+		ret->expr = parse_expr(ps, 0);
+		expect_operator(ps, OP_SEMICOLON);
 	}
 
 	return ret;
@@ -134,8 +137,8 @@ struct Statement **parse(struct ParseState *ps)
 	struct Statement **program = oak_malloc(sizeof *program);
 
 	while (ps->tok->type != TOK_END) {
-		fprintf(stderr, "parsing a statment with value '%s'\n",
-			ps->tok->value);
+//		fprintf(stderr, "parsing a statment with value '%s'\n",
+//			ps->tok->value);
 		program = oak_realloc(program,
 				      (num_stmts + 1) * sizeof *program);
 		program[num_stmts] = parse_stmt(ps);

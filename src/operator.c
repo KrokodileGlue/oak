@@ -3,7 +3,6 @@
 static struct Operator operators[] = {
 	{ OP_LPAREN,		"OP_LPAREN",		"(",	ASS_NONE,	0 },
 	{ OP_RPAREN,		"OP_RPAREN",		")",	ASS_NONE,	1 },
-	{ OP_RBRACK,		"OP_RBRACK",		"]",	ASS_RIGHT,	1 },
 	{ OP_ADD,		"OP_ADD",		"+",	ASS_LEFT,	1 },
 	{ OP_SUB,		"OP_SUB",		"-",	ASS_LEFT,	1 },
 	{ OP_COMMA,		"OP_COMMA",		",",	ASS_NONE,	2 },

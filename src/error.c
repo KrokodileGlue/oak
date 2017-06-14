@@ -5,6 +5,7 @@
 
 #include "error.h"
 #include "util.h"
+#include "color.h"
 
 static char error_level_strs[][32] = { "note", "warning", "error" };
 
@@ -43,17 +44,20 @@ void error_write(struct ErrorState *es, FILE *fp)
 	struct Error *errors = es->err;
 	for (size_t i = 0; i < es->num; i++) {
 		struct Error err = errors[i];
-		
-		fprintf(fp, "%s:%zd:%zd: ", err.loc.file, line_number(err.loc), column_number(err.loc));
-		fprintf(fp, "%s: %s\n", error_level_strs[err.sev], err.msg);
+
+		fprintf(fp, ERROR_LOCATION_COLOR"%s:%zd:%zd: "RESET_COLOR, err.loc.file, line_number(err.loc), column_number(err.loc));
+		fprintf(fp, ERROR_MSG_COLOR"%s:"RESET_COLOR" %s\n", error_level_strs[err.sev], err.msg);
 
 		char *line = get_line(err.loc);
-		fprintf(fp, "\t%s\n\t", line);
-		
+		fprintf(fp, "\t%.*s", index_in_line(err.loc), line);
+		fprintf(fp, ERROR_HIGHLIGHT_COLOR"%.*s"RESET_COLOR, err.loc.len, index_in_line(err.loc) + line);
+		fprintf(fp, "%s\n\t", line + index_in_line(err.loc) + err.loc.len);
+
 		for (size_t j = 0; j < index_in_line(err.loc); j++) {
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
 		}
-		
+
+		fprintf(fp, ERROR_HIGHLIGHT_COLOR);
 		fputc('^', fp);
 
 		size_t j = 1;
@@ -61,6 +65,7 @@ void error_write(struct ErrorState *es, FILE *fp)
 			? strlen(line) - index_in_line(err.loc)
 			: err.loc.len;
 		while (j++ < len) fputc('~', fp);
+		fprintf(fp, RESET_COLOR);
 
 		free(line);
 
