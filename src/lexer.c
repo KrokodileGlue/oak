@@ -41,7 +41,7 @@ static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt
 	va_start(args, fmt);
 	vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
 	va_end(args);
-	
+
 	error_push(ls->es, ls->loc, sev, msg);
 }
 
@@ -57,7 +57,7 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 	do {
 		char a = str[i];
 		//ls->loc.index += 1;
-		
+
 		if (a == '\\') {
 			i++;
 			a = str[i];
@@ -85,7 +85,7 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 					a = str[++i];
 				}
 				i--;
-				
+
 				oct_sequence[j] = 0;
 				//printf("found octal escape sequence: %s\n", oct_sequence);
 
@@ -109,7 +109,7 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 					a = str[++i];
 				}
 				i--;
-				
+
 				hex_sequence[j] = 0;
 				//printf("found hex escape sequence: %s\n", hex_sequence);
 
@@ -132,7 +132,7 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 			}
 			}
 		}
-		
+
 		*out++ = a;
 	} while (str[i++]);
 }
@@ -162,7 +162,7 @@ static char *parse_number(struct LexState *ls, char *a)
 	} else {
 		bool is_integer = true;
 		bool is_oct = (*a == '0'), found_exponent = false;
-		
+
 		while (true) {
 			if (*b == 'e') {
 				if (found_exponent || is_integer) {
@@ -176,7 +176,7 @@ static char *parse_number(struct LexState *ls, char *a)
 				if (*b == '-' || *b == '+') b++;
 				continue;
 			}
-			
+
 			if ((is_oct && is_oct_digit(*b)) || is_dec_digit(*b)) {
 				b++;
 				continue;
@@ -190,7 +190,7 @@ static char *parse_number(struct LexState *ls, char *a)
 					 * we will break, so that example will be parsed as 0.1, 0.2 */
 					break;
 				}
-				
+
 				b++;
 				continue;
 			}
@@ -225,11 +225,11 @@ static char *parse_string_literal(struct LexState *ls, char *a)
 
 		ls->loc.len = b - a + 1;
 		lexer_push_error(ls, ERR_FATAL, "unterminated string literal");
-		
+
 		return b;
 	}
 
-	ls->loc.len = b - a;
+	ls->loc.len = b - a + 2;
 	lexer_push_token(ls, TOK_STRING, a, b);
 	parse_escape_sequences(ls, ls->tok->value);
 
@@ -250,7 +250,7 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 
 		ls->loc.len = b - a + 1;
 		lexer_push_error(ls, ERR_FATAL, "unterminated character literal");
-		
+
 		return b;
 	}
 
@@ -310,14 +310,14 @@ static char *parse_raw_string_literal(struct LexState *ls, char *a)
 	ls->loc.len = strlen(delim) + 4 + (b - a);
 	lexer_push_token(ls, TOK_STRING, a, b);
 	free(delim);
-	
+
 	return b + delim_len;
 }
 
 static char *smart_cat(char *first, char *second)
 {
 	size_t len = strlen(first) + strlen(second);
-	
+
 	first = realloc(first, len + 1);
 	strcpy(first + strlen(first), second);
 
@@ -341,7 +341,7 @@ static bool cat_strings(struct Token *tok)
 {
 	bool ret = false;
 	token_rewind(&tok);
-	
+
 	while (tok && tok->next) {
 		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
 			ret = true;
@@ -371,10 +371,10 @@ static char *parse_operator(struct LexState *ls, char *a)
 struct Token *tokenize(struct LexState *ls)
 {
 	char *a = ls->text;
-	
+
 	while (*a) {
 		ls->loc = (struct Location){ls->text, ls->file, a - ls->text, 1};
-		
+
 		if (is_whitespace(*a)) {
 			while (is_whitespace(*a) && *a) {
 				a++;
@@ -396,7 +396,7 @@ struct Token *tokenize(struct LexState *ls)
 			} else {
 				a = b + 2;
 			}
-			
+
 			continue;
 		}
 
@@ -418,7 +418,7 @@ struct Token *tokenize(struct LexState *ls)
 			a = parse_raw_string_literal(ls, a);
 		} else if (is_identifier_start(*a)) {
 			a = parse_identifier(ls, a);
-			
+
 			if (keyword_get_type(ls->tok->value) != KEYWORD_INVALID) {
 				ls->tok->type = TOK_KEYWORD;
 				ls->tok->keyword_type = keyword_get_type(ls->tok->value);

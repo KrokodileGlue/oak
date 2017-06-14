@@ -54,6 +54,7 @@ enum OpType {
 	OP_SUB_SUB,
 	OP_ADD_ADD,
 	OP_LBRACK,
+	OP_SEMICOLON,
 	OP_INVALID
 };
 
