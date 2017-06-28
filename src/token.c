@@ -60,8 +60,8 @@ void token_push(struct Location loc, enum TokType type, char *start, char *end, 
 
 	current->type = type;
 	current->loc = loc;
-	current->iData = 0;
-	current->op_type = OP_INVALID;
+	current->integer = 0;
+	current->operator = NULL;
 
 	current->value = malloc(end - start + 1);
 	strncpy(current->value, start, end - start);
@@ -94,20 +94,23 @@ void token_write(struct Token *tok, FILE *fp)
 {
 	while (tok) {
 		if (tok->type <= TOK_INVALID)
-			fprintf(fp, "[type:%10s]", token_type_str[(size_t)tok->type]);
+			fprintf(fp, "[%10s]", token_type_str[(size_t)tok->type]);
 		else
-			fprintf(fp, "[type:%10c]", tok->type);
+			fprintf(fp, "[%10c]", tok->type);
 
-		if (tok->type == TOK_OPERATOR)
-			fprintf(fp, "[data:%17s]", get_op_str(tok->op_type));
-		else if (tok->type == TOK_FLOAT)
-			fprintf(fp, "[data:%17.4f]", tok->fData);
-		else if (tok->type == TOK_INTEGER)
-			fprintf(fp, "[data:%17zd]", tok->iData);
-		else
-			fprintf(fp, "[data:%17s]", "");
+		if (tok->type == TOK_OPERATOR) {
+			fprintf(fp, "[%17s]", tok->operator->body);
+		} else if (tok->type == TOK_FLOAT) {
+			fprintf(fp, "[%17.4f]", tok->floating);
+		} else if (tok->type == TOK_INTEGER) {
+			fprintf(fp, "[%17zd]", tok->integer);
+		} else if (tok->type == TOK_SYMBOL) {
+			fprintf(fp, "[%17s]", tok->value);
+		} else {
+			fprintf(fp, "[%17s]", "");
+		}
 
-		fprintf(fp, "[len:%5zd][value:%s]\n", tok->loc.len, tok->value);
+		fprintf(fp, "[%5zd][%s]\n", tok->loc.len, tok->value);
 		tok = tok->next;
 	}
 }

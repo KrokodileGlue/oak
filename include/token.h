@@ -12,25 +12,32 @@
 struct Token {
 	struct Location loc;
 
-	union {
-		double fData;
-		int64_t iData;
-		enum OpType op_type;
-		enum KeywordType keyword_type;
-		bool bool_type;
-	};
-	
 	char *value; /* the body of the token */
 	struct Token *next; /* doubly-linked list */
 	struct Token *prev;
 
 	enum TokType {
-		TOK_IDENTIFIER, TOK_KEYWORD,
-		TOK_STRING,	TOK_SYMBOL,
-		TOK_INTEGER,	TOK_FLOAT,
-		TOK_OPERATOR,	TOK_BOOL,
-		TOK_END,	TOK_INVALID
+		TOK_IDENTIFIER, /* there's no data for identifiers, just the token body. */
+		TOK_KEYWORD,
+		TOK_STRING,
+		TOK_SYMBOL,
+		TOK_INTEGER,
+		TOK_FLOAT,
+		TOK_OPERATOR,
+		TOK_BOOL,
+		TOK_END,
+		TOK_INVALID
 	} type;
+
+	union {
+		enum KeywordType	 keyword;
+		char			*string;
+		char			 symbol;
+		int64_t		 integer;
+		double			 floating;
+		struct Operator	*operator;
+		bool			 boolean;
+	};
 };
 
 void token_push  (struct Location loc, enum TokType type, char *start, char *end, struct Token **prev);

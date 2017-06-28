@@ -29,13 +29,13 @@ struct LexState *lexer_new(char *text, char *file)
 	return ls;
 }
 
-#define SKIP_TO_END_OF_LINE(start, stop)          \
-	stop = start;                             \
+#define SKIP_TO_END_OF_LINE(start, stop)	\
+	stop = start;				\
 	while (*stop != '\n' && *stop) { stop++; }
 
 static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt, ...)
 {
-       	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
+	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
 	va_list args;
 	va_start(args, fmt);
@@ -158,7 +158,7 @@ static char *parse_number(struct LexState *ls, char *a)
 
 		ls->loc.len = b - a;
 		lexer_push_token(ls, TOK_INTEGER, a, b);
-		ls->tok->iData = (int64_t)strtol(ls->tok->value, NULL, 16);
+		ls->tok->integer = (int64_t)strtol(ls->tok->value, NULL, 16);
 	} else {
 		bool is_integer = true;
 		bool is_oct = (*a == '0'), found_exponent = false;
@@ -201,10 +201,10 @@ static char *parse_number(struct LexState *ls, char *a)
 		ls->loc.len = b - a;
 		if (is_integer) {
 			lexer_push_token(ls, TOK_INTEGER, a, b);
-			ls->tok->iData = (int64_t)strtol(ls->tok->value, NULL, 0);
+			ls->tok->integer = (int64_t)strtol(ls->tok->value, NULL, 0);
 		} else {
 			lexer_push_token(ls, TOK_FLOAT, a, b);
-			ls->tok->fData = atof(ls->tok->value);
+			ls->tok->floating = atof(ls->tok->value);
 		}
 	}
 
@@ -266,7 +266,7 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 	}
 
 	ls->tok->type = TOK_INTEGER;
-	ls->tok->iData = (int64_t)ls->tok->value[0];
+	ls->tok->integer = (int64_t)ls->tok->value[0];
 
 	return b + 1;
 }
@@ -355,17 +355,48 @@ static bool cat_strings(struct Token *tok)
 	return ret;
 }
 
+/* matches the longest operator starting from a */
+static struct Operator *match_operator(char *a)
+{
+	size_t len = 0;
+	struct Operator *op = NULL;
+
+	for (size_t i = 0; i < num_ops(); i++) {
+		if (!strncmp(ops[i].body, a, strlen(ops[i].body))
+		    && strlen(ops[i].body) > len) {
+			len = strlen(ops[i].body);
+			op = ops + i;
+		}
+	}
+
+	return op;
+}
+
 static char *parse_operator(struct LexState *ls, char *a)
 {
-	enum OpType op_type = match_operator(a);
-	size_t len = get_op_len(op_type);
+	struct Operator *op = match_operator(a);
+	size_t len = strlen(op->body);
 	char *b = a + len;
 
 	ls->loc.len = len;
 	lexer_push_token(ls, TOK_OPERATOR, a, b);
-	ls->tok->op_type = op_type;
+	ls->tok->operator = op;
 
 	return b;
+}
+
+static char *parse_secondary_operator(char *a)
+{
+	size_t len = 0;
+
+	for (size_t i = 0; i < num_ops(); i++) {
+		if (!strncmp(ops[i].body2, a, strlen(ops[i].body2))
+		    && strlen(ops[i].body2) > len) {
+			len = strlen(ops[i].body2);
+		}
+	}
+
+	return len ? a + len : 0;
 }
 
 struct Token *tokenize(struct LexState *ls)
@@ -408,7 +439,7 @@ struct Token *tokenize(struct LexState *ls)
 			continue;
 		}
 
-		if (!strncmp(a, "//", 2)) {
+		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 2)) {
 			while (*a != '\n' && *a) a++;
 
 			continue;
@@ -416,26 +447,33 @@ struct Token *tokenize(struct LexState *ls)
 
 		if (!strncmp(a, "R(", 2)) {
 			a = parse_raw_string_literal(ls, a);
+		} else if (match_operator(a)) {
+			a = parse_operator(ls, a);
 		} else if (is_identifier_start(*a)) {
 			a = parse_identifier(ls, a);
 
 			if (keyword_get_type(ls->tok->value) != KEYWORD_INVALID) {
 				ls->tok->type = TOK_KEYWORD;
-				ls->tok->keyword_type = keyword_get_type(ls->tok->value);
+				ls->tok->keyword = keyword_get_type(ls->tok->value);
 			}
 
 			if (!strcmp(ls->tok->value, "true") || !strcmp(ls->tok->value, "false")) {
 				ls->tok->type = TOK_BOOL;
-				ls->tok->bool_type = strcmp(ls->tok->value, "true") ? false : true;
+				ls->tok->boolean = strcmp(ls->tok->value, "true") ? false : true;
 			}
 		} else if (*a == '\"') {
 			a = parse_string_literal(ls, a);
 		} else if (is_dec_digit(*a) || *a == '.') {
 			a = parse_number(ls, a);
-		} else if (match_operator(a) != OP_INVALID) {
-			a = parse_operator(ls, a);
 		} else if (*a == '\'') {
 			a = parse_character_literal(ls, a);
+		} else if (parse_secondary_operator(a)) {
+			char *b = parse_secondary_operator(a);
+
+			ls->loc.len = b - a;
+			lexer_push_token(ls, TOK_SYMBOL, a, b);
+
+			a = b;
 		} else {
 			ls->loc.len = 1;
 			lexer_push_token(ls, (enum TokType)*a, a, a + 1);
