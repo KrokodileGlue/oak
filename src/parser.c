@@ -26,7 +26,7 @@ void parser_clear(struct ParseState *ps)
 
 static void expect_keyword(struct ParseState *ps, enum KeywordType type)
 {
-	if (ps->tok->keyword_type != type) {
+	if (ps->tok->keyword != type) {
 		error_push(ps->es, ps->tok->loc, ERR_FATAL,
 			   "unexpected token '%s', expected '%s'.",
 			   ps->tok->value, keyword_get_type_str(type));
@@ -45,12 +45,12 @@ static void expect_toktype(struct ParseState *ps, enum TokType type)
 	}
 }
 
-static void expect_operator(struct ParseState *ps, enum OpType type)
+static void expect_operator(struct ParseState *ps, char *op_body)
 {
-	if (ps->tok->type != TOK_OPERATOR || ps->tok->op_type != type) {
+	if (ps->tok->type != TOK_OPERATOR || strcmp(ps->tok->operator->body, op_body)) {
 		error_push(ps->es, ps->tok->loc, ERR_FATAL,
-			   "unexpected token '"ERROR_LOCATION_COLOR"%.*s"RESET_COLOR"', expected '%s'",
-			   ps->tok->loc.len, get_line(ps->tok->loc) + index_in_line(ps->tok->loc), get_op(type).value);
+			   "unexpected token '"ERROR_LOCATION_COLOR"%.*s"RESET_COLOR"', expected '" ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
+			   ps->tok->loc.len, get_line(ps->tok->loc) + index_in_line(ps->tok->loc), op_body);
 	}
 	ps->tok = ps->tok->next;
 }
@@ -62,7 +62,7 @@ static struct Expression *parse_expr(struct ParseState *ps, int prec)
 {
 	struct Expression *expr = oak_malloc(sizeof *expr);
 
-//	printf("looking at token %s\n", ps->tok->value);
+	fprintf(stderr, "token: %s\n", ps->tok->value);
 
 	if (ps->tok->type == TOK_OPERATOR) {
 		/* prefix */
@@ -79,7 +79,7 @@ static struct Statement *parse_if_stmt(struct ParseState *ps)
 
 	expect_keyword(ps, KEYWORD_IF);
 	stmt->if_stmt.cond = parse_expr(ps, 0);
-	expect_operator(ps, OP_COLON);
+	expect_operator(ps, ":");
 	stmt->if_stmt.body = parse_stmt(ps);
 
 	return stmt;
@@ -98,7 +98,7 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 	if (ps->tok->type == (enum TokType)'{') {
 		ret = parse_block(ps);
 	} else if (ps->tok->type == TOK_KEYWORD) {
-		switch (ps->tok->keyword_type) {
+		switch (ps->tok->keyword) {
 		case KEYWORD_IF: ret = parse_if_stmt(ps); break;
 		case KEYWORD_FN: ret = parse_fn_def(ps);  break;
 		default: printf("TODO: parse more statement types.\n"); break;
@@ -106,7 +106,7 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 	} else {
 		ret->type = STMT_EXPR;
 		ret->expr = parse_expr(ps, 0);
-		expect_operator(ps, OP_SEMICOLON);
+		expect_operator(ps, ";");
 	}
 
 	return ret;

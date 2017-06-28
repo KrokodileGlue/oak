@@ -51,7 +51,9 @@ void error_write(struct ErrorState *es, FILE *fp)
 		char *line = get_line(err.loc);
 		fprintf(fp, "\t%.*s", index_in_line(err.loc), line);
 		fprintf(fp, ERROR_HIGHLIGHT_COLOR"%.*s"RESET_COLOR, err.loc.len, index_in_line(err.loc) + line);
-		fprintf(fp, "%s\n\t", line + index_in_line(err.loc) + err.loc.len);
+		fprintf(fp, "%s\n\t", err.loc.len <= strlen(line) - index_in_line(err.loc)
+			? line + index_in_line(err.loc) + err.loc.len
+			: ERROR_MSG_COLOR" [token truncated]"RESET_COLOR);
 
 		for (size_t j = 0; j < index_in_line(err.loc); j++) {
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
