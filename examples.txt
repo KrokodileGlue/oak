@@ -1,3 +1,12 @@
+if (1 ? 2 : 3) == 2:
+	print "Hello, world!"
+else
+	print "Hello... world?"
+
+if 5 == 5
+	print "foo", "bar";
+
+print #"this is just a regular print statement.";
 oak: now lexing...
 [   KEYWORD][keyw:        if][len:    2][value:if]
 [  OPERATOR][prec:        15][len:    1][value:(]
@@ -39,3 +48,67 @@ test.k:7:3: error: unexpected token 'print'; expected ';'
 test.k:9:2: error: unexpected end-of-file; expected an expression
 	print #"this is just a regular print statement.";
 	^~~~~
+
+if (1 ? 2 : 3) == 2:
+	print "Hello, world!";
+else
+	print "Hello... world?";
+
+if 5 == 5:
+	print "foo", "bar";
+
+print "this is just a regular print statement.";
+oak: now lexing...
+[   KEYWORD][keyw:        if][len:    2][value:if]
+[  OPERATOR][prec:        15][len:    1][value:(]
+[   INTEGER][data:         1][len:    1][value:1]
+[  OPERATOR][prec:         3][len:    1][value:?]
+[   INTEGER][data:         2][len:    1][value:2]
+[    SYMBOL][symb:         :][len:    1][value::]
+[   INTEGER][data:         3][len:    1][value:3]
+[    SYMBOL][symb:         )][len:    1][value:)]
+[  OPERATOR][prec:         9][len:    2][value:==]
+[   INTEGER][data:         2][len:    1][value:2]
+[    SYMBOL][symb:         :][len:    1][value::]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:   15][value:Hello, world!]
+[    SYMBOL][symb:         ;][len:    1][value:;]
+[   KEYWORD][keyw:      else][len:    4][value:else]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:   17][value:Hello... world?]
+[    SYMBOL][symb:         ;][len:    1][value:;]
+[   KEYWORD][keyw:        if][len:    2][value:if]
+[   INTEGER][data:         5][len:    1][value:5]
+[  OPERATOR][prec:         9][len:    2][value:==]
+[   INTEGER][data:         5][len:    1][value:5]
+[    SYMBOL][symb:         :][len:    1][value::]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:    5][value:foo]
+[  OPERATOR][prec:         1][len:    1][value:,]
+[    STRING][               ][len:    5][value:bar]
+[    SYMBOL][symb:         ;][len:    1][value:;]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:   41][value:this is just a regular print statement.]
+[    SYMBOL][symb:         ;][len:    1][value:;]
+[       END][               ][len:    1][value:]
+oak: now parsing...
+(stmt if)
+|-- (binary ==)
+|   |-- (ternary ?)
+|   |   |-- (integer 1)
+|   |   |-- (integer 2)
+|   |   `-- (integer 3)
+|   `-- (integer 2)
+|-- (stmt print)
+|   `-- (string "Hello, world!")
+`-- (stmt print)
+    `-- (string "Hello... world?")
+(stmt if)
+|-- (binary ==)
+|   |-- (integer 5)
+|   `-- (integer 5)
+`-- (stmt print)
+    |-- (string "foo")
+    `-- (string "bar")
+(stmt print)
+`-- (string "this is just a regular print statement.")

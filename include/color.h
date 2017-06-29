@@ -1,7 +1,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#if OAK_COLORIZE
+#ifdef OAK_COLORIZE
 	#define ERROR_MSG_COLOR	"\x1B[1m\x1B[31m"
 	#define ERROR_HIGHLIGHT_COLOR	"\x1B[1m\x1B[33m"
 	#define ERROR_NOTE_COLOR	"\x1B[1m\x1B[34m"
