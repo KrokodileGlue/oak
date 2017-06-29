@@ -5,10 +5,11 @@
 #include <string.h>
 
 struct Keyword keywords[] = {
-	{ KEYWORD_FOR, "for" },
-	{ KEYWORD_IF,  "if"  },
-	{ KEYWORD_FN,  "fn"  },
-	{ KEYWORD_VAR, "var" }
+	{ KEYWORD_FOR,   "for"   },
+	{ KEYWORD_IF,    "if"    },
+	{ KEYWORD_FN,    "fn"    },
+	{ KEYWORD_VAR,   "var"   },
+	{ KEYWORD_PRINT, "print" }
 };
 
 enum KeywordType keyword_get_type(char *str)
