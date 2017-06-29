@@ -9,18 +9,28 @@
 
 struct Expression;
 
+enum StmtType {
+	STMT_FN_DEF,
+	STMT_FOR_LOOP,
+	STMT_IF_STMT,
+	STMT_WHILE_LOOP,
+	STMT_EXPR,
+	STMT_VAR_DECL,
+	STMT_BLOCK,
+	STMT_PRINT
+} type;
+
+struct StatementData {
+	enum StmtType	 type;
+	char		*body;
+};
+
+extern struct StatementData statement_data[];
+
 struct Statement {
 	struct Location loc;
 
-	enum StmtType {
-		STMT_FN_DEF,
-		STMT_FOR_LOOP,
-		STMT_IF_STMT,
-		STMT_WHILE_LOOP,
-		STMT_EXPR,
-		STMT_VAR_DECL,
-		STMT_BLOCK
-	} type;
+	enum StmtType type;
 
 	union {
 		struct {
@@ -32,7 +42,8 @@ struct Statement {
 
 		struct {
 			struct Expression *cond;
-			struct Statement *body;
+			struct Statement *then;
+			struct Statement *otherwise;
 		} if_stmt;
 
 		struct {
@@ -44,6 +55,11 @@ struct Statement {
 			struct Statement **stmts;
 			size_t num;
 		} block;
+
+		struct {
+			struct Expression **args;
+			size_t num;
+		} print;
 
 		struct Expression *expr;
 	};

@@ -14,6 +14,7 @@ static char token_type_str[][64] = {
 	"FLOAT",
 	"OPERATOR",
 	"BOOL",
+	"END",
 	"INVALID"
 };
 
@@ -98,19 +99,27 @@ void token_write(struct Token *tok, FILE *fp)
 		else
 			fprintf(fp, "[%10c]", tok->type);
 
-		if (tok->type == TOK_OPERATOR) {
-			fprintf(fp, "[%17s]", tok->operator->body);
-		} else if (tok->type == TOK_FLOAT) {
-			fprintf(fp, "[%17.4f]", tok->floating);
-		} else if (tok->type == TOK_INTEGER) {
-			fprintf(fp, "[%17zd]", tok->integer);
-		} else if (tok->type == TOK_SYMBOL) {
-			fprintf(fp, "[%17s]", tok->value);
-		} else {
-			fprintf(fp, "[%17s]", "");
+		switch (tok->type) {
+		case TOK_OPERATOR:
+			fprintf(fp, "[prec:%10zd]", tok->operator->prec);
+			break;
+		case TOK_FLOAT:
+			fprintf(fp, "[data:%10.4f]", tok->floating);
+			break;
+		case TOK_INTEGER:
+			fprintf(fp, "[data:%10zd]", tok->integer);
+			break;
+		case TOK_SYMBOL:
+			fprintf(fp, "[symb:%10s]", tok->value);
+			break;
+		case TOK_KEYWORD:
+			fprintf(fp, "[keyw:%10s]", tok->keyword->body);
+			break;
+		default:
+			fprintf(fp, "[     %10s]", "");
 		}
 
-		fprintf(fp, "[%5zd][%s]\n", tok->loc.len, tok->value);
+		fprintf(fp, "[len:%5zd][value:%s]\n", tok->loc.len, tok->value);
 		tok = tok->next;
 	}
 }

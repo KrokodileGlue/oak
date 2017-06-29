@@ -7,20 +7,13 @@
 struct Keyword keywords[] = {
 	{ KEYWORD_FOR,   "for"   },
 	{ KEYWORD_IF,    "if"    },
+	{ KEYWORD_ELSE,  "else"  },
 	{ KEYWORD_FN,    "fn"    },
 	{ KEYWORD_VAR,   "var"   },
 	{ KEYWORD_PRINT, "print" }
 };
 
-enum KeywordType keyword_get_type(char *str)
+size_t num_keywords()
 {
-	for (size_t i = 0; i < sizeof keywords / sizeof *keywords; i++) {
-		if (!strcmp(str, keywords[i].value)) return keywords[i].type;
-	}
-	return KEYWORD_INVALID;
-}
-
-char *keyword_get_type_str(enum KeywordType type)
-{
-	return keywords[type].value;
+	return sizeof keywords / sizeof *keywords;
 }

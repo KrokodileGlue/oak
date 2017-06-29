@@ -452,9 +452,12 @@ struct Token *tokenize(struct LexState *ls)
 		} else if (is_identifier_start(*a)) {
 			a = parse_identifier(ls, a);
 
-			if (keyword_get_type(ls->tok->value) != KEYWORD_INVALID) {
-				ls->tok->type = TOK_KEYWORD;
-				ls->tok->keyword = keyword_get_type(ls->tok->value);
+			for (size_t i = 0; i < num_keywords(); i++) {
+				if (!strcmp(ls->tok->value, keywords[i].body)) {
+					ls->tok->type = TOK_KEYWORD;
+					ls->tok->keyword = keywords + i;
+					break;
+				}
 			}
 
 			if (!strcmp(ls->tok->value, "true") || !strcmp(ls->tok->value, "false")) {
@@ -476,7 +479,7 @@ struct Token *tokenize(struct LexState *ls)
 			a = b;
 		} else {
 			ls->loc.len = 1;
-			lexer_push_token(ls, (enum TokType)*a, a, a + 1);
+			lexer_push_token(ls, TOK_SYMBOL, a, a + 1);
 			a++;
 		}
 	}
