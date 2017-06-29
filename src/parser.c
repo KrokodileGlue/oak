@@ -47,29 +47,104 @@ static void expect_toktype(struct ParseState *ps, enum TokType type)
 
 static void expect_operator(struct ParseState *ps, char *op_body)
 {
+	printf("ERROR TOKEN: %s\n", ps->tok->value);
 	if (ps->tok->type != TOK_OPERATOR || strcmp(ps->tok->operator->body, op_body)) {
-		error_push(ps->es, ps->tok->loc, ERR_FATAL,
+		if (ps->tok->type == TOK_END) {
+			struct Token *tok = ps->tok->prev;
+
+			error_push(ps->es, tok->loc, ERR_FATAL,
+			   "unexpected end-of-file, expected '" ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
+			   op_body);
+
+			ps->tok = tok;
+		} else {
+			char *line = get_line(ps->tok->loc);
+			error_push(ps->es, ps->tok->loc, ERR_FATAL,
 			   "unexpected token '"ERROR_LOCATION_COLOR"%.*s"RESET_COLOR"', expected '" ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
-			   ps->tok->loc.len, get_line(ps->tok->loc) + index_in_line(ps->tok->loc), op_body);
+			   ps->tok->loc.len, line + index_in_line(ps->tok->loc), op_body);
+		}
 	}
+	ps->tok = ps->tok->next;
+}
+
+static void expect_symbol(struct ParseState *ps, char *sym)
+{
+	if (strcmp(ps->tok->value, sym)) {
+		error_push(ps->es, ps->tok->loc, ERR_FATAL,
+			   "unexpected token '"
+			   ERROR_LOCATION_COLOR "%s" RESET_COLOR
+			   "', expected '"
+			   ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
+			   ps->tok->value, sym);
+	}
+
 	ps->tok = ps->tok->next;
 }
 
 static struct Statement *parse_stmt(struct ParseState *ps);
 static struct Statement *parse_block(struct ParseState *ps);
 
-static struct Expression *parse_expr(struct ParseState *ps, int prec)
+static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 {
-	struct Expression *expr = oak_malloc(sizeof *expr);
-
 	fprintf(stderr, "token: %s\n", ps->tok->value);
 
+	struct Expression *left = oak_malloc(sizeof *left);
+	struct Operator *op = ps->tok->operator;
+
 	if (ps->tok->type == TOK_OPERATOR) {
-		/* prefix */
-		expr->type = EXPR_PREFIX;
+		left->type = EXPR_OPERATOR;
+		left->operator = op;
+
+		ps->tok = ps->tok->next;
+		if (op->type == OP_GROUP) {
+			left->a = parse_expr(ps, 0);
+			expect_symbol(ps, op->body2);
+			ps->tok = ps->tok->next;
+		} else {
+			left->a = parse_expr(ps, op->prec);
+		}
+	} else {
+		left->type = EXPR_VALUE;
+		left->value = ps->tok;
+		ps->tok = ps->tok->next;
 	}
 
-	return expr;
+	op = NULL;
+	struct Expression *e = left;
+
+	while (prec <
+	       (ps->tok->type == TOK_OPERATOR
+	       ? ps->tok->operator->prec
+	       : prec)) {
+		op = ps->tok->operator;
+		if (!op) return left;
+
+		e = oak_malloc(sizeof *e);
+		e->type = EXPR_OPERATOR;
+		e->operator = op;
+		e->a = left;
+
+		if (op->type == OP_TERNARY) {
+			ps->tok = ps->tok->next;
+			e->b = parse_expr(ps, 1);
+			expect_symbol(ps, op->body2);
+			ps->tok = ps->tok->next;
+		} else if (op->type == OP_MEMBER) {
+			ps->tok = ps->tok->next;
+			e->b = parse_expr(ps, 0);
+			expect_symbol(ps, op->body2);
+			ps->tok = ps->tok->next;
+		} else if (op->type == OP_BINARY) {
+			ps->tok = ps->tok->next;
+			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
+		} else if (op->type == OP_POSTFIX) {
+			ps->tok = ps->tok->next;
+		}
+
+		left = e;
+	}
+
+	return e;
 }
 
 static struct Statement *parse_if_stmt(struct ParseState *ps)
@@ -79,7 +154,7 @@ static struct Statement *parse_if_stmt(struct ParseState *ps)
 
 	expect_keyword(ps, KEYWORD_IF);
 	stmt->if_stmt.cond = parse_expr(ps, 0);
-	expect_operator(ps, ":");
+	expect_symbol(ps, ":");
 	stmt->if_stmt.body = parse_stmt(ps);
 
 	return stmt;
@@ -91,6 +166,13 @@ static struct Statement *parse_fn_def(struct ParseState *ps)
 	return NULL;
 }
 
+static struct Statement *parse_print_stmt(struct ParseState *ps)
+{
+	fprintf(stderr, "parse if statements n shit\n");
+	ps->tok = ps->tok->next;
+	return NULL;
+}
+
 static struct Statement *parse_stmt(struct ParseState *ps)
 {
 	struct Statement *ret = oak_malloc(sizeof *ret);
@@ -99,8 +181,9 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		ret = parse_block(ps);
 	} else if (ps->tok->type == TOK_KEYWORD) {
 		switch (ps->tok->keyword) {
-		case KEYWORD_IF: ret = parse_if_stmt(ps); break;
-		case KEYWORD_FN: ret = parse_fn_def(ps);  break;
+		case KEYWORD_IF:    ret = parse_if_stmt(ps); break;
+		case KEYWORD_FN:    ret = parse_fn_def(ps);  break;
+		case KEYWORD_PRINT: ret = parse_print_stmt(ps);  break;
 		default: printf("TODO: parse more statement types.\n"); break;
 		}
 	} else {
@@ -137,8 +220,8 @@ struct Statement **parse(struct ParseState *ps)
 	struct Statement **program = oak_malloc(sizeof *program);
 
 	while (ps->tok->type != TOK_END) {
-//		fprintf(stderr, "parsing a statment with value '%s'\n",
-//			ps->tok->value);
+		fprintf(stderr, "parsing a statment with value '%s'\n",
+			ps->tok->value);
 		program = oak_realloc(program,
 				      (num_stmts + 1) * sizeof *program);
 		program[num_stmts] = parse_stmt(ps);

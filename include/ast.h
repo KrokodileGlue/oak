@@ -51,26 +51,16 @@ struct Statement {
 
 struct Expression {
 	enum ExprType {
-		EXPR_INTEGER,
-		EXPR_BOOLEAN,
-		EXPR_FN_CALL,
-		EXPR_LIST,
-		EXPR_FLOAT,
-		EXPR_IDENTIFIER,
-		EXPR_OP,
-		EXPR_PREFIX,
-		EXPR_POSTFIX
+		EXPR_VALUE,
+		EXPR_OPERATOR
 	} type;
 
+	struct Operator *operator;
+
 	union {
-		int64_t integer;
-		bool boolean;
-		double floating;
-		struct Expression **list;
-		char *identifier;
+		struct Token *value;
 		struct {
-			enum OpType op;
-			struct Expression *left, *right;
+			struct Expression *a, *b, *c;
 		};
 	};
 };
