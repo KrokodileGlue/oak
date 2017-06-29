@@ -1,8 +1,9 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-#include "location.h"
 #include <stdbool.h>
+#include <stdio.h>
+#include "location.h"
 
 #define ERR_MAX_MESSAGE_LEN 1024 /* probably enough */
 

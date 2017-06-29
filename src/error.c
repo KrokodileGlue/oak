@@ -77,7 +77,8 @@ void error_write(struct ErrorState *es, FILE *fp)
 
 static void error_delete(struct Error err)
 {
-	free(err.msg);
+	/* TODO: investigate how i was retarded enough to write this */
+//	free(err.msg);
 }
 
 void error_clear(struct ErrorState *es)
