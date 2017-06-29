@@ -1,0 +1,41 @@
+oak: now lexing...
+[   KEYWORD][keyw:        if][len:    2][value:if]
+[  OPERATOR][prec:        15][len:    1][value:(]
+[   INTEGER][data:         1][len:    1][value:1]
+[  OPERATOR][prec:         3][len:    1][value:?]
+[   INTEGER][data:         2][len:    1][value:2]
+[    SYMBOL][symb:         :][len:    1][value::]
+[   INTEGER][data:         3][len:    1][value:3]
+[    SYMBOL][symb:         )][len:    1][value:)]
+[  OPERATOR][prec:         9][len:    2][value:==]
+[   INTEGER][data:         2][len:    1][value:2]
+[    SYMBOL][symb:         :][len:    1][value::]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:   15][value:Hello, world!]
+[   KEYWORD][keyw:      else][len:    4][value:else]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:   17][value:Hello... world?]
+[   KEYWORD][keyw:        if][len:    2][value:if]
+[   INTEGER][data:         5][len:    1][value:5]
+[  OPERATOR][prec:         9][len:    2][value:==]
+[   INTEGER][data:         5][len:    1][value:5]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[    STRING][               ][len:    5][value:foo]
+[  OPERATOR][prec:         1][len:    1][value:,]
+[    STRING][               ][len:    5][value:bar]
+[    SYMBOL][symb:         ;][len:    1][value:;]
+[   KEYWORD][keyw:     print][len:    5][value:print]
+[       END][               ][len:    1][value:]
+oak: now parsing...
+test.k:3:2: error: unexpected token 'else'; expected ';'
+	else
+	^~~~
+test.k:6:2: error: unexpected token 'if'; expected ';'
+	if 5 == 5
+	^~
+test.k:7:3: error: unexpected token 'print'; expected ';'
+		print "foo", "bar";
+		^~~~~
+test.k:9:2: error: unexpected end-of-file; expected an expression
+	print #"this is just a regular print statement.";
+	^~~~~

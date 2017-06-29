@@ -39,6 +39,7 @@ int do_file(char *filename)
 	struct Statement **module = parse(ps);
 
 	if (ps->es->fatal) {
+		fprintf(stderr, "\n");
 		error_write(ps->es, stderr);
 		parser_clear(ps);
 		goto error;

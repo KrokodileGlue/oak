@@ -439,7 +439,7 @@ struct Token *tokenize(struct LexState *ls)
 			continue;
 		}
 
-		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 2)) {
+		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) {
 			while (*a != '\n' && *a) a++;
 
 			continue;
