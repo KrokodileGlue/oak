@@ -6,6 +6,7 @@
 #include "error.h"
 #include "util.h"
 #include "parser.h"
+#include "ast-printer.h"
 
 int do_file(char *filename)
 {
@@ -31,7 +32,7 @@ int do_file(char *filename)
 
 	lexer_clear(ls);
 
-	fprintf(stderr, "oak: now parsing...\n");
+	fprintf(stderr, "oak: now parsing...");
 
 	/* parse */
 	struct ParseState *ps = parser_new(tok);
@@ -45,6 +46,7 @@ int do_file(char *filename)
 		error_write(ps->es, stderr);
 	}
 
+	print_ast(stderr, module);
 	parser_clear(ps);
 
 	/* TODO: compile and run */

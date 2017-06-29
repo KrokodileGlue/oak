@@ -1,11 +1,13 @@
 #ifndef KEYWORD_H
 #define KEYWORD_H
 
+#include <stdlib.h>
 #include <stdbool.h>
 
 enum KeywordType {
 	KEYWORD_FOR,
 	KEYWORD_IF,
+	KEYWORD_ELSE,
 	KEYWORD_FN,
 	KEYWORD_VAR,
 	KEYWORD_PRINT,
@@ -13,11 +15,11 @@ enum KeywordType {
 };
 
 struct Keyword {
-	enum KeywordType type;
-	char *value;
+	enum KeywordType	 type;
+	char			*body;
 };
 
-enum KeywordType keyword_get_type(char *str);
-char *keyword_get_type_str(enum KeywordType type);
+extern struct Keyword keywords[];
+size_t num_keywords();
 
 #endif

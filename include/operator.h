@@ -19,7 +19,6 @@ struct Operator {
 	enum OpType {
 		/* prefix operator types */
 		OP_PREFIX,
-		OP_GROUP, /* only used for grouping with () */
 
 		/* infix operator types */
 		OP_POSTFIX,

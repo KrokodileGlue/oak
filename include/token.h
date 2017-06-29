@@ -30,13 +30,13 @@ struct Token {
 	} type;
 
 	union {
-		enum KeywordType	 keyword;
-		char			*string;
-		char			 symbol;
-		int64_t		 integer;
-		double			 floating;
-		struct Operator	*operator;
-		bool			 boolean;
+		struct Keyword  *keyword;
+		char		*string;
+		char		 symbol;
+		int64_t	 integer;
+		double		 floating;
+		struct Operator *operator;
+		bool		 boolean;
 	};
 };
 
