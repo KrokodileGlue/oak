@@ -112,3 +112,101 @@ oak: now parsing...
     `-- (string "bar")
 (stmt print)
 `-- (string "this is just a regular print statement.")
+oak: input:
+a = 420 * 666 + 6969
+
+if true {
+	print "Hello, world!"
+	print "other stuff"
+	print "new stuff"
+} else if false {
+	print "Hello... world?"
+	print "blah"
+}
+
+if 5 == 5:
+	print "foo", "bar"
+
+print "foo bar baz"
+
+oak: now lexing...
+[IDENTIFIER][               ][len:    1][eol:false][value:a]
+[    SYMBOL][symb:         =][len:    1][eol:false][value:=]
+[   INTEGER][data:       420][len:    3][eol:false][value:420]
+[    SYMBOL][symb:         *][len:    1][eol:false][value:*]
+[   INTEGER][data:       666][len:    3][eol:false][value:666]
+[    SYMBOL][symb:         +][len:    1][eol:false][value:+]
+[   INTEGER][data:      6969][len:    4][eol: true][value:6969]
+[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
+[  OPERATOR][               ][len:    4][eol:false][value:true]
+[    SYMBOL][symb:         {][len:    1][eol: true][value:{]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:   15][eol: true][value:Hello, world!]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:   13][eol: true][value:other stuff]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:   11][eol: true][value:new stuff]
+[    SYMBOL][symb:         }][len:    1][eol:false][value:}]
+[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
+[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
+[  OPERATOR][               ][len:    5][eol:false][value:false]
+[    SYMBOL][symb:         {][len:    1][eol: true][value:{]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:   17][eol: true][value:Hello... world?]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:    6][eol: true][value:blah]
+[    SYMBOL][symb:         }][len:    1][eol: true][value:}]
+[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
+[   INTEGER][data:         5][len:    1][eol:false][value:5]
+[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
+[   INTEGER][data:         5][len:    1][eol:false][value:5]
+[    SYMBOL][symb:         :][len:    1][eol: true][value::]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:    5][eol:false][value:foo]
+[    SYMBOL][symb:         ,][len:    1][eol:false][value:,]
+[    STRING][               ][len:    5][eol: true][value:bar]
+[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
+[    STRING][               ][len:   13][eol: true][value:foo bar baz]
+[      BOOL][               ][len:    1][eol:false][value:]
+oak: now parsing...
+(root)
+|-- (stmt expression)
+|   `-- (binary =)
+|       |-- (identifier a)
+|       `-- (binary +)
+|           |-- (binary *)
+|           |   |-- (integer 420)
+|           |   `-- (integer 666)
+|           `-- (integer 6969)
+|-- (stmt if)
+|   |-- (condition)
+|   |   `-- (bool true)
+|   |-- (then branch)
+|   |   `-- (stmt block)
+|   |       |-- (stmt print)
+|   |       |   `-- (string "Hello, world!")
+|   |       |-- (stmt print)
+|   |       |   `-- (string "other stuff")
+|   |       `-- (stmt print)
+|   |           `-- (string "new stuff")
+|   `-- (else branch)
+|       `-- (stmt if)
+|           |-- (condition)
+|           |   `-- (bool false)
+|           `-- (then branch)
+|               `-- (stmt block)
+|                   |-- (stmt print)
+|                   |   `-- (string "Hello... world?")
+|                   `-- (stmt print)
+|                       `-- (string "blah")
+|-- (stmt if)
+|   |-- (condition)
+|   |   `-- (binary ==)
+|   |       |-- (integer 5)
+|   |       `-- (integer 5)
+|   `-- (then branch)
+|       `-- (stmt print)
+|           |-- (string "foo")
+|           `-- (string "bar")
+`-- (stmt print)
+    `-- (string "foo bar baz")
