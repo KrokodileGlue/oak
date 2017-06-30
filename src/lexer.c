@@ -44,6 +44,8 @@ static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt
 	va_end(args);
 
 	error_push(ls->es, ls->loc, sev, msg);
+
+	free(msg);
 }
 
 static void lexer_push_token(struct LexState *ls, enum TokType type, char *a, char *b)
@@ -214,11 +216,10 @@ static char *parse_number(struct LexState *ls, char *a)
 
 static char *parse_string_literal(struct LexState *ls, char *a)
 {
-	a += 1;
 	char *b = a;
 	do {
 		if (*b == '\\') b++;
-		b++;
+		if (*b) b++; /* don't skip over the null terminator */
 	} while (*b != '\"' && *b != '\n' && *b);
 
 	if (*b == 0 || *b == '\n') {
@@ -231,19 +232,23 @@ static char *parse_string_literal(struct LexState *ls, char *a)
 	}
 
 	ls->loc.len = b - a + 2;
-	lexer_push_token(ls, TOK_STRING, a, b);
-	parse_escape_sequences(ls, ls->tok->value);
+	lexer_push_token(ls, TOK_STRING, a, b + 1);
+
+	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
+	strncpy(ls->tok->string, ls->tok->value + 1, strlen(ls->tok->value));
+	ls->tok->string[strlen(ls->tok->value) - 2] = 0; /* cut off the " at the end */
+
+	parse_escape_sequences(ls, ls->tok->string);
 
 	return b + 1;
 }
 
 static char *parse_character_literal(struct LexState *ls, char *a)
 {
-	a += 1; /* skip the ' */
 	char *b = a;
 	do {
 		if (*b == '\\') b++;
-		if (*b) b++; /* we might skip over the end of the string without the conditional */
+		if (*b) b++; /* don't skip over the null terminator */
 	} while (*b != '\'' && *b != '\n' && *b);
 
 	if (*b == 0 || *b == '\n') {
@@ -256,32 +261,38 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 	}
 
 	ls->loc.len = b - a;
-	lexer_push_token(ls, TOK_STRING, a, b);
-	parse_escape_sequences(ls, ls->tok->value);
+	lexer_push_token(ls, TOK_STRING, a, b + 1);
 
-	if (strlen(ls->tok->value) != 1) {
+	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
+
+	strncpy(ls->tok->string, ls->tok->value + 1, strlen(ls->tok->value));
+	ls->tok->string[strlen(ls->tok->value) - 2] = 0;
+
+	parse_escape_sequences(ls, ls->tok->string);
+
+	if (strlen(ls->tok->string) != 1) {
 		/* add 2 to the length because the body of the token doesn't include the ' characters */
-		ls->loc.len = b - a + 2;
+		ls->loc.len = b - a + 1;
 
 		lexer_push_error(ls, ERR_WARNING, "multi-element character literal will be truncated to the first element");
 	}
 
+	free(ls->tok->string);
 	ls->tok->type = TOK_INTEGER;
-	ls->tok->integer = (int64_t)ls->tok->value[0];
+	ls->tok->integer = (int64_t)ls->tok->string[0];
 
 	return b + 1;
 }
 
 static char *parse_raw_string_literal(struct LexState *ls, char *a)
 {
+	char *begin = a;
 	a += 2; /* skip the R( */
 	char *b = a;
 
 	while (*b != ')' && *b) b++; /* find the end of the delimiter spec */
 
 	if (*b == 0) {
-		SKIP_TO_END_OF_LINE(a, b)
-
 		ls->loc.len = b - a;
 		lexer_push_error(ls, ERR_FATAL, "unterminated delimiter specification");
 
@@ -301,15 +312,18 @@ static char *parse_raw_string_literal(struct LexState *ls, char *a)
 	if (*b == 0) {
 		ls->loc.len = strlen(delim) + 3;
 		lexer_push_error(ls, ERR_FATAL, "unterminated raw string literal");
-
-		SKIP_TO_END_OF_LINE(a, b)
 		free(delim);
 
 		return b;
 	}
 
 	ls->loc.len = strlen(delim) + 4 + (b - a);
-	lexer_push_token(ls, TOK_STRING, a, b);
+	lexer_push_token(ls, TOK_STRING, begin, b);
+
+	ls->tok->string = oak_malloc(strlen(delim) + 4 + (b - a));
+	strncpy(ls->tok->string, ls->tok->value + strlen(delim) + 3, strlen(ls->tok->value));
+	ls->tok->string[strlen(ls->tok->value) - 1] = 0; /* cut off the " at the end */
+
 	free(delim);
 
 	return b + delim_len;
@@ -327,17 +341,7 @@ static char *smart_cat(char *first, char *second)
 	return first;
 }
 
-/*
- * Whenever we have two adjacent string tokens like "foo" "bar",
- * they ought to be combined into a new token that has
- * the data fields of the leftmost token, but which has
- * a body composed of both strings concatenated ("foobar").
- *
- * This function is recursive, and does multiple passes.
- *
- * Returns true if it found any strings to concatenate,
- * otherwise returns false.
- */
+/* recursively concatenate adjacent strings */
 static bool cat_strings(struct Token *tok)
 {
 	bool ret = false;
@@ -346,6 +350,7 @@ static bool cat_strings(struct Token *tok)
 	while (tok && tok->next) {
 		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
 			ret = true;
+			tok->string = smart_cat(tok->string, tok->next->string);
 			tok->value = smart_cat(tok->value, tok->next->value);
 			token_delete(tok->next);
 		}
@@ -356,7 +361,16 @@ static bool cat_strings(struct Token *tok)
 	return ret;
 }
 
-/* matches the longest operator starting from a */
+/* set the is_line_end flag on tokens that are at the end of lines */
+static void eolize(struct Token *tok)
+{
+	while (tok && tok->next) {
+		tok->is_line_end = (line_number(tok->loc) != line_number(tok->next->loc));
+		tok = tok->next;
+	}
+}
+
+/* match the longest operator starting from a */
 static struct Operator *match_operator(char *a)
 {
 	size_t len = 0;
@@ -482,14 +496,12 @@ struct Token *tokenize(struct LexState *ls)
 			lexer_push_token(ls, TOK_SYMBOL, a, a + 1);
 			a++;
 		}
-
-		if (*a == '\n')
-			ls->tok->is_line_end = true;
 	}
 
 	lexer_push_token(ls, TOK_END, a, a);
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
+	eolize(ls->tok);
 
 	return ls->tok;
 }

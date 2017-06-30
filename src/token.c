@@ -34,6 +34,7 @@ void token_delete(struct Token *tok)
 	if (next) next->prev = prev;
 
 	free(tok->value);
+	if (tok->type == TOK_STRING) free(tok->string);
 	free(tok);
 }
 
@@ -44,10 +45,12 @@ void token_clear(struct Token *tok)
 	while (tok) {
 		if (tok->next) {
 			free(tok->value);
+			if (tok->type == TOK_STRING) free(tok->string);
 			tok = tok->next;
 			if (tok && tok->prev) free(tok->prev);
 		} else {
 			free(tok->value);
+			if (tok->type == TOK_STRING) free(tok->string);
 			free(tok);
 			tok = NULL;
 		}

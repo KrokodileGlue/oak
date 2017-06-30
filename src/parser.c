@@ -146,7 +146,6 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 	struct Expression *e = left;
 
 	while (prec < get_prec(ps, prec)) {
-//		fprintf(stderr, "parse_expr: looking at %s\n", ps->tok->value);
 		op = get_infix_op(ps);
 		if (!op) return left;
 

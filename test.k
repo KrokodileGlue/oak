@@ -1,4 +1,6 @@
-a = 420 * 666 + 6969;
+a = 420 * 666 + 6969 - '\xFFF n stuff \e';
+
+"string 1" "string 2" R($)string 3$
 
 if true {
 	print "Hello, world!";
@@ -9,7 +11,7 @@ if true {
 	print "blah";
 }
 
-if 5 == 5:
-	print "foo", "bar";
+if type a == "integer":
+	print "foo" + "bar";
 
 print "foo bar baz";

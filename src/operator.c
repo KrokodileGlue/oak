@@ -5,6 +5,7 @@ struct Operator ops[] = {
 	{ "[",   "]", 15, ASS_LEFT,  OP_MEMBER  },
 	{ "+",   "",  14, ASS_RIGHT, OP_PREFIX  },
 	{ "-",   "",  14, ASS_RIGHT, OP_PREFIX  },
+	{ "type","",  14, ASS_RIGHT, OP_PREFIX  },
 	{ "*",   "",  13, ASS_LEFT,  OP_BINARY  },
 	{ "/",   "",  13, ASS_LEFT,  OP_BINARY  },
 	{ "%",   "",  13, ASS_LEFT,  OP_BINARY  },
