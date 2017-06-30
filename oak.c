@@ -43,6 +43,7 @@ int do_file(char *filename)
 		fprintf(stderr, "\n");
 		error_write(ps->es, stderr);
 		parser_clear(ps);
+		free_ast(module);
 		goto error;
 	} else if (ps->es->pending) {
 		error_write(ps->es, stderr);
@@ -50,6 +51,7 @@ int do_file(char *filename)
 
 	print_ast(stderr, module);
 	parser_clear(ps);
+	free_ast(module);
 
 	/* TODO: compile and run */
 

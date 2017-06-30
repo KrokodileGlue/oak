@@ -15,6 +15,7 @@
 void lexer_clear(struct LexState *ls)
 {
 	error_clear(ls->es);
+	free(ls);
 }
 
 struct LexState *lexer_new(char *text, char *file)
