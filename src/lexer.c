@@ -379,8 +379,7 @@ static char *parse_operator(struct LexState *ls, char *a)
 	char *b = a + len;
 
 	ls->loc.len = len;
-	lexer_push_token(ls, TOK_OPERATOR, a, b);
-	ls->tok->operator = op;
+	lexer_push_token(ls, TOK_SYMBOL, a, b);
 
 	return b;
 }
@@ -482,6 +481,9 @@ struct Token *tokenize(struct LexState *ls)
 			lexer_push_token(ls, TOK_SYMBOL, a, a + 1);
 			a++;
 		}
+
+		if (*a == '\n')
+			ls->tok->is_line_end = true;
 	}
 
 	lexer_push_token(ls, TOK_END, a, a);
