@@ -1,9 +1,14 @@
-if (1 ? 2 : 3) == 2:
+a = 5 * 3 + 5
+
+if true {
 	print "Hello, world!"
-else
+	print "other stuff"
+	print "new stuff"
+} else if false {
 	print "Hello... world?"
+}
 
-if 5 == 5
-	print "foo", "bar";
+if 5 == 5:
+	print "foo", "bar"
 
-print #"this is just a regular print statement.";
+print "foo bar baz"

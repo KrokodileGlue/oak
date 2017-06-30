@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "location.h"
 #include "operator.h"
@@ -11,6 +12,7 @@
 
 struct Token {
 	struct Location loc;
+	bool is_line_end;
 
 	char *value; /* the body of the token */
 	struct Token *next; /* doubly-linked list */
@@ -23,7 +25,6 @@ struct Token {
 		TOK_SYMBOL,
 		TOK_INTEGER,
 		TOK_FLOAT,
-		TOK_OPERATOR,
 		TOK_BOOL,
 		TOK_END,
 		TOK_INVALID
@@ -35,7 +36,6 @@ struct Token {
 		char		 symbol;
 		int64_t	 integer;
 		double		 floating;
-		struct Operator *operator;
 		bool		 boolean;
 	};
 };

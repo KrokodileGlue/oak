@@ -62,7 +62,7 @@ void token_push(struct Location loc, enum TokType type, char *start, char *end, 
 	current->type = type;
 	current->loc = loc;
 	current->integer = 0;
-	current->operator = NULL;
+	current->is_line_end = false;
 
 	current->value = malloc(end - start + 1);
 	strncpy(current->value, start, end - start);
@@ -100,9 +100,6 @@ void token_write(struct Token *tok, FILE *fp)
 			fprintf(fp, "[%10c]", tok->type);
 
 		switch (tok->type) {
-		case TOK_OPERATOR:
-			fprintf(fp, "[prec:%10zd]", tok->operator->prec);
-			break;
 		case TOK_FLOAT:
 			fprintf(fp, "[data:%10.4f]", tok->floating);
 			break;
@@ -119,7 +116,8 @@ void token_write(struct Token *tok, FILE *fp)
 			fprintf(fp, "[     %10s]", "");
 		}
 
-		fprintf(fp, "[len:%5zd][value:%s]\n", tok->loc.len, tok->value);
+		fprintf(fp, "[len:%5zd][eol:%5s][value:%s]\n",
+			tok->loc.len, tok->is_line_end ? "true" : "false", tok->value);
 		tok = tok->next;
 	}
 }

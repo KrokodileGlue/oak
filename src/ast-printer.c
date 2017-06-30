@@ -99,7 +99,11 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 		case TOK_FLOAT:
 			fprintf(ap->f, "(float %f)", e->value->floating);
 			break;
+		case TOK_BOOL:
+			fprintf(ap->f, "(bool %s)", e->value->boolean ? "true" : "false");
+			break;
 		default:
+			fprintf(stderr, "impossible value token %d\n", e->type);
 			assert(false);
 		}
 	}
@@ -115,15 +119,20 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		ap->depth++;
 		split(ap);
 
-		print_expression(ap, s->if_stmt.cond);
+		indent(ap);  fprintf(ap->f, "(condition)");
+		ap->depth++; print_expression(ap, s->if_stmt.cond); ap->depth--;
 
 		if (s->if_stmt.otherwise) {
-			print_statement(ap, s->if_stmt.then);
+			indent(ap);  fprintf(ap->f, "(then branch)");
+			ap->depth++; print_statement(ap, s->if_stmt.then); ap->depth--;
+
 			join(ap);
-			print_statement(ap, s->if_stmt.otherwise);
+			indent(ap);  fprintf(ap->f, "(else branch)");
+			ap->depth++; print_statement(ap, s->if_stmt.otherwise); ap->depth--;
 		} else {
 			join(ap);
-			print_statement(ap, s->if_stmt.then);
+			indent(ap);  fprintf(ap->f, "(then branch)");
+			ap->depth++; print_statement(ap, s->if_stmt.then); ap->depth--; join(ap);
 		}
 
 		ap->depth--;
@@ -139,8 +148,24 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 
 		ap->depth--;
 		break;
+	case STMT_EXPR:
+		ap->depth++;
+		print_expression(ap, s->expr);
+		ap->depth--;
+		break;
+	case STMT_BLOCK:
+		ap->depth++;
+		split(ap);
+
+		for (size_t i = 0; i < s->block.num; i++) {
+			if (i == s->print.num - 1) join(ap);
+			print_statement(ap, s->block.stmts[i]);
+		}
+
+		ap->depth--;
+		break;
 	default:
-		fprintf(ap->f, "cannot yet print statement.\n");
+		fprintf(ap->f, "unimplemented statement printer\n");
 	}
 }
 
@@ -153,10 +178,16 @@ void print_ast(FILE *f, struct Statement **module)
 
 	struct Statement *s = NULL;
 
+	indent(ap);
+	fprintf(ap->f, "(root)");
+	ap->depth++;
+	split(ap);
 	for (size_t i = 0; (s = module[i]); i++) {
+		if (module[i + 1] == NULL) join(ap);
 		s = module[i];
 		print_statement(ap, s);
 	}
 
+	free(ap);
 	fprintf(f, "\n");
 }

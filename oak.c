@@ -14,6 +14,7 @@ int do_file(char *filename)
 	char *text = load_file(filename);
 	if (!text) return EXIT_FAILURE;
 
+	fprintf(stderr, "oak: input:\n%s\n", text);
 	fprintf(stderr, "oak: now lexing...\n");
 
 	/* lex */
