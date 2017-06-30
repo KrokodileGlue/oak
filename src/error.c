@@ -24,9 +24,7 @@ struct ErrorState *error_new()
 void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev, char *fmt, ...)
 {
 	es->pending = true;
-	es->err = (es-> err == NULL)
-		? oak_malloc(sizeof *(es->err) * ++(es->num))
-		: realloc(es->err, sizeof *(es->err) * ++(es->num));
+	es->err = realloc(es->err, sizeof *(es->err) * ++(es->num));
 
 	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
@@ -77,8 +75,7 @@ void error_write(struct ErrorState *es, FILE *fp)
 
 static void error_delete(struct Error err)
 {
-	/* TODO: investigate how i was retarded enough to write this */
-//	free(err.msg);
+	free(err.msg);
 }
 
 void error_clear(struct ErrorState *es)
