@@ -1,4 +1,4 @@
-a = 5 * 3 + 5
+a = 420 * 666 + 6969
 
 if true {
 	print "Hello, world!"
@@ -6,6 +6,7 @@ if true {
 	print "new stuff"
 } else if false {
 	print "Hello... world?"
+	print "blah"
 }
 
 if 5 == 5:

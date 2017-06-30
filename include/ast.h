@@ -17,7 +17,8 @@ enum StmtType {
 	STMT_EXPR,
 	STMT_VAR_DECL,
 	STMT_BLOCK,
-	STMT_PRINT
+	STMT_PRINT,
+	STMT_INVALID
 } type;
 
 struct StatementData {
@@ -28,7 +29,7 @@ struct StatementData {
 extern struct StatementData statement_data[];
 
 struct Statement {
-	struct Location loc;
+	struct Token *tok;
 
 	enum StmtType type;
 
@@ -66,19 +67,27 @@ struct Statement {
 };
 
 struct Expression {
+	struct Token *tok;
+
 	enum ExprType {
 		EXPR_VALUE,
-		EXPR_OPERATOR
+		EXPR_OPERATOR,
+		EXPR_INVALID
 	} type;
 
 	struct Operator *operator;
 
 	union {
-		struct Token *value;
 		struct {
 			struct Expression *a, *b, *c;
 		};
+
+		struct Token *value;
 	};
 };
+
+struct Expression *mkexpr();
+struct Statement  *mkstmt();
+void free_ast(struct Statement **module);
 
 #endif

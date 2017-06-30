@@ -184,7 +184,6 @@ void print_ast(FILE *f, struct Statement **module)
 	split(ap);
 	for (size_t i = 0; (s = module[i]); i++) {
 		if (module[i + 1] == NULL) join(ap);
-		s = module[i];
 		print_statement(ap, s);
 	}
 

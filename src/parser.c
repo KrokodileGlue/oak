@@ -112,7 +112,7 @@ static size_t get_prec(struct ParseState *ps, size_t prec)
 
 static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 {
-	struct Expression *left = oak_malloc(sizeof *left);
+	struct Expression *left = mkexpr();
 	struct Operator *op = get_prefix_op(ps);
 
 	if (op || !strcmp(ps->tok->value, "(")) {
@@ -150,7 +150,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		op = get_infix_op(ps);
 		if (!op) return left;
 
-		e = oak_malloc(sizeof *e);
+		e = mkexpr();
 		e->type = EXPR_OPERATOR;
 		e->operator = op;
 		e->a = left;
@@ -179,7 +179,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 
 static struct Statement *parse_if_stmt(struct ParseState *ps)
 {
-	struct Statement *s = oak_malloc(sizeof *s);
+	struct Statement *s = mkstmt(ps->tok);
 	s->type = STMT_IF_STMT;
 	s->if_stmt.otherwise = NULL;
 
@@ -208,7 +208,7 @@ static struct Statement *parse_fn_def(struct ParseState *ps)
 
 static struct Statement *parse_print_stmt(struct ParseState *ps)
 {
-	struct Statement *s = oak_malloc(sizeof *s);
+	struct Statement *s = mkstmt(ps->tok);
 	s->type = STMT_PRINT;
 	s->print.num = 0;
 	s->print.args = oak_malloc(sizeof *(s->print.args));
@@ -228,6 +228,8 @@ static struct Statement *parse_print_stmt(struct ParseState *ps)
 		s->print.num++;
 	} while (!strcmp(ps->tok->value, ","));
 
+	s->print.args = oak_realloc(s->print.args,
+			    sizeof *(s->print.args) * (s->print.num));
 	expect_terminator(ps);
 
 	return s;
@@ -235,64 +237,62 @@ static struct Statement *parse_print_stmt(struct ParseState *ps)
 
 static struct Statement *parse_stmt(struct ParseState *ps)
 {
-	struct Statement *ret = oak_malloc(sizeof *ret);
+	struct Statement *s = NULL;
 
 	if (!strcmp(ps->tok->value, "{")) {
-		ret = parse_block(ps);
+		s = parse_block(ps);
 	} else if (ps->tok->type == TOK_KEYWORD) {
 		switch (ps->tok->keyword->type) {
-		case KEYWORD_IF:    ret = parse_if_stmt(ps);		break;
-		case KEYWORD_FN:    ret = parse_fn_def(ps);		break;
-		case KEYWORD_PRINT: ret = parse_print_stmt(ps);	break;
+		case KEYWORD_IF:    s = parse_if_stmt(ps);		break;
+		case KEYWORD_FN:    s = parse_fn_def(ps);		break;
+		case KEYWORD_PRINT: s = parse_print_stmt(ps);	break;
 		default:
 			fprintf(stderr, "TODO: parse more statement types.\n");
 			ps->tok = ps->tok->next;
 			break;
 		}
 	} else {
-		ret->type = STMT_EXPR;
-		ret->expr = parse_expr(ps, 0);
+		s = mkstmt(ps->tok);
+		s->type = STMT_EXPR;
+		s->expr = parse_expr(ps, 0);
 		expect_terminator(ps);
 	}
 
-	return ret;
+	return s;
 }
 
 static struct Statement *parse_block(struct ParseState *ps)
 {
-	struct Statement *stmt	= oak_malloc(sizeof *stmt);
-	stmt->type		= STMT_BLOCK;
-	stmt->block.stmts	= oak_malloc(sizeof *(stmt->block.stmts));
+	struct Statement *s	= mkstmt(ps->tok);
+	s->type		= STMT_BLOCK;
+	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
 
 	ps->tok = ps->tok->next;
 
 	while (strcmp(ps->tok->value, "}") && ps->tok->type != TOK_END) {
 //		fprintf(stderr, "looking at %s\n", ps->tok->value);
-		stmt->block.stmts =
-			oak_realloc(stmt->block.stmts,
-				    sizeof *(stmt->block.stmts)
-				    * (stmt->block.num + 1));
-		stmt->block.stmts[stmt->block.num++] = parse_stmt(ps);
+		s->block.stmts = oak_realloc(s->block.stmts, sizeof s->block.stmts[0] * (s->block.num + 1));
+		s->block.stmts[s->block.num++] = parse_stmt(ps);
 	}
 
 	expect_symbol(ps, "}");
 
-	return stmt;
+	return s;
 }
 
 struct Statement **parse(struct ParseState *ps)
 {
 	size_t num_stmts = 0;
-	struct Statement **program = oak_malloc(sizeof *program);
+	struct Statement **module = oak_malloc(sizeof *module);
 
 	while (ps->tok->type != TOK_END) {
-		program = oak_realloc(program,
-				      (num_stmts + 2) * sizeof *program);
-		program[num_stmts] = parse_stmt(ps);
+		module = oak_realloc(module,
+				      (num_stmts + 2) * sizeof *module);
+		module[num_stmts] = parse_stmt(ps);
 		num_stmts++;
 	}
 
-	program[num_stmts] = NULL;
+	module[num_stmts] = NULL;
 
-	return program;
+	return module;
 }
