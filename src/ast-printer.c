@@ -84,6 +84,10 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 		case OP_MEMBER:
 			fprintf(ap->f,"(member of )");
 			break;
+		case OP_INVALID:
+			fprintf(stderr, "An invalid node was encountered. This should never happen.\n");
+			assert(false);
+			break;
 		}
 	} else {
 		switch (e->value->type) {
@@ -94,7 +98,7 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 			fprintf(ap->f, "(integer %zd)", e->value->integer);
 			break;
 		case TOK_STRING:
-			fprintf(ap->f, "(string \"%s\")", e->value->value);
+			fprintf(ap->f, "(string \"%s\")", e->value->string);
 			break;
 		case TOK_FLOAT:
 			fprintf(ap->f, "(float %f)", e->value->floating);
