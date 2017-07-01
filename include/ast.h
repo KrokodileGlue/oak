@@ -41,14 +41,7 @@ struct Statement {
 		 */
 
 		struct {
-			enum {
-				STMT_FOR_EACH,
-				STMT_FOR_CSTYLE
-			} type;
-			union {
-				struct Statement *vardecl;
-				struct Expression *a;
-			};
+			struct Statement *a;
 			struct Expression *b;
 			struct Expression *c;
 			struct Statement *body;

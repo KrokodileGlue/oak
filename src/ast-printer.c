@@ -80,6 +80,9 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 			break;
 		case OP_POSTFIX:
 			fprintf(ap->f,"(postfix %s)", op->body);
+			ap->depth++;
+			print_expression(ap, e->a);
+			ap->depth--;
 			break;
 		case OP_MEMBER:
 			fprintf(ap->f,"(member of )");
@@ -182,6 +185,32 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		}
 
 		ap->depth--;
+		break;
+	case STMT_FOR_LOOP:
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(initializer)");
+		ap->depth++; print_statement(ap, s->for_loop.a); ap->depth--;
+
+		indent(ap);
+		if (s->for_loop.c) fprintf(ap->f, "(condition)");
+		else fprintf(ap->f, "(iterator)");
+		ap->depth++; print_expression(ap, s->for_loop.b); ap->depth--;
+
+		if (s->for_loop.c) {
+			indent(ap);  fprintf(ap->f, "(next)");
+			ap->depth++; print_expression(ap, s->for_loop.c); ap->depth--;
+		}
+
+		join(ap);
+		indent(ap);  fprintf(ap->f, "(body)");
+		ap->depth++; print_statement(ap, s->for_loop.body); ap->depth--;
+
+		ap->depth--;
+		break;
+	case STMT_INVALID:
+		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
 	default:
 		fprintf(ap->f, "unimplemented statement printer\n");

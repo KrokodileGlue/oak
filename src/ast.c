@@ -85,6 +85,13 @@ void free_stmt(struct Statement *s)
 		free(s->var_decl.names);
 
 		break;
+	case STMT_FOR_LOOP:
+		free_stmt(s->for_loop.a);
+		free_expr(s->for_loop.b);
+		if (s->for_loop.c) free_expr(s->for_loop.c);
+		free_stmt(s->for_loop.body);
+
+		break;
 	default:
 		fprintf(stderr, "cannot free thing.\n");
 	}

@@ -372,7 +372,7 @@ static void eolize(struct Token *tok)
 	}
 
 	/* the end of the token stream is also considered a line ending */
-	tok->is_line_end = true;
+	tok->prev->is_line_end = true;
 }
 
 /* match the longest operator starting from a */
