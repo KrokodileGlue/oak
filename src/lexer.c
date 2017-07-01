@@ -368,6 +368,9 @@ static void eolize(struct Token *tok)
 		tok->is_line_end = (line_number(tok->loc) != line_number(tok->next->loc));
 		tok = tok->next;
 	}
+
+	/* the end of the token stream is also considered a line ending */
+	tok->is_line_end = true;
 }
 
 /* match the longest operator starting from a */
