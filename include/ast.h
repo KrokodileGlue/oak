@@ -34,10 +34,23 @@ struct Statement {
 	enum StmtType type;
 
 	union {
+		/* there are three kinds of for loops:
+		 *   for expression in expression:
+		 *   for vardecl; expression; expression:
+		 *   for expression; expression; expression:
+		 */
+
 		struct {
-			struct Statement *init;
-			struct Expression *cond;
-			struct Expression **action;
+			enum {
+				STMT_FOR_EACH,
+				STMT_FOR_CSTYLE
+			} type;
+			union {
+				struct Statement *vardecl;
+				struct Expression *a;
+			};
+			struct Expression *b;
+			struct Expression *c;
 			struct Statement *body;
 		} for_loop;
 
@@ -48,8 +61,11 @@ struct Statement {
 		} if_stmt;
 
 		struct {
-			char *name;
-			struct Expression *init;
+			/* a list of identifiers */
+			struct Token **names;
+			/* a list of initalizers */
+			struct Expression **init;
+			size_t num;
 		} var_decl;
 
 		struct {

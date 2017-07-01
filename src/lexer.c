@@ -263,7 +263,7 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 	ls->loc.len = b - a;
 	lexer_push_token(ls, TOK_STRING, a, b + 1);
 
-	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
+	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 2);
 
 	strncpy(ls->tok->string, ls->tok->value + 1, strlen(ls->tok->value));
 	ls->tok->string[strlen(ls->tok->value) - 2] = 0;
@@ -277,9 +277,11 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 		lexer_push_error(ls, ERR_WARNING, "multi-element character literal will be truncated to the first element");
 	}
 
+	int64_t t = (int64_t)(ls->tok->string[0]);
 	free(ls->tok->string);
+
 	ls->tok->type = TOK_INTEGER;
-	ls->tok->integer = (int64_t)ls->tok->string[0];
+	ls->tok->integer = t;
 
 	return b + 1;
 }

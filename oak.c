@@ -43,7 +43,6 @@ int do_file(char *filename)
 		fprintf(stderr, "\n");
 		error_write(ps->es, stderr);
 		parser_clear(ps);
-		free_ast(module);
 		goto error;
 	} else if (ps->es->pending) {
 		error_write(ps->es, stderr);
@@ -60,6 +59,11 @@ int do_file(char *filename)
 	return EXIT_SUCCESS;
 
 error:
+	token_clear(tok);
+	free(text);
+	return EXIT_FAILURE;
+error2:
+	free_ast(module);
 	token_clear(tok);
 	free(text);
 	return EXIT_FAILURE;

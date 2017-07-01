@@ -209,8 +209,6 @@ static struct Statement *parse_print_stmt(struct ParseState *ps)
 {
 	struct Statement *s = mkstmt(ps->tok);
 	s->type = STMT_PRINT;
-	s->print.num = 0;
-	s->print.args = oak_malloc(sizeof *(s->print.args));
 
 	if (ps->tok->next->type == TOK_END) {
 		error_push(ps->es, ps->tok->loc, ERR_FATAL,
@@ -221,15 +219,50 @@ static struct Statement *parse_print_stmt(struct ParseState *ps)
 
 	do {
 		ps->tok = ps->tok->next;
-		s->print.args[s->print.num] = parse_expr(ps, 1);
 		s->print.args = oak_realloc(s->print.args,
 					    sizeof *(s->print.args) * (s->print.num + 2));
+
+		s->print.args[s->print.num] = parse_expr(ps, 1);
 		s->print.num++;
 	} while (!strcmp(ps->tok->value, ","));
 
 	s->print.args = oak_realloc(s->print.args,
 			    sizeof *(s->print.args) * (s->print.num));
 	expect_terminator(ps);
+
+	return s;
+}
+
+static struct Statement *parse_vardecl(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	ps->tok = ps->tok->next;
+	s->type = STMT_VAR_DECL;
+
+	while (ps->tok->type == TOK_IDENTIFIER) {
+		s->var_decl.names = oak_realloc(s->var_decl.names, sizeof *s->var_decl.names * (s->var_decl.num + 1));
+		s->var_decl.names[s->var_decl.num++] = ps->tok;
+		ps->tok = ps->tok->next;
+	}
+
+	expect_symbol(ps, "=");
+	ps->tok = ps->tok->prev;
+
+	size_t i = 0;
+	do {
+		ps->tok = ps->tok->next;
+
+		s->var_decl.init = oak_realloc(s->var_decl.init, sizeof *s->var_decl.init * (i + 1));
+		s->var_decl.init[i] = parse_expr(ps, 1);
+
+		i++;
+	} while (!strcmp(ps->tok->value, ","));
+
+	expect_terminator(ps);
+
+	if (i != s->var_decl.num) {
+		error_push(ps->es, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
+	}
 
 	return s;
 }
@@ -242,9 +275,10 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		s = parse_block(ps);
 	} else if (ps->tok->type == TOK_KEYWORD) {
 		switch (ps->tok->keyword->type) {
-		case KEYWORD_IF:    s = parse_if_stmt(ps);		break;
-		case KEYWORD_FN:    s = parse_fn_def(ps);		break;
+		case KEYWORD_IF:    s = parse_if_stmt(ps);	break;
+		case KEYWORD_FN:    s = parse_fn_def(ps);	break;
 		case KEYWORD_PRINT: s = parse_print_stmt(ps);	break;
+		case KEYWORD_VAR:   s = parse_vardecl(ps);	break;
 		default:
 			fprintf(stderr, "TODO: parse more statement types.\n");
 			ps->tok = ps->tok->next;
