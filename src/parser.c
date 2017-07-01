@@ -60,23 +60,24 @@ static void expect_terminator(struct ParseState *ps)
 			error_push(ps->es, tok->loc, ERR_FATAL,
 				   "unexpected end-of-file; expected a statement terminator");
 
-			ps->tok = ps->tok->prev;
+//			ps->tok = ps->tok->prev;
 		} else {
 			error_push(ps->es, ps->tok->loc, ERR_FATAL,
 				   "unexpected token '"
 				   ERROR_LOCATION_COLOR "%s" RESET_COLOR
 				   "'; expected a statement terminator",
 				   ps->tok->value);
+			ps->tok = ps->tok->next;
 		}
+	} else {
+		if (!strcmp(ps->tok->value, ";"))
+			ps->tok = ps->tok->next;
 	}
 
-	if (!ps->tok->prev->is_line_end)
-		ps->tok = ps->tok->next;
 //	fprintf(stderr, "ending on token %s\n", ps->tok->value);
 }
 
 static struct Statement *parse_stmt(struct ParseState *ps);
-static struct Statement *parse_block(struct ParseState *ps);
 
 static struct Operator *get_infix_op(struct ParseState *ps)
 {
@@ -122,7 +123,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		ps->tok = ps->tok->next;
 		if (op) {
 			left->a = parse_expr(ps, op->prec);
-		} else { /* other wise we're looking at a ( */
+		} else { /* otherwise we're looking at a ( */
 			free(left);
 			left = parse_expr(ps, 0);
 			expect_symbol(ps, ")");
@@ -258,11 +259,72 @@ static struct Statement *parse_vardecl(struct ParseState *ps)
 		i++;
 	} while (!strcmp(ps->tok->value, ","));
 
-	expect_terminator(ps);
-
 	if (i != s->var_decl.num) {
 		error_push(ps->es, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
 	}
+
+	return s;
+}
+
+static struct Statement *parse_for_loop(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_FOR_LOOP;
+	ps->tok = ps->tok->next;
+
+	if (!strcmp(ps->tok->value, "var")) {
+		s->for_loop.a = parse_vardecl(ps);
+	} else {
+		struct Statement *e = mkstmt(ps->tok);
+		e->type = STMT_EXPR;
+		e->expr = parse_expr(ps, 0);
+
+		s->for_loop.a = e;
+	}
+
+	if (!strcmp(ps->tok->value, "in")) {
+		ps->tok = ps->tok->next;
+		s->for_loop.b = parse_expr(ps, 0);
+
+		if (!strcmp(ps->tok->value, "{")) {
+			s->for_loop.body = parse_stmt(ps);
+		} else {
+			expect_symbol(ps, ":");
+			s->for_loop.body = parse_stmt(ps);
+		}
+	} else {
+		expect_symbol(ps, ";");
+
+		s->for_loop.b = parse_expr(ps, 0);
+		expect_symbol(ps, ";");
+
+		s->for_loop.c = parse_expr(ps, 0);
+
+		if (!strcmp(ps->tok->value, "{")) {
+			s->for_loop.body = parse_stmt(ps);
+		} else {
+			expect_symbol(ps, ":");
+			s->for_loop.body = parse_stmt(ps);
+		}
+	}
+
+	return s;
+}
+
+static struct Statement *parse_block(struct ParseState *ps)
+{
+	struct Statement *s	= mkstmt(ps->tok);
+	s->type		= STMT_BLOCK;
+	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
+
+	ps->tok = ps->tok->next;
+
+	while (strcmp(ps->tok->value, "}") && ps->tok->type != TOK_END) {
+		s->block.stmts = oak_realloc(s->block.stmts, sizeof s->block.stmts[0] * (s->block.num + 1));
+		s->block.stmts[s->block.num++] = parse_stmt(ps);
+	}
+
+	expect_symbol(ps, "}");
 
 	return s;
 }
@@ -278,7 +340,11 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		case KEYWORD_IF:    s = parse_if_stmt(ps);	break;
 		case KEYWORD_FN:    s = parse_fn_def(ps);	break;
 		case KEYWORD_PRINT: s = parse_print_stmt(ps);	break;
-		case KEYWORD_VAR:   s = parse_vardecl(ps);	break;
+		case KEYWORD_VAR:
+			s = parse_vardecl(ps);
+			expect_terminator(ps);
+			break;
+		case KEYWORD_FOR:   s = parse_for_loop(ps);	break;
 		default:
 			fprintf(stderr, "TODO: parse more statement types.\n");
 			ps->tok = ps->tok->next;
@@ -290,25 +356,6 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		s->expr = parse_expr(ps, 0);
 		expect_terminator(ps);
 	}
-
-	return s;
-}
-
-static struct Statement *parse_block(struct ParseState *ps)
-{
-	struct Statement *s	= mkstmt(ps->tok);
-	s->type		= STMT_BLOCK;
-	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
-
-	ps->tok = ps->tok->next;
-
-	while (strcmp(ps->tok->value, "}") && ps->tok->type != TOK_END) {
-//		fprintf(stderr, "looking at %s\n", ps->tok->value);
-		s->block.stmts = oak_realloc(s->block.stmts, sizeof s->block.stmts[0] * (s->block.num + 1));
-		s->block.stmts[s->block.num++] = parse_stmt(ps);
-	}
-
-	expect_symbol(ps, "}");
 
 	return s;
 }

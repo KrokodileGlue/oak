@@ -1,19 +1,15 @@
-a = 420 * 666 + 6969 - '\xFFF n stuff \e';
-
-var a b c = 123 * 456 + -789, 1, 5;
-
-"string 1" "string 2" R($)string 3$
-
-if true {
-	print "Hello, world!";
-	print "other stuff";
-	print "new stuff";
-} else if false {
-	print "Hello... world?";
-	print "blah";
+for i in 1 -> 100 {
+	if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
+	else if i % 5 == 0:		print "fizz"
+	else if i % 3 == 0:		print "buzz"
+	else				print i;
 }
 
-if type a == "integer":
-	print "foo" + "bar";
+# foobar
 
-print "foo bar baz";
+for var i = 1; i < 101; i++ {
+	if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
+	else if i % 5 == 0:		print "fizz"
+	else if i % 3 == 0:		print "buzz"
+	else				print i
+}
