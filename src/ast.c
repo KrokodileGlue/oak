@@ -9,20 +9,29 @@ struct StatementData statement_data[] = {
 	{ STMT_EXPR,		"expression"		},
 	{ STMT_VAR_DECL,	"variable declaration"	},
 	{ STMT_BLOCK,		"block"		},
-	{ STMT_PRINT,		"print"		}
+	{ STMT_PRINT,		"print"		},
+	{ STMT_INVALID,	"invalid statement"	}
 };
 
 struct Expression *mkexpr(struct Token *tok)
 {
 	struct Expression *e = oak_malloc(sizeof *e);
-	*e = (struct Expression){ tok, EXPR_INVALID, NULL, { { NULL, NULL, NULL } } };
+
+	memset(e, 0, sizeof *e);
+	e->tok = tok;
+	e->type = EXPR_INVALID;
+
 	return e;
 }
 
 struct Statement *mkstmt(struct Token *tok)
 {
 	struct Statement *s = oak_malloc(sizeof *s);
-	*s = (struct Statement){ tok, STMT_INVALID, { { NULL, NULL, NULL, NULL} } };
+
+	memset(s, 0, sizeof *s);
+	s->tok = tok;
+	s->type = STMT_INVALID;
+
 	return s;
 }
 
@@ -65,6 +74,15 @@ void free_stmt(struct Statement *s)
 		}
 
 		free(s->print.args);
+
+		break;
+	case STMT_VAR_DECL:
+		for (size_t i = 0; i < s->var_decl.num; i++) {
+			free_expr(s->var_decl.init[i]);
+		}
+
+		free(s->var_decl.init);
+		free(s->var_decl.names);
 
 		break;
 	default:

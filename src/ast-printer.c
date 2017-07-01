@@ -168,6 +168,21 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 
 		ap->depth--;
 		break;
+	case STMT_VAR_DECL:
+		ap->depth++;
+		split(ap);
+
+		for (size_t i = 0; i < s->var_decl.num; i++) {
+			if (i == s->var_decl.num - 1) join(ap);
+			indent(ap);
+			fprintf(ap->f, "(%s)", s->var_decl.names[i]->value);
+			ap->depth++;
+			print_expression(ap, s->var_decl.init[i]);
+			ap->depth--;
+		}
+
+		ap->depth--;
+		break;
 	default:
 		fprintf(ap->f, "unimplemented statement printer\n");
 	}
