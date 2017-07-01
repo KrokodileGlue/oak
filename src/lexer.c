@@ -320,11 +320,11 @@ static char *parse_raw_string_literal(struct LexState *ls, char *a)
 	}
 
 	ls->loc.len = strlen(delim) + 4 + (b - a);
-	lexer_push_token(ls, TOK_STRING, begin, b);
+	lexer_push_token(ls, TOK_STRING, begin, b + strlen(delim));
 
 	ls->tok->string = oak_malloc(strlen(delim) + 4 + (b - a));
-	strncpy(ls->tok->string, ls->tok->value + strlen(delim) + 3, strlen(ls->tok->value));
-	ls->tok->string[strlen(ls->tok->value) - 1] = 0; /* cut off the " at the end */
+	strncpy(ls->tok->string, ls->tok->value + strlen(delim) + 3, (b - begin) - strlen(delim));
+	ls->tok->string[b - a] = 0; /* cut off the delimiter at the end */
 
 	free(delim);
 
@@ -370,6 +370,9 @@ static void eolize(struct Token *tok)
 		tok->is_line_end = (line_number(tok->loc) != line_number(tok->next->loc));
 		tok = tok->next;
 	}
+
+	/* the end of the token stream is also considered a line ending */
+	tok->is_line_end = true;
 }
 
 /* match the longest operator starting from a */

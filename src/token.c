@@ -12,7 +12,6 @@ static char token_type_str[][64] = {
 	"SYMBOL",
 	"INTEGER",
 	"FLOAT",
-	"OPERATOR",
 	"BOOL",
 	"END",
 	"INVALID"
