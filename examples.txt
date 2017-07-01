@@ -1,7 +1,7 @@
 oak: input:
 a = 420 * 666 + 6969 - '\xFFF n stuff \e';
 
-"string 1" "string 2" R($)string 3$
+"string 1" "string 2" R($$$$)string 3$$$$
 
 if true {
 	print "Hello, world!";
@@ -28,7 +28,7 @@ oak: now lexing...
 [    SYMBOL][symb:         -][len:    1][eol:false][value:-]
 [   INTEGER][data:        96][len:   17][eol:false][value:'\xFFF n stuff \e']
 [    SYMBOL][symb:         ;][len:    1][eol: true][value:;]
-[    STRING][               ][len:   11][eol: true][value:"string 1""string 2"R($)string 3]
+[    STRING][               ][len:   11][eol: true][value:"string 1""string 2"R($$$$)string 3$$$$]
 [   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
 [      BOOL][               ][len:    4][eol:false][value:true]
 [    SYMBOL][symb:         {][len:    1][eol: true][value:{]
