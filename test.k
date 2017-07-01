@@ -1,6 +1,6 @@
 a = 420 * 666 + 6969 - '\xFFF n stuff \e';
 
-"string 1" "string 2" R($)string 3$
+"string 1" "string 2" R($$$$)string 3$$$$
 
 if true {
 	print "Hello, world!";
