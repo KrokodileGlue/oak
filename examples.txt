@@ -4,7 +4,7 @@ for i in 1 -> 100 {
 	if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
 	else if i % 5 == 0:		print "fizz"
 	else if i % 3 == 0:		print "buzz"
-	else				print i;
+	else				print i
 }
 */
 
@@ -17,85 +17,121 @@ fn fizzbuzz = {
 	}
 }
 
-(fizzbuzz * 2)(1, 2, 3), 2 * 5
+-f(a = -85 * 92 - 23 ? b++ = (25 * (22 + 38)) : --c = 63) * 43;
+fizzbuzz(1, 2, 3)
+fizzbuzz(4, 5, 6)
+#(fizzbuzz * 2)(1, 2, 3), 2 * 5
 
 oak: now lexing...
 type       | data       | file       | index   | length | eol?  | value   
 --------------------------------------------------------------------------
-   KEYWORD |         fn |     test.k |     165 |      2 | false | fn
-IDENTIFIER |            |     test.k |     168 |      8 | false | fizzbuzz
-    SYMBOL |          = |     test.k |     177 |      1 | false | =
-    SYMBOL |          { |     test.k |     179 |      1 |  true | {
-   KEYWORD |        for |     test.k |     182 |      3 | false | for
-   KEYWORD |        var |     test.k |     186 |      3 | false | var
-IDENTIFIER |            |     test.k |     190 |      1 | false | i
-    SYMBOL |          = |     test.k |     192 |      1 | false | =
-   INTEGER |          1 |     test.k |     194 |      1 | false | 1
-    SYMBOL |          ; |     test.k |     195 |      1 | false | ;
-IDENTIFIER |            |     test.k |     197 |      1 | false | i
-    SYMBOL |          < |     test.k |     199 |      1 | false | <
-   INTEGER |        101 |     test.k |     201 |      3 | false | 101
-    SYMBOL |          ; |     test.k |     204 |      1 | false | ;
-IDENTIFIER |            |     test.k |     206 |      1 | false | i
-    SYMBOL |         ++ |     test.k |     207 |      2 | false | ++
-    SYMBOL |          { |     test.k |     210 |      1 |  true | {
-   KEYWORD |         if |     test.k |     214 |      2 | false | if
-IDENTIFIER |            |     test.k |     217 |      1 | false | i
-    SYMBOL |          % |     test.k |     219 |      1 | false | %
-   INTEGER |          5 |     test.k |     221 |      1 | false | 5
-    SYMBOL |         == |     test.k |     223 |      2 | false | ==
-   INTEGER |          0 |     test.k |     226 |      1 | false | 0
-    SYMBOL |        and |     test.k |     228 |      3 | false | and
-IDENTIFIER |            |     test.k |     232 |      1 | false | i
-    SYMBOL |          % |     test.k |     234 |      1 | false | %
-   INTEGER |          3 |     test.k |     236 |      1 | false | 3
-    SYMBOL |         == |     test.k |     238 |      2 | false | ==
-   INTEGER |          0 |     test.k |     241 |      1 | false | 0
-    SYMBOL |          : |     test.k |     242 |      1 | false | :
-   KEYWORD |      print |     test.k |     244 |      5 | false | print
-    STRING |            |     test.k |     250 |     11 |  true | "fizzbuzz"
-   KEYWORD |       else |     test.k |     263 |      4 | false | else
-   KEYWORD |         if |     test.k |     268 |      2 | false | if
-IDENTIFIER |            |     test.k |     271 |      1 | false | i
-    SYMBOL |          % |     test.k |     273 |      1 | false | %
-   INTEGER |          5 |     test.k |     275 |      1 | false | 5
-    SYMBOL |         == |     test.k |     277 |      2 | false | ==
-   INTEGER |          0 |     test.k |     280 |      1 | false | 0
-    SYMBOL |          : |     test.k |     281 |      1 | false | :
-   KEYWORD |      print |     test.k |     284 |      5 | false | print
-    STRING |            |     test.k |     290 |      7 |  true | "fizz"
-   KEYWORD |       else |     test.k |     299 |      4 | false | else
-   KEYWORD |         if |     test.k |     304 |      2 | false | if
-IDENTIFIER |            |     test.k |     307 |      1 | false | i
-    SYMBOL |          % |     test.k |     309 |      1 | false | %
-   INTEGER |          3 |     test.k |     311 |      1 | false | 3
-    SYMBOL |         == |     test.k |     313 |      2 | false | ==
-   INTEGER |          0 |     test.k |     316 |      1 | false | 0
-    SYMBOL |          : |     test.k |     317 |      1 | false | :
-   KEYWORD |      print |     test.k |     320 |      5 | false | print
-    STRING |            |     test.k |     326 |      7 |  true | "buzz"
-   KEYWORD |       else |     test.k |     335 |      4 | false | else
-   KEYWORD |      print |     test.k |     343 |      5 | false | print
-IDENTIFIER |            |     test.k |     349 |      1 |  true | i
-    SYMBOL |          } |     test.k |     352 |      1 |  true | }
-    SYMBOL |          } |     test.k |     354 |      1 |  true | }
-    SYMBOL |          ( |     test.k |     357 |      1 | false | (
-IDENTIFIER |            |     test.k |     358 |      8 | false | fizzbuzz
+   KEYWORD |         fn |     test.k |     164 |      2 | false | fn
+IDENTIFIER |            |     test.k |     167 |      8 | false | fizzbuzz
+    SYMBOL |          = |     test.k |     176 |      1 | false | =
+    SYMBOL |          { |     test.k |     178 |      1 |  true | {
+   KEYWORD |        for |     test.k |     181 |      3 | false | for
+   KEYWORD |        var |     test.k |     185 |      3 | false | var
+IDENTIFIER |            |     test.k |     189 |      1 | false | i
+    SYMBOL |          = |     test.k |     191 |      1 | false | =
+   INTEGER |          1 |     test.k |     193 |      1 | false | 1
+    SYMBOL |          ; |     test.k |     194 |      1 | false | ;
+IDENTIFIER |            |     test.k |     196 |      1 | false | i
+    SYMBOL |          < |     test.k |     198 |      1 | false | <
+   INTEGER |        101 |     test.k |     200 |      3 | false | 101
+    SYMBOL |          ; |     test.k |     203 |      1 | false | ;
+IDENTIFIER |            |     test.k |     205 |      1 | false | i
+    SYMBOL |         ++ |     test.k |     206 |      2 | false | ++
+    SYMBOL |          { |     test.k |     209 |      1 |  true | {
+   KEYWORD |         if |     test.k |     213 |      2 | false | if
+IDENTIFIER |            |     test.k |     216 |      1 | false | i
+    SYMBOL |          % |     test.k |     218 |      1 | false | %
+   INTEGER |          5 |     test.k |     220 |      1 | false | 5
+    SYMBOL |         == |     test.k |     222 |      2 | false | ==
+   INTEGER |          0 |     test.k |     225 |      1 | false | 0
+    SYMBOL |        and |     test.k |     227 |      3 | false | and
+IDENTIFIER |            |     test.k |     231 |      1 | false | i
+    SYMBOL |          % |     test.k |     233 |      1 | false | %
+   INTEGER |          3 |     test.k |     235 |      1 | false | 3
+    SYMBOL |         == |     test.k |     237 |      2 | false | ==
+   INTEGER |          0 |     test.k |     240 |      1 | false | 0
+    SYMBOL |          : |     test.k |     241 |      1 | false | :
+   KEYWORD |      print |     test.k |     243 |      5 | false | print
+    STRING |            |     test.k |     249 |     10 |  true | "fizzbuzz"
+   KEYWORD |       else |     test.k |     262 |      4 | false | else
+   KEYWORD |         if |     test.k |     267 |      2 | false | if
+IDENTIFIER |            |     test.k |     270 |      1 | false | i
+    SYMBOL |          % |     test.k |     272 |      1 | false | %
+   INTEGER |          5 |     test.k |     274 |      1 | false | 5
+    SYMBOL |         == |     test.k |     276 |      2 | false | ==
+   INTEGER |          0 |     test.k |     279 |      1 | false | 0
+    SYMBOL |          : |     test.k |     280 |      1 | false | :
+   KEYWORD |      print |     test.k |     283 |      5 | false | print
+    STRING |            |     test.k |     289 |      6 |  true | "fizz"
+   KEYWORD |       else |     test.k |     298 |      4 | false | else
+   KEYWORD |         if |     test.k |     303 |      2 | false | if
+IDENTIFIER |            |     test.k |     306 |      1 | false | i
+    SYMBOL |          % |     test.k |     308 |      1 | false | %
+   INTEGER |          3 |     test.k |     310 |      1 | false | 3
+    SYMBOL |         == |     test.k |     312 |      2 | false | ==
+   INTEGER |          0 |     test.k |     315 |      1 | false | 0
+    SYMBOL |          : |     test.k |     316 |      1 | false | :
+   KEYWORD |      print |     test.k |     319 |      5 | false | print
+    STRING |            |     test.k |     325 |      6 |  true | "buzz"
+   KEYWORD |       else |     test.k |     334 |      4 | false | else
+   KEYWORD |      print |     test.k |     342 |      5 | false | print
+IDENTIFIER |            |     test.k |     348 |      1 |  true | i
+    SYMBOL |          } |     test.k |     351 |      1 |  true | }
+    SYMBOL |          } |     test.k |     353 |      1 |  true | }
+    SYMBOL |          - |     test.k |     356 |      1 | false | -
+IDENTIFIER |            |     test.k |     357 |      1 | false | f
+    SYMBOL |          ( |     test.k |     358 |      1 | false | (
+IDENTIFIER |            |     test.k |     359 |      1 | false | a
+    SYMBOL |          = |     test.k |     361 |      1 | false | =
+    SYMBOL |          - |     test.k |     363 |      1 | false | -
+   INTEGER |         85 |     test.k |     364 |      2 | false | 85
     SYMBOL |          * |     test.k |     367 |      1 | false | *
-   INTEGER |          2 |     test.k |     369 |      1 | false | 2
-    SYMBOL |          ) |     test.k |     370 |      1 | false | )
-    SYMBOL |          ( |     test.k |     371 |      1 | false | (
-   INTEGER |          1 |     test.k |     372 |      1 | false | 1
-    SYMBOL |          , |     test.k |     373 |      1 | false | ,
-   INTEGER |          2 |     test.k |     375 |      1 | false | 2
-    SYMBOL |          , |     test.k |     376 |      1 | false | ,
-   INTEGER |          3 |     test.k |     378 |      1 | false | 3
-    SYMBOL |          ) |     test.k |     379 |      1 | false | )
-    SYMBOL |          , |     test.k |     380 |      1 | false | ,
-   INTEGER |          2 |     test.k |     382 |      1 | false | 2
-    SYMBOL |          * |     test.k |     384 |      1 | false | *
-   INTEGER |          5 |     test.k |     386 |      1 |  true | 5
-       END |            |     test.k |     387 |      1 | false | 
+   INTEGER |         92 |     test.k |     369 |      2 | false | 92
+    SYMBOL |          - |     test.k |     372 |      1 | false | -
+   INTEGER |         23 |     test.k |     374 |      2 | false | 23
+    SYMBOL |          ? |     test.k |     377 |      1 | false | ?
+IDENTIFIER |            |     test.k |     379 |      1 | false | b
+    SYMBOL |         ++ |     test.k |     380 |      2 | false | ++
+    SYMBOL |          = |     test.k |     383 |      1 | false | =
+    SYMBOL |          ( |     test.k |     385 |      1 | false | (
+   INTEGER |         25 |     test.k |     386 |      2 | false | 25
+    SYMBOL |          * |     test.k |     389 |      1 | false | *
+    SYMBOL |          ( |     test.k |     391 |      1 | false | (
+   INTEGER |         22 |     test.k |     392 |      2 | false | 22
+    SYMBOL |          + |     test.k |     395 |      1 | false | +
+   INTEGER |         38 |     test.k |     397 |      2 | false | 38
+    SYMBOL |          ) |     test.k |     399 |      1 | false | )
+    SYMBOL |          ) |     test.k |     400 |      1 | false | )
+    SYMBOL |          : |     test.k |     402 |      1 | false | :
+    SYMBOL |         -- |     test.k |     404 |      2 | false | --
+IDENTIFIER |            |     test.k |     406 |      1 | false | c
+    SYMBOL |          = |     test.k |     408 |      1 | false | =
+   INTEGER |         63 |     test.k |     410 |      2 | false | 63
+    SYMBOL |          ) |     test.k |     412 |      1 | false | )
+    SYMBOL |          * |     test.k |     414 |      1 | false | *
+   INTEGER |         43 |     test.k |     416 |      2 | false | 43
+    SYMBOL |          ; |     test.k |     418 |      1 |  true | ;
+IDENTIFIER |            |     test.k |     420 |      8 | false | fizzbuzz
+    SYMBOL |          ( |     test.k |     428 |      1 | false | (
+   INTEGER |          1 |     test.k |     429 |      1 | false | 1
+    SYMBOL |          , |     test.k |     430 |      1 | false | ,
+   INTEGER |          2 |     test.k |     432 |      1 | false | 2
+    SYMBOL |          , |     test.k |     433 |      1 | false | ,
+   INTEGER |          3 |     test.k |     435 |      1 | false | 3
+    SYMBOL |          ) |     test.k |     436 |      1 |  true | )
+IDENTIFIER |            |     test.k |     438 |      8 | false | fizzbuzz
+    SYMBOL |          ( |     test.k |     446 |      1 | false | (
+   INTEGER |          4 |     test.k |     447 |      1 | false | 4
+    SYMBOL |          , |     test.k |     448 |      1 | false | ,
+   INTEGER |          5 |     test.k |     450 |      1 | false | 5
+    SYMBOL |          , |     test.k |     451 |      1 | false | ,
+   INTEGER |          6 |     test.k |     453 |      1 | false | 6
+    SYMBOL |          ) |     test.k |     454 |      1 |  true | )
+       END |            |     test.k |     487 |      1 | false | 
 oak: now parsing...
 (root)
 |-- (stmt function definition)
@@ -159,16 +195,45 @@ oak: now parsing...
 |                                           `-- (else branch)
 |                                               `-- (stmt print)
 |                                                   `-- (identifier i)
+|-- (stmt expression)
+|   `-- (binary *)
+|       |-- (prefix -)
+|       |   `-- (fn call)
+|       |       |-- (identifier f)
+|       |       `-- (arguments)
+|       |           `-- (binary =)
+|       |               |-- (identifier a)
+|       |               `-- (ternary ?)
+|       |                   |-- (binary -)
+|       |                   |   |-- (binary *)
+|       |                   |   |   |-- (prefix -)
+|       |                   |   |   |   `-- (integer 85)
+|       |                   |   |   `-- (integer 92)
+|       |                   |   `-- (integer 23)
+|       |                   |-- (binary =)
+|       |                   |   |-- (postfix ++)
+|       |                   |   |   `-- (identifier b)
+|       |                   |   `-- (binary *)
+|       |                   |       |-- (integer 25)
+|       |                   |       `-- (binary +)
+|       |                   |           |-- (integer 22)
+|       |                   |           `-- (integer 38)
+|       |                   `-- (binary =)
+|       |                       |-- (prefix --)
+|       |                       |   `-- (identifier c)
+|       |                       `-- (integer 63)
+|       `-- (integer 43)
+|-- (stmt expression)
+|   `-- (fn call)
+|       |-- (identifier fizzbuzz)
+|       `-- (arguments)
+|           |-- (integer 1)
+|           |-- (integer 2)
+|           `-- (integer 3)
 `-- (stmt expression)
-    `-- (binary ,)
-        |-- (fn call)
-        |   |-- (binary *)
-        |   |   |-- (identifier fizzbuzz)
-        |   |   `-- (integer 2)
-        |   `-- (arguments)
-        |       |-- (integer 1)
-        |       |-- (integer 2)
-        |       `-- (integer 3)
-        `-- (binary *)
-            |-- (integer 2)
-            `-- (integer 5)
+    `-- (fn call)
+        |-- (identifier fizzbuzz)
+        `-- (arguments)
+            |-- (integer 4)
+            |-- (integer 5)
+            `-- (integer 6)

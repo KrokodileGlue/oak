@@ -6,6 +6,9 @@ struct Operator ops[] = {
 	{ "++",  "",  15, ASS_LEFT,  OP_POSTFIX  },
 	{ "--",  "",  15, ASS_LEFT,  OP_POSTFIX  },
 
+	{ "++",   "", 14, ASS_RIGHT, OP_PREFIX   },
+	{ "--",   "", 14, ASS_RIGHT, OP_PREFIX   },
+
 	{ "+",   "",  14, ASS_RIGHT, OP_PREFIX   },
 	{ "-",   "",  14, ASS_RIGHT, OP_PREFIX   },
 	{ "type","",  14, ASS_RIGHT, OP_PREFIX   },
