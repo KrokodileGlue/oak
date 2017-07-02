@@ -1,8 +1,7 @@
 #include "operator.h"
 
 struct Operator ops[] = {
-	{ "(",   ")", 15, ASS_LEFT,  OP_MEMBER   },
-	{ "[",   "]", 15, ASS_LEFT,  OP_MEMBER   },
+	{ "(",   ")", 15, ASS_LEFT,  OP_FN_CALL  },
 
 	{ "++",  "",  15, ASS_LEFT,  OP_POSTFIX  },
 	{ "--",  "",  15, ASS_LEFT,  OP_POSTFIX  },

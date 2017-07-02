@@ -11,13 +11,13 @@ struct Expression;
 
 enum StmtType {
 	STMT_FN_DEF,
-	STMT_FOR_LOOP,
-	STMT_IF_STMT,
+	STMT_FOR_LOOP,	// DONE
+	STMT_IF_STMT,	// DONE
 	STMT_WHILE_LOOP,
-	STMT_EXPR,
-	STMT_VAR_DECL,
-	STMT_BLOCK,
-	STMT_PRINT,
+	STMT_EXPR,	// DONE
+	STMT_VAR_DECL,	// DONE
+	STMT_BLOCK,	// DONE
+	STMT_PRINT,	// DONE
 	STMT_INVALID
 } type;
 
@@ -34,7 +34,15 @@ struct Statement {
 	enum StmtType type;
 
 	union {
-		/* there are three kinds of for loops:
+		struct {
+			struct Token *name;
+			struct Token **args;
+			size_t num;
+			struct Statement *body;
+		} fn_def;
+
+		/*
+		 * there are three kinds of for loops:
 		 *   for expression in expression:
 		 *   for vardecl; expression; expression:
 		 *   for expression; expression; expression:
@@ -81,6 +89,7 @@ struct Expression {
 	enum ExprType {
 		EXPR_VALUE,
 		EXPR_OPERATOR,
+		EXPR_FN_CALL,
 		EXPR_INVALID
 	} type;
 
@@ -89,9 +98,11 @@ struct Expression {
 	union {
 		struct {
 			struct Expression *a, *b, *c;
+			struct Expression **args;
+			size_t num;
 		};
 
-		struct Token *value;
+		struct Token *val;
 	};
 };
 

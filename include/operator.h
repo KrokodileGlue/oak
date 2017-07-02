@@ -21,9 +21,9 @@ struct Operator {
 		OP_PREFIX,
 
 		/* infix operator types */
+		OP_FN_CALL,
 		OP_POSTFIX,
 		OP_BINARY,
-		OP_MEMBER,
 		OP_TERNARY,
 		OP_INVALID
 	} type;
