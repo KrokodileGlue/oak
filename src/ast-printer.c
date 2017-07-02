@@ -43,7 +43,7 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 {
 	indent(ap);
 
-	if (e->type == EXPR_OPERATOR) {
+	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL) {
 		struct Operator *op = e->operator;
 
 		switch (op->type) {
@@ -84,8 +84,24 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 			print_expression(ap, e->a);
 			ap->depth--;
 			break;
-		case OP_MEMBER:
-			fprintf(ap->f,"(member of )");
+		case OP_FN_CALL:
+			fprintf(ap->f,"(fn call)");
+			ap->depth++; split(ap);
+
+			print_expression(ap, e->a);
+			join(ap); indent(ap);
+			fprintf(ap->f, "(arguments)");
+
+			ap->depth++;
+			split(ap);
+			for (size_t i = 0; i < e->num; i++) {
+				if (i == e->num - 1) join(ap);
+				print_expression(ap, e->args[i]);
+			}
+			join(ap);
+			ap->depth--;
+
+			ap->depth--;
 			break;
 		case OP_INVALID:
 			fprintf(stderr, "An invalid node was encountered. This should never happen.\n");
@@ -93,21 +109,21 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 			break;
 		}
 	} else {
-		switch (e->value->type) {
+		switch (e->val->type) {
 		case TOK_IDENTIFIER:
-			fprintf(ap->f, "(identifier %s)", e->value->value);
+			fprintf(ap->f, "(identifier %s)", e->val->value);
 			break;
 		case TOK_INTEGER:
-			fprintf(ap->f, "(integer %zd)", e->value->integer);
+			fprintf(ap->f, "(integer %zd)", e->val->integer);
 			break;
 		case TOK_STRING:
-			fprintf(ap->f, "(string \"%s\")", e->value->string);
+			fprintf(ap->f, "(string \"%s\")", e->val->string);
 			break;
 		case TOK_FLOAT:
-			fprintf(ap->f, "(float %f)", e->value->floating);
+			fprintf(ap->f, "(float %f)", e->val->floating);
 			break;
 		case TOK_BOOL:
-			fprintf(ap->f, "(bool %s)", e->value->boolean ? "true" : "false");
+			fprintf(ap->f, "(bool %s)", e->val->boolean ? "true" : "false");
 			break;
 		default:
 			fprintf(stderr, "impossible value token %d\n", e->type);
@@ -206,6 +222,34 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		join(ap);
 		indent(ap);  fprintf(ap->f, "(body)");
 		ap->depth++; print_statement(ap, s->for_loop.body); ap->depth--;
+
+		ap->depth--;
+		break;
+	case STMT_FN_DEF:
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(name)");
+		ap->depth++; indent(ap); fprintf(ap->f, "(%s)", s->tok->value); ap->depth--;
+
+		indent(ap);  fprintf(ap->f, "(arguments)");
+
+		ap->depth++;
+		split(ap);
+		for (size_t i = 0; i < s->fn_def.num; i++) {
+			if (i == s->fn_def.num - 1) join(ap);
+			indent(ap);
+			fprintf(ap->f, "(%s)", s->fn_def.args[i]->value);
+		}
+		join(ap);
+		ap->depth--;
+
+		join(ap);
+		indent(ap);  fprintf(ap->f, "(body)");
+
+		ap->depth++;
+		print_statement(ap, s->for_loop.body);
+		ap->depth--;
 
 		ap->depth--;
 		break;

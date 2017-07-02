@@ -135,7 +135,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 			|| ps->tok->type == TOK_IDENTIFIER
 			|| ps->tok->type == TOK_BOOL) {
 			left->type = EXPR_VALUE;
-			left->value = ps->tok;
+			left->val = ps->tok;
 			ps->tok = ps->tok->next;
 		} else {
 			error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an expression, value or prefix operator");
@@ -150,7 +150,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		op = get_infix_op(ps);
 		if (!op) return left;
 
-		e = mkexpr();
+		e = mkexpr(ps->tok);
 		e->type = EXPR_OPERATOR;
 		e->operator = op;
 		e->a = left;
@@ -160,10 +160,20 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 			e->b = parse_expr(ps, 1);
 			expect_symbol(ps, op->body2);
 			e->c = parse_expr(ps, 1);
-		} else if (op->type == OP_MEMBER) {
+		} else if (op->type == OP_FN_CALL) { /* aka '(' */
+			e->type = EXPR_FN_CALL;
+
 			ps->tok = ps->tok->next;
-			e->b = parse_expr(ps, 0);
-			ps->tok = ps->tok->next;
+			if (strcmp(ps->tok->value, op->body2)) {
+				ps->tok = ps->tok->prev;
+				do {
+					ps->tok = ps->tok->next;
+					e->args = oak_realloc(e->args, sizeof e->args[0] * (e->num + 1));
+					e->args[e->num++] = parse_expr(ps, 1);
+				} while(!strcmp(ps->tok->value, ","));
+			}
+
+			expect_symbol(ps, op->body2);
 		} else if (op->type == OP_BINARY) {
 			ps->tok = ps->tok->next;
 			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
@@ -202,8 +212,28 @@ static struct Statement *parse_if_stmt(struct ParseState *ps)
 
 static struct Statement *parse_fn_def(struct ParseState *ps)
 {
-	printf("TODO: parse function definitions\n");
-	return NULL;
+	ps->tok = ps->tok->next;
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_FN_DEF;
+
+	if (ps->tok->type != TOK_IDENTIFIER) {
+		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+	}
+
+	s->fn_def.name = ps->tok;
+	ps->tok = ps->tok->next;
+
+	while (ps->tok->type == TOK_IDENTIFIER) {
+		s->fn_def.args = oak_realloc(s->fn_def.args, sizeof *s->fn_def.args * (s->fn_def.num + 1));
+		s->fn_def.args[s->fn_def.num++] = ps->tok;
+		ps->tok = ps->tok->next;
+	}
+
+	expect_symbol(ps, "=");
+
+	s->fn_def.body = parse_stmt(ps);
+
+	return s;
 }
 
 static struct Statement *parse_print_stmt(struct ParseState *ps)

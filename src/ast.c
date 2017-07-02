@@ -39,6 +39,12 @@ void free_expr(struct Expression *e)
 {
 	if (e->type == EXPR_VALUE) {
 		/* don't free the tokens here */
+	} else if (e->type == EXPR_FN_CALL) {
+		free_expr(e->a);
+		for (size_t i = 0; i < e->num; i++) {
+			free_expr(e->args[i]);
+		}
+		free(e->args);
 	} else {
 		if (e->a) free_expr(e->a);
 		if (e->b) free_expr(e->b);
@@ -92,8 +98,12 @@ void free_stmt(struct Statement *s)
 		free_stmt(s->for_loop.body);
 
 		break;
+	case STMT_FN_DEF:
+		free_stmt(s->fn_def.body);
+
+		break;
 	default:
-		fprintf(stderr, "cannot free thing.\n");
+		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);
 	}
 
 	free(s);
