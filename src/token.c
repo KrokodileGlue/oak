@@ -95,7 +95,11 @@ char *token_get_str(enum TokType type)
 
 void token_write(struct Token *tok, FILE *fp)
 {
+	fprintf(fp, "type       | data       | file       | index   | length | eol?  | value   \n");
+//	fprintf(fp, "token type | data       | file       | index   | length | eol?  | value   \n");
+	fprintf(fp, "--------------------------------------------------------------------------\n");
 	while (tok) {
+//		fprintf("   KEYWORD | keyw:        fn | file:    test.k | index:  165 | len:    2 | eol:false | value:fn");
 		if (tok->type <= TOK_INVALID)
 			fprintf(fp, "%10s | ", token_type_str[(size_t)tok->type]);
 		else
@@ -103,23 +107,23 @@ void token_write(struct Token *tok, FILE *fp)
 
 		switch (tok->type) {
 		case TOK_FLOAT:
-			fprintf(fp, "data:%10.4f | ", tok->floating);
+			fprintf(fp, "%10.4f | ", tok->floating);
 			break;
 		case TOK_INTEGER:
-			fprintf(fp, "data:%10zd | ", tok->integer);
+			fprintf(fp, "%10zd | ", tok->integer);
 			break;
 		case TOK_SYMBOL:
-			fprintf(fp, "symb:%10s | ", tok->value);
+			fprintf(fp, "%10s | ", tok->value);
 			break;
 		case TOK_KEYWORD:
-			fprintf(fp, "keyw:%10s | ", tok->keyword->body);
+			fprintf(fp, "%10s | ", tok->keyword->body);
 			break;
 		default:
-			fprintf(fp, "     %10s | ", "");
+			fprintf(fp, "%10s | ", "");
 		}
 
-		fprintf(fp, "file:%10s | index:%5zd | ", tok->loc.file, tok->loc.index);
-		fprintf(fp, "len:%5zd | eol:%5s | value:%s",
+		fprintf(fp, "%10s | %7zd | ", tok->loc.file, tok->loc.index);
+		fprintf(fp, "%6zd | %5s | %s",
 			tok->loc.len, tok->is_line_end ? "true" : "false", tok->value);
 
 		fputc('\n', fp);

@@ -1,226 +1,174 @@
 oak: input:
+/*
 for i in 1 -> 100 {
 	if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
 	else if i % 5 == 0:		print "fizz"
 	else if i % 3 == 0:		print "buzz"
 	else				print i;
 }
+*/
 
-# foobar
-
-for var i = 1; i < 101; i++ {
-	if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
-	else if i % 5 == 0:		print "fizz"
-	else if i % 3 == 0:		print "buzz"
-	else				print i
+fn fizzbuzz = {
+	for var i = 1; i < 101; i++ {
+		if i % 5 == 0 and i % 3 == 0:	print "fizzbuzz"
+		else if i % 5 == 0:		print "fizz"
+		else if i % 3 == 0:		print "buzz"
+		else				print i
+	}
 }
 
+(fizzbuzz * 2)(1, 2, 3), 2 * 5
+
 oak: now lexing...
-[   KEYWORD][keyw:       for][len:    3][eol:false][value:for]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[   KEYWORD][keyw:        in][len:    2][eol:false][value:in]
-[   INTEGER][data:         1][len:    1][eol:false][value:1]
-[    SYMBOL][symb:        ->][len:    2][eol:false][value:->]
-[   INTEGER][data:       100][len:    3][eol:false][value:100]
-[    SYMBOL][symb:         {][len:    1][eol: true][value:{]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         5][len:    1][eol:false][value:5]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:       and][len:    3][eol:false][value:and]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         3][len:    1][eol:false][value:3]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:   11][eol: true][value:"fizzbuzz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         5][len:    1][eol:false][value:5]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:    7][eol: true][value:"fizz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         3][len:    1][eol:false][value:3]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:    7][eol: true][value:"buzz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         ;][len:    1][eol: true][value:;]
-[    SYMBOL][symb:         }][len:    1][eol: true][value:}]
-[   KEYWORD][keyw:       for][len:    3][eol:false][value:for]
-[   KEYWORD][keyw:       var][len:    3][eol:false][value:var]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         =][len:    1][eol:false][value:=]
-[   INTEGER][data:         1][len:    1][eol:false][value:1]
-[    SYMBOL][symb:         ;][len:    1][eol:false][value:;]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         <][len:    1][eol:false][value:<]
-[   INTEGER][data:       101][len:    3][eol:false][value:101]
-[    SYMBOL][symb:         ;][len:    1][eol:false][value:;]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:        ++][len:    2][eol:false][value:++]
-[    SYMBOL][symb:         {][len:    1][eol: true][value:{]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         5][len:    1][eol:false][value:5]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:       and][len:    3][eol:false][value:and]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         3][len:    1][eol:false][value:3]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:   11][eol: true][value:"fizzbuzz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         5][len:    1][eol:false][value:5]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:    7][eol: true][value:"fizz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:        if][len:    2][eol:false][value:if]
-[IDENTIFIER][               ][len:    1][eol:false][value:i]
-[    SYMBOL][symb:         %][len:    1][eol:false][value:%]
-[   INTEGER][data:         3][len:    1][eol:false][value:3]
-[    SYMBOL][symb:        ==][len:    2][eol:false][value:==]
-[   INTEGER][data:         0][len:    1][eol:false][value:0]
-[    SYMBOL][symb:         :][len:    1][eol:false][value::]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[    STRING][               ][len:    7][eol: true][value:"buzz"]
-[   KEYWORD][keyw:      else][len:    4][eol:false][value:else]
-[   KEYWORD][keyw:     print][len:    5][eol:false][value:print]
-[IDENTIFIER][               ][len:    1][eol: true][value:i]
-[    SYMBOL][symb:         }][len:    1][eol: true][value:}]
-[       END][               ][len:    1][eol:false][value:]
+type       | data       | file       | index   | length | eol?  | value   
+--------------------------------------------------------------------------
+   KEYWORD |         fn |     test.k |     165 |      2 | false | fn
+IDENTIFIER |            |     test.k |     168 |      8 | false | fizzbuzz
+    SYMBOL |          = |     test.k |     177 |      1 | false | =
+    SYMBOL |          { |     test.k |     179 |      1 |  true | {
+   KEYWORD |        for |     test.k |     182 |      3 | false | for
+   KEYWORD |        var |     test.k |     186 |      3 | false | var
+IDENTIFIER |            |     test.k |     190 |      1 | false | i
+    SYMBOL |          = |     test.k |     192 |      1 | false | =
+   INTEGER |          1 |     test.k |     194 |      1 | false | 1
+    SYMBOL |          ; |     test.k |     195 |      1 | false | ;
+IDENTIFIER |            |     test.k |     197 |      1 | false | i
+    SYMBOL |          < |     test.k |     199 |      1 | false | <
+   INTEGER |        101 |     test.k |     201 |      3 | false | 101
+    SYMBOL |          ; |     test.k |     204 |      1 | false | ;
+IDENTIFIER |            |     test.k |     206 |      1 | false | i
+    SYMBOL |         ++ |     test.k |     207 |      2 | false | ++
+    SYMBOL |          { |     test.k |     210 |      1 |  true | {
+   KEYWORD |         if |     test.k |     214 |      2 | false | if
+IDENTIFIER |            |     test.k |     217 |      1 | false | i
+    SYMBOL |          % |     test.k |     219 |      1 | false | %
+   INTEGER |          5 |     test.k |     221 |      1 | false | 5
+    SYMBOL |         == |     test.k |     223 |      2 | false | ==
+   INTEGER |          0 |     test.k |     226 |      1 | false | 0
+    SYMBOL |        and |     test.k |     228 |      3 | false | and
+IDENTIFIER |            |     test.k |     232 |      1 | false | i
+    SYMBOL |          % |     test.k |     234 |      1 | false | %
+   INTEGER |          3 |     test.k |     236 |      1 | false | 3
+    SYMBOL |         == |     test.k |     238 |      2 | false | ==
+   INTEGER |          0 |     test.k |     241 |      1 | false | 0
+    SYMBOL |          : |     test.k |     242 |      1 | false | :
+   KEYWORD |      print |     test.k |     244 |      5 | false | print
+    STRING |            |     test.k |     250 |     11 |  true | "fizzbuzz"
+   KEYWORD |       else |     test.k |     263 |      4 | false | else
+   KEYWORD |         if |     test.k |     268 |      2 | false | if
+IDENTIFIER |            |     test.k |     271 |      1 | false | i
+    SYMBOL |          % |     test.k |     273 |      1 | false | %
+   INTEGER |          5 |     test.k |     275 |      1 | false | 5
+    SYMBOL |         == |     test.k |     277 |      2 | false | ==
+   INTEGER |          0 |     test.k |     280 |      1 | false | 0
+    SYMBOL |          : |     test.k |     281 |      1 | false | :
+   KEYWORD |      print |     test.k |     284 |      5 | false | print
+    STRING |            |     test.k |     290 |      7 |  true | "fizz"
+   KEYWORD |       else |     test.k |     299 |      4 | false | else
+   KEYWORD |         if |     test.k |     304 |      2 | false | if
+IDENTIFIER |            |     test.k |     307 |      1 | false | i
+    SYMBOL |          % |     test.k |     309 |      1 | false | %
+   INTEGER |          3 |     test.k |     311 |      1 | false | 3
+    SYMBOL |         == |     test.k |     313 |      2 | false | ==
+   INTEGER |          0 |     test.k |     316 |      1 | false | 0
+    SYMBOL |          : |     test.k |     317 |      1 | false | :
+   KEYWORD |      print |     test.k |     320 |      5 | false | print
+    STRING |            |     test.k |     326 |      7 |  true | "buzz"
+   KEYWORD |       else |     test.k |     335 |      4 | false | else
+   KEYWORD |      print |     test.k |     343 |      5 | false | print
+IDENTIFIER |            |     test.k |     349 |      1 |  true | i
+    SYMBOL |          } |     test.k |     352 |      1 |  true | }
+    SYMBOL |          } |     test.k |     354 |      1 |  true | }
+    SYMBOL |          ( |     test.k |     357 |      1 | false | (
+IDENTIFIER |            |     test.k |     358 |      8 | false | fizzbuzz
+    SYMBOL |          * |     test.k |     367 |      1 | false | *
+   INTEGER |          2 |     test.k |     369 |      1 | false | 2
+    SYMBOL |          ) |     test.k |     370 |      1 | false | )
+    SYMBOL |          ( |     test.k |     371 |      1 | false | (
+   INTEGER |          1 |     test.k |     372 |      1 | false | 1
+    SYMBOL |          , |     test.k |     373 |      1 | false | ,
+   INTEGER |          2 |     test.k |     375 |      1 | false | 2
+    SYMBOL |          , |     test.k |     376 |      1 | false | ,
+   INTEGER |          3 |     test.k |     378 |      1 | false | 3
+    SYMBOL |          ) |     test.k |     379 |      1 | false | )
+    SYMBOL |          , |     test.k |     380 |      1 | false | ,
+   INTEGER |          2 |     test.k |     382 |      1 | false | 2
+    SYMBOL |          * |     test.k |     384 |      1 | false | *
+   INTEGER |          5 |     test.k |     386 |      1 |  true | 5
+       END |            |     test.k |     387 |      1 | false | 
 oak: now parsing...
 (root)
-|-- (stmt for loop)
-|   |-- (initializer)
-|   |   `-- (stmt expression)
-|   |       `-- (identifier i)
-|   |-- (iterator)
-|   |   `-- (binary ->)
-|   |       |-- (integer 1)
-|   |       `-- (integer 100)
+|-- (stmt function definition)
+|   |-- (name)
+|   |   `-- (fizzbuzz)
+|   |-- (arguments)
 |   `-- (body)
 |       `-- (stmt block)
-|           `-- (stmt if)
+|           `-- (stmt for loop)
+|               |-- (initializer)
+|               |   `-- (stmt variable declaration)
+|               |       `-- (i)
+|               |           `-- (integer 1)
 |               |-- (condition)
-|               |   `-- (binary and)
-|               |       |-- (binary ==)
-|               |       |   |-- (binary %)
-|               |       |   |   |-- (identifier i)
-|               |       |   |   `-- (integer 5)
-|               |       |   `-- (integer 0)
-|               |       `-- (binary ==)
-|               |           |-- (binary %)
-|               |           |   |-- (identifier i)
-|               |           |   `-- (integer 3)
-|               |           `-- (integer 0)
-|               |-- (then branch)
-|               |   `-- (stmt print)
-|               |       `-- (string "fizzbuzz")
-|               `-- (else branch)
-|                   `-- (stmt if)
-|                       |-- (condition)
-|                       |   `-- (binary ==)
-|                       |       |-- (binary %)
-|                       |       |   |-- (identifier i)
-|                       |       |   `-- (integer 5)
-|                       |       `-- (integer 0)
-|                       |-- (then branch)
-|                       |   `-- (stmt print)
-|                       |       `-- (string "fizz")
-|                       `-- (else branch)
-|                           `-- (stmt if)
-|                               |-- (condition)
-|                               |   `-- (binary ==)
-|                               |       |-- (binary %)
-|                               |       |   |-- (identifier i)
-|                               |       |   `-- (integer 3)
-|                               |       `-- (integer 0)
-|                               |-- (then branch)
-|                               |   `-- (stmt print)
-|                               |       `-- (string "buzz")
-|                               `-- (else branch)
-|                                   `-- (stmt print)
-|                                       `-- (identifier i)
-`-- (stmt for loop)
-    |-- (initializer)
-    |   `-- (stmt variable declaration)
-    |       `-- (i)
-    |           `-- (integer 1)
-    |-- (condition)
-    |   `-- (binary <)
-    |       |-- (identifier i)
-    |       `-- (integer 101)
-    |-- (next)
-    |   `-- (postfix ++)
-    |       `-- (identifier i)
-    `-- (body)
-        `-- (stmt block)
-            `-- (stmt if)
-                |-- (condition)
-                |   `-- (binary and)
-                |       |-- (binary ==)
-                |       |   |-- (binary %)
-                |       |   |   |-- (identifier i)
-                |       |   |   `-- (integer 5)
-                |       |   `-- (integer 0)
-                |       `-- (binary ==)
-                |           |-- (binary %)
-                |           |   |-- (identifier i)
-                |           |   `-- (integer 3)
-                |           `-- (integer 0)
-                |-- (then branch)
-                |   `-- (stmt print)
-                |       `-- (string "fizzbuzz")
-                `-- (else branch)
-                    `-- (stmt if)
-                        |-- (condition)
-                        |   `-- (binary ==)
-                        |       |-- (binary %)
-                        |       |   |-- (identifier i)
-                        |       |   `-- (integer 5)
-                        |       `-- (integer 0)
-                        |-- (then branch)
-                        |   `-- (stmt print)
-                        |       `-- (string "fizz")
-                        `-- (else branch)
-                            `-- (stmt if)
-                                |-- (condition)
-                                |   `-- (binary ==)
-                                |       |-- (binary %)
-                                |       |   |-- (identifier i)
-                                |       |   `-- (integer 3)
-                                |       `-- (integer 0)
-                                |-- (then branch)
-                                |   `-- (stmt print)
-                                |       `-- (string "buzz")
-                                `-- (else branch)
-                                    `-- (stmt print)
-                                        `-- (identifier i)
+|               |   `-- (binary <)
+|               |       |-- (identifier i)
+|               |       `-- (integer 101)
+|               |-- (next)
+|               |   `-- (postfix ++)
+|               |       `-- (identifier i)
+|               `-- (body)
+|                   `-- (stmt block)
+|                       `-- (stmt if)
+|                           |-- (condition)
+|                           |   `-- (binary and)
+|                           |       |-- (binary ==)
+|                           |       |   |-- (binary %)
+|                           |       |   |   |-- (identifier i)
+|                           |       |   |   `-- (integer 5)
+|                           |       |   `-- (integer 0)
+|                           |       `-- (binary ==)
+|                           |           |-- (binary %)
+|                           |           |   |-- (identifier i)
+|                           |           |   `-- (integer 3)
+|                           |           `-- (integer 0)
+|                           |-- (then branch)
+|                           |   `-- (stmt print)
+|                           |       `-- (string "fizzbuzz")
+|                           `-- (else branch)
+|                               `-- (stmt if)
+|                                   |-- (condition)
+|                                   |   `-- (binary ==)
+|                                   |       |-- (binary %)
+|                                   |       |   |-- (identifier i)
+|                                   |       |   `-- (integer 5)
+|                                   |       `-- (integer 0)
+|                                   |-- (then branch)
+|                                   |   `-- (stmt print)
+|                                   |       `-- (string "fizz")
+|                                   `-- (else branch)
+|                                       `-- (stmt if)
+|                                           |-- (condition)
+|                                           |   `-- (binary ==)
+|                                           |       |-- (binary %)
+|                                           |       |   |-- (identifier i)
+|                                           |       |   `-- (integer 3)
+|                                           |       `-- (integer 0)
+|                                           |-- (then branch)
+|                                           |   `-- (stmt print)
+|                                           |       `-- (string "buzz")
+|                                           `-- (else branch)
+|                                               `-- (stmt print)
+|                                                   `-- (identifier i)
+`-- (stmt expression)
+    `-- (binary ,)
+        |-- (fn call)
+        |   |-- (binary *)
+        |   |   |-- (identifier fizzbuzz)
+        |   |   `-- (integer 2)
+        |   `-- (arguments)
+        |       |-- (integer 1)
+        |       |-- (integer 2)
+        |       `-- (integer 3)
+        `-- (binary *)
+            |-- (integer 2)
+            `-- (integer 5)
