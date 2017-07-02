@@ -231,7 +231,7 @@ static char *parse_string_literal(struct LexState *ls, char *a)
 		return b;
 	}
 
-	ls->loc.len = b - a + 2;
+	ls->loc.len = b - a + 1;
 	lexer_push_token(ls, TOK_STRING, a, b + 1);
 
 	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
@@ -319,7 +319,7 @@ static char *parse_raw_string_literal(struct LexState *ls, char *a)
 		return b;
 	}
 
-	ls->loc.len = strlen(delim) + 4 + (b - a);
+	ls->loc.len = strlen(delim) * 2 + 3 + (b - a);
 	lexer_push_token(ls, TOK_STRING, begin, b + strlen(delim));
 
 	ls->tok->string = oak_malloc(strlen(delim) + 4 + (b - a));
