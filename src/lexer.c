@@ -363,18 +363,6 @@ static bool cat_strings(struct Token *tok)
 	return ret;
 }
 
-/* set the is_line_end flag on tokens that are at the end of lines */
-static void eolize(struct Token *tok)
-{
-	while (tok && tok->next) {
-		tok->is_line_end = (line_number(tok->loc) != line_number(tok->next->loc));
-		tok = tok->next;
-	}
-
-	/* the end of the token stream is also considered a line ending */
-	tok->prev->is_line_end = true;
-}
-
 /* match the longest operator starting from a */
 static struct Operator *match_operator(char *a)
 {
@@ -427,6 +415,7 @@ struct Token *tokenize(struct LexState *ls)
 
 		if (is_whitespace(*a)) {
 			while (is_whitespace(*a) && *a) {
+				if ((*a == '\n' || *a == 0) && ls->tok) ls->tok->is_line_end = true;
 				a++;
 			}
 			continue;
@@ -506,7 +495,6 @@ struct Token *tokenize(struct LexState *ls)
 	lexer_push_token(ls, TOK_END, a, a);
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
-	eolize(ls->tok);
 
 	return ls->tok;
 }

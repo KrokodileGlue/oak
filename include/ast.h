@@ -10,7 +10,7 @@
 struct Expression;
 
 enum StmtType {
-	STMT_FN_DEF,
+	STMT_FN_DEF,	// DONE
 	STMT_FOR_LOOP,	// DONE
 	STMT_IF_STMT,	// DONE
 	STMT_WHILE_LOOP,
@@ -18,6 +18,7 @@ enum StmtType {
 	STMT_VAR_DECL,	// DONE
 	STMT_BLOCK,	// DONE
 	STMT_PRINT,	// DONE
+	STMT_YIELD,
 	STMT_INVALID
 } type;
 
@@ -34,6 +35,10 @@ struct Statement {
 	enum StmtType type;
 
 	union {
+		struct {
+			struct Expression *expr;
+		} yield;
+
 		struct {
 			struct Token *name;
 			struct Token **args;

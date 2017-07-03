@@ -10,6 +10,7 @@ struct StatementData statement_data[] = {
 	{ STMT_VAR_DECL,	"variable declaration"	},
 	{ STMT_BLOCK,		"block"		},
 	{ STMT_PRINT,		"print"		},
+	{ STMT_YIELD,		"yield"		},
 	{ STMT_INVALID,	"invalid statement"	}
 };
 
@@ -100,7 +101,11 @@ void free_stmt(struct Statement *s)
 		break;
 	case STMT_FN_DEF:
 		free_stmt(s->fn_def.body);
+		free(s->fn_def.args);
 
+		break;
+	case STMT_YIELD:
+		free_expr(s->yield.expr);
 		break;
 	default:
 		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);

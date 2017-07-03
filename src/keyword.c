@@ -12,6 +12,7 @@ struct Keyword keywords[] = {
 	{ KEYWORD_VAR,		"var"		},
 	{ KEYWORD_PRINT,	"print"	},
 	{ KEYWORD_IN,		"in"		},
+	{ KEYWORD_YIELD,	"yield"	},
 	{ KEYWORD_INVALID,	"invalid"	}
 };
 
