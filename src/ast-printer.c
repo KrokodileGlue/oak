@@ -253,6 +253,11 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 
 		ap->depth--;
 		break;
+	case STMT_YIELD:
+		ap->depth++;
+		print_expression(ap, s->expr);
+		ap->depth--;
+		break;
 	case STMT_INVALID:
 		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
