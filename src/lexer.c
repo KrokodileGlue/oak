@@ -415,7 +415,7 @@ struct Token *tokenize(struct LexState *ls)
 
 		if (is_whitespace(*a)) {
 			while (is_whitespace(*a) && *a) {
-				if ((*a == '\n' || *a == 0) && ls->tok) ls->tok->is_line_end = true;
+				if (*a == '\n' && ls->tok) ls->tok->is_line_end = true;
 				a++;
 			}
 			continue;
@@ -492,6 +492,7 @@ struct Token *tokenize(struct LexState *ls)
 		}
 	}
 
+	if (ls->tok) ls->tok->is_line_end = true;
 	lexer_push_token(ls, TOK_END, a, a);
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);

@@ -13,6 +13,8 @@ struct Keyword keywords[] = {
 	{ KEYWORD_PRINT,	"print"	},
 	{ KEYWORD_IN,		"in"		},
 	{ KEYWORD_YIELD,	"yield"	},
+	{ KEYWORD_WHILE,	"while"	},
+	{ KEYWORD_DO,		"do"		},
 	{ KEYWORD_INVALID,	"invalid"	}
 };
 

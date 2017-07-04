@@ -5,7 +5,8 @@ struct StatementData statement_data[] = {
 	{ STMT_FN_DEF,		"function definition"	},
 	{ STMT_FOR_LOOP,	"for loop"		},
 	{ STMT_IF_STMT,	"if"			},
-	{ STMT_WHILE_LOOP,	"while loop"		},
+	{ STMT_WHILE,		"while loop"		},
+	{ STMT_DO,		"do-while loop"	},
 	{ STMT_EXPR,		"expression"		},
 	{ STMT_VAR_DECL,	"variable declaration"	},
 	{ STMT_BLOCK,		"block"		},
@@ -84,7 +85,7 @@ void free_stmt(struct Statement *s)
 
 		break;
 	case STMT_VAR_DECL:
-		for (size_t i = 0; i < s->var_decl.num; i++) {
+		for (size_t i = 0; i < s->var_decl.num_init; i++) {
 			free_expr(s->var_decl.init[i]);
 		}
 
@@ -95,7 +96,8 @@ void free_stmt(struct Statement *s)
 	case STMT_FOR_LOOP:
 		free_stmt(s->for_loop.a);
 		free_expr(s->for_loop.b);
-		if (s->for_loop.c) free_expr(s->for_loop.c);
+		if (s->for_loop.c)
+			free_expr(s->for_loop.c);
 		free_stmt(s->for_loop.body);
 
 		break;
@@ -106,6 +108,17 @@ void free_stmt(struct Statement *s)
 		break;
 	case STMT_YIELD:
 		free_expr(s->yield.expr);
+
+		break;
+	case STMT_WHILE:
+		free_expr(s->while_loop.cond);
+		free_stmt(s->while_loop.body);
+
+		break;
+	case STMT_DO:
+		free_expr(s->do_while_loop.cond);
+		free_stmt(s->do_while_loop.body);
+
 		break;
 	default:
 		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);

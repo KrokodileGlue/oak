@@ -195,9 +195,11 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 			if (i == s->var_decl.num - 1) join(ap);
 			indent(ap);
 			fprintf(ap->f, "(%s)", s->var_decl.names[i]->value);
-			ap->depth++;
-			print_expression(ap, s->var_decl.init[i]);
-			ap->depth--;
+			if (s->var_decl.num_init) {
+				ap->depth++;
+				print_expression(ap, s->var_decl.init[i]);
+				ap->depth--;
+			}
 		}
 
 		ap->depth--;
@@ -256,6 +258,32 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 	case STMT_YIELD:
 		ap->depth++;
 		print_expression(ap, s->expr);
+		ap->depth--;
+		break;
+	case STMT_WHILE:
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(condition)");
+		ap->depth++; print_expression(ap, s->while_loop.cond); ap->depth--;
+
+		join(ap);
+		indent(ap);  fprintf(ap->f, "(body)");
+		ap->depth++; print_statement(ap, s->while_loop.body); ap->depth--;
+
+		ap->depth--;
+		break;
+	case STMT_DO:
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(body)");
+		ap->depth++; print_statement(ap, s->do_while_loop.body); ap->depth--;
+
+		join(ap);
+		indent(ap);  fprintf(ap->f, "(condition)");
+		ap->depth++; print_expression(ap, s->do_while_loop.cond); ap->depth--;
+
 		ap->depth--;
 		break;
 	case STMT_INVALID:
