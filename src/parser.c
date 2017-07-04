@@ -105,7 +105,7 @@ static size_t get_prec(struct ParseState *ps, size_t prec)
 
 static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 {
-	struct Expression *left = mkexpr();
+	struct Expression *left = mkexpr(ps->tok);
 	struct Operator *op = get_prefix_op(ps);
 
 	if (op || !strcmp(ps->tok->value, "(")) {
@@ -271,21 +271,25 @@ static struct Statement *parse_vardecl(struct ParseState *ps)
 		NEXT;
 	}
 
-	expect_symbol(ps, "=");
-	ps->tok = ps->tok->prev;
-
-	size_t i = 0;
-	do {
+	if (!strcmp(ps->tok->value, "=")) {
 		NEXT;
+		s->var_decl.num_init = s->var_decl.num;
 
-		s->var_decl.init = oak_realloc(s->var_decl.init, sizeof *s->var_decl.init * (i + 1));
-		s->var_decl.init[i] = parse_expr(ps, 1);
+		size_t i = 0;
+		do {
+			NEXT;
 
-		i++;
-	} while (!strcmp(ps->tok->value, ","));
+			s->var_decl.init = oak_realloc(s->var_decl.init, sizeof *s->var_decl.init * (i + 1));
+			s->var_decl.init[i] = parse_expr(ps, 1);
 
-	if (i != s->var_decl.num) {
-		error_push(ps->es, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
+			i++;
+		} while (!strcmp(ps->tok->value, ","));
+
+		if (i != s->var_decl.num) {
+			error_push(ps->es, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
+		}
+	} else {
+		s->var_decl.num_init = 0;
 	}
 
 	return s;
@@ -366,6 +370,34 @@ static struct Statement *parse_yield(struct ParseState *ps)
 	return s;
 }
 
+static struct Statement *parse_while(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_WHILE;
+	NEXT;
+
+	s->while_loop.cond = parse_expr(ps, 0);
+	if (!strcmp(ps->tok->value, ":")) NEXT;
+
+	s->while_loop.body = parse_stmt(ps);
+
+	return s;
+}
+
+static struct Statement *parse_do(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_DO;
+	NEXT;
+
+	s->do_while_loop.body = parse_stmt(ps);
+	expect_symbol(ps, "while");
+	s->do_while_loop.cond = parse_expr(ps, 0);
+	expect_terminator(ps);
+
+	return s;
+}
+
 static struct Statement *parse_stmt(struct ParseState *ps)
 {
 	struct Statement *s = NULL;
@@ -383,6 +415,9 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 			break;
 		case KEYWORD_FOR:   s = parse_for_loop(ps);	break;
 		case KEYWORD_YIELD: s = parse_yield(ps);	break;
+		case KEYWORD_WHILE: s = parse_while(ps);	break;
+		case KEYWORD_DO:    s = parse_do(ps);		break;
+
 		default:
 			fprintf(stderr, "TODO: parse more statement types.\n");
 			NEXT;

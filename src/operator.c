@@ -8,6 +8,7 @@ struct Operator ops[] = {
 
 	{ "++",   "", 14, ASS_RIGHT, OP_PREFIX   },
 	{ "--",   "", 14, ASS_RIGHT, OP_PREFIX   },
+	{ "!",    "", 14, ASS_RIGHT, OP_PREFIX   },
 
 	{ "+",   "",  14, ASS_RIGHT, OP_PREFIX   },
 	{ "-",   "",  14, ASS_RIGHT, OP_PREFIX   },
@@ -30,7 +31,9 @@ struct Operator ops[] = {
 	{ "||",  "",  4,  ASS_LEFT,  OP_BINARY   },
 	{ "or",  "",  4,  ASS_LEFT,  OP_BINARY   },
 	{ "?",   ":", 3,  ASS_LEFT,  OP_TERNARY  },
-	{ "=",   "",  2,  ASS_LEFT,  OP_BINARY   },
+	{ "=",   "",  2,  ASS_RIGHT, OP_BINARY   },
+	{ "+=",  "",  2,  ASS_RIGHT, OP_BINARY   },
+	{ "-=",  "",  2,  ASS_RIGHT, OP_BINARY   },
 	{ ",",   "",  1,  ASS_RIGHT, OP_BINARY   }
 };
 

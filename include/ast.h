@@ -13,12 +13,13 @@ enum StmtType {
 	STMT_FN_DEF,	// DONE
 	STMT_FOR_LOOP,	// DONE
 	STMT_IF_STMT,	// DONE
-	STMT_WHILE_LOOP,
+	STMT_WHILE,
+	STMT_DO,
 	STMT_EXPR,	// DONE
 	STMT_VAR_DECL,	// DONE
 	STMT_BLOCK,	// DONE
 	STMT_PRINT,	// DONE
-	STMT_YIELD,
+	STMT_YIELD,	// DONE
 	STMT_INVALID
 } type;
 
@@ -72,6 +73,7 @@ struct Statement {
 			/* a list of initalizers */
 			struct Expression **init;
 			size_t num;
+			size_t num_init;
 		} var_decl;
 
 		struct {
@@ -83,6 +85,16 @@ struct Statement {
 			struct Expression **args;
 			size_t num;
 		} print;
+
+		struct {
+			struct Expression *cond;
+			struct Statement *body;
+		} do_while_loop;
+
+		struct {
+			struct Expression *cond;
+			struct Statement *body;
+		} while_loop;
 
 		struct Expression *expr;
 	};
@@ -111,8 +123,8 @@ struct Expression {
 	};
 };
 
-struct Expression *mkexpr();
-struct Statement  *mkstmt();
+struct Expression *mkexpr(struct Token *tok);
+struct Statement  *mkstmt(struct Token *tok);
 void free_ast(struct Statement **module);
 
 #endif
