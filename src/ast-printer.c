@@ -107,7 +107,45 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 			fprintf(stderr, "An invalid node was encountered. This should never happen.\n");
 			assert(false);
 			break;
+		default:
+			fprintf(stderr, "unimplemented expression printer\n");
 		}
+	} else if (e->type == EXPR_LIST) {
+		fprintf(ap->f, "(list)");
+		ap->depth++;
+		split(ap);
+		for (size_t i = 0; i < e->num; i++) {
+			if (i == e->num - 1) join(ap);
+			print_expression(ap, e->args[i]);
+		}
+		ap->depth--;
+	} else if (e->type == EXPR_LIST_COMPREHENSION) {
+		fprintf(ap->f, "(list comprehension)");
+
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(give)");
+		ap->depth++; print_expression(ap, e->a); ap->depth--;
+		indent(ap);  fprintf(ap->f, "(for)");
+		ap->depth++; print_expression(ap, e->b); ap->depth--;
+		join(ap);
+		indent(ap);  fprintf(ap->f, "(in)");
+		ap->depth++; print_expression(ap, e->c); ap->depth--;
+
+		ap->depth--;
+	} else if (e->type == EXPR_SUBSCRIPT) {
+		fprintf(ap->f, "(subscript)");
+
+		ap->depth++;
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(of)");
+		ap->depth++; print_expression(ap, e->a); ap->depth--;
+		join(ap);
+		print_expression(ap, e->b);
+
+		ap->depth--;
 	} else {
 		switch (e->val->type) {
 		case TOK_IDENTIFIER:

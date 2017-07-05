@@ -115,10 +115,38 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		NEXT;
 		if (op) {
 			left->a = parse_expr(ps, op->prec);
-		} else { /* otherwise we're looking at a ( */
+		} else { /* otherwise we're looking at a '(' */
 			free(left);
 			left = parse_expr(ps, 0);
 			expect_symbol(ps, ")");
+		}
+	} else if (!strcmp(ps->tok->value, "[")) {
+		left->type = EXPR_LIST;
+		NEXT;
+		if (!strcmp(ps->tok->value, "]")) {
+			expect_symbol(ps, "]"); /* we have an empty list */
+		} else {
+			struct Expression *first = parse_expr(ps, 1);
+			if (!strcmp(ps->tok->value, "for")) {
+				/* we have a list comprehension */
+				left->type = EXPR_LIST_COMPREHENSION;
+				left->a = first;
+				NEXT;
+				left->b = parse_expr(ps, 0);
+				expect_symbol(ps, "in");
+				left->c = parse_expr(ps, 0);
+			} else {
+				NEXT;
+				left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
+				left->args[left->num++] = first;
+				do {
+					left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
+					left->args[left->num++] = parse_expr(ps, 1);
+					if (!strcmp(ps->tok->value, ",")) NEXT;
+				} while (strcmp(ps->tok->value, "]"));
+			}
+
+			expect_symbol(ps, "]");
 		}
 	} else { /* if it's not a prefix operator it must be a value. */
 		if (ps->tok->type == TOK_INTEGER
@@ -147,12 +175,14 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		e->operator = op;
 		e->a = left;
 
-		if (op->type == OP_TERNARY) {
+		switch (op->type) {
+		case OP_TERNARY:
 			NEXT;
 			e->b = parse_expr(ps, 1);
 			expect_symbol(ps, op->body2);
 			e->c = parse_expr(ps, 1);
-		} else if (op->type == OP_FN_CALL) { /* aka '(' */
+			break;
+		case OP_FN_CALL:
 			e->type = EXPR_FN_CALL;
 
 			NEXT;
@@ -162,15 +192,23 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 					NEXT;
 					e->args = oak_realloc(e->args, sizeof e->args[0] * (e->num + 1));
 					e->args[e->num++] = parse_expr(ps, 1);
-				} while(!strcmp(ps->tok->value, ","));
+				} while (!strcmp(ps->tok->value, ","));
 			}
 
 			expect_symbol(ps, op->body2);
-		} else if (op->type == OP_BINARY) {
+			break;
+		case OP_BINARY:
 			NEXT;
 			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
-		} else if (op->type == OP_POSTFIX) {
+			break;
+		case OP_PREFIX: NEXT; break;
+		case OP_SUBCRIPT:
+			e->type = EXPR_SUBSCRIPT;
+
 			NEXT;
+			e->b = parse_expr(ps, 0);
+			expect_symbol(ps, op->body2);
+			break;
 		}
 
 		left = e;

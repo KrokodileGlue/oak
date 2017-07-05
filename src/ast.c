@@ -4,15 +4,15 @@
 struct StatementData statement_data[] = {
 	{ STMT_FN_DEF,		"function definition"	},
 	{ STMT_FOR_LOOP,	"for loop"		},
-	{ STMT_IF_STMT,	"if"			},
+	{ STMT_IF_STMT,		"if"			},
 	{ STMT_WHILE,		"while loop"		},
-	{ STMT_DO,		"do-while loop"	},
+	{ STMT_DO,		"do-while loop"		},
 	{ STMT_EXPR,		"expression"		},
 	{ STMT_VAR_DECL,	"variable declaration"	},
-	{ STMT_BLOCK,		"block"		},
-	{ STMT_PRINT,		"print"		},
-	{ STMT_YIELD,		"yield"		},
-	{ STMT_INVALID,	"invalid statement"	}
+	{ STMT_BLOCK,		"block"			},
+	{ STMT_PRINT,		"print"			},
+	{ STMT_YIELD,		"yield"			},
+	{ STMT_INVALID,		"invalid statement"	}
 };
 
 struct Expression *mkexpr(struct Token *tok)
