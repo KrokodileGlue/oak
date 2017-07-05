@@ -272,7 +272,6 @@ static struct Statement *parse_vardecl(struct ParseState *ps)
 	}
 
 	if (!strcmp(ps->tok->value, "=")) {
-		NEXT;
 		s->var_decl.num_init = s->var_decl.num;
 
 		size_t i = 0;
@@ -343,7 +342,7 @@ static struct Statement *parse_for_loop(struct ParseState *ps)
 static struct Statement *parse_block(struct ParseState *ps)
 {
 	struct Statement *s	= mkstmt(ps->tok);
-	s->type		= STMT_BLOCK;
+	s->type			= STMT_BLOCK;
 	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
 
 	NEXT;
