@@ -91,7 +91,10 @@ char *load_file(const char* path)
 	char *buf = NULL;
 	FILE *file = fopen(path, "r");
 
-	if (!file) return NULL;
+	if (!file) {
+		printf("could not load file %s\n", path);
+		return NULL;
+	}
 
 	if (fseek(file, 0L, SEEK_END) == 0) {
 		long len = ftell(file);
