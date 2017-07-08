@@ -7,13 +7,13 @@
 struct Keyword keywords[] = {
 	{ KEYWORD_FOR,		"for"		},
 	{ KEYWORD_IF,		"if"		},
-	{ KEYWORD_ELSE,	"else"		},
+	{ KEYWORD_ELSE,		"else"		},
 	{ KEYWORD_FN,		"fn"		},
 	{ KEYWORD_VAR,		"var"		},
-	{ KEYWORD_PRINT,	"print"	},
+	{ KEYWORD_PRINT,	"print"		},
 	{ KEYWORD_IN,		"in"		},
-	{ KEYWORD_YIELD,	"yield"	},
-	{ KEYWORD_WHILE,	"while"	},
+	{ KEYWORD_YIELD,	"yield"		},
+	{ KEYWORD_WHILE,	"while"		},
 	{ KEYWORD_DO,		"do"		},
 	{ KEYWORD_INVALID,	"invalid"	}
 };

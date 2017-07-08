@@ -422,10 +422,14 @@ struct Token *tokenize(struct LexState *ls)
 		}
 
 		if (!strncmp(a, "/*", 2)) {
-			a += 2;
 			char *b = a;
+			size_t depth = 0;
 
-			while (strncmp(b, "*/", 2) && *b) b++;
+			do {
+				if (!strncmp(b, "/*", 2)) depth++;
+				if (!strncmp(b, "*/", 2)) depth--;
+				b++;
+			} while (depth && *b);
 
 			if (*b == 0) {
 				ls->loc.len = 2;
@@ -433,7 +437,7 @@ struct Token *tokenize(struct LexState *ls)
 
 				while (*a != '\n' && *a) a++;
 			} else {
-				a = b + 2;
+				a = b + 1;
 			}
 
 			continue;

@@ -10,16 +10,16 @@
 struct Expression;
 
 enum StmtType {
-	STMT_FN_DEF,	// DONE
-	STMT_FOR_LOOP,	// DONE
-	STMT_IF_STMT,	// DONE
+	STMT_FN_DEF,
+	STMT_FOR_LOOP,
+	STMT_IF_STMT,
 	STMT_WHILE,
 	STMT_DO,
-	STMT_EXPR,	// DONE
-	STMT_VAR_DECL,	// DONE
-	STMT_BLOCK,	// DONE
-	STMT_PRINT,	// DONE
-	STMT_YIELD,	// DONE
+	STMT_EXPR,
+	STMT_VAR_DECL,
+	STMT_BLOCK,
+	STMT_PRINT,
+	STMT_YIELD,
 	STMT_INVALID
 } type;
 
@@ -48,12 +48,9 @@ struct Statement {
 		} fn_def;
 
 		/*
-		 * there are three kinds of for loops:
-		 *   for expression in expression:
-		 *   for vardecl; expression; expression:
-		 *   for expression; expression; expression:
+		 * for loops are a bit weird, for-each and c-style loops are distinguished
+		 * by the c field; if it's NULL then it's for-each, otherwise it's c-style.
 		 */
-
 		struct {
 			struct Statement *a;
 			struct Expression *b;
@@ -107,6 +104,9 @@ struct Expression {
 		EXPR_VALUE,
 		EXPR_OPERATOR,
 		EXPR_FN_CALL,
+		EXPR_LIST,
+		EXPR_LIST_COMPREHENSION,
+		EXPR_SUBSCRIPT,
 		EXPR_INVALID
 	} type;
 
@@ -115,7 +115,7 @@ struct Expression {
 	union {
 		struct {
 			struct Expression *a, *b, *c;
-			struct Expression **args;
+			struct Expression **args; /* used for function arguments and lists */
 			size_t num;
 		};
 
@@ -126,5 +126,6 @@ struct Expression {
 struct Expression *mkexpr(struct Token *tok);
 struct Statement  *mkstmt(struct Token *tok);
 void free_ast(struct Statement **module);
+void print_ast(FILE *f, struct Statement **module);
 
 #endif

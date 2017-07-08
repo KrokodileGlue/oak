@@ -25,6 +25,7 @@ struct Operator {
 		OP_POSTFIX,
 		OP_BINARY,
 		OP_TERNARY,
+		OP_SUBCRIPT,
 		OP_INVALID
 	} type;
 };
