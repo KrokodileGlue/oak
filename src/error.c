@@ -47,8 +47,8 @@ void error_write(struct ErrorState *es, FILE *fp)
 		fprintf(fp, ERROR_MSG_COLOR"%s:"RESET_COLOR" %s\n", error_level_strs[err.sev], err.msg);
 
 		char *line = get_line(err.loc);
-		fprintf(fp, "\t%.*s", index_in_line(err.loc), line);
-		fprintf(fp, ERROR_HIGHLIGHT_COLOR"%.*s"RESET_COLOR, err.loc.len, index_in_line(err.loc) + line);
+		fprintf(fp, "\t%.*s", (int)index_in_line(err.loc), line);
+		fprintf(fp, ERROR_HIGHLIGHT_COLOR"%.*s"RESET_COLOR, (int)err.loc.len, index_in_line(err.loc) + line);
 		fprintf(fp, "%s\n\t", err.loc.len <= strlen(line) - index_in_line(err.loc)
 			? line + index_in_line(err.loc) + err.loc.len
 			: ERROR_MSG_COLOR" [token truncated]"RESET_COLOR);
@@ -57,7 +57,7 @@ void error_write(struct ErrorState *es, FILE *fp)
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
 		}
 
-		fprintf(fp, ERROR_HIGHLIGHT_COLOR);
+		fprintf(fp, "%s", ERROR_HIGHLIGHT_COLOR);
 		fputc('^', fp);
 
 		size_t j = 1;
@@ -65,7 +65,7 @@ void error_write(struct ErrorState *es, FILE *fp)
 			? strlen(line) - index_in_line(err.loc)
 			: err.loc.len;
 		while (j++ < len) fputc('~', fp);
-		fprintf(fp, RESET_COLOR);
+		fprintf(fp, "%s", RESET_COLOR);
 
 		free(line);
 

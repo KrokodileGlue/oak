@@ -20,6 +20,7 @@ enum StmtType {
 	STMT_BLOCK,
 	STMT_PRINT,
 	STMT_YIELD,
+	STMT_CLASS,
 	STMT_INVALID
 } type;
 
@@ -92,6 +93,13 @@ struct Statement {
 			struct Expression *cond;
 			struct Statement *body;
 		} while_loop;
+
+		struct {
+			struct Token *name;
+			/* the name of the class this class inherits from */
+			struct Token *parent_name;
+			struct Statement *body;
+		} class;
 
 		struct Expression *expr;
 	};
