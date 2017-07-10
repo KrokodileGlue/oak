@@ -15,6 +15,7 @@ struct Keyword keywords[] = {
 	{ KEYWORD_YIELD,	"yield"		},
 	{ KEYWORD_WHILE,	"while"		},
 	{ KEYWORD_DO,		"do"		},
+	{ KEYWORD_CLASS,	"class"		},
 	{ KEYWORD_INVALID,	"invalid"	}
 };
 

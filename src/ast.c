@@ -1,3 +1,7 @@
+#include "keyword.h"
+#include "util.h"
+#include "token.h"
+#include "assert.h"
 #include "ast.h"
 #include "util.h"
 
@@ -12,6 +16,7 @@ struct StatementData statement_data[] = {
 	{ STMT_BLOCK,		"block"			},
 	{ STMT_PRINT,		"print"			},
 	{ STMT_YIELD,		"yield"			},
+	{ STMT_CLASS,		"class"			},
 	{ STMT_INVALID,		"invalid statement"	}
 };
 
@@ -120,6 +125,9 @@ void free_stmt(struct Statement *s)
 		free_stmt(s->do_while_loop.body);
 
 		break;
+	case STMT_CLASS:
+		free_stmt(s->class.body);
+		break;
 	default:
 		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);
 	}
@@ -137,12 +145,6 @@ void free_ast(struct Statement **module)
 
 	free(module);
 }
-
-#include "ast-printer.h"
-#include "keyword.h"
-#include "util.h"
-#include "token.h"
-#include "assert.h"
 
 struct ASTPrinter {
 	FILE *f;
@@ -183,7 +185,7 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 {
 	indent(ap);
 
-	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL) {
+	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL || e->type == EXPR_SUBSCRIPT) {
 		struct Operator *op = e->operator;
 
 		switch (op->type) {
@@ -239,12 +241,22 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 				print_expression(ap, e->args[i]);
 			}
 			join(ap);
-			ap->depth--;
-
-			ap->depth--;
+			ap->depth -= 2;
+			break;
+		case OP_SUBCRIPT:
+			fprintf(ap->f,"(subscript)");
+			ap->depth++;
+			split(ap);
+			print_expression(ap, e->b);
+			join(ap);
+			indent(ap);
+			fprintf(ap->f, "(of)");
+			ap->depth++;
+			print_expression(ap, e->a);
+			ap->depth -= 2;
 			break;
 		case OP_INVALID:
-			fprintf(stderr, "An invalid node was encountered. This should never happen.\n");
+			fprintf(stderr, "\noak: internal error; an invalid operator node was encountered.\n");
 			assert(false);
 			break;
 		}
@@ -424,6 +436,11 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		indent(ap);  fprintf(ap->f, "(condition)");
 		ap->depth++; print_expression(ap, s->do_while_loop.cond); ap->depth--;
 
+		ap->depth--;
+		break;
+	case STMT_CLASS:
+		ap->depth++;
+		print_statement(ap, s->class.body);
 		ap->depth--;
 		break;
 	case STMT_INVALID:

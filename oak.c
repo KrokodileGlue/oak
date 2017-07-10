@@ -6,7 +6,6 @@
 #include "error.h"
 #include "util.h"
 #include "parser.h"
-#include "ast-printer.h"
 
 int do_file(char *filename)
 {

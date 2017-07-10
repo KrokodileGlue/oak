@@ -5,6 +5,7 @@
 #include "color.h"
 
 #include <stdbool.h>
+#include <assert.h>
 
 #define NEXT if (ps->tok->type != TOK_END) ps->tok = ps->tok->next;
 
@@ -208,6 +209,11 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 			NEXT;
 			e->b = parse_expr(ps, 0);
 			expect_symbol(ps, op->body2);
+			break;
+		case OP_POSTFIX: NEXT; break;
+		default:
+			fprintf(stderr, "\noak: internal error; an invalid operator was returned.");
+			assert(false);
 			break;
 		}
 
@@ -435,6 +441,26 @@ static struct Statement *parse_do(struct ParseState *ps)
 	return s;
 }
 
+static struct Statement *parse_class(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_CLASS;
+
+	NEXT;
+	s->class.name = ps->tok;
+	NEXT;
+
+	if (!strcmp(ps->tok->value, ":")) {
+		NEXT;
+		s->class.parent_name = ps->tok;
+		NEXT;
+	}
+
+	s->class.body = parse_stmt(ps);
+
+	return s;
+}
+
 static struct Statement *parse_stmt(struct ParseState *ps)
 {
 	struct Statement *s = NULL;
@@ -454,6 +480,7 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		case KEYWORD_YIELD: s = parse_yield(ps);	break;
 		case KEYWORD_WHILE: s = parse_while(ps);	break;
 		case KEYWORD_DO:    s = parse_do(ps);		break;
+		case KEYWORD_CLASS: s = parse_class(ps);	break;
 
 		default:
 			fprintf(stderr, "TODO: parse more statement types.\n");
