@@ -256,7 +256,9 @@ static struct Statement *parse_fn_def(struct ParseState *ps)
 		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
 	}
 
-	s->fn_def.name = ps->tok;
+	if (ps->tok->type != TOK_IDENTIFIER)
+		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+	s->fn_def.name = ps->tok->value;
 	NEXT;
 
 	while (ps->tok->type == TOK_IDENTIFIER) {
@@ -447,7 +449,9 @@ static struct Statement *parse_class(struct ParseState *ps)
 	s->type = STMT_CLASS;
 
 	NEXT;
-	s->class.name = ps->tok;
+	if (ps->tok->type != TOK_IDENTIFIER)
+		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+	s->class.name = ps->tok->value;
 	NEXT;
 
 	if (!strcmp(ps->tok->value, ":")) {
@@ -456,7 +460,24 @@ static struct Statement *parse_class(struct ParseState *ps)
 		NEXT;
 	}
 
-	s->class.body = parse_stmt(ps);
+	expect_symbol(ps, "{");
+
+	while (strcmp(ps->tok->value, "}")) {
+		struct Token *tok = ps->tok; /* so that the error is reported at the right place */
+		s->class.body = oak_realloc(s->class.body, sizeof s->class.body[0] * (s->class.num + 1));
+		s->class.body[s->class.num] = parse_stmt(ps);
+
+		if (s->class.body[s->class.num]->type == STMT_FN_DEF
+		    || s->class.body[s->class.num]->type == STMT_VAR_DECL) {
+			// good.
+		} else {
+			error_push(ps->es, tok->loc, ERR_FATAL, "class bodies may not contain arbitrary code");
+		}
+
+		s->class.num++;
+	}
+
+	expect_symbol(ps, "}");
 
 	return s;
 }
