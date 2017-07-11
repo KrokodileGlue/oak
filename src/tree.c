@@ -2,7 +2,7 @@
 #include "util.h"
 #include "token.h"
 #include "assert.h"
-#include "ast.h"
+#include "tree.h"
 #include "util.h"
 
 struct StatementData statement_data[] = {
@@ -126,7 +126,11 @@ void free_stmt(struct Statement *s)
 
 		break;
 	case STMT_CLASS:
-		free_stmt(s->class.body);
+		for (size_t i = 0; i < s->class.num; i++) {
+			free_stmt(s->class.body[i]);
+		}
+		free(s->class.body);
+
 		break;
 	default:
 		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);
@@ -384,7 +388,7 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		split(ap);
 
 		indent(ap);  fprintf(ap->f, "(name)");
-		ap->depth++; indent(ap); fprintf(ap->f, "(%s)", s->tok->value); ap->depth--;
+		ap->depth++; indent(ap); fprintf(ap->f, "(%s)", s->fn_def.name); ap->depth--;
 
 		indent(ap);  fprintf(ap->f, "(arguments)");
 
@@ -440,7 +444,20 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 		break;
 	case STMT_CLASS:
 		ap->depth++;
-		print_statement(ap, s->class.body);
+
+		split(ap);
+
+		indent(ap);  fprintf(ap->f, "(name)");
+		ap->depth++;
+		indent(ap);
+		fprintf(ap->f, "(%s)", s->class.name);
+		ap->depth--;
+
+		for (size_t i = 0; i < s->class.num; i++) {
+			if (i == s->class.num - 1) join(ap);
+			print_statement(ap, s->class.body[i]);
+		}
+
 		ap->depth--;
 		break;
 	case STMT_INVALID:

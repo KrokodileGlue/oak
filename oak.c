@@ -6,6 +6,7 @@
 #include "error.h"
 #include "util.h"
 #include "parser.h"
+#include "symbol.h"
 
 int do_file(char *filename)
 {
@@ -49,10 +50,17 @@ int do_file(char *filename)
 
 	print_ast(stderr, module);
 	parser_clear(ps);
-	free_ast(module);
+
+	fprintf(stderr, "oak: generating symbol table...");
+
+	struct Symbolizer *si = mksymbolizer(module);
+	struct Symbol *st = symbolize(si);
+	print_symbol(stderr, 0, st);
+	fputc('\n', stderr);
 
 	/* TODO: compile and run */
 
+	free_ast(module);
 	token_clear(tok);
 	free(text);
 	return EXIT_SUCCESS;

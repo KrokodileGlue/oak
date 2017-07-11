@@ -42,7 +42,7 @@ struct Statement {
 		} yield;
 
 		struct {
-			struct Token *name;
+			char *name;
 			struct Token **args;
 			size_t num;
 			struct Statement *body;
@@ -95,10 +95,11 @@ struct Statement {
 		} while_loop;
 
 		struct {
-			struct Token *name;
+			char *name;
 			/* the name of the class this class inherits from */
 			struct Token *parent_name;
-			struct Statement *body;
+			struct Statement **body;
+			size_t num;
 		} class;
 
 		struct Expression *expr;
