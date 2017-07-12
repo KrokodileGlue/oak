@@ -31,7 +31,7 @@ struct Symbolizer {
 };
 
 struct Symbolizer *mksymbolizer();
-struct Symbol *symbolize(struct Symbolizer *si);
+struct Symbol *symbolize_module(struct Symbolizer *si);
 void print_symbol(FILE *f, size_t depth, struct Symbol *s);
 
 #endif
