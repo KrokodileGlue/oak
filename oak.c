@@ -54,7 +54,7 @@ int do_file(char *filename)
 	fprintf(stderr, "oak: generating symbol table...");
 
 	struct Symbolizer *si = mksymbolizer(module);
-	struct Symbol *st = symbolize(si);
+	struct Symbol *st = symbolize_module(si);
 	print_symbol(stderr, 0, st);
 	fputc('\n', stderr);
 
