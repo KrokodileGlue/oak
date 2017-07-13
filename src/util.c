@@ -62,6 +62,27 @@ char *get_line(struct Location loc)
 	return line;
 }
 
+char *strclone(char *str)
+{
+	char *ret = oak_malloc(strlen(str) + 1);
+	strcpy(ret, str);
+	return ret;
+}
+
+void chop_extension(char *str)
+{
+	char *a = str;
+	while (*a != '.' && *a)
+		a++;
+	*a = 0;
+}
+
+void add_extension(char *str)
+{
+	str = oak_realloc(str, strlen(str) + 3);
+	strcat(str, ".k");
+}
+
 void *oak_malloc(size_t size)
 {
 	void *ptr = malloc(size);

@@ -3,6 +3,7 @@
 #include "util.h"
 #include "operator.h"
 #include "color.h"
+#include "module.h"
 
 #include <stdbool.h>
 #include <assert.h>
@@ -29,7 +30,7 @@ void parser_clear(struct ParseState *ps)
 
 static void expect_symbol(struct ParseState *ps, char *sym)
 {
-//	fprintf(stderr, "expecting %s, looking at %s\n", sym, ps->tok->value);
+//	DOUT("expecting %s, looking at %s\n", sym, ps->tok->value);
 	if (strcmp(ps->tok->value, sym)) {
 		if (ps->tok->type == TOK_END) {
 			struct Token *tok = ps->tok->prev;
@@ -212,7 +213,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 			break;
 		case OP_POSTFIX: NEXT; break;
 		default:
-			fprintf(stderr, "\noak: internal error; an invalid operator was returned.");
+			DOUT("\noak: internal error; an invalid operator was returned.");
 			assert(false);
 			break;
 		}
@@ -482,6 +483,31 @@ static struct Statement *parse_class(struct ParseState *ps)
 	return s;
 }
 
+static struct Statement *parse_import(struct ParseState *ps)
+{
+	struct Statement *s = mkstmt(ps->tok);
+	s->type = STMT_IMPORT;
+	NEXT;
+	s->import.name = ps->tok;
+
+	if (ps->tok->type != TOK_IDENTIFIER) {
+		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+		parse_expr(ps, 0); /* stop errors from cascading */
+	}
+
+	NEXT;
+
+	if (!strcmp(ps->tok->value, "as")) {
+		NEXT;
+		s->import.as = ps->tok;
+		NEXT;
+	}
+
+	expect_symbol(ps, ";");
+
+	return s;
+}
+
 static struct Statement *parse_stmt(struct ParseState *ps)
 {
 	struct Statement *s = NULL;
@@ -490,21 +516,22 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 		s = parse_block(ps);
 	} else if (ps->tok->type == TOK_KEYWORD) {
 		switch (ps->tok->keyword->type) {
-		case KEYWORD_IF:    s = parse_if_stmt(ps);	break;
-		case KEYWORD_FN:    s = parse_fn_def(ps);	break;
-		case KEYWORD_PRINT: s = parse_print_stmt(ps);	break;
+		case KEYWORD_IF:     s = parse_if_stmt(ps);	break;
+		case KEYWORD_FN:     s = parse_fn_def(ps);	break;
+		case KEYWORD_PRINT:  s = parse_print_stmt(ps);	break;
 		case KEYWORD_VAR:
 			s = parse_vardecl(ps);
 			expect_terminator(ps);
 			break;
-		case KEYWORD_FOR:   s = parse_for_loop(ps);	break;
-		case KEYWORD_YIELD: s = parse_yield(ps);	break;
-		case KEYWORD_WHILE: s = parse_while(ps);	break;
-		case KEYWORD_DO:    s = parse_do(ps);		break;
-		case KEYWORD_CLASS: s = parse_class(ps);	break;
+		case KEYWORD_FOR:    s = parse_for_loop(ps);	break;
+		case KEYWORD_YIELD:  s = parse_yield(ps);	break;
+		case KEYWORD_WHILE:  s = parse_while(ps);	break;
+		case KEYWORD_DO:     s = parse_do(ps);		break;
+		case KEYWORD_CLASS:  s = parse_class(ps);	break;
+		case KEYWORD_IMPORT: s = parse_import(ps);	break;
 
 		default:
-			fprintf(stderr, "TODO: parse more statement types.\n");
+			DOUT("\nunimplemented statement parser for %d (%s)\n", ps->tok->keyword->type, ps->tok->keyword->body);
 			NEXT;
 			break;
 		}
@@ -518,19 +545,18 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 	return s;
 }
 
-struct Statement **parse(struct ParseState *ps)
+struct Module *parse(struct ParseState *ps)
 {
-	size_t num_stmts = 0;
-	struct Statement **module = oak_malloc(sizeof *module);
-
+	size_t num = 0;
+	struct Statement **tree = oak_malloc(sizeof *tree);
 	while (ps->tok->type != TOK_END) {
-		module = oak_realloc(module,
-				      (num_stmts + 2) * sizeof *module);
-		module[num_stmts] = parse_stmt(ps);
-		num_stmts++;
+		tree = oak_realloc(tree, sizeof *tree * (num + 2));
+		tree[num] = parse_stmt(ps);
+		num++;
 	}
+	tree[num] = NULL;
 
-	module[num_stmts] = NULL;
+	struct Module *module = mkmodule(ps->tok->loc.file, tree, num);
 
 	return module;
 }

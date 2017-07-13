@@ -21,6 +21,7 @@ enum StmtType {
 	STMT_PRINT,
 	STMT_YIELD,
 	STMT_CLASS,
+	STMT_IMPORT,
 	STMT_INVALID
 } type;
 
@@ -101,6 +102,11 @@ struct Statement {
 			struct Statement **body;
 			size_t num;
 		} class;
+
+		struct {
+			struct Token *name;
+			struct Token *as;
+		} import;
 
 		struct Expression *expr;
 	};

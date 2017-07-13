@@ -17,6 +17,7 @@ struct StatementData statement_data[] = {
 	{ STMT_PRINT,		"print"			},
 	{ STMT_YIELD,		"yield"			},
 	{ STMT_CLASS,		"class"			},
+	{ STMT_IMPORT,		"import"			},
 	{ STMT_INVALID,		"invalid statement"	}
 };
 
@@ -132,8 +133,11 @@ void free_stmt(struct Statement *s)
 		free(s->class.body);
 
 		break;
+	case STMT_IMPORT:
+		break;
 	default:
-		fprintf(stderr, "unimplemented free for statement of type '%d'\n", s->type);
+		fprintf(stderr, "unimplemented free for statement of type %d (%s)\n",
+		        s->type, statement_data[s->type].body);
 	}
 
 	free(s);
@@ -460,11 +464,21 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 
 		ap->depth--;
 		break;
+	case STMT_IMPORT:
+		ap->depth++;
+
+		indent(ap);
+		fprintf(ap->f, "import %s as %s", s->import.name->value,
+		        s->import.as ? s->import.as->value : s->import.name->value);
+
+		ap->depth--;
+		break;
 	case STMT_INVALID:
 		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
 	default:
-		fprintf(ap->f, "unimplemented statement printer\n");
+		DOUT("\nunimplemented printer for statement of type %d (%s)",
+		     s->type, statement_data[s->type].body);
 	}
 }
 

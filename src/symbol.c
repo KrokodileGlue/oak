@@ -5,16 +5,96 @@
 #include "util.h"
 #include "symbol.h"
 #include "token.h"
+#include "lexer.h"
+#include "parser.h"
 
-struct Symbolizer *mksymbolizer(struct Statement **module)
+static void add(struct Symbolizer *si, struct Symbol *sym);
+
+static void import(struct Symbolizer *si, char *filename)
+{
+	/* load */
+	char *text = load_file(filename);
+	if (!text) return;
+
+	/* lex */
+	struct LexState *ls = lexer_new(text, filename);
+	struct Token *tok = tokenize(ls);
+
+	if (ls->es->fatal) {
+		error_write(ls->es, stderr);
+		lexer_clear(ls);
+		goto error;
+	} else if (ls->es->pending) {
+		error_write(ls->es, stderr);
+	}
+
+	lexer_clear(ls);
+
+	/* parse */
+	struct ParseState *ps = parser_new(tok);
+	struct Module *module = parse(ps);
+
+	if (ps->es->fatal) {
+		DOUT("\n");
+		error_write(ps->es, stderr);
+		parser_clear(ps);
+		goto error;
+	} else if (ps->es->pending) {
+		error_write(ps->es, stderr);
+	}
+
+	parser_clear(ps);
+
+	/* symbolize */
+	symbolize_module(si, module);
+
+	if (si->es->fatal) {
+		error_write(si->es, stderr);
+		goto error;
+	} else if (si->es->pending) {
+		error_write(si->es, stderr);
+	}
+
+//	add(si, st);
+error:
+//	token_clear(tok);
+//	free(text);
+	return;
+}
+
+static struct Symbol *mksym(struct Token *tok);
+
+struct Symbolizer *mksymbolizer()
 {
 	struct Symbolizer *si = oak_malloc(sizeof *si);
 
 	memset(si, 0, sizeof *si);
-	si->m = module; /* the statement stream */
 	si->es = error_new();
 
+	struct Symbol *sym = mksym(NULL);
+	sym->type = SYM_GLOBAL;
+	sym->name = "*global*";
+
+	si->symbol = sym;
+
 	return si;
+}
+
+void free_symbol(struct Symbol *sym)
+{
+	for (size_t i = 0; i < sym->num_children; i++) {
+		free_symbol(sym->children[i]);
+	}
+
+	free(sym->children);
+	free(sym);
+}
+
+void symbolizer_free(struct Symbolizer *si)
+{
+	free_symbol(si->symbol);
+	free(si->es);
+	free(si);
 }
 
 static char sym_str[][32] = {
@@ -24,6 +104,7 @@ static char sym_str[][32] = {
 	"global",
 	"block",
 	"argument",
+	"module",
 	"invalid"
 };
 
@@ -60,27 +141,36 @@ static void add(struct Symbolizer *si, struct Symbol *sym)
 	symbol->children[symbol->num_children++] = sym;
 }
 
-static bool resolve(struct Symbolizer *si, struct Location loc, char *name)
+static struct Symbol *resolve(struct Symbolizer *si, char *name)
 {
 	uint64_t h = hash(name, strlen(name));
 	struct Symbol *sym = si->symbol;
 
 	while (sym) {
 		for (size_t i = 0; i < sym->num_children; i++) {
-			if (sym->children[i]->id == h) {
-				return true;
+			if (sym->children[i]->id == h
+			    && !strcmp(sym->children[i]->name, name)) {
+				return sym->children[i];
 			}
 		}
+
 		sym = sym->parent;
 	}
 
-	error_push(si->es, loc, ERR_FATAL, "undeclared identifier");
-	return false;
+	return NULL;
+}
+
+static void find(struct Symbolizer *si, struct Location loc, char *name)
+{
+	struct Symbol *sym = resolve(si, name);
+	if (!sym)
+		error_push(si->es, loc, ERR_FATAL, "undeclared identifier");
 }
 
 static void pop(struct Symbolizer *si)
 {
-	si->symbol = si->symbol->parent;
+	if (si->symbol->parent)
+		si->symbol = si->symbol->parent;
 }
 
 static void push(struct Symbolizer *si, struct Symbol *sym)
@@ -121,13 +211,12 @@ static void resolve_expr(struct Symbolizer *si, struct Expression *e)
 				resolve_expr(si, e->args[i]);
 			break;
 		default:
-			fprintf(stderr, "unimplemented expression thing\n");
+			DOUT("\nunimplemented printer for expression of type %d\n", e->type);
 		}
 		break;
 	case EXPR_VALUE:
 		if (e->val->type == TOK_IDENTIFIER) {
-			fprintf(stderr, "");
-			resolve(si, e->tok->loc, e->val->value);
+			find(si, e->tok->loc, e->val->value);
 		}
 		break;
 	default:
@@ -207,7 +296,23 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 	case STMT_PRINT: /* fall through */
 		free(sym);
 		return;
+
 		break;
+	case STMT_IMPORT: {
+		struct Symbol *module = resolve(si, stmt->import.name->value);
+
+		if (module) {
+			add(si, module);
+		} else {
+			char *filename = strclone(stmt->import.name->value);
+			add_extension(filename);
+			import(si, filename);
+			free(filename);
+		}
+
+		free(sym);
+		return;
+	} break;
 	default:
 		free(sym);
 		fprintf(stderr, "\nunimplemented symbol visitor for statement of type %d (%s)",
@@ -219,19 +324,25 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 	add(si, sym);
 }
 
-struct Symbol *symbolize_module(struct Symbolizer *si)
+struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m)
 {
-	struct Symbol *sym = mksym(si->m[0]->tok);
-	sym->type = SYM_GLOBAL;
-	sym->name = "*global*";
+	struct Symbol *sym = mksym(m->tree[0]->tok);
+	sym->type = SYM_MODULE;
+	sym->name = m->name;
+	sym->parent = si->symbol;
+	sym->id = hash(m->name, strlen(m->name));
 
-	si->symbol = sym;
+	add(si, sym);
+	push(si, sym);
 
-	while (si->m[si->i]) {
-		symbolize(si, si->m[si->i++]);
+	size_t i = 0;
+	while (m->tree[i]) {
+		symbolize(si, m->tree[i++]);
 	}
 
-	return sym;
+	pop(si);
+
+	return si->symbol;
 }
 
 #define INDENT                             \

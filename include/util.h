@@ -7,6 +7,10 @@
 
 #include "location.h"
 
+/* debug out */
+#define DOUT(...) \
+	fprintf(stderr, __VA_ARGS__)
+
 static inline bool is_whitespace(char c)
 {
 	return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
@@ -48,8 +52,12 @@ size_t line_len     (struct Location loc);
 size_t index_in_line(struct Location loc);
 char *get_line      (struct Location loc);
 
-void *oak_malloc(size_t size);
+char *strclone      (char *str);
+void chop_extension (char *str);
+void add_extension  (char *str);
+
+void *oak_malloc (size_t size);
 void *oak_realloc(void *mem, size_t size);
-char *load_file(const char *path);
+char *load_file  (const char *path);
 
 #endif
