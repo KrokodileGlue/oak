@@ -13,6 +13,6 @@ struct ParseState {
 struct ParseState *parser_new();
 void parser_clear(struct ParseState *ps);
 
-struct Statement **parse(struct ParseState *ps);
+struct Module *parse(struct ParseState *ps);
 
 #endif

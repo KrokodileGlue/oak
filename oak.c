@@ -7,6 +7,7 @@
 #include "util.h"
 #include "parser.h"
 #include "symbol.h"
+#include "module.h"
 
 int do_file(char *filename)
 {
@@ -14,8 +15,8 @@ int do_file(char *filename)
 	char *text = load_file(filename);
 	if (!text) return EXIT_FAILURE;
 
-	fprintf(stderr, "oak: input:\n%s\n", text);
-	fprintf(stderr, "oak: now lexing...\n");
+	DOUT("oak: input:\n%s\n", text);
+	DOUT("oak: now lexing...\n");
 
 	/* lex */
 	struct LexState *ls = lexer_new(text, filename);
@@ -33,14 +34,14 @@ int do_file(char *filename)
 
 	lexer_clear(ls);
 
-	fprintf(stderr, "oak: now parsing...");
+	DOUT("oak: now parsing...");
 
 	/* parse */
 	struct ParseState *ps = parser_new(tok);
-	struct Statement **module = parse(ps);
+	struct Module *module = parse(ps);
 
 	if (ps->es->fatal) {
-		fprintf(stderr, "\n");
+		DOUT("\n");
 		error_write(ps->es, stderr);
 		parser_clear(ps);
 		goto error;
@@ -48,27 +49,31 @@ int do_file(char *filename)
 		error_write(ps->es, stderr);
 	}
 
-	print_ast(stderr, module);
+	print_ast(stderr, module->tree);
 	parser_clear(ps);
 
-	fprintf(stderr, "oak: generating symbol table...");
+	DOUT("oak: generating symbol table...");
 
+	/* symbolize */
 	struct Symbolizer *si = mksymbolizer(module);
-	struct Symbol *st = symbolize_module(si);
+	struct Symbol *st = symbolize_module(si, module);
 	print_symbol(stderr, 0, st);
-	fputc('\n', stderr);
+	DOUT("\n");
 
 	if (si->es->fatal) {
-		fprintf(stderr, "\n");
 		error_write(si->es, stderr);
+		symbolizer_free(si);
 		goto error;
 	} else if (si->es->pending) {
 		error_write(si->es, stderr);
 	}
 
+	symbolizer_free(si);
+
 	/* TODO: compile and run */
 
-	free_ast(module);
+	free_ast(module->tree);
+	module_free(module);
 	token_clear(tok);
 	free(text);
 	return EXIT_SUCCESS;
@@ -78,7 +83,7 @@ error:
 	free(text);
 	return EXIT_FAILURE;
 error2:
-	free_ast(module);
+	free_ast(module->tree);
 	token_clear(tok);
 	free(text);
 	return EXIT_FAILURE;
