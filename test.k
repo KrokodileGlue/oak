@@ -10,24 +10,18 @@ class CLASS {
 }
 */
 
-{ var a; a = 5; }
-a = 5;
-var b = 3;
-b + 4;
-
-/*if true {
+/*
+if true {
 	var something;
 } else {
 	var other-thing;
 }
 */
 
-/*
 if true:
 	var something;
 else
 	var other-thing;
-*/
 
 /*
 foo[5 * 5];

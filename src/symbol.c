@@ -99,6 +99,7 @@ static void block(struct Symbolizer *si, struct Statement *stmt)
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
+	add(si, sym);
 
 	push(si, sym);
 	symbolize(si, stmt);
