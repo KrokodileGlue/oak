@@ -12,6 +12,7 @@ struct Symbolizer *mksymbolizer(struct Statement **module)
 
 	memset(si, 0, sizeof *si);
 	si->m = module; /* the statement stream */
+	si->es = error_new();
 
 	return si;
 }
@@ -59,6 +60,24 @@ static void add(struct Symbolizer *si, struct Symbol *sym)
 	symbol->children[symbol->num_children++] = sym;
 }
 
+static bool resolve(struct Symbolizer *si, struct Location loc, char *name)
+{
+	uint64_t h = hash(name, strlen(name));
+	struct Symbol *sym = si->symbol;
+
+	while (sym) {
+		for (size_t i = 0; i < sym->num_children; i++) {
+			if (sym->children[i]->id == h) {
+				return true;
+			}
+		}
+		sym = sym->parent;
+	}
+
+	error_push(si->es, loc, ERR_FATAL, "undeclared identifier");
+	return false;
+}
+
 static void pop(struct Symbolizer *si)
 {
 	si->symbol = si->symbol->parent;
@@ -68,6 +87,7 @@ static void push(struct Symbolizer *si, struct Symbol *sym)
 {
 	si->symbol = sym;
 }
+
 static void symbolize(struct Symbolizer *si, struct Statement *stmt);
 
 static void block(struct Symbolizer *si, struct Statement *stmt)
@@ -75,7 +95,7 @@ static void block(struct Symbolizer *si, struct Statement *stmt)
 	if (!stmt)
 		return;
 
-	struct Symbol *sym = mksym(si->symbol->tok);
+	struct Symbol *sym = mksym(stmt->tok);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
@@ -83,6 +103,35 @@ static void block(struct Symbolizer *si, struct Statement *stmt)
 	push(si, sym);
 	symbolize(si, stmt);
 	pop(si);
+}
+
+static void resolve_expr(struct Symbolizer *si, struct Expression *e)
+{
+	switch (e->type) {
+	case EXPR_OPERATOR:
+		switch (e->operator->type) {
+		case OP_BINARY:
+			resolve_expr(si, e->a);
+			resolve_expr(si, e->b);
+			break;
+		case OP_FN_CALL:
+			resolve_expr(si, e->a);
+			for (size_t i = 0; i < e->num; i++)
+				resolve_expr(si, e->args[i]);
+			break;
+		default:
+			fprintf(stderr, "unimplemented expression thing\n");
+		}
+		break;
+	case EXPR_VALUE:
+		if (e->val->type == TOK_IDENTIFIER) {
+			fprintf(stderr, "");
+			resolve(si, e->tok->loc, e->val->value);
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 static void symbolize(struct Symbolizer *si, struct Statement *stmt)
@@ -153,7 +202,8 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 		return;
 	} break;
 	case STMT_EXPR:
-	case STMT_PRINT:
+		resolve_expr(si, stmt->expr);
+	case STMT_PRINT: /* fall through */
 		free(sym);
 		return;
 		break;

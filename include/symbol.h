@@ -26,11 +26,12 @@ struct Symbol {
 
 struct Symbolizer {
 	struct Symbol *symbol;
+	struct ErrorState *es;
 	struct Statement **m; /* the module we're working on */
 	size_t i;
 };
 
-struct Symbolizer *mksymbolizer();
+struct Symbolizer *mksymbolizer(struct Statement **module);
 struct Symbol *symbolize_module(struct Symbolizer *si);
 void print_symbol(FILE *f, size_t depth, struct Symbol *s);
 

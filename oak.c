@@ -58,6 +58,14 @@ int do_file(char *filename)
 	print_symbol(stderr, 0, st);
 	fputc('\n', stderr);
 
+	if (si->es->fatal) {
+		fprintf(stderr, "\n");
+		error_write(si->es, stderr);
+		goto error;
+	} else if (si->es->pending) {
+		error_write(si->es, stderr);
+	}
+
 	/* TODO: compile and run */
 
 	free_ast(module);
