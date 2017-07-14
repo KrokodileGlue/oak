@@ -77,10 +77,14 @@ void chop_extension(char *str)
 	*a = 0;
 }
 
-void add_extension(char *str)
+char *add_extension(char *str)
 {
-	str = oak_realloc(str, strlen(str) + 3);
+	size_t len = strlen(str) + 3;
+
+	str = oak_realloc(str, len);
 	strcat(str, ".k");
+
+	return str;
 }
 
 void *oak_malloc(size_t size)
@@ -107,13 +111,13 @@ void *oak_realloc(void *mem, size_t size)
 	return ptr;
 }
 
-char *load_file(const char* path)
+char *load_file(const char *path)
 {
 	char *buf = NULL;
 	FILE *file = fopen(path, "r");
 
 	if (!file) {
-		printf("could not load file %s\n", path);
+		DOUT("could not load file %s\n", path);
 		return NULL;
 	}
 
@@ -128,7 +132,7 @@ char *load_file(const char* path)
 
 		size_t new_len = fread(buf, 1, len, file);
 		if (ferror(file) != 0) {
-			printf("could not read file %s\n", path);
+			DOUT("could not read file %s\n", path);
 			exit(EXIT_FAILURE);
 		} else {
 			buf[new_len++] = '\0';

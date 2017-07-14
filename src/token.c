@@ -96,10 +96,9 @@ char *token_get_str(enum TokType type)
 void token_write(struct Token *tok, FILE *fp)
 {
 	fprintf(fp, "type       | data       | file       | index   | length | eol?  | value   \n");
-//	fprintf(fp, "token type | data       | file       | index   | length | eol?  | value   \n");
 	fprintf(fp, "--------------------------------------------------------------------------\n");
+
 	while (tok) {
-//		fprintf("   KEYWORD | keyw:        fn | file:    test.k | index:  165 | len:    2 | eol:false | value:fn");
 		if (tok->type <= TOK_INVALID)
 			fprintf(fp, "%10s | ", token_type_str[(size_t)tok->type]);
 		else

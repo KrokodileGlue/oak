@@ -54,7 +54,7 @@ char *get_line      (struct Location loc);
 
 char *strclone      (char *str);
 void chop_extension (char *str);
-void add_extension  (char *str);
+char *add_extension (char *str);
 
 void *oak_malloc (size_t size);
 void *oak_realloc(void *mem, size_t size);

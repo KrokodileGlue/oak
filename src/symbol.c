@@ -7,6 +7,7 @@
 #include "token.h"
 #include "lexer.h"
 #include "parser.h"
+#include "module.h"
 
 static void add(struct Symbolizer *si, struct Symbol *sym);
 
@@ -14,11 +15,16 @@ static void import(struct Symbolizer *si, char *filename)
 {
 	/* load */
 	char *text = load_file(filename);
-	if (!text) return;
+	if (!text) return; /* TODO: more error handling */
+
+	DOUT("oak: input:\n%s\n", text);
+	DOUT("oak: now lexing...\n");
 
 	/* lex */
 	struct LexState *ls = lexer_new(text, filename);
 	struct Token *tok = tokenize(ls);
+
+	token_write(tok, stderr);
 
 	if (ls->es->fatal) {
 		error_write(ls->es, stderr);
@@ -33,6 +39,7 @@ static void import(struct Symbolizer *si, char *filename)
 	/* parse */
 	struct ParseState *ps = parser_new(tok);
 	struct Module *module = parse(ps);
+	module->text = text;
 
 	if (ps->es->fatal) {
 		DOUT("\n");
@@ -55,7 +62,6 @@ static void import(struct Symbolizer *si, char *filename)
 		error_write(si->es, stderr);
 	}
 
-//	add(si, st);
 error:
 //	token_clear(tok);
 //	free(text);
@@ -85,6 +91,9 @@ void free_symbol(struct Symbol *sym)
 	for (size_t i = 0; i < sym->num_children; i++) {
 		free_symbol(sym->children[i]);
 	}
+
+	if (sym->type == SYM_MODULE)
+		module_free(sym->module);
 
 	free(sym->children);
 	free(sym);
@@ -302,12 +311,11 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 		struct Symbol *module = resolve(si, stmt->import.name->value);
 
 		if (module) {
-			add(si, module);
+			error_push(si->es, stmt->tok->loc, ERR_FATAL, "recursive module inclusion");
 		} else {
 			char *filename = strclone(stmt->import.name->value);
-			add_extension(filename);
+			filename = add_extension(filename);
 			import(si, filename);
-			free(filename);
 		}
 
 		free(sym);
@@ -315,7 +323,7 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 	} break;
 	default:
 		free(sym);
-		fprintf(stderr, "\nunimplemented symbol visitor for statement of type %d (%s)",
+		DOUT("\nunimplemented symbol visitor for statement of type %d (%s)",
 		        stmt->type, statement_data[stmt->type].body);
 		return;
 	}
@@ -331,6 +339,7 @@ struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m)
 	sym->name = m->name;
 	sym->parent = si->symbol;
 	sym->id = hash(m->name, strlen(m->name));
+	sym->module = m;
 
 	add(si, sym);
 	push(si, sym);

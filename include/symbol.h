@@ -9,6 +9,7 @@ struct Symbol {
 	uint64_t id;
 	char *name;
 	struct Token *tok;
+	struct Module *module;
 
 	struct Symbol *parent;
 	struct Symbol **children;
@@ -33,6 +34,7 @@ struct Symbolizer {
 
 struct Symbolizer *mksymbolizer();
 void symbolizer_free(struct Symbolizer *si);
+void free_symbol(struct Symbol *sym);
 
 struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m);
 void print_symbol(FILE *f, size_t depth, struct Symbol *s);
