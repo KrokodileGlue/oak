@@ -22,7 +22,7 @@ int do_file(char *filename)
 	struct LexState *ls = lexer_new(text, filename);
 	struct Token *tok = tokenize(ls);
 
-	token_write(tok, stderr); /* for debugging */
+	token_write(tok, stderr);
 
 	if (ls->es->fatal) {
 		error_write(ls->es, stderr);
@@ -39,6 +39,7 @@ int do_file(char *filename)
 	/* parse */
 	struct ParseState *ps = parser_new(tok);
 	struct Module *module = parse(ps);
+	module->text = text;
 
 	if (ps->es->fatal) {
 		DOUT("\n");
@@ -72,20 +73,10 @@ int do_file(char *filename)
 
 	/* TODO: compile and run */
 
-	free_ast(module->tree);
-	module_free(module);
-	token_clear(tok);
-	free(text);
 	return EXIT_SUCCESS;
 
 error:
 	token_clear(tok);
-	free(text);
-	return EXIT_FAILURE;
-error2:
-	free_ast(module->tree);
-	token_clear(tok);
-	free(text);
 	return EXIT_FAILURE;
 }
 

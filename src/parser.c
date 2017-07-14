@@ -556,7 +556,7 @@ struct Module *parse(struct ParseState *ps)
 	}
 	tree[num] = NULL;
 
-	struct Module *module = mkmodule(ps->tok->loc.file, tree, num);
+	struct Module *module = mkmodule(ps->tok->loc.file, tree, num, ps->tok);
 
 	return module;
 }
