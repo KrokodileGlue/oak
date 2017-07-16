@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-enum KeywordType {
+enum keyword_type {
 	KEYWORD_FOR,
 	KEYWORD_IF,
 	KEYWORD_ELSE,
@@ -21,12 +21,14 @@ enum KeywordType {
 	KEYWORD_INVALID
 };
 
-struct Keyword {
-	enum KeywordType	 type;
+struct keyword {
+	enum keyword_type	 type;
 	char			*body;
 };
 
-extern struct Keyword keywords[];
-size_t num_keywords();
+extern struct keyword keywords[];
+
+size_t
+num_keywords();
 
 #endif

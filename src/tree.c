@@ -5,7 +5,7 @@
 #include "tree.h"
 #include "util.h"
 
-struct StatementData statement_data[] = {
+struct statementData statement_data[] = {
 	{ STMT_FN_DEF,		"function definition"	},
 	{ STMT_FOR_LOOP,	"for loop"		},
 	{ STMT_IF_STMT,		"if"			},
@@ -21,9 +21,10 @@ struct StatementData statement_data[] = {
 	{ STMT_INVALID,		"invalid statement"	}
 };
 
-struct Expression *mkexpr(struct Token *tok)
+struct expression *
+mkexpr(struct token *tok)
 {
-	struct Expression *e = oak_malloc(sizeof *e);
+	struct expression *e = oak_malloc(sizeof *e);
 
 	memset(e, 0, sizeof *e);
 	e->tok = tok;
@@ -32,9 +33,10 @@ struct Expression *mkexpr(struct Token *tok)
 	return e;
 }
 
-struct Statement *mkstmt(struct Token *tok)
+struct statement *
+mkstmt(struct token *tok)
 {
-	struct Statement *s = oak_malloc(sizeof *s);
+	struct statement *s = oak_malloc(sizeof *s);
 
 	memset(s, 0, sizeof *s);
 	s->tok = tok;
@@ -43,7 +45,8 @@ struct Statement *mkstmt(struct Token *tok)
 	return s;
 }
 
-void free_expr(struct Expression *e)
+void
+free_expr(struct expression *e)
 {
 	if (e->type == EXPR_VALUE) {
 		/* don't free the tokens here */
@@ -62,7 +65,8 @@ void free_expr(struct Expression *e)
 	free(e);
 }
 
-void free_stmt(struct Statement *s)
+void
+free_stmt(struct statement *s)
 {
 	switch (s->type) {
 	case STMT_EXPR:
@@ -143,9 +147,10 @@ void free_stmt(struct Statement *s)
 	free(s);
 }
 
-void free_ast(struct Statement **module)
+void
+free_ast(struct statement **module)
 {
-	struct Statement *s = NULL;
+	struct statement *s = NULL;
 
 	for (size_t i = 0; (s = module[i]); i++) {
 		free_stmt(s);
@@ -160,17 +165,20 @@ struct ASTPrinter {
 	int arm[2048]; /* this is probably enough. */
 };
 
-static void split(struct ASTPrinter *ap)
+static void
+split(struct ASTPrinter *ap)
 {
 	ap->arm[ap->depth - 1] = 1;
 }
 
-static void join(struct ASTPrinter *ap)
+static void
+join(struct ASTPrinter *ap)
 {
 	ap->arm[ap->depth - 1] = 0;
 }
 
-static void indent(struct ASTPrinter *ap)
+static void
+indent(struct ASTPrinter *ap)
 {
 	fprintf(ap->f, "\n");
 
@@ -189,12 +197,13 @@ static void indent(struct ASTPrinter *ap)
 	}
 }
 
-static void print_expression(struct ASTPrinter *ap, struct Expression *e)
+static void
+print_expression(struct ASTPrinter *ap, struct expression *e)
 {
 	indent(ap);
 
 	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL || e->type == EXPR_SUBSCRIPT) {
-		struct Operator *op = e->operator;
+		struct operator *op = e->operator;
 
 		switch (op->type) {
 		case OP_PREFIX:
@@ -292,7 +301,8 @@ static void print_expression(struct ASTPrinter *ap, struct Expression *e)
 	}
 }
 
-static void print_statement(struct ASTPrinter *ap, struct Statement *s)
+static void
+print_statement(struct ASTPrinter *ap, struct statement *s)
 {
 	indent(ap);
 	fprintf(ap->f, "(stmt %s)", statement_data[s->type].body);
@@ -482,14 +492,15 @@ static void print_statement(struct ASTPrinter *ap, struct Statement *s)
 	}
 }
 
-void print_ast(FILE *f, struct Statement **module)
+void
+print_ast(FILE *f, struct statement **module)
 {
 	struct ASTPrinter *ap = oak_malloc(sizeof *ap);
 	ap->f = f;
 	ap->depth = 0;
 	memset(ap->arm, 0, 2048 * sizeof (int));
 
-	struct Statement *s = NULL;
+	struct statement *s = NULL;
 
 	indent(ap);
 	fprintf(ap->f, "(root)");

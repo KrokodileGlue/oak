@@ -10,15 +10,15 @@
 #include "keyword.h"
 #include "error.h"
 
-struct Token {
-	struct Location loc;
+struct token {
+	struct location loc;
 	bool is_line_end;
 
-	char *value; /* the body of the token */
-	struct Token *next; /* doubly-linked list */
-	struct Token *prev;
+	char         *value; /* the body of the token */
+	struct token *next; /* doubly-linked list */
+	struct token *prev;
 
-	enum TokType {
+	enum token_type {
 		TOK_IDENTIFIER, /* there's no data for identifiers, just the token body. */
 		TOK_KEYWORD,
 		TOK_STRING,
@@ -31,22 +31,31 @@ struct Token {
 	} type;
 
 	union {
-		struct Keyword  *keyword;
-		char		*string;
-		char		 symbol;
-		int64_t	 integer;
-		double		 floating;
-		bool		 boolean;
+		struct keyword *keyword;
+		char           *string;
+		char            symbol;
+		int64_t         integer;
+		double          floating;
+		bool            boolean;
 	};
 };
 
-void token_push  (struct Location loc, enum TokType type, char *start, char *end, struct Token **prev);
-char *token_get_str(enum TokType type);
+void
+token_push(struct location loc, enum token_type type, char *start, char *end, struct token **prev);
 
-void token_clear (struct Token *tok);
-void token_delete(struct Token *tok);
+char *
+token_get_str(enum token_type type);
 
-void token_write (struct Token *tok, FILE *fp);
-void token_rewind(struct Token **tok);
+void
+token_clear(struct token *tok);
+
+void
+token_delete(struct token *tok);
+
+void
+token_write(struct token *tok, FILE *fp);
+
+void
+token_rewind(struct token **tok);
 
 #endif

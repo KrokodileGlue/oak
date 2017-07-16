@@ -1,6 +1,6 @@
 #include "operator.h"
 
-struct Operator ops[] = {
+struct operator ops[] = {
 	{ "(",   ")", 15, ASS_LEFT,  OP_FN_CALL },
 	{ ".",   "",  15, ASS_LEFT,  OP_BINARY  },
 	{ "[",   "]", 15, ASS_LEFT,  OP_SUBCRIPT},
@@ -39,7 +39,8 @@ struct Operator ops[] = {
 	{ ",",   "",  1,  ASS_RIGHT, OP_BINARY  }
 };
 
-size_t num_ops()
+size_t
+num_ops()
 {
 	return sizeof ops / sizeof *ops;
 }

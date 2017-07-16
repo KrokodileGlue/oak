@@ -6,17 +6,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-struct Operator {
-	char	*body;
-	char	*body2;
-	size_t	 prec;
+struct operator {
+	char   *body;
+	char   *body2;
+	size_t  prec;
 
-	enum BinaryAssociation {
+	enum {
 		ASS_LEFT,
 		ASS_RIGHT
 	} ass;
 
-	enum OpType {
+	enum operator_type {
 		/* prefix operator types */
 		OP_PREFIX,
 
@@ -30,7 +30,9 @@ struct Operator {
 	} type;
 };
 
-extern struct Operator ops[];
-size_t num_ops();
+extern struct operator ops[];
+
+size_t
+num_ops();
 
 #endif

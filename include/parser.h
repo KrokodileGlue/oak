@@ -5,14 +5,18 @@
 #include "token.h"
 #include "error.h"
 
-struct ParseState {
-	struct ErrorState *es;
-	struct Token *tok;
+struct parser {
+	struct error_state *es;
+	struct token *tok;
 };
 
-struct ParseState *parser_new();
-void parser_clear(struct ParseState *ps);
+struct parser *
+parser_new();
 
-struct Module *parse(struct ParseState *ps);
+void
+parser_clear(struct parser *ps);
+
+struct module *
+parse(struct parser *ps);
 
 #endif

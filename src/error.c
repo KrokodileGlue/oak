@@ -9,11 +9,12 @@
 
 static char error_level_strs[][32] = { "note", "warning", "error" };
 
-struct ErrorState *error_new()
+struct error_state *
+error_new()
 {
-	struct ErrorState *es = oak_malloc(sizeof *es);
+	struct error_state *es = oak_malloc(sizeof *es);
 
-	*es = (struct ErrorState) {
+	*es = (struct error_state) {
 		.err = NULL,      .num = 0,
 		.pending = false, .fatal = false
 	};
@@ -21,7 +22,8 @@ struct ErrorState *error_new()
 	return es;
 }
 
-void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev, char *fmt, ...)
+void
+error_push(struct error_state *es, struct location loc, enum error_level sev, char *fmt, ...)
 {
 	es->pending = true;
 	es->err = realloc(es->err, sizeof *(es->err) * ++(es->num));
@@ -37,7 +39,8 @@ void error_push(struct ErrorState *es, struct Location loc, enum ErrorLevel sev,
 	if (sev == ERR_FATAL) es->fatal = true;
 }
 
-void error_write(struct ErrorState *es, FILE *fp)
+void
+error_write(struct error_state *es, FILE *fp)
 {
 	struct Error *errors = es->err;
 	for (size_t i = 0; i < es->num; i++) {
@@ -73,12 +76,14 @@ void error_write(struct ErrorState *es, FILE *fp)
 	}
 }
 
-static void error_delete(struct Error err)
+static void
+error_delete(struct Error err)
 {
 	free(err.msg);
 }
 
-void error_clear(struct ErrorState *es)
+void
+error_clear(struct error_state *es)
 {
 	for (size_t i = 0; i < es->num; i++) {
 		error_delete(es->err[i]);

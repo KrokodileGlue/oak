@@ -7,9 +7,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-struct Expression;
+struct expression;
 
-enum StmtType {
+enum statement_type {
 	STMT_FN_DEF,
 	STMT_FOR_LOOP,
 	STMT_IF_STMT,
@@ -25,28 +25,27 @@ enum StmtType {
 	STMT_INVALID
 } type;
 
-struct StatementData {
-	enum StmtType	 type;
-	char		*body;
+struct statementData {
+	enum statement_type  type;
+	char                *body;
 };
 
-extern struct StatementData statement_data[];
+extern struct statementData statement_data[];
 
-struct Statement {
-	struct Token *tok;
-
-	enum StmtType type;
+struct statement {
+	struct token *tok;
+	enum statement_type type;
 
 	union {
 		struct {
-			struct Expression *expr;
+			struct expression *expr;
 		} yield;
 
 		struct {
 			char *name;
-			struct Token **args;
+			struct token **args;
 			size_t num;
-			struct Statement *body;
+			struct statement *body;
 		} fn_def;
 
 		/*
@@ -54,68 +53,68 @@ struct Statement {
 		 * by the c field; if it's NULL then it's for-each, otherwise it's c-style.
 		 */
 		struct {
-			struct Statement *a;
-			struct Expression *b;
-			struct Expression *c;
-			struct Statement *body;
+			struct statement *a;
+			struct expression *b;
+			struct expression *c;
+			struct statement *body;
 		} for_loop;
 
 		struct {
-			struct Expression *cond;
-			struct Statement *then;
-			struct Statement *otherwise;
+			struct expression *cond;
+			struct statement *then;
+			struct statement *otherwise;
 		} if_stmt;
 
 		struct {
 			/* a list of identifiers */
-			struct Token **names;
+			struct token **names;
 			/* a list of initalizers */
-			struct Expression **init;
+			struct expression **init;
 			size_t num;
 			size_t num_init;
 		} var_decl;
 
 		struct {
-			struct Statement **stmts;
+			struct statement **stmts;
 			size_t num;
 		} block;
 
 		struct {
-			struct Expression **args;
+			struct expression **args;
 			size_t num;
 		} print;
 
 		struct {
-			struct Expression *cond;
-			struct Statement *body;
+			struct expression *cond;
+			struct statement *body;
 		} do_while_loop;
 
 		struct {
-			struct Expression *cond;
-			struct Statement *body;
+			struct expression *cond;
+			struct statement *body;
 		} while_loop;
 
 		struct {
 			char *name;
 			/* the name of the class this class inherits from */
-			struct Token *parent_name;
-			struct Statement **body;
+			struct token *parent_name;
+			struct statement **body;
 			size_t num;
 		} class;
 
 		struct {
-			struct Token *name;
-			struct Token *as;
+			struct token *name;
+			struct token *as;
 		} import;
 
-		struct Expression *expr;
+		struct expression *expr;
 	};
 };
 
-struct Expression {
-	struct Token *tok;
+struct expression {
+	struct token *tok;
 
-	enum ExprType {
+	enum expression_type {
 		EXPR_VALUE,
 		EXPR_OPERATOR,
 		EXPR_FN_CALL,
@@ -125,22 +124,29 @@ struct Expression {
 		EXPR_INVALID
 	} type;
 
-	struct Operator *operator;
+	struct operator *operator;
 
 	union {
 		struct {
-			struct Expression *a, *b, *c;
-			struct Expression **args; /* used for function arguments and lists */
+			struct expression *a, *b, *c;
+			struct expression **args; /* used for function arguments and lists */
 			size_t num;
 		};
 
-		struct Token *val;
+		struct token *val;
 	};
 };
 
-struct Expression *mkexpr(struct Token *tok);
-struct Statement  *mkstmt(struct Token *tok);
-void free_ast(struct Statement **module);
-void print_ast(FILE *f, struct Statement **module);
+struct expression *
+mkexpr(struct token *tok);
+
+struct statement *
+mkstmt(struct token *tok);
+
+void
+free_ast(struct statement **module);
+
+void
+print_ast(FILE *f, struct statement **module);
 
 #endif

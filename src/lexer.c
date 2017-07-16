@@ -12,15 +12,17 @@
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
-void lexer_clear(struct LexState *ls)
+void
+lexer_clear(struct lexer *ls)
 {
 	error_clear(ls->es);
 	free(ls);
 }
 
-struct LexState *lexer_new(char *text, char *file)
+struct lexer *
+lexer_new(char *text, char *file)
 {
-	struct LexState *ls = oak_malloc(sizeof *ls);
+	struct lexer *ls = oak_malloc(sizeof *ls);
 
 	ls->text = text;
 	ls->file = file;
@@ -34,7 +36,8 @@ struct LexState *lexer_new(char *text, char *file)
 	stop = start;				\
 	while (*stop != '\n' && *stop) { stop++; }
 
-static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt, ...)
+static void
+lexer_push_error(struct lexer *ls, enum error_level sev, char *fmt, ...)
 {
 	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
@@ -48,12 +51,14 @@ static void lexer_push_error(struct LexState *ls, enum ErrorLevel sev, char *fmt
 	free(msg);
 }
 
-static void lexer_push_token(struct LexState *ls, enum TokType type, char *a, char *b)
+static void
+lexer_push_token(struct lexer *ls, enum token_type type, char *a, char *b)
 {
 	token_push(ls->loc, type, a, b, &ls->tok);
 }
 
-static void parse_escape_sequences(struct LexState *ls, char *str)
+static void
+parse_escape_sequences(struct lexer *ls, char *str)
 {
 	char *out = str;
 	size_t i = 0;
@@ -140,7 +145,8 @@ static void parse_escape_sequences(struct LexState *ls, char *str)
 	} while (str[i++]);
 }
 
-static char *parse_identifier(struct LexState *ls, char *a)
+static char *
+parse_identifier(struct lexer *ls, char *a)
 {
 	char *b = a;
 	while (is_legal_in_identifier(*b) && *b) b++;
@@ -151,7 +157,8 @@ static char *parse_identifier(struct LexState *ls, char *a)
 	return b;
 }
 
-static char *parse_number(struct LexState *ls, char *a)
+static char *
+parse_number(struct lexer *ls, char *a)
 {
 	char *b = a;
 
@@ -214,7 +221,8 @@ static char *parse_number(struct LexState *ls, char *a)
 	return b;
 }
 
-static char *parse_string_literal(struct LexState *ls, char *a)
+static char *
+parse_string_literal(struct lexer *ls, char *a)
 {
 	char *b = a;
 	do {
@@ -243,7 +251,8 @@ static char *parse_string_literal(struct LexState *ls, char *a)
 	return b + 1;
 }
 
-static char *parse_character_literal(struct LexState *ls, char *a)
+static char *
+parse_character_literal(struct lexer *ls, char *a)
 {
 	char *b = a;
 	do {
@@ -286,7 +295,8 @@ static char *parse_character_literal(struct LexState *ls, char *a)
 	return b + 1;
 }
 
-static char *parse_raw_string_literal(struct LexState *ls, char *a)
+static char *
+parse_raw_string_literal(struct lexer *ls, char *a)
 {
 	char *begin = a;
 	a += 2; /* skip the R( */
@@ -331,7 +341,8 @@ static char *parse_raw_string_literal(struct LexState *ls, char *a)
 	return b + delim_len;
 }
 
-static char *smart_cat(char *first, char *second)
+static char *
+smart_cat(char *first, char *second)
 {
 	size_t len = strlen(first) + strlen(second);
 
@@ -344,7 +355,8 @@ static char *smart_cat(char *first, char *second)
 }
 
 /* recursively concatenate adjacent strings */
-static bool cat_strings(struct Token *tok)
+static bool
+cat_strings(struct token *tok)
 {
 	bool ret = false;
 	token_rewind(&tok);
@@ -364,10 +376,11 @@ static bool cat_strings(struct Token *tok)
 }
 
 /* match the longest operator starting from a */
-static struct Operator *match_operator(char *a)
+static struct operator *
+match_operator(char *a)
 {
 	size_t len = 0;
-	struct Operator *op = NULL;
+	struct operator *op = NULL;
 
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strncmp(ops[i].body, a, strlen(ops[i].body))
@@ -380,9 +393,10 @@ static struct Operator *match_operator(char *a)
 	return op;
 }
 
-static char *parse_operator(struct LexState *ls, char *a)
+static char *
+parse_operator(struct lexer *ls, char *a)
 {
-	struct Operator *op = match_operator(a);
+	struct operator *op = match_operator(a);
 	size_t len = strlen(op->body);
 	char *b = a + len;
 
@@ -392,7 +406,8 @@ static char *parse_operator(struct LexState *ls, char *a)
 	return b;
 }
 
-static char *parse_secondary_operator(char *a)
+static char *
+parse_secondary_operator(char *a)
 {
 	size_t len = 0;
 
@@ -406,12 +421,13 @@ static char *parse_secondary_operator(char *a)
 	return len ? a + len : 0;
 }
 
-struct Token *tokenize(struct LexState *ls)
+struct token *
+tokenize(struct lexer *ls)
 {
 	char *a = ls->text;
 
 	while (*a) {
-		ls->loc = (struct Location){ls->text, ls->file, a - ls->text, 1};
+		ls->loc = (struct location){ls->text, ls->file, a - ls->text, 1};
 
 		if (is_whitespace(*a)) {
 			while (is_whitespace(*a) && *a) {

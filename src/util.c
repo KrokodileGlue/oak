@@ -2,14 +2,16 @@
 
 #include <string.h>
 
-size_t line_len(struct Location loc)
+size_t
+line_len(struct location loc)
 {
 	size_t i;
 	for (i = loc.index; loc.text[i] && loc.text[i] != '\n'; i++);
 	return i - loc.index;
 }
 
-size_t line_number(struct Location loc)
+size_t
+line_number(struct location loc)
 {
 	size_t line_num = 1;
 	for (size_t i = 0; i < strlen(loc.text); i++) {
@@ -19,7 +21,8 @@ size_t line_number(struct Location loc)
 	return line_num;
 }
 
-size_t column_number(struct Location loc)
+size_t
+column_number(struct location loc)
 {
 	size_t column_num = 1;
 	for (size_t i = 0; i < strlen(loc.text); i++) {
@@ -30,7 +33,8 @@ size_t column_number(struct Location loc)
 	return column_num;
 }
 
-size_t index_in_line(struct Location loc)
+size_t
+index_in_line(struct location loc)
 {
 	size_t start = loc.index;
 	while (start) { /* find the beginning of the line we're in */
@@ -43,7 +47,8 @@ size_t index_in_line(struct Location loc)
 	return loc.index - start;
 }
 
-char *get_line(struct Location loc)
+char *
+get_line(struct location loc)
 {
 	size_t start = loc.index, end = loc.index;
 	while (start) { /* find the beginning of the line we're in */
@@ -62,14 +67,16 @@ char *get_line(struct Location loc)
 	return line;
 }
 
-char *strclone(char *str)
+char *
+strclone(char *str)
 {
 	char *ret = oak_malloc(strlen(str) + 1);
 	strcpy(ret, str);
 	return ret;
 }
 
-void chop_extension(char *str)
+void
+chop_extension(char *str)
 {
 	char *a = str;
 	while (*a != '.' && *a)
@@ -77,7 +84,8 @@ void chop_extension(char *str)
 	*a = 0;
 }
 
-char *add_extension(char *str)
+char *
+add_extension(char *str)
 {
 	size_t len = strlen(str) + 3;
 
@@ -87,7 +95,8 @@ char *add_extension(char *str)
 	return str;
 }
 
-void *oak_malloc(size_t size)
+void *
+oak_malloc(size_t size)
 {
 	void *ptr = malloc(size);
 
@@ -99,7 +108,8 @@ void *oak_malloc(size_t size)
 	return ptr;
 }
 
-void *oak_realloc(void *mem, size_t size)
+void *
+oak_realloc(void *mem, size_t size)
 {
 	void *ptr = realloc(mem, size);
 
@@ -111,7 +121,8 @@ void *oak_realloc(void *mem, size_t size)
 	return ptr;
 }
 
-char *load_file(const char *path)
+char *
+load_file(const char *path)
 {
 	char *buf = NULL;
 	FILE *file = fopen(path, "r");

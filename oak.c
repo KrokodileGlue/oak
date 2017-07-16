@@ -9,7 +9,8 @@
 #include "symbol.h"
 #include "module.h"
 
-int do_file(char *filename)
+int
+do_file(char *filename)
 {
 	/* load */
 	char *text = load_file(filename);
@@ -19,8 +20,8 @@ int do_file(char *filename)
 	DOUT("oak: now lexing...\n");
 
 	/* lex */
-	struct LexState *ls = lexer_new(text, filename);
-	struct Token *tok = tokenize(ls);
+	struct lexer *ls = lexer_new(text, filename);
+	struct token *tok = tokenize(ls);
 
 	token_write(tok, stderr);
 
@@ -37,8 +38,8 @@ int do_file(char *filename)
 	DOUT("oak: now parsing...");
 
 	/* parse */
-	struct ParseState *ps = parser_new(tok);
-	struct Module *module = parse(ps);
+	struct parser *ps = parser_new(tok);
+	struct module *module = parse(ps);
 	module->text = text;
 
 	if (ps->es->fatal) {
@@ -56,8 +57,8 @@ int do_file(char *filename)
 	DOUT("oak: generating symbol table...");
 
 	/* symbolize */
-	struct Symbolizer *si = mksymbolizer(module);
-	struct Symbol *st = symbolize_module(si, module);
+	struct symbolizer *si = mksymbolizer(module);
+	struct symbol *st = symbolize_module(si, module);
 	print_symbol(stderr, 0, st);
 	DOUT("\n");
 
@@ -80,7 +81,8 @@ error:
 	return EXIT_FAILURE;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	return do_file(argv[1]);
 }
