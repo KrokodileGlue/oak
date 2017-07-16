@@ -5,15 +5,15 @@
 #include "tree.h"
 #include "module.h"
 
-struct Symbol {
-	uint64_t id;
-	char *name;
-	struct Token *tok;
-	struct Module *module;
+struct symbol {
+	uint64_t        id;
+	char           *name;
+	struct token   *tok;
+	struct module  *module;
 
-	struct Symbol *parent;
-	struct Symbol **children;
-	size_t num_children;
+	struct symbol  *parent;
+	struct symbol **children;
+	size_t          num_children;
 
 	enum SymbolType {
 		SYM_FN,
@@ -27,16 +27,24 @@ struct Symbol {
 	} type;
 };
 
-struct Symbolizer {
-	struct Symbol *symbol;
-	struct ErrorState *es;
+struct symbolizer {
+	struct symbol *symbol;
+	struct error_state *es;
 };
 
-struct Symbolizer *mksymbolizer();
-void symbolizer_free(struct Symbolizer *si);
-void free_symbol(struct Symbol *sym);
+struct symbolizer *
+mksymbolizer();
 
-struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m);
-void print_symbol(FILE *f, size_t depth, struct Symbol *s);
+void
+symbolizer_free(struct symbolizer *si);
+
+void
+free_symbol(struct symbol *sym);
+
+struct symbol *
+symbolize_module(struct symbolizer *si, struct module *m);
+
+void
+print_symbol(FILE *f, size_t depth, struct symbol *s);
 
 #endif

@@ -3,9 +3,10 @@
 #include "token.h"
 #include "symbol.h"
 
-struct Module *mkmodule(char *file, struct Statement **tree, size_t num, struct Token *tok)
+struct module *
+new_module(char *file, struct statement **tree, size_t num, struct token *tok)
 {
-	struct Module *m = oak_malloc(sizeof *m);
+	struct module *m = oak_malloc(sizeof *m);
 
 	memset(m, 0, sizeof *m);
 	m->name = strclone(file);
@@ -18,7 +19,8 @@ struct Module *mkmodule(char *file, struct Statement **tree, size_t num, struct 
 	return m;
 }
 
-void module_free(struct Module *m)
+void
+module_free(struct module *m)
 {
 	token_clear(m->tok);
 	free_ast(m->tree);

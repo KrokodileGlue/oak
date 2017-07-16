@@ -9,9 +9,11 @@
 #include "parser.h"
 #include "module.h"
 
-static void add(struct Symbolizer *si, struct Symbol *sym);
+static void
+add(struct symbolizer *si, struct symbol *sym);
 
-static void import(struct Symbolizer *si, char *filename)
+static void
+import(struct symbolizer *si, char *filename)
 {
 	/* load */
 	char *text = load_file(filename);
@@ -21,8 +23,8 @@ static void import(struct Symbolizer *si, char *filename)
 	DOUT("oak: now lexing...\n");
 
 	/* lex */
-	struct LexState *ls = lexer_new(text, filename);
-	struct Token *tok = tokenize(ls);
+	struct lexer *ls = lexer_new(text, filename);
+	struct token *tok = tokenize(ls);
 
 	token_write(tok, stderr);
 
@@ -37,8 +39,8 @@ static void import(struct Symbolizer *si, char *filename)
 	lexer_clear(ls);
 
 	/* parse */
-	struct ParseState *ps = parser_new(tok);
-	struct Module *module = parse(ps);
+	struct parser *ps = parser_new(tok);
+	struct module *module = parse(ps);
 	module->text = text;
 
 	if (ps->es->fatal) {
@@ -68,16 +70,18 @@ error:
 	return;
 }
 
-static struct Symbol *mksym(struct Token *tok);
+static struct symbol *
+mksym(struct token *tok);
 
-struct Symbolizer *mksymbolizer()
+struct symbolizer *
+mksymbolizer()
 {
-	struct Symbolizer *si = oak_malloc(sizeof *si);
+	struct symbolizer *si = oak_malloc(sizeof *si);
 
 	memset(si, 0, sizeof *si);
 	si->es = error_new();
 
-	struct Symbol *sym = mksym(NULL);
+	struct symbol *sym = mksym(NULL);
 	sym->type = SYM_GLOBAL;
 	sym->name = "*global*";
 
@@ -86,7 +90,8 @@ struct Symbolizer *mksymbolizer()
 	return si;
 }
 
-void free_symbol(struct Symbol *sym)
+void
+free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
 		free_symbol(sym->children[i]);
@@ -99,7 +104,8 @@ void free_symbol(struct Symbol *sym)
 	free(sym);
 }
 
-void symbolizer_free(struct Symbolizer *si)
+void
+symbolizer_free(struct symbolizer *si)
 {
 	free_symbol(si->symbol);
 	free(si->es);
@@ -117,9 +123,10 @@ static char sym_str[][32] = {
 	"invalid"
 };
 
-static struct Symbol *mksym(struct Token *tok)
+static struct symbol *
+mksym(struct token *tok)
 {
-	struct Symbol *sym = oak_malloc(sizeof *sym);
+	struct symbol *sym = oak_malloc(sizeof *sym);
 
 	memset(sym, 0, sizeof *sym);
 	sym->type = SYM_INVALID;
@@ -128,7 +135,8 @@ static struct Symbol *mksym(struct Token *tok)
 	return sym;
 }
 
-static uint64_t hash(char *d, size_t len)
+static uint64_t
+hash(char *d, size_t len)
 {
 	uint64_t hash = 5381;
 
@@ -138,22 +146,24 @@ static uint64_t hash(char *d, size_t len)
 	return hash;
 }
 
-static void add(struct Symbolizer *si, struct Symbol *sym)
+static void
+add(struct symbolizer *si, struct symbol *sym)
 {
 	if (!sym)
 		return;
 
-	struct Symbol *symbol = si->symbol;
+	struct symbol *symbol = si->symbol;
 	symbol->children = oak_realloc(symbol->children,
 	    sizeof symbol->children[0] * (symbol->num_children + 1));
 
 	symbol->children[symbol->num_children++] = sym;
 }
 
-static struct Symbol *resolve(struct Symbolizer *si, char *name)
+static struct symbol *
+resolve(struct symbolizer *si, char *name)
 {
 	uint64_t h = hash(name, strlen(name));
-	struct Symbol *sym = si->symbol;
+	struct symbol *sym = si->symbol;
 
 	while (sym) {
 		for (size_t i = 0; i < sym->num_children; i++) {
@@ -169,32 +179,37 @@ static struct Symbol *resolve(struct Symbolizer *si, char *name)
 	return NULL;
 }
 
-static void find(struct Symbolizer *si, struct Location loc, char *name)
+static void
+find(struct symbolizer *si, struct location loc, char *name)
 {
-	struct Symbol *sym = resolve(si, name);
+	struct symbol *sym = resolve(si, name);
 	if (!sym)
 		error_push(si->es, loc, ERR_FATAL, "undeclared identifier");
 }
 
-static void pop(struct Symbolizer *si)
+static void
+pop(struct symbolizer *si)
 {
 	if (si->symbol->parent)
 		si->symbol = si->symbol->parent;
 }
 
-static void push(struct Symbolizer *si, struct Symbol *sym)
+static void
+push(struct symbolizer *si, struct symbol *sym)
 {
 	si->symbol = sym;
 }
 
-static void symbolize(struct Symbolizer *si, struct Statement *stmt);
+static void
+symbolize(struct symbolizer *si, struct statement *stmt);
 
-static void block(struct Symbolizer *si, struct Statement *stmt)
+static void
+block(struct symbolizer *si, struct statement *stmt)
 {
 	if (!stmt)
 		return;
 
-	struct Symbol *sym = mksym(stmt->tok);
+	struct symbol *sym = mksym(stmt->tok);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
@@ -205,7 +220,8 @@ static void block(struct Symbolizer *si, struct Statement *stmt)
 	pop(si);
 }
 
-static void resolve_expr(struct Symbolizer *si, struct Expression *e)
+static void
+resolve_expr(struct symbolizer *si, struct expression *e)
 {
 	switch (e->type) {
 	case EXPR_OPERATOR:
@@ -233,9 +249,10 @@ static void resolve_expr(struct Symbolizer *si, struct Expression *e)
 	}
 }
 
-static void symbolize(struct Symbolizer *si, struct Statement *stmt)
+static void
+symbolize(struct symbolizer *si, struct statement *stmt)
 {
-	struct Symbol *sym = mksym(stmt->tok);
+	struct symbol *sym = mksym(stmt->tok);
 	sym->parent = si->symbol;
 
 	switch (stmt->type) {
@@ -259,7 +276,7 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 		push(si, sym);
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
-			struct Symbol *s = mksym(sym->tok);
+			struct symbol *s = mksym(sym->tok);
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
 			s->id = hash(s->name, strlen(s->name));
@@ -272,7 +289,7 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 		break;
 	case STMT_VAR_DECL: {
 		for (size_t i = 0; i < stmt->var_decl.num; i++) {
-			struct Symbol *s = mksym(sym->tok);
+			struct symbol *s = mksym(sym->tok);
 			s->type = SYM_VAR;
 			s->name = stmt->var_decl.names[i]->value;
 			s->id = hash(s->name, strlen(s->name));
@@ -308,7 +325,7 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 
 		break;
 	case STMT_IMPORT: {
-		struct Symbol *module = resolve(si, stmt->import.name->value);
+		struct symbol *module = resolve(si, stmt->import.name->value);
 
 		if (module) {
 			error_push(si->es, stmt->tok->loc, ERR_FATAL, "recursive module inclusion");
@@ -332,9 +349,10 @@ static void symbolize(struct Symbolizer *si, struct Statement *stmt)
 	add(si, sym);
 }
 
-struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m)
+struct symbol *
+symbolize_module(struct symbolizer *si, struct module *m)
 {
-	struct Symbol *sym = mksym(m->tree[0]->tok);
+	struct symbol *sym = mksym(m->tree[0]->tok);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
 	sym->parent = si->symbol;
@@ -359,7 +377,8 @@ struct Symbol *symbolize_module(struct Symbolizer *si, struct Module *m)
 	for (size_t i = 0; i < depth; i++) \
 		fprintf(f, "        ");
 
-void print_symbol(FILE *f, size_t depth, struct Symbol *s)
+void
+print_symbol(FILE *f, size_t depth, struct symbol *s)
 {
 	INDENT; fprintf(f, "<%s : %s>", s->name, sym_str[s->type]);
 	INDENT; fprintf(f, "  num_children=%zd", s->num_children);

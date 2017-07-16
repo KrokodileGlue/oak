@@ -10,9 +10,10 @@
 
 #define NEXT if (ps->tok->type != TOK_END) ps->tok = ps->tok->next;
 
-struct ParseState *parser_new(struct Token *tok)
+struct parser *
+parser_new(struct token *tok)
 {
-	struct ParseState *ps = oak_malloc(sizeof *ps);
+	struct parser *ps = oak_malloc(sizeof *ps);
 
 	ps->es = error_new();
 	ps->tok = tok;
@@ -20,7 +21,8 @@ struct ParseState *parser_new(struct Token *tok)
 	return ps;
 }
 
-void parser_clear(struct ParseState *ps)
+void
+parser_clear(struct parser *ps)
 {
 	error_clear(ps->es);
 	/* the parser is not responsible for the token stream, so we
@@ -28,12 +30,13 @@ void parser_clear(struct ParseState *ps)
 	free(ps);
 }
 
-static void expect_symbol(struct ParseState *ps, char *sym)
+static void
+expect_symbol(struct parser *ps, char *sym)
 {
 //	DOUT("expecting %s, looking at %s\n", sym, ps->tok->value);
 	if (strcmp(ps->tok->value, sym)) {
 		if (ps->tok->type == TOK_END) {
-			struct Token *tok = ps->tok->prev;
+			struct token *tok = ps->tok->prev;
 
 			error_push(ps->es, tok->loc, ERR_FATAL,
 				   "unexpected end-of-file; expected '" ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
@@ -51,11 +54,12 @@ static void expect_symbol(struct ParseState *ps, char *sym)
 	NEXT;
 }
 
-static void expect_terminator(struct ParseState *ps)
+static void
+expect_terminator(struct parser *ps)
 {
 	if (strcmp(ps->tok->value, ";") && !ps->tok->prev->is_line_end) {
 		if (ps->tok->type == TOK_END) {
-			struct Token *tok = ps->tok->prev;
+			struct token *tok = ps->tok->prev;
 
 			error_push(ps->es, tok->loc, ERR_FATAL,
 				   "unexpected end-of-file; expected a statement terminator");
@@ -71,9 +75,11 @@ static void expect_terminator(struct ParseState *ps)
 	if (!strcmp(ps->tok->value, ";")) NEXT;
 }
 
-static struct Statement *parse_stmt(struct ParseState *ps);
+static struct statement *
+parse_stmt(struct parser *ps);
 
-static struct Operator *get_infix_op(struct ParseState *ps)
+static struct operator *
+get_infix_op(struct parser *ps)
 {
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strcmp(ops[i].body, ps->tok->value)
@@ -85,7 +91,8 @@ static struct Operator *get_infix_op(struct ParseState *ps)
 	return NULL;
 }
 
-static struct Operator *get_prefix_op(struct ParseState *ps)
+static struct operator *
+get_prefix_op(struct parser *ps)
 {
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strcmp(ops[i].body, ps->tok->value)
@@ -97,7 +104,8 @@ static struct Operator *get_prefix_op(struct ParseState *ps)
 	return NULL;
 }
 
-static size_t get_prec(struct ParseState *ps, size_t prec)
+static size_t
+get_prec(struct parser *ps, size_t prec)
 {
 	if (get_infix_op(ps))
 		return get_infix_op(ps)->prec;
@@ -105,10 +113,11 @@ static size_t get_prec(struct ParseState *ps, size_t prec)
 	return prec;
 }
 
-static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
+static struct expression *
+parse_expr(struct parser *ps, size_t prec)
 {
-	struct Expression *left = mkexpr(ps->tok);
-	struct Operator *op = get_prefix_op(ps);
+	struct expression *left = mkexpr(ps->tok);
+	struct operator *op = get_prefix_op(ps);
 
 	if (op || !strcmp(ps->tok->value, "(")) {
 		left->type = EXPR_OPERATOR;
@@ -128,7 +137,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 		if (!strcmp(ps->tok->value, "]")) {
 			expect_symbol(ps, "]"); /* we have an empty list */
 		} else {
-			struct Expression *first = parse_expr(ps, 1);
+			struct expression *first = parse_expr(ps, 1);
 			if (!strcmp(ps->tok->value, "for")) {
 				/* we have a list comprehension */
 				left->type = EXPR_LIST_COMPREHENSION;
@@ -166,7 +175,7 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 	}
 
 	op = NULL;
-	struct Expression *e = left;
+	struct expression *e = left;
 
 	while (prec < get_prec(ps, prec)) {
 		op = get_infix_op(ps);
@@ -224,9 +233,10 @@ static struct Expression *parse_expr(struct ParseState *ps, size_t prec)
 	return e;
 }
 
-static struct Statement *parse_if_stmt(struct ParseState *ps)
+static struct statement *
+parse_if_stmt(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_IF_STMT;
 	s->if_stmt.otherwise = NULL;
 
@@ -247,10 +257,11 @@ static struct Statement *parse_if_stmt(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_fn_def(struct ParseState *ps)
+static struct statement *
+parse_fn_def(struct parser *ps)
 {
 	NEXT;
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_FN_DEF;
 
 	if (ps->tok->type != TOK_IDENTIFIER) {
@@ -278,9 +289,10 @@ static struct Statement *parse_fn_def(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_print_stmt(struct ParseState *ps)
+static struct statement *
+parse_print_stmt(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_PRINT;
 
 	if (ps->tok->next->type == TOK_END) {
@@ -306,9 +318,10 @@ static struct Statement *parse_print_stmt(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_vardecl(struct ParseState *ps)
+static struct statement *
+parse_vardecl(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	NEXT;
 	s->type = STMT_VAR_DECL;
 
@@ -341,16 +354,17 @@ static struct Statement *parse_vardecl(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_for_loop(struct ParseState *ps)
+static struct statement *
+parse_for_loop(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_FOR_LOOP;
 	NEXT;
 
 	if (!strcmp(ps->tok->value, "var")) {
 		s->for_loop.a = parse_vardecl(ps);
 	} else {
-		struct Statement *e = mkstmt(ps->tok);
+		struct statement *e = mkstmt(ps->tok);
 		e->type = STMT_EXPR;
 		e->expr = parse_expr(ps, 0);
 
@@ -386,9 +400,10 @@ static struct Statement *parse_for_loop(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_block(struct ParseState *ps)
+static struct statement *
+parse_block(struct parser *ps)
 {
-	struct Statement *s	= mkstmt(ps->tok);
+	struct statement *s	= mkstmt(ps->tok);
 	s->type			= STMT_BLOCK;
 	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
 
@@ -404,9 +419,10 @@ static struct Statement *parse_block(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_yield(struct ParseState *ps)
+static struct statement *
+parse_yield(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_YIELD;
 
 	NEXT;
@@ -416,9 +432,10 @@ static struct Statement *parse_yield(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_while(struct ParseState *ps)
+static struct statement *
+parse_while(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_WHILE;
 	NEXT;
 
@@ -430,9 +447,10 @@ static struct Statement *parse_while(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_do(struct ParseState *ps)
+static struct statement *
+parse_do(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_DO;
 	NEXT;
 
@@ -444,9 +462,10 @@ static struct Statement *parse_do(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_class(struct ParseState *ps)
+static struct statement *
+parse_class(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_CLASS;
 
 	NEXT;
@@ -464,7 +483,7 @@ static struct Statement *parse_class(struct ParseState *ps)
 	expect_symbol(ps, "{");
 
 	while (strcmp(ps->tok->value, "}")) {
-		struct Token *tok = ps->tok; /* so that the error is reported at the right place */
+		struct token *tok = ps->tok; /* so that the error is reported at the right place */
 		s->class.body = oak_realloc(s->class.body, sizeof s->class.body[0] * (s->class.num + 1));
 		s->class.body[s->class.num] = parse_stmt(ps);
 
@@ -483,9 +502,10 @@ static struct Statement *parse_class(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_import(struct ParseState *ps)
+static struct statement *
+parse_import(struct parser *ps)
 {
-	struct Statement *s = mkstmt(ps->tok);
+	struct statement *s = mkstmt(ps->tok);
 	s->type = STMT_IMPORT;
 	NEXT;
 	s->import.name = ps->tok;
@@ -508,9 +528,10 @@ static struct Statement *parse_import(struct ParseState *ps)
 	return s;
 }
 
-static struct Statement *parse_stmt(struct ParseState *ps)
+static struct statement *
+parse_stmt(struct parser *ps)
 {
-	struct Statement *s = NULL;
+	struct statement *s = NULL;
 
 	if (!strcmp(ps->tok->value, "{")) {
 		s = parse_block(ps);
@@ -545,10 +566,11 @@ static struct Statement *parse_stmt(struct ParseState *ps)
 	return s;
 }
 
-struct Module *parse(struct ParseState *ps)
+struct module *
+parse(struct parser *ps)
 {
 	size_t num = 0;
-	struct Statement **tree = oak_malloc(sizeof *tree);
+	struct statement **tree = oak_malloc(sizeof *tree);
 	while (ps->tok->type != TOK_END) {
 		tree = oak_realloc(tree, sizeof *tree * (num + 2));
 		tree[num] = parse_stmt(ps);
@@ -556,7 +578,7 @@ struct Module *parse(struct ParseState *ps)
 	}
 	tree[num] = NULL;
 
-	struct Module *module = mkmodule(ps->tok->loc.file, tree, num, ps->tok);
+	struct module *module = new_module(ps->tok->loc.file, tree, num, ps->tok);
 
 	return module;
 }

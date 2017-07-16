@@ -4,16 +4,19 @@
 #include <stdlib.h>
 #include "tree.h"
 
-struct Module {
+struct module {
 	char *name, *text;
-	struct Symbol *st;
-	struct Token *tok; /* keep the token stream for later free()ing */
+	struct symbol *st;
+	struct token *tok; /* keep the token stream for later free()ing */
 
-	struct Statement **tree;
+	struct statement **tree;
 	size_t num;
 };
 
-struct Module *mkmodule(char *file, struct Statement **tree, size_t num, struct Token *tok);
-void module_free(struct Module *m);
+struct module *
+new_module(char *file, struct statement **tree, size_t num, struct token *tok);
+
+void
+module_free(struct module *m);
 
 #endif
