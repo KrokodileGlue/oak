@@ -22,7 +22,7 @@ struct error_state {
 };
 
 struct error_state *
-error_new();
+new_error();
 
 void
 error_push (struct error_state *es, struct location loc, enum error_level sev, char *fmt, ...);

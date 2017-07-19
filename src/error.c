@@ -10,7 +10,7 @@
 static char error_level_strs[][32] = { "note", "warning", "error" };
 
 struct error_state *
-error_new()
+new_error()
 {
 	struct error_state *es = oak_malloc(sizeof *es);
 

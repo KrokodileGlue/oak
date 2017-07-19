@@ -138,10 +138,10 @@ struct expression {
 };
 
 struct expression *
-mkexpr(struct token *tok);
+new_expression(struct token *tok);
 
 struct statement *
-mkstmt(struct token *tok);
+new_statement(struct token *tok);
 
 void
 free_ast(struct statement **module);

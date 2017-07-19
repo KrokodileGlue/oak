@@ -20,13 +20,13 @@ lexer_clear(struct lexer *ls)
 }
 
 struct lexer *
-lexer_new(char *text, char *file)
+new_lexer(char *text, char *file)
 {
 	struct lexer *ls = oak_malloc(sizeof *ls);
 
 	ls->text = text;
 	ls->file = file;
-	ls->es = error_new();
+	ls->es = new_error();
 	ls->tok = NULL;
 
 	return ls;
@@ -516,6 +516,16 @@ tokenize(struct lexer *ls)
 	lexer_push_token(ls, TOK_END, a, a);
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
+
+	if (ls->es->fatal) {
+		DOUT("\n");
+		error_write(ls->es, stderr);
+		token_clear(ls->tok);
+
+		return NULL;
+	} else if (ls->es->pending) {
+		error_write(ls->es, stderr);
+	}
 
 	return ls->tok;
 }

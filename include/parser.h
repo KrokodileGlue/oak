@@ -4,6 +4,7 @@
 #include "tree.h"
 #include "token.h"
 #include "error.h"
+#include "module.h"
 
 struct parser {
 	struct error_state *es;
@@ -11,12 +12,12 @@ struct parser {
 };
 
 struct parser *
-parser_new();
+new_parser();
 
 void
 parser_clear(struct parser *ps);
 
-struct module *
-parse(struct parser *ps);
+int
+parse(struct module *m);
 
 #endif
