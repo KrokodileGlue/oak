@@ -11,11 +11,11 @@
 #define NEXT if (ps->tok->type != TOK_END) ps->tok = ps->tok->next;
 
 struct parser *
-parser_new(struct token *tok)
+new_parser(struct token *tok)
 {
 	struct parser *ps = oak_malloc(sizeof *ps);
 
-	ps->es = error_new();
+	ps->es = new_error();
 	ps->tok = tok;
 
 	return ps;
@@ -116,7 +116,7 @@ get_prec(struct parser *ps, size_t prec)
 static struct expression *
 parse_expr(struct parser *ps, size_t prec)
 {
-	struct expression *left = mkexpr(ps->tok);
+	struct expression *left = new_expression(ps->tok);
 	struct operator *op = get_prefix_op(ps);
 
 	if (op || !strcmp(ps->tok->value, "(")) {
@@ -181,7 +181,7 @@ parse_expr(struct parser *ps, size_t prec)
 		op = get_infix_op(ps);
 		if (!op) return left;
 
-		e = mkexpr(ps->tok);
+		e = new_expression(ps->tok);
 		e->type = EXPR_OPERATOR;
 		e->operator = op;
 		e->a = left;
@@ -236,7 +236,7 @@ parse_expr(struct parser *ps, size_t prec)
 static struct statement *
 parse_if_stmt(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_IF_STMT;
 	s->if_stmt.otherwise = NULL;
 
@@ -261,7 +261,7 @@ static struct statement *
 parse_fn_def(struct parser *ps)
 {
 	NEXT;
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_FN_DEF;
 
 	if (ps->tok->type != TOK_IDENTIFIER) {
@@ -292,7 +292,7 @@ parse_fn_def(struct parser *ps)
 static struct statement *
 parse_print_stmt(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_PRINT;
 
 	if (ps->tok->next->type == TOK_END) {
@@ -321,7 +321,7 @@ parse_print_stmt(struct parser *ps)
 static struct statement *
 parse_vardecl(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	NEXT;
 	s->type = STMT_VAR_DECL;
 
@@ -357,14 +357,14 @@ parse_vardecl(struct parser *ps)
 static struct statement *
 parse_for_loop(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_FOR_LOOP;
 	NEXT;
 
 	if (!strcmp(ps->tok->value, "var")) {
 		s->for_loop.a = parse_vardecl(ps);
 	} else {
-		struct statement *e = mkstmt(ps->tok);
+		struct statement *e = new_statement(ps->tok);
 		e->type = STMT_EXPR;
 		e->expr = parse_expr(ps, 0);
 
@@ -403,7 +403,7 @@ parse_for_loop(struct parser *ps)
 static struct statement *
 parse_block(struct parser *ps)
 {
-	struct statement *s	= mkstmt(ps->tok);
+	struct statement *s	= new_statement(ps->tok);
 	s->type			= STMT_BLOCK;
 	s->block.stmts		= oak_malloc(sizeof *(s->block.stmts));
 
@@ -422,7 +422,7 @@ parse_block(struct parser *ps)
 static struct statement *
 parse_yield(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_YIELD;
 
 	NEXT;
@@ -435,7 +435,7 @@ parse_yield(struct parser *ps)
 static struct statement *
 parse_while(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_WHILE;
 	NEXT;
 
@@ -450,7 +450,7 @@ parse_while(struct parser *ps)
 static struct statement *
 parse_do(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_DO;
 	NEXT;
 
@@ -465,7 +465,7 @@ parse_do(struct parser *ps)
 static struct statement *
 parse_class(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_CLASS;
 
 	NEXT;
@@ -505,7 +505,7 @@ parse_class(struct parser *ps)
 static struct statement *
 parse_import(struct parser *ps)
 {
-	struct statement *s = mkstmt(ps->tok);
+	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_IMPORT;
 	NEXT;
 	s->import.name = ps->tok;
@@ -522,8 +522,6 @@ parse_import(struct parser *ps)
 		s->import.as = ps->tok;
 		NEXT;
 	}
-
-	expect_symbol(ps, ";");
 
 	return s;
 }
@@ -557,7 +555,7 @@ parse_stmt(struct parser *ps)
 			break;
 		}
 	} else {
-		s = mkstmt(ps->tok);
+		s = new_statement(ps->tok);
 		s->type = STMT_EXPR;
 		s->expr = parse_expr(ps, 0);
 		expect_terminator(ps);
@@ -566,9 +564,11 @@ parse_stmt(struct parser *ps)
 	return s;
 }
 
-struct module *
-parse(struct parser *ps)
+int
+parse(struct module *m)
 {
+	struct parser *ps = new_parser(m->tok);
+
 	size_t num = 0;
 	struct statement **tree = oak_malloc(sizeof *tree);
 	while (ps->tok->type != TOK_END) {
@@ -576,9 +576,18 @@ parse(struct parser *ps)
 		tree[num] = parse_stmt(ps);
 		num++;
 	}
+
 	tree[num] = NULL;
+	m->tree = tree;
 
-	struct module *module = new_module(ps->tok->loc.file, tree, num, ps->tok);
+	if (ps->es->fatal) {
+		DOUT("\n");
+		error_write(ps->es, stderr);
+		parser_clear(ps);
+		return 0;
+	} else if (ps->es->pending) {
+		error_write(ps->es, stderr);
+	}
 
-	return module;
+	return 1;
 }

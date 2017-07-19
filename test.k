@@ -16,10 +16,10 @@ if true {
 }
 */
 
-import foo as bar;
+import foo as bar
 var buzz;
 buzz = 2;
-buzz = foo;
+#buzz = foo;
 
 { var a; a = 5; }
 #a = 5;

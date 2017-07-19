@@ -33,7 +33,7 @@ struct symbolizer {
 };
 
 struct symbolizer *
-mksymbolizer();
+new_symbolizer();
 
 void
 symbolizer_free(struct symbolizer *si);

@@ -12,76 +12,18 @@
 static void
 add(struct symbolizer *si, struct symbol *sym);
 
-static void
-import(struct symbolizer *si, char *filename)
-{
-	/* load */
-	char *text = load_file(filename);
-	if (!text) return; /* TODO: more error handling */
-
-	DOUT("oak: input:\n%s\n", text);
-	DOUT("oak: now lexing...\n");
-
-	/* lex */
-	struct lexer *ls = lexer_new(text, filename);
-	struct token *tok = tokenize(ls);
-
-	token_write(tok, stderr);
-
-	if (ls->es->fatal) {
-		error_write(ls->es, stderr);
-		lexer_clear(ls);
-		goto error;
-	} else if (ls->es->pending) {
-		error_write(ls->es, stderr);
-	}
-
-	lexer_clear(ls);
-
-	/* parse */
-	struct parser *ps = parser_new(tok);
-	struct module *module = parse(ps);
-	module->text = text;
-
-	if (ps->es->fatal) {
-		DOUT("\n");
-		error_write(ps->es, stderr);
-		parser_clear(ps);
-		goto error;
-	} else if (ps->es->pending) {
-		error_write(ps->es, stderr);
-	}
-
-	parser_clear(ps);
-
-	/* symbolize */
-	symbolize_module(si, module);
-
-	if (si->es->fatal) {
-		error_write(si->es, stderr);
-		goto error;
-	} else if (si->es->pending) {
-		error_write(si->es, stderr);
-	}
-
-error:
-//	token_clear(tok);
-//	free(text);
-	return;
-}
-
 static struct symbol *
-mksym(struct token *tok);
+new_symbol(struct token *tok);
 
 struct symbolizer *
-mksymbolizer()
+new_symbolizer()
 {
 	struct symbolizer *si = oak_malloc(sizeof *si);
 
 	memset(si, 0, sizeof *si);
-	si->es = error_new();
+	si->es = new_error();
 
-	struct symbol *sym = mksym(NULL);
+	struct symbol *sym = new_symbol(NULL);
 	sym->type = SYM_GLOBAL;
 	sym->name = "*global*";
 
@@ -124,7 +66,7 @@ static char sym_str[][32] = {
 };
 
 static struct symbol *
-mksym(struct token *tok)
+new_symbol(struct token *tok)
 {
 	struct symbol *sym = oak_malloc(sizeof *sym);
 
@@ -209,7 +151,7 @@ block(struct symbolizer *si, struct statement *stmt)
 	if (!stmt)
 		return;
 
-	struct symbol *sym = mksym(stmt->tok);
+	struct symbol *sym = new_symbol(stmt->tok);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
@@ -252,7 +194,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
-	struct symbol *sym = mksym(stmt->tok);
+	struct symbol *sym = new_symbol(stmt->tok);
 	sym->parent = si->symbol;
 
 	switch (stmt->type) {
@@ -276,7 +218,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		push(si, sym);
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
-			struct symbol *s = mksym(sym->tok);
+			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
 			s->id = hash(s->name, strlen(s->name));
@@ -289,7 +231,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		break;
 	case STMT_VAR_DECL: {
 		for (size_t i = 0; i < stmt->var_decl.num; i++) {
-			struct symbol *s = mksym(sym->tok);
+			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_VAR;
 			s->name = stmt->var_decl.names[i]->value;
 			s->id = hash(s->name, strlen(s->name));
@@ -325,6 +267,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_IMPORT: {
+#if 0
 		struct symbol *module = resolve(si, stmt->import.name->value);
 
 		if (module) {
@@ -334,7 +277,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			filename = add_extension(filename);
 			import(si, filename);
 		}
-
+#endif
 		free(sym);
 		return;
 	} break;
@@ -352,7 +295,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 struct symbol *
 symbolize_module(struct symbolizer *si, struct module *m)
 {
-	struct symbol *sym = mksym(m->tree[0]->tok);
+	struct symbol *sym = new_symbol(m->tree[0]->tok);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
 	sym->parent = si->symbol;
@@ -368,6 +311,14 @@ symbolize_module(struct symbolizer *si, struct module *m)
 	}
 
 	pop(si);
+
+	if (si->es->fatal) {
+		error_write(si->es, stderr);
+		symbolizer_free(si);
+		return NULL;
+	} else if (si->es->pending) {
+		error_write(si->es, stderr);
+	}
 
 	return si->symbol;
 }

@@ -21,7 +21,7 @@ void
 lexer_clear(struct lexer *ls);
 
 struct lexer *
-lexer_new(char *text, char *file);
+new_lexer(char *text, char *file);
 
 struct token *
 tokenize(struct lexer *ls);

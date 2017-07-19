@@ -22,7 +22,7 @@ struct statementData statement_data[] = {
 };
 
 struct expression *
-mkexpr(struct token *tok)
+new_expression(struct token *tok)
 {
 	struct expression *e = oak_malloc(sizeof *e);
 
@@ -34,7 +34,7 @@ mkexpr(struct token *tok)
 }
 
 struct statement *
-mkstmt(struct token *tok)
+new_statement(struct token *tok)
 {
 	struct statement *s = oak_malloc(sizeof *s);
 

@@ -4,17 +4,12 @@
 #include "symbol.h"
 
 struct module *
-new_module(char *file, struct statement **tree, size_t num, struct token *tok)
+new_module(char *path)
 {
 	struct module *m = oak_malloc(sizeof *m);
 
 	memset(m, 0, sizeof *m);
-	m->name = strclone(file);
-	chop_extension(m->name);
-	m->tree = tree;
-	m->num = num;
-	token_rewind(&tok);
-	m->tok = tok;
+	m->path = strclone(path);
 
 	return m;
 }
