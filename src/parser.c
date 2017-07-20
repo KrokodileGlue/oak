@@ -209,7 +209,6 @@ parse_expr(struct parser *ps, size_t prec)
 			NEXT;
 			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
 			break;
-		case OP_PREFIX: NEXT; break;
 		case OP_SUBCRIPT:
 			e->type = EXPR_SUBSCRIPT;
 

@@ -230,6 +230,13 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		break;
 	case STMT_VAR_DECL: {
 		for (size_t i = 0; i < stmt->var_decl.num; i++) {
+			struct symbol *redefinition = resolve(si, stmt->var_decl.names[i]->value);
+
+			if (redefinition) {
+				error_push(si->es, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", stmt->var_decl.names[i]->value);
+				error_push(si->es, redefinition->tok->loc, ERR_NOTE, "previously defined here");
+			}
+
 			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_VAR;
 			s->name = stmt->var_decl.names[i]->value;
@@ -254,22 +261,26 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	case STMT_IF_STMT: {
 		block(si, stmt->if_stmt.then);
 		block(si, stmt->if_stmt.otherwise);
+		resolve_expr(si, stmt->if_stmt.cond);
 
 		free(sym);
 		return;
 	} break;
 	case STMT_EXPR:
 		resolve_expr(si, stmt->expr);
-	case STMT_PRINT: /* fall through */
 		free(sym);
 		return;
-
-		break;
+	case STMT_PRINT:
+		for (size_t i = 0; i < stmt->print.num; i++) {
+			resolve_expr(si, stmt->print.args[i]);
+		}
+		free(sym);
+		return;
 	case STMT_IMPORT: {
 		struct module *m = load_module(si->k, stmt->import.name->string, stmt->import.as->value);
 
 		if (!m) {
-			error_push(si->es, stmt->tok->loc, ERR_FATAL, "no such file");
+			error_push(si->es, stmt->tok->loc, ERR_FATAL, "could not load module");
 			free(sym);
 			return;
 		}
@@ -279,6 +290,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
+	case STMT_WHILE: {
+		block(si, stmt->while_loop.body);
+		resolve_expr(si, stmt->while_loop.cond);
+		free(sym);
+		return;
+	}
 	default:
 		free(sym);
 		DOUT("unimplemented symbol visitor for statement of type %d (%s)",
