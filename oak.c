@@ -60,28 +60,29 @@ void add_module(struct oak *k, struct module *m)
 
 void print_modules(struct oak *k)
 {
-	for (size_t i = 0; i < k->num; i++) {
-		struct module *m = k->modules[i];
+	if (k->print_anything) {
+		for (size_t i = 0; i < k->num; i++) {
+			struct module *m = k->modules[i];
 
-		if (k->print_anything)
-			fprintf(stderr, "========================== module '%s' ==========================\n", m->name);
+			fprintf(stderr, "============================== module '%s' ==============================\n", m->name);
 
-		if (m->stage >= MODULE_STAGE_EMPTY
-		    && (k->print_input || k->print_everything))
-			DOUT("input:\n%s\n", m->text);
+			if (m->stage >= MODULE_STAGE_EMPTY
+			    && (k->print_input || k->print_everything))
+				DOUT("input:\n%s\n", m->text);
 
-		if (m->stage >= MODULE_STAGE_LEXED
-		    && (k->print_tokens || k->print_everything))
-			token_write(m->tok, stderr);
+			if (m->stage >= MODULE_STAGE_LEXED
+			    && (k->print_tokens || k->print_everything))
+				token_write(m->tok, stderr);
 
-		if (m->stage >= MODULE_STAGE_PARSED
-		    && (k->print_ast || k->print_everything))
-			print_ast(stderr, m->tree);
+			if (m->stage >= MODULE_STAGE_PARSED
+			    && (k->print_ast || k->print_everything))
+				print_ast(stderr, m->tree);
 
-		if (m->stage >= MODULE_STAGE_SYMBOLIZED
-		    && (k->print_symbol_table || k->print_everything)) {
-			print_symbol(stderr, 0, m->sym);
-			fputc('\n', stderr);
+			if (m->stage >= MODULE_STAGE_SYMBOLIZED
+			    && (k->print_symbol_table || k->print_everything)) {
+				print_symbol(stderr, 0, m->sym);
+				fputc('\n', stderr);
+			}
 		}
 	}
 }

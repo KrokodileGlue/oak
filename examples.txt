@@ -1,19 +1,31 @@
+oak: unimplemented printer for expression of type 1
+============================== module '*main*' ==============================
 oak: input:
 class CLASS {
 	fn FUNCTION ARG1 ARG2 {
 		var VARIABLE-A = "foo";
 		print "test"
+		VARIABLE-A = 5;
 	}
 
 	var VARIABLE-B VARIABLE-C = 2, 3;
 }
 
-/*if true {
+/*
+if true {
 	var something;
 } else {
 	var other-thing;
 }
 */
+
+import "foo.k" as foo
+var buzz;
+buzz = 2
+buzz = foo;
+
+{ var a; a = 5; }
+#a = 5;
 
 /*
 if true:
@@ -22,12 +34,7 @@ else
 	var other-thing;
 */
 
-/*
-foo[5 * 5];
--f(a = -85 * 92 - 23 ? b++ = (25 * (22 + 38)) : --c = 63)[43];
-*/
 
-oak: now lexing...
 type       | data       | file       | index   | length | eol?  | value   
 --------------------------------------------------------------------------
    KEYWORD |      class |     test.k |       0 |      5 | false | class
@@ -45,44 +52,94 @@ IDENTIFIER |            |     test.k |      45 |     10 | false | VARIABLE-A
     SYMBOL |          ; |     test.k |      63 |      1 |  true | ;
    KEYWORD |      print |     test.k |      67 |      5 | false | print
     STRING |            |     test.k |      73 |      6 |  true | "test"
-    SYMBOL |          } |     test.k |      81 |      1 |  true | }
-   KEYWORD |        var |     test.k |      85 |      3 | false | var
-IDENTIFIER |            |     test.k |      89 |     10 | false | VARIABLE-B
-IDENTIFIER |            |     test.k |     100 |     10 | false | VARIABLE-C
-    SYMBOL |          = |     test.k |     111 |      1 | false | =
-   INTEGER |          2 |     test.k |     113 |      1 | false | 2
-    SYMBOL |          , |     test.k |     114 |      1 | false | ,
-   INTEGER |          3 |     test.k |     116 |      1 | false | 3
-    SYMBOL |          ; |     test.k |     117 |      1 |  true | ;
-    SYMBOL |          } |     test.k |     119 |      1 |  true | }
-       END |            |     test.k |     318 |      1 | false | 
-oak: now parsing...
+IDENTIFIER |            |     test.k |      82 |     10 | false | VARIABLE-A
+    SYMBOL |          = |     test.k |      93 |      1 | false | =
+   INTEGER |          5 |     test.k |      95 |      1 | false | 5
+    SYMBOL |          ; |     test.k |      96 |      1 |  true | ;
+    SYMBOL |          } |     test.k |      99 |      1 |  true | }
+   KEYWORD |        var |     test.k |     103 |      3 | false | var
+IDENTIFIER |            |     test.k |     107 |     10 | false | VARIABLE-B
+IDENTIFIER |            |     test.k |     118 |     10 | false | VARIABLE-C
+    SYMBOL |          = |     test.k |     129 |      1 | false | =
+   INTEGER |          2 |     test.k |     131 |      1 | false | 2
+    SYMBOL |          , |     test.k |     132 |      1 | false | ,
+   INTEGER |          3 |     test.k |     134 |      1 | false | 3
+    SYMBOL |          ; |     test.k |     135 |      1 |  true | ;
+    SYMBOL |          } |     test.k |     137 |      1 |  true | }
+   KEYWORD |     import |     test.k |     202 |      6 | false | import
+    STRING |            |     test.k |     209 |      7 | false | "foo.k"
+   KEYWORD |         as |     test.k |     217 |      2 | false | as
+IDENTIFIER |            |     test.k |     220 |      3 |  true | foo
+   KEYWORD |        var |     test.k |     224 |      3 | false | var
+IDENTIFIER |            |     test.k |     228 |      4 | false | buzz
+    SYMBOL |          ; |     test.k |     232 |      1 |  true | ;
+IDENTIFIER |            |     test.k |     234 |      4 | false | buzz
+    SYMBOL |          = |     test.k |     239 |      1 | false | =
+   INTEGER |          2 |     test.k |     241 |      1 |  true | 2
+IDENTIFIER |            |     test.k |     243 |      4 | false | buzz
+    SYMBOL |          = |     test.k |     248 |      1 | false | =
+IDENTIFIER |            |     test.k |     250 |      3 | false | foo
+    SYMBOL |          ; |     test.k |     253 |      1 |  true | ;
+    SYMBOL |          { |     test.k |     256 |      1 | false | {
+   KEYWORD |        var |     test.k |     258 |      3 | false | var
+IDENTIFIER |            |     test.k |     262 |      1 | false | a
+    SYMBOL |          ; |     test.k |     263 |      1 | false | ;
+IDENTIFIER |            |     test.k |     265 |      1 | false | a
+    SYMBOL |          = |     test.k |     267 |      1 | false | =
+   INTEGER |          5 |     test.k |     269 |      1 | false | 5
+    SYMBOL |          ; |     test.k |     270 |      1 | false | ;
+    SYMBOL |          } |     test.k |     272 |      1 |  true | }
+       END |            |     test.k |     336 |      1 | false | 
+
 (root)
-`-- (stmt class)
-    |-- (name)
-    |   `-- (CLASS)
-    |-- (stmt function definition)
-    |   |-- (name)
-    |   |   `-- (FUNCTION)
-    |   |-- (arguments)
-    |   |   |-- (ARG1)
-    |   |   `-- (ARG2)
-    |   `-- (body)
-    |       `-- (stmt block)
-    |           |-- (stmt variable declaration)
-    |           |   `-- (VARIABLE-A)
-    |           |       `-- (string "foo")
-    |           `-- (stmt print)
-    |               `-- (string "test")
-    `-- (stmt variable declaration)
-        |-- (VARIABLE-B)
-        |   `-- (integer 2)
-        `-- (VARIABLE-C)
-            `-- (integer 3)
-oak: generating symbol table...
-<*global* : global>
-  num_children=1
-  id=0
+|-- (stmt class)
+|   |-- (name)
+|   |   `-- (CLASS)
+|   |-- (stmt function definition)
+|   |   |-- (name)
+|   |   |   `-- (FUNCTION)
+|   |   |-- (arguments)
+|   |   |   |-- (ARG1)
+|   |   |   `-- (ARG2)
+|   |   `-- (body)
+|   |       `-- (stmt block)
+|   |           |-- (stmt variable declaration)
+|   |           |   `-- (VARIABLE-A)
+|   |           |       `-- (string "foo")
+|   |           |-- (stmt print)
+|   |           |   `-- (string "test")
+|   |           `-- (stmt expression)
+|   |               `-- (binary =)
+|   |                   |-- (identifier VARIABLE-A)
+|   |                   `-- (integer 5)
+|   `-- (stmt variable declaration)
+|       |-- (VARIABLE-B)
+|       |   `-- (integer 2)
+|       `-- (VARIABLE-C)
+|           `-- (integer 3)
+|-- (stmt import)
+|   `-- import "foo.k" as foo
+|-- (stmt variable declaration)
+|   `-- (buzz)
+|-- (stmt expression)
+|   `-- (binary =)
+|       |-- (identifier buzz)
+|       `-- (integer 2)
+|-- (stmt expression)
+|   `-- (binary =)
+|       |-- (identifier buzz)
+|       `-- (identifier foo)
+`-- (stmt block)
+    |-- (stmt variable declaration)
+    |   `-- (a)
+    `-- (stmt expression)
+        `-- (binary =)
+            |-- (identifier a)
+            `-- (integer 5)
+
+<*main* : module>
+  num_children=4
+  id=6951165696990
         <CLASS : class>
           num_children=3
           id=210669811259
@@ -107,3 +164,147 @@ oak: generating symbol table...
                 <VARIABLE-C : variable>
                   num_children=0
                   id=8245512915541118779
+        <foo : module>
+          num_children=1
+          id=193491849
+                <FOO-FUNC : function>
+                  num_children=1
+                  id=7570973239406050
+                        <*block* : block>
+                          num_children=1
+                          id=229388050762308
+                                <FOO-VAR-A : variable>
+                                  num_children=0
+                                  id=249842116918659341
+        <buzz : variable>
+          num_children=0
+          id=6385094288
+        <*block* : block>
+          num_children=1
+          id=229388050762308
+                <a : variable>
+                  num_children=0
+                  id=177670
+============================== module 'foo' ==============================
+oak: input:
+// a = 4;
+fn FOO-FUNC {
+	var FOO-VAR-A = 2
+}
+
+foo[5 * 5];
+-f(a = -85 * 92 - 23 ? b++ = (25 * (22 + 38)) : --c = 63)[43];
+
+
+type       | data       | file       | index   | length | eol?  | value   
+--------------------------------------------------------------------------
+   KEYWORD |         fn |      foo.k |      10 |      2 | false | fn
+IDENTIFIER |            |      foo.k |      13 |      8 | false | FOO-FUNC
+    SYMBOL |          { |      foo.k |      22 |      1 |  true | {
+   KEYWORD |        var |      foo.k |      25 |      3 | false | var
+IDENTIFIER |            |      foo.k |      29 |      9 | false | FOO-VAR-A
+    SYMBOL |          = |      foo.k |      39 |      1 | false | =
+   INTEGER |          2 |      foo.k |      41 |      1 |  true | 2
+    SYMBOL |          } |      foo.k |      43 |      1 |  true | }
+IDENTIFIER |            |      foo.k |      46 |      3 | false | foo
+    SYMBOL |          [ |      foo.k |      49 |      1 | false | [
+   INTEGER |          5 |      foo.k |      50 |      1 | false | 5
+    SYMBOL |          * |      foo.k |      52 |      1 | false | *
+   INTEGER |          5 |      foo.k |      54 |      1 | false | 5
+    SYMBOL |          ] |      foo.k |      55 |      1 | false | ]
+    SYMBOL |          ; |      foo.k |      56 |      1 |  true | ;
+    SYMBOL |          - |      foo.k |      58 |      1 | false | -
+IDENTIFIER |            |      foo.k |      59 |      1 | false | f
+    SYMBOL |          ( |      foo.k |      60 |      1 | false | (
+IDENTIFIER |            |      foo.k |      61 |      1 | false | a
+    SYMBOL |          = |      foo.k |      63 |      1 | false | =
+    SYMBOL |          - |      foo.k |      65 |      1 | false | -
+   INTEGER |         85 |      foo.k |      66 |      2 | false | 85
+    SYMBOL |          * |      foo.k |      69 |      1 | false | *
+   INTEGER |         92 |      foo.k |      71 |      2 | false | 92
+    SYMBOL |          - |      foo.k |      74 |      1 | false | -
+   INTEGER |         23 |      foo.k |      76 |      2 | false | 23
+    SYMBOL |          ? |      foo.k |      79 |      1 | false | ?
+IDENTIFIER |            |      foo.k |      81 |      1 | false | b
+    SYMBOL |         ++ |      foo.k |      82 |      2 | false | ++
+    SYMBOL |          = |      foo.k |      85 |      1 | false | =
+    SYMBOL |          ( |      foo.k |      87 |      1 | false | (
+   INTEGER |         25 |      foo.k |      88 |      2 | false | 25
+    SYMBOL |          * |      foo.k |      91 |      1 | false | *
+    SYMBOL |          ( |      foo.k |      93 |      1 | false | (
+   INTEGER |         22 |      foo.k |      94 |      2 | false | 22
+    SYMBOL |          + |      foo.k |      97 |      1 | false | +
+   INTEGER |         38 |      foo.k |      99 |      2 | false | 38
+    SYMBOL |          ) |      foo.k |     101 |      1 | false | )
+    SYMBOL |          ) |      foo.k |     102 |      1 | false | )
+    SYMBOL |          : |      foo.k |     104 |      1 | false | :
+    SYMBOL |         -- |      foo.k |     106 |      2 | false | --
+IDENTIFIER |            |      foo.k |     108 |      1 | false | c
+    SYMBOL |          = |      foo.k |     110 |      1 | false | =
+   INTEGER |         63 |      foo.k |     112 |      2 | false | 63
+    SYMBOL |          ) |      foo.k |     114 |      1 | false | )
+    SYMBOL |          [ |      foo.k |     115 |      1 | false | [
+   INTEGER |         43 |      foo.k |     116 |      2 | false | 43
+    SYMBOL |          ] |      foo.k |     118 |      1 | false | ]
+    SYMBOL |          ; |      foo.k |     119 |      1 |  true | ;
+       END |            |      foo.k |     120 |      1 | false | 
+
+(root)
+|-- (stmt function definition)
+|   |-- (name)
+|   |   `-- (FOO-FUNC)
+|   |-- (arguments)
+|   `-- (body)
+|       `-- (stmt block)
+|           `-- (stmt variable declaration)
+|               `-- (FOO-VAR-A)
+|                   `-- (integer 2)
+|-- (stmt expression)
+|   `-- (subscript)
+|       |-- (binary *)
+|       |   |-- (integer 5)
+|       |   `-- (integer 5)
+|       `-- (of)
+|           `-- (identifier foo)
+`-- (stmt expression)
+    `-- (prefix -)
+        `-- (subscript)
+            |-- (integer 43)
+            `-- (of)
+                `-- (fn call)
+                    |-- (identifier f)
+                    `-- (arguments)
+                        `-- (binary =)
+                            |-- (identifier a)
+                            `-- (ternary ?)
+                                |-- (binary -)
+                                |   |-- (binary *)
+                                |   |   |-- (prefix -)
+                                |   |   |   `-- (integer 85)
+                                |   |   `-- (integer 92)
+                                |   `-- (integer 23)
+                                |-- (binary =)
+                                |   |-- (postfix ++)
+                                |   |   `-- (identifier b)
+                                |   `-- (binary *)
+                                |       |-- (integer 25)
+                                |       `-- (binary +)
+                                |           |-- (integer 22)
+                                |           `-- (integer 38)
+                                `-- (binary =)
+                                    |-- (prefix --)
+                                    |   `-- (identifier c)
+                                    `-- (integer 63)
+
+<foo : module>
+  num_children=1
+  id=193491849
+        <FOO-FUNC : function>
+          num_children=1
+          id=7570973239406050
+                <*block* : block>
+                  num_children=1
+                  id=229388050762308
+                        <FOO-VAR-A : variable>
+                          num_children=0
+                          id=249842116918659341

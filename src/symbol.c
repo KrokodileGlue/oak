@@ -154,25 +154,38 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	switch (e->type) {
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
+		case OP_PREFIX: case OP_POSTFIX:
+			resolve_expr(si, e->a);
+			break;
 		case OP_BINARY:
 			resolve_expr(si, e->a);
 			resolve_expr(si, e->b);
+
 			break;
-		case OP_FN_CALL:
+		case OP_TERNARY:
 			resolve_expr(si, e->a);
-			for (size_t i = 0; i < e->num; i++)
-				resolve_expr(si, e->args[i]);
+			resolve_expr(si, e->b);
+			resolve_expr(si, e->c);
 			break;
 		default:
-			DOUT("unimplemented printer for expression of type %d", e->type);
-		}
-		break;
+			DOUT("unimplemented symbolizer for operator of type %d", e->operator->type);
+		} break;
 	case EXPR_VALUE:
 		if (e->val->type == TOK_IDENTIFIER) {
 			find(si, e->tok->loc, e->val->value);
-		}
+		} break;
+	case EXPR_SUBSCRIPT:
+		resolve_expr(si, e->a);
+		resolve_expr(si, e->b);
+		break;
+	case EXPR_FN_CALL:
+		resolve_expr(si, e->a);
+		for (size_t i = 0; i < e->num; i++)
+			resolve_expr(si, e->args[i]);
+
 		break;
 	default:
+		DOUT("unimplemented symbolizer for expression of type %d", e->type);
 		break;
 	}
 }
