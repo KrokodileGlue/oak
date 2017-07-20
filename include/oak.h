@@ -13,12 +13,11 @@ struct oak {
 	bool print_ast;
 	bool print_symbol_table;
 	bool print_everything;
+	bool print_anything;
 };
 
-struct oak *
-new_oak();
-
-char *
-process_arguments(int argc, char **argv, struct oak *k);
+struct oak *new_oak();
+struct module *load_module(struct oak *k, char *path, char *name);
+char *process_arguments(struct oak *k, int argc, char **argv);
 
 #endif

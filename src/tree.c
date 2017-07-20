@@ -487,7 +487,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
 	default:
-		DOUT("\nunimplemented printer for statement of type %d (%s)",
+		DOUT("unimplemented printer for statement of type %d (%s)",
 		     s->type, statement_data[s->type].body);
 	}
 }

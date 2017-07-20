@@ -10,12 +10,13 @@ new_module(char *path)
 
 	memset(m, 0, sizeof *m);
 	m->path = strclone(path);
+	m->stage = MODULE_STAGE_EMPTY;
 
 	return m;
 }
 
 void
-module_free(struct module *m)
+free_module(struct module *m)
 {
 	token_clear(m->tok);
 	free_ast(m->tree);

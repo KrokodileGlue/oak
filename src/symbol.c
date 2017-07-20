@@ -9,25 +9,18 @@
 #include "parser.h"
 #include "module.h"
 
-static void
-add(struct symbolizer *si, struct symbol *sym);
+static void add(struct symbolizer *si, struct symbol *sym);
+static void symbolize(struct symbolizer *si, struct statement *stmt);
+static struct symbol *new_symbol(struct token *tok);
 
-static struct symbol *
-new_symbol(struct token *tok);
-
-struct symbolizer *
-new_symbolizer()
+static struct symbolizer *
+new_symbolizer(struct oak *k)
 {
 	struct symbolizer *si = oak_malloc(sizeof *si);
 
 	memset(si, 0, sizeof *si);
+	si->k = k;
 	si->es = new_error();
-
-	struct symbol *sym = new_symbol(NULL);
-	sym->type = SYM_GLOBAL;
-	sym->name = "*global*";
-
-	si->symbol = sym;
 
 	return si;
 }
@@ -39,9 +32,6 @@ free_symbol(struct symbol *sym)
 		free_symbol(sym->children[i]);
 	}
 
-	if (sym->type == SYM_MODULE)
-		module_free(sym->module);
-
 	free(sym->children);
 	free(sym);
 }
@@ -49,7 +39,6 @@ free_symbol(struct symbol *sym)
 void
 symbolizer_free(struct symbolizer *si)
 {
-	free_symbol(si->symbol);
 	free(si->es);
 	free(si);
 }
@@ -143,9 +132,6 @@ push(struct symbolizer *si, struct symbol *sym)
 }
 
 static void
-symbolize(struct symbolizer *si, struct statement *stmt);
-
-static void
 block(struct symbolizer *si, struct statement *stmt)
 {
 	if (!stmt)
@@ -178,7 +164,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 				resolve_expr(si, e->args[i]);
 			break;
 		default:
-			DOUT("\nunimplemented printer for expression of type %d\n", e->type);
+			DOUT("unimplemented printer for expression of type %d", e->type);
 		}
 		break;
 	case EXPR_VALUE:
@@ -267,23 +253,22 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_IMPORT: {
-#if 0
-		struct symbol *module = resolve(si, stmt->import.name->value);
+		struct module *m = load_module(si->k, stmt->import.name->string, stmt->import.as->value);
 
-		if (module) {
-			error_push(si->es, stmt->tok->loc, ERR_FATAL, "recursive module inclusion");
-		} else {
-			char *filename = strclone(stmt->import.name->value);
-			filename = add_extension(filename);
-			import(si, filename);
+		if (!m) {
+			error_push(si->es, stmt->tok->loc, ERR_FATAL, "no such file");
+			free(sym);
+			return;
 		}
-#endif
+
+		add(si, m->sym);
+
 		free(sym);
 		return;
 	} break;
 	default:
 		free(sym);
-		DOUT("\nunimplemented symbol visitor for statement of type %d (%s)",
+		DOUT("unimplemented symbol visitor for statement of type %d (%s)",
 		        stmt->type, statement_data[stmt->type].body);
 		return;
 	}
@@ -292,9 +277,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	add(si, sym);
 }
 
-struct symbol *
-symbolize_module(struct symbolizer *si, struct module *m)
+bool
+symbolize_module(struct module *m, struct oak *k)
 {
+	struct symbolizer *si = new_symbolizer(k);
 	struct symbol *sym = new_symbol(m->tree[0]->tok);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
@@ -302,25 +288,27 @@ symbolize_module(struct symbolizer *si, struct module *m)
 	sym->id = hash(m->name, strlen(m->name));
 	sym->module = m;
 
-	add(si, sym);
-	push(si, sym);
+	si->symbol = sym;
 
 	size_t i = 0;
 	while (m->tree[i]) {
 		symbolize(si, m->tree[i++]);
 	}
 
-	pop(si);
+	m->sym = si->symbol;
 
 	if (si->es->fatal) {
 		error_write(si->es, stderr);
 		symbolizer_free(si);
-		return NULL;
+		return false;
 	} else if (si->es->pending) {
 		error_write(si->es, stderr);
 	}
 
-	return si->symbol;
+	symbolizer_free(si);
+	m->stage = MODULE_STAGE_SYMBOLIZED;
+
+	return true;
 }
 
 #define INDENT                             \

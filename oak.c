@@ -10,7 +10,8 @@
 #include "module.h"
 #include "oak.h"
 
-struct oak *new_oak()
+struct oak *
+new_oak()
 {
 	struct oak *k = oak_malloc(sizeof *k);
 
@@ -20,9 +21,9 @@ struct oak *new_oak()
 }
 
 char *
-process_arguments(int argc, char **argv, struct oak *k)
+process_arguments(struct oak *k, int argc, char **argv)
 {
-	char *filename = NULL;
+	char *path = NULL;
 
 	for (int i = 1; i < argc; i++) {
 		if (!k->print_input)        k->print_input        = !strcmp(argv[i], "-pi");
@@ -32,88 +33,80 @@ process_arguments(int argc, char **argv, struct oak *k)
 		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
 
 		if (argv[i][0] != '-')  {
-			if (filename) {
-				DOUT("received multiple input files; '%s' and '%s'\n", filename, argv[i]);
+			if (path) {
+				DOUT("received multiple input files; '%s' and '%s'", path, argv[i]);
 				exit(EXIT_FAILURE);
 			} else {
-				filename = argv[i];
+				path = argv[i];
 			}
 		}
 	}
 
-	if (k->print_everything) {
-		k->print_input        = true;
-		k->print_tokens       = true;
-		k->print_ast          = true;
-		k->print_symbol_table = true;
-	}
+	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_everything);
 
-	if (!filename) {
-		DOUT("oak: did not receive an input file\n");
+	if (!path) {
+		DOUT("did not receive an input file");
 		exit(EXIT_FAILURE);
 	}
 
-	return filename;
+	return path;
 }
 
-void
-do_file(struct oak *k, char *filename)
+void add_module(struct oak *k, struct module *m)
 {
-	/* load */
-	char *text = load_file(filename);
-	if (!text)
-		DOUT("oak: could not load input file %s\n", filename);
+	k->modules = oak_realloc(k->modules, sizeof k->modules[0] * (k->num + 1));
+	k->modules[k->num++] = m;
+}
 
-	struct module *m = new_module(filename);
-	char *name = strclone(filename);
-	chop_extension(name);
-	m->name = name;
+void print_modules(struct oak *k)
+{
+	for (size_t i = 0; i < k->num; i++) {
+		struct module *m = k->modules[i];
+
+		if (k->print_anything)
+			fprintf(stderr, "========================== module '%s' ==========================\n", m->name);
+
+		if (m->stage >= MODULE_STAGE_EMPTY
+		    && (k->print_input || k->print_everything))
+			DOUT("input:\n%s\n", m->text);
+
+		if (m->stage >= MODULE_STAGE_LEXED
+		    && (k->print_tokens || k->print_everything))
+			token_write(m->tok, stderr);
+
+		if (m->stage >= MODULE_STAGE_PARSED
+		    && (k->print_ast || k->print_everything))
+			print_ast(stderr, m->tree);
+
+		if (m->stage >= MODULE_STAGE_SYMBOLIZED
+		    && (k->print_symbol_table || k->print_everything)) {
+			print_symbol(stderr, 0, m->sym);
+			fputc('\n', stderr);
+		}
+	}
+}
+
+struct module *
+load_module(struct oak *k, char *path, char *name)
+{
+	char *text = load_file(path);
+	if (!text) {
+		DOUT("could not load input file %s", path);
+		return NULL;
+	}
+
+	struct module *m = new_module(path);
+	m->name = strclone(name);
 	m->text = text;
 
-	if (k->print_input)
-		DOUT("oak: input:\n%s\n", text);
+	add_module(k, m);
 
-	/* lex */
-	struct lexer *ls = new_lexer(text, filename);
-	struct token *tok = tokenize(ls);
-	if (!tok) goto error;
-
-	m->tok = tok;
-
-	if (k->print_tokens)
-		token_write(tok, stderr);
-	if (ls->es->fatal) {
-		error_write(ls->es, stderr);
-		lexer_clear(ls);
-		goto error;
-	} else if (ls->es->pending) {
-		error_write(ls->es, stderr);
-	}
-
-	lexer_clear(ls);
-
-	/* parse */
-	struct parser *ps = new_parser(tok);
-	if (!parse(m)) goto error;
-
-	if (k->print_ast) print_ast(stderr, m->tree);
-	parser_clear(ps);
-
-	/* symbolize */
-	struct symbolizer *si = new_symbolizer(m);
-	struct symbol *st = symbolize_module(si, m);
-	if (!st) goto error;
-	if (k->print_symbol_table) {
-		print_symbol(stderr, 0, st);
-		DOUT("\n");
-	}
-
-	symbolizer_free(si);
+	if (!tokenize(m)) return NULL;
+	if (!parse(m)) return NULL;
+	if (!symbolize_module(m, k)) return NULL;
 
 	/* TODO: compile and run */
-error:
-	token_clear(tok);
-	exit(EXIT_FAILURE);
+	return m;
 }
 
 int
@@ -121,8 +114,9 @@ main(int argc, char **argv)
 {
 	struct oak *k = new_oak();
 
-	char *filename = process_arguments(argc, argv, k);
-	do_file(k, filename);
+	char *path = process_arguments(k, argc, argv);
+	load_module(k, path, "*main*");
+	print_modules(k);
 
 	return EXIT_SUCCESS;
 }
