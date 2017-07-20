@@ -68,7 +68,7 @@ void print_modules(struct oak *k)
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
-				DOUT("input:\n%s\n", m->text);
+				DOUT("%s", m->text);
 
 			if (m->stage >= MODULE_STAGE_LEXED
 			    && (k->print_tokens || k->print_everything))
@@ -90,11 +90,12 @@ void print_modules(struct oak *k)
 struct module *
 load_module(struct oak *k, char *path, char *name)
 {
+	for (size_t i = 0; i < k->num; i++)
+		if (!strcmp(k->modules[i]->path, path))
+			return k->modules[i];
+
 	char *text = load_file(path);
-	if (!text) {
-		DOUT("could not load input file %s", path);
-		return NULL;
-	}
+	if (!text) DOUT("could not load input file %s", path);
 
 	struct module *m = new_module(path);
 	m->name = strclone(name);

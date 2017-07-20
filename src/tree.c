@@ -277,7 +277,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			assert(false);
 			break;
 		}
-	} else {
+	} else if (e->type == EXPR_VALUE) {
 		switch (e->val->type) {
 		case TOK_IDENTIFIER:
 			fprintf(ap->f, "(identifier %s)", e->val->value);
@@ -298,6 +298,19 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			fprintf(stderr, "impossible value token %d\n", e->type);
 			assert(false);
 		}
+	} else if (e->type == EXPR_LIST) {
+		fprintf(ap->f, "(list)");
+		ap->depth++; split(ap);
+
+		for (size_t i = 0; i < e->num; i++) {
+			if (i == e->num - 1) join(ap);
+			print_expression(ap, e->args[i]);
+		}
+
+		ap->depth--;
+	} else {
+		fprintf(stderr, "impossible expression type %d\n", e->type);
+		assert(false);
 	}
 }
 
