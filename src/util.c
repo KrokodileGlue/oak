@@ -128,7 +128,7 @@ load_file(const char *path)
 	FILE *file = fopen(path, "r");
 
 	if (!file) {
-		DOUT("could not load file %s\n", path);
+		DOUT("could not load file %s", path);
 		return NULL;
 	}
 
@@ -143,7 +143,7 @@ load_file(const char *path)
 
 		size_t new_len = fread(buf, 1, len, file);
 		if (ferror(file) != 0) {
-			DOUT("could not read file %s\n", path);
+			DOUT("could not read file %s", path);
 			exit(EXIT_FAILURE);
 		} else {
 			buf[new_len++] = '\0';

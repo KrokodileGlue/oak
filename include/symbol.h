@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "tree.h"
 #include "module.h"
+#include "oak.h"
 
 struct symbol {
 	uint64_t        id;
@@ -28,23 +29,14 @@ struct symbol {
 };
 
 struct symbolizer {
-	struct symbol *symbol;
+	struct symbol      *symbol;
 	struct error_state *es;
+	struct oak         *k;
 };
 
-struct symbolizer *
-new_symbolizer();
-
-void
-symbolizer_free(struct symbolizer *si);
-
-void
-free_symbol(struct symbol *sym);
-
-struct symbol *
-symbolize_module(struct symbolizer *si, struct module *m);
-
-void
-print_symbol(FILE *f, size_t depth, struct symbol *s);
+void symbolizer_free(struct symbolizer *si);
+void free_symbol(struct symbol *sym);
+bool symbolize_module(struct module *m, struct oak *k);
+void print_symbol(FILE *f, size_t depth, struct symbol *s);
 
 #endif

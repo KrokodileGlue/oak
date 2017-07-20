@@ -8,8 +8,9 @@
 #include "location.h"
 
 /* debug out */
-#define DOUT(...) \
-	fprintf(stderr, __VA_ARGS__)
+#define DOUT(...)                             \
+	fprintf(stderr, "oak: " __VA_ARGS__); \
+	fputc('\n', stderr)
 
 static inline bool
 is_whitespace(char c)

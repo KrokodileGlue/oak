@@ -7,13 +7,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 #define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
 #define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
 
 void
-lexer_clear(struct lexer *ls)
+free_lexer(struct lexer *ls)
 {
 	error_clear(ls->es);
 	free(ls);
@@ -421,10 +420,11 @@ parse_secondary_operator(char *a)
 	return len ? a + len : 0;
 }
 
-struct token *
-tokenize(struct lexer *ls)
+bool
+tokenize(struct module *m)
 {
-	char *a = ls->text;
+	struct lexer *ls = new_lexer(m->text, m->path);
+	char *a = m->text;
 
 	while (*a) {
 		ls->loc = (struct location){ls->text, ls->file, a - ls->text, 1};
@@ -518,14 +518,18 @@ tokenize(struct lexer *ls)
 	token_rewind(&ls->tok);
 
 	if (ls->es->fatal) {
-		DOUT("\n");
+		fputc('\n', stderr);
 		error_write(ls->es, stderr);
 		token_clear(ls->tok);
 
-		return NULL;
+		return false;
 	} else if (ls->es->pending) {
 		error_write(ls->es, stderr);
 	}
 
-	return ls->tok;
+	m->tok = ls->tok;
+	m->stage = MODULE_STAGE_LEXED;
+	free_lexer(ls);
+
+	return true;
 }

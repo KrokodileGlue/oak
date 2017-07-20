@@ -11,18 +11,15 @@
 #define NEXT if (ps->tok->type != TOK_END) ps->tok = ps->tok->next;
 
 struct parser *
-new_parser(struct token *tok)
+new_parser()
 {
 	struct parser *ps = oak_malloc(sizeof *ps);
-
 	ps->es = new_error();
-	ps->tok = tok;
-
 	return ps;
 }
 
 void
-parser_clear(struct parser *ps)
+free_parser(struct parser *ps)
 {
 	error_clear(ps->es);
 	/* the parser is not responsible for the token stream, so we
@@ -222,7 +219,7 @@ parse_expr(struct parser *ps, size_t prec)
 			break;
 		case OP_POSTFIX: NEXT; break;
 		default:
-			DOUT("\noak: internal error; an invalid operator was returned.");
+			DOUT("internal error; an invalid operator was returned.");
 			assert(false);
 			break;
 		}
@@ -510,8 +507,8 @@ parse_import(struct parser *ps)
 	NEXT;
 	s->import.name = ps->tok;
 
-	if (ps->tok->type != TOK_IDENTIFIER) {
-		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+	if (ps->tok->type != TOK_STRING) {
+		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected a string");
 		parse_expr(ps, 0); /* stop errors from cascading */
 	}
 
@@ -520,6 +517,12 @@ parse_import(struct parser *ps)
 	if (!strcmp(ps->tok->value, "as")) {
 		NEXT;
 		s->import.as = ps->tok;
+
+		if (ps->tok->type != TOK_IDENTIFIER) {
+			error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected a string");
+			parse_expr(ps, 0); /* stop errors from cascading */
+		}
+
 		NEXT;
 	}
 
@@ -550,7 +553,7 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_IMPORT: s = parse_import(ps);	break;
 
 		default:
-			DOUT("\nunimplemented statement parser for %d (%s)\n", ps->tok->keyword->type, ps->tok->keyword->body);
+			DOUT("unimplemented statement parser for %d (%s)", ps->tok->keyword->type, ps->tok->keyword->body);
 			NEXT;
 			break;
 		}
@@ -564,10 +567,11 @@ parse_stmt(struct parser *ps)
 	return s;
 }
 
-int
+bool
 parse(struct module *m)
 {
-	struct parser *ps = new_parser(m->tok);
+	struct parser *ps = new_parser();
+	ps->tok = m->tok;
 
 	size_t num = 0;
 	struct statement **tree = oak_malloc(sizeof *tree);
@@ -581,13 +585,15 @@ parse(struct module *m)
 	m->tree = tree;
 
 	if (ps->es->fatal) {
-		DOUT("\n");
 		error_write(ps->es, stderr);
-		parser_clear(ps);
-		return 0;
+		free_parser(ps);
+		return false;
 	} else if (ps->es->pending) {
 		error_write(ps->es, stderr);
 	}
 
-	return 1;
+	free_parser(ps);
+	m->stage = MODULE_STAGE_PARSED;
+
+	return true;
 }

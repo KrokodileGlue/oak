@@ -17,7 +17,7 @@ new_parser();
 void
 parser_clear(struct parser *ps);
 
-int
+bool
 parse(struct module *m);
 
 #endif
