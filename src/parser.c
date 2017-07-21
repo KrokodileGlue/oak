@@ -14,14 +14,14 @@ struct parser *
 new_parser()
 {
 	struct parser *ps = oak_malloc(sizeof *ps);
-	ps->es = new_error();
+	ps->r = new_reporter();
 	return ps;
 }
 
 void
 free_parser(struct parser *ps)
 {
-	error_clear(ps->es);
+	error_clear(ps->r);
 	/* the parser is not responsible for the token stream, so we
 	 * don't have to free it here. */
 	free(ps);
@@ -35,11 +35,11 @@ expect_symbol(struct parser *ps, char *sym)
 		if (ps->tok->type == TOK_END) {
 			struct token *tok = ps->tok->prev;
 
-			error_push(ps->es, tok->loc, ERR_FATAL,
+			error_push(ps->r, tok->loc, ERR_FATAL,
 				   "unexpected end-of-file; expected '" ERROR_LOCATION_COLOR "%s" RESET_COLOR "'",
 				   sym);
 		} else {
-			error_push(ps->es, ps->tok->loc, ERR_FATAL,
+			error_push(ps->r, ps->tok->loc, ERR_FATAL,
 				   "unexpected token '"
 				   ERROR_LOCATION_COLOR "%s" RESET_COLOR
 				   "'; expected '"
@@ -58,10 +58,10 @@ expect_terminator(struct parser *ps)
 		if (ps->tok->type == TOK_END) {
 			struct token *tok = ps->tok->prev;
 
-			error_push(ps->es, tok->loc, ERR_FATAL,
+			error_push(ps->r, tok->loc, ERR_FATAL,
 				   "unexpected end-of-file; expected a statement terminator");
 		} else {
-			error_push(ps->es, ps->tok->loc, ERR_FATAL,
+			error_push(ps->r, ps->tok->loc, ERR_FATAL,
 				   "unexpected token '"
 				   ERROR_LOCATION_COLOR "%s" RESET_COLOR
 				   "'; expected a statement terminator",
@@ -180,7 +180,7 @@ parse_expr(struct parser *ps, size_t prec)
 			left->val = ps->tok;
 			NEXT;
 		} else {
-			error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an expression, value or prefix operator");
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value or prefix operator");
 			NEXT;
 		}
 	}
@@ -275,11 +275,11 @@ parse_fn_def(struct parser *ps)
 	s->type = STMT_FN_DEF;
 
 	if (ps->tok->type != TOK_IDENTIFIER) {
-		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
 	}
 
 	if (ps->tok->type != TOK_IDENTIFIER)
-		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
 	s->fn_def.name = ps->tok->value;
 	NEXT;
 
@@ -306,7 +306,7 @@ parse_print_stmt(struct parser *ps)
 	s->type = STMT_PRINT;
 
 	if (ps->tok->next->type == TOK_END) {
-		error_push(ps->es, ps->tok->loc, ERR_FATAL,
+		error_push(ps->r, ps->tok->loc, ERR_FATAL,
 			   "unexpected end-of-file; expected an expression");
 		NEXT;
 		return NULL;
@@ -355,7 +355,7 @@ parse_vardecl(struct parser *ps)
 		} while (!strcmp(ps->tok->value, ","));
 
 		if (i != s->var_decl.num) {
-			error_push(ps->es, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
+			error_push(ps->r, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
 		}
 	} else {
 		s->var_decl.num_init = 0;
@@ -480,7 +480,7 @@ parse_class(struct parser *ps)
 
 	NEXT;
 	if (ps->tok->type != TOK_IDENTIFIER)
-		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected an identifier");
+		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
 	s->class.name = ps->tok->value;
 	NEXT;
 
@@ -501,7 +501,7 @@ parse_class(struct parser *ps)
 		    || s->class.body[s->class.num]->type == STMT_VAR_DECL) {
 			// good.
 		} else {
-			error_push(ps->es, tok->loc, ERR_FATAL, "class bodies may not contain arbitrary code");
+			error_push(ps->r, tok->loc, ERR_FATAL, "class bodies may not contain arbitrary code");
 		}
 
 		s->class.num++;
@@ -521,7 +521,7 @@ parse_import(struct parser *ps)
 	s->import.name = ps->tok;
 
 	if (ps->tok->type != TOK_STRING) {
-		error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected a string");
+		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected a string");
 		parse_expr(ps, 0); /* stop errors from cascading */
 	}
 
@@ -532,7 +532,7 @@ parse_import(struct parser *ps)
 		s->import.as = ps->tok;
 
 		if (ps->tok->type != TOK_IDENTIFIER) {
-			error_push(ps->es, ps->tok->loc, ERR_FATAL, "expected a string");
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected a string");
 			parse_expr(ps, 0); /* stop errors from cascading */
 		}
 
@@ -597,12 +597,12 @@ parse(struct module *m)
 	tree[num] = NULL;
 	m->tree = tree;
 
-	if (ps->es->fatal) {
-		error_write(ps->es, stderr);
+	if (ps->r->fatal) {
+		error_write(ps->r, stderr);
 		free_parser(ps);
 		return false;
-	} else if (ps->es->pending) {
-		error_write(ps->es, stderr);
+	} else if (ps->r->pending) {
+		error_write(ps->r, stderr);
 	}
 
 	free_parser(ps);

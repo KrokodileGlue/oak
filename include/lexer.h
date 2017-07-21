@@ -14,8 +14,8 @@
 
 struct lexer {
 	char *text, *file;
-	struct error_state *es;
-	struct token       *tok;
+	struct reporter   *r;
+	struct token      *tok;
 	struct location    loc;
 };
 

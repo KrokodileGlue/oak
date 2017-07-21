@@ -9,24 +9,24 @@
 
 static char error_level_strs[][32] = { "note", "warning", "error" };
 
-struct error_state *
-new_error()
+struct reporter *
+new_reporter()
 {
-	struct error_state *es = oak_malloc(sizeof *es);
+	struct reporter *r = oak_malloc(sizeof *r);
 
-	*es = (struct error_state) {
+	*r = (struct reporter) {
 		.err = NULL,      .num = 0,
 		.pending = false, .fatal = false
 	};
 
-	return es;
+	return r;
 }
 
 void
-error_push(struct error_state *es, struct location loc, enum error_level sev, char *fmt, ...)
+error_push(struct reporter *r, struct location loc, enum error_level sev, char *fmt, ...)
 {
-	es->pending = true;
-	es->err = realloc(es->err, sizeof *(es->err) * ++(es->num));
+	r->pending = true;
+	r->err = realloc(r->err, sizeof *(r->err) * ++(r->num));
 
 	char* msg = oak_malloc(ERR_MAX_MESSAGE_LEN + 1);
 
@@ -35,15 +35,15 @@ error_push(struct error_state *es, struct location loc, enum error_level sev, ch
 	vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
 	va_end(args);
 
-	es->err[es->num - 1] = (struct Error){loc, sev, msg};
-	if (sev == ERR_FATAL) es->fatal = true;
+	r->err[r->num - 1] = (struct Error){loc, sev, msg};
+	if (sev == ERR_FATAL) r->fatal = true;
 }
 
 void
-error_write(struct error_state *es, FILE *fp)
+error_write(struct reporter *r, FILE *fp)
 {
-	struct Error *errors = es->err;
-	for (size_t i = 0; i < es->num; i++) {
+	struct Error *errors = r->err;
+	for (size_t i = 0; i < r->num; i++) {
 		struct Error err = errors[i];
 
 		fprintf(fp, ERROR_LOCATION_COLOR"%s:%zd:%zd: "RESET_COLOR, err.loc.file, line_number(err.loc), column_number(err.loc));
@@ -83,11 +83,11 @@ error_delete(struct Error err)
 }
 
 void
-error_clear(struct error_state *es)
+error_clear(struct reporter *r)
 {
-	for (size_t i = 0; i < es->num; i++) {
-		error_delete(es->err[i]);
+	for (size_t i = 0; i < r->num; i++) {
+		error_delete(r->err[i]);
 	}
-	free(es->err);
-	free(es);
+	free(r->err);
+	free(r);
 }

@@ -14,7 +14,7 @@
 void
 free_lexer(struct lexer *ls)
 {
-	error_clear(ls->es);
+	error_clear(ls->r);
 	free(ls);
 }
 
@@ -25,7 +25,7 @@ new_lexer(char *text, char *file)
 
 	ls->text = text;
 	ls->file = file;
-	ls->es = new_error();
+	ls->r = new_reporter();
 	ls->tok = NULL;
 
 	return ls;
@@ -45,7 +45,7 @@ lexer_push_error(struct lexer *ls, enum error_level sev, char *fmt, ...)
 	vsnprintf(msg, ERR_MAX_MESSAGE_LEN, fmt, args);
 	va_end(args);
 
-	error_push(ls->es, ls->loc, sev, msg);
+	error_push(ls->r, ls->loc, sev, msg);
 
 	free(msg);
 }
@@ -556,14 +556,14 @@ tokenize(struct module *m)
 	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
 
-	if (ls->es->fatal) {
+	if (ls->r->fatal) {
 		fputc('\n', stderr);
-		error_write(ls->es, stderr);
+		error_write(ls->r, stderr);
 		token_clear(ls->tok);
 
 		return false;
-	} else if (ls->es->pending) {
-		error_write(ls->es, stderr);
+	} else if (ls->r->pending) {
+		error_write(ls->r, stderr);
 	}
 
 	m->tok = ls->tok;

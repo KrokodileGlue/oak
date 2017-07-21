@@ -20,7 +20,7 @@ new_symbolizer(struct oak *k)
 
 	memset(si, 0, sizeof *si);
 	si->k = k;
-	si->es = new_error();
+	si->r = new_reporter();
 
 	return si;
 }
@@ -43,7 +43,7 @@ free_symbol(struct symbol *sym)
 void
 symbolizer_free(struct symbolizer *si)
 {
-	error_clear(si->es);
+	error_clear(si->r);
 	free(si);
 }
 
@@ -131,7 +131,7 @@ find(struct symbolizer *si, struct location loc, char *name)
 {
 	struct symbol *sym = resolve(si, name);
 	if (!sym)
-		error_push(si->es, loc, ERR_FATAL, "undeclared identifier");
+		error_push(si->r, loc, ERR_FATAL, "undeclared identifier");
 }
 
 static void
@@ -283,8 +283,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);                                                 \
 			                                                                                                                           \
 			if (redefinition) {                                                                                                        \
-				error_push(si->es, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", STATEMENT->var_decl.names[i]->value); \
-				error_push(si->es, redefinition->tok->loc, ERR_NOTE, "previously defined here");                                   \
+				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", STATEMENT->var_decl.names[i]->value); \
+				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");                                   \
 			}                                                                                                                          \
 			                                                                                                                           \
 			struct symbol *s = new_symbol(sym->tok);                                                                                   \
@@ -331,7 +331,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		struct module *m = load_module(si->k, stmt->import.name->string, stmt->import.as->value);
 
 		if (!m) {
-			error_push(si->es, stmt->tok->loc, ERR_FATAL, "could not load module");
+			error_push(si->r, stmt->tok->loc, ERR_FATAL, "could not load module");
 			free(sym);
 			return;
 		}
@@ -400,12 +400,12 @@ symbolize_module(struct module *m, struct oak *k)
 
 	m->sym = si->symbol;
 
-	if (si->es->fatal) {
-		error_write(si->es, stderr);
+	if (si->r->fatal) {
+		error_write(si->r, stderr);
 		symbolizer_free(si);
 		return false;
-	} else if (si->es->pending) {
-		error_write(si->es, stderr);
+	} else if (si->r->pending) {
+		error_write(si->r, stderr);
 	}
 
 	symbolizer_free(si);
