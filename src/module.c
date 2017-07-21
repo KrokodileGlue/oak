@@ -18,9 +18,13 @@ new_module(char *path)
 void
 free_module(struct module *m)
 {
-	token_clear(m->tok);
-	free_ast(m->tree);
-	free(m->name);
+	if (m->stage >= MODULE_STAGE_LEXED)      token_clear(m->tok);
+	if (m->stage >= MODULE_STAGE_PARSED)     free_ast(m->tree);
+	if (m->stage >= MODULE_STAGE_SYMBOLIZED) free_symbol(m->sym);
+
 	free(m->text);
+	free(m->name);
+	free(m->path);
+
 	free(m);
 }

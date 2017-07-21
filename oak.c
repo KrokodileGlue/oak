@@ -20,6 +20,16 @@ new_oak()
 	return k;
 }
 
+void free_oak(struct oak *k)
+{
+	for (size_t i = 0; i < k->num; i++) {
+		free_module(k->modules[i]);
+	}
+
+	free(k->modules);
+	free(k);
+}
+
 char *
 process_arguments(struct oak *k, int argc, char **argv)
 {
@@ -95,7 +105,7 @@ load_module(struct oak *k, char *path, char *name)
 			return k->modules[i];
 
 	char *text = load_file(path);
-	if (!text) DOUT("could not load input file %s", path);
+	if (!text) return NULL;
 
 	struct module *m = new_module(path);
 	m->name = strclone(name);
@@ -119,6 +129,7 @@ main(int argc, char **argv)
 	char *path = process_arguments(k, argc, argv);
 	load_module(k, path, "*main*");
 	print_modules(k);
+	free_oak(k);
 
 	return EXIT_SUCCESS;
 }

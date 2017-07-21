@@ -23,6 +23,6 @@ struct module {
 
 struct module *new_module(char *path);
 
-void module_free(struct module *m);
+void free_module(struct module *m);
 
 #endif
