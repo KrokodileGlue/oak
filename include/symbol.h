@@ -15,6 +15,7 @@ struct symbol {
 	struct symbol  *parent;
 	struct symbol **children;
 	size_t          num_children;
+	size_t          num_variables;
 
 	enum SymbolType {
 		SYM_FN,

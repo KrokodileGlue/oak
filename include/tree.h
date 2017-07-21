@@ -130,6 +130,7 @@ struct expression {
 		struct {
 			struct expression *a, *b, *c;
 			struct expression **args; /* used for function arguments and lists */
+			struct statement *s;
 			size_t num;
 		};
 
@@ -137,16 +138,9 @@ struct expression {
 	};
 };
 
-struct expression *
-new_expression(struct token *tok);
-
-struct statement *
-new_statement(struct token *tok);
-
-void
-free_ast(struct statement **module);
-
-void
-print_ast(FILE *f, struct statement **module);
+struct expression *new_expression(struct token *tok);
+struct statement *new_statement(struct token *tok);
+void free_ast(struct statement **module);
+void print_ast(FILE *f, struct statement **module);
 
 #endif

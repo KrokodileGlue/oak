@@ -81,11 +81,23 @@ hash(char *d, size_t len)
 	return hash;
 }
 
+static void inc_variable_count(struct symbol *sym)
+{
+	while (sym->parent) {
+		sym->num_variables++;
+		sym = sym->parent;
+	}
+}
+
 static void
 add(struct symbolizer *si, struct symbol *sym)
 {
 	if (!sym)
 		return;
+
+	if (sym->type == SYM_VAR || sym->type == SYM_ARGUMENT) {
+		inc_variable_count(si->symbol);
+	}
 
 	struct symbol *symbol = si->symbol;
 	symbol->children = oak_realloc(symbol->children,
@@ -188,7 +200,9 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			break;
 		default:
 			DOUT("unimplemented symbolizer for operator of type %d", e->operator->type);
-		} break;
+			break;
+		}
+		break;
 	case EXPR_VALUE:
 		if (e->val->type == TOK_IDENTIFIER) {
 			find(si, e->tok->loc, e->val->value);
@@ -202,6 +216,21 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		for (size_t i = 0; i < e->num; i++)
 			resolve_expr(si, e->args[i]);
 
+		break;
+	case EXPR_LIST:
+		for (size_t i = 0; i < e->num; i++) {
+			resolve_expr(si, e->args[i]);
+		}
+		break;
+	case EXPR_LIST_COMPREHENSION:
+		push_block(si, e->s);
+
+		symbolize(si, e->s);
+		resolve_expr(si, e->a);
+		resolve_expr(si, e->b);
+		if (e->c) resolve_expr(si, e->c);
+
+		pop(si);
 		break;
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
@@ -250,6 +279,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	case STMT_VAR_DECL: {
 #define VARDECL(STATEMENT) \
 		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                                                  \
+			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]); \
 			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);                                                 \
 			                                                                                                                           \
 			if (redefinition) {                                                                                                        \
@@ -393,7 +423,15 @@ void
 print_symbol(FILE *f, size_t depth, struct symbol *s)
 {
 	INDENT; fprintf(f, "<%s : %s>", s->name, sym_str[s->type]);
-	INDENT; fprintf(f, "  num_children=%zd", s->num_children);
+
+	if (s->num_children) {
+		INDENT; fprintf(f, "  num_children=%zu", s->num_children);
+	}
+
+	if (s->num_variables) {
+		INDENT; fprintf(f, "  num_variables=%zu", s->num_variables);
+	}
+
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);
 

@@ -20,7 +20,7 @@ struct operator ops[] = {
 	{ "%",   "",  13, ASS_LEFT,  OP_BINARY  },
 	{ "+",   "",  12, ASS_LEFT,  OP_BINARY  },
 	{ "-",   "",  12, ASS_LEFT,  OP_BINARY  },
-	{ "->",  "",  12, ASS_LEFT,  OP_BINARY  },
+	{ "->",  "^",  12, ASS_LEFT, OP_TERNARY },
 
 	{ "<",   "",  10, ASS_LEFT,  OP_BINARY  },
 	{ ">",   "",  10, ASS_LEFT,  OP_BINARY  },
