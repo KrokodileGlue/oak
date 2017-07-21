@@ -2,12 +2,12 @@ import "foo.k" as foo
 
 class CLASS {
 	fn FUNCTION ARG1 ARG2 {
-		var VARIABLE-A = "foo";
+		var VARIABLE-A = "foo"
 		print "test"
-		VARIABLE-A = 5;
+		VARIABLE-A = 5
 	}
 
-	var VARIABLE-B VARIABLE-C = 2, 3;
+	var VARIABLE-B VARIABLE-C = 2, 3
 }
 
-# print a * 5 + -5;
+var a = I(test.txt)

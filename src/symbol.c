@@ -29,7 +29,11 @@ void
 free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
-		free_symbol(sym->children[i]);
+		/* if a module symbol appears in another module
+		 * it means that it was imported and it's symbol
+		 * table will be free'd elsewhere. */
+		if (sym->children[i]->type != SYM_MODULE)
+			free_symbol(sym->children[i]);
 	}
 
 	free(sym->children);
@@ -39,7 +43,7 @@ free_symbol(struct symbol *sym)
 void
 symbolizer_free(struct symbolizer *si)
 {
-	free(si->es);
+	error_clear(si->es);
 	free(si);
 }
 
@@ -129,6 +133,21 @@ static void
 push(struct symbolizer *si, struct symbol *sym)
 {
 	si->symbol = sym;
+}
+
+static void
+push_block(struct symbolizer *si, struct statement *stmt)
+{
+	if (!stmt)
+		return;
+
+	struct symbol *sym = new_symbol(stmt->tok);
+	sym->name = "*block*";
+	sym->type = SYM_BLOCK;
+	sym->parent = si->symbol;
+	add(si, sym);
+
+	push(si, sym);
 }
 
 static void
@@ -229,21 +248,23 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_VAR_DECL: {
-		for (size_t i = 0; i < stmt->var_decl.num; i++) {
-			struct symbol *redefinition = resolve(si, stmt->var_decl.names[i]->value);
+#define VARDECL(STATEMENT) \
+		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                                                  \
+			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);                                                 \
+			                                                                                                                           \
+			if (redefinition) {                                                                                                        \
+				error_push(si->es, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", STATEMENT->var_decl.names[i]->value); \
+				error_push(si->es, redefinition->tok->loc, ERR_NOTE, "previously defined here");                                   \
+			}                                                                                                                          \
+			                                                                                                                           \
+			struct symbol *s = new_symbol(sym->tok);                                                                                   \
+			s->type = SYM_VAR;                                                                                                         \
+			s->name = STATEMENT->var_decl.names[i]->value;                                                                                  \
+			s->id = hash(s->name, strlen(s->name));                                                                                    \
+			add(si, s);                                                                                                                \
+		}                                                                                                                                  \
 
-			if (redefinition) {
-				error_push(si->es, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", stmt->var_decl.names[i]->value);
-				error_push(si->es, redefinition->tok->loc, ERR_NOTE, "previously defined here");
-			}
-
-			struct symbol *s = new_symbol(sym->tok);
-			s->type = SYM_VAR;
-			s->name = stmt->var_decl.names[i]->value;
-			s->id = hash(s->name, strlen(s->name));
-			add(si, s);
-		}
-
+		VARDECL(stmt);
 		free(sym);
 		return;
 	} break;
@@ -296,6 +317,28 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	}
+	case STMT_FOR_LOOP: {
+		push_block(si, stmt);
+
+		resolve_expr(si, stmt->for_loop.b);
+		if (stmt->for_loop.c) resolve_expr(si, stmt->for_loop.c);
+
+		if (stmt->for_loop.a->type == STMT_VAR_DECL) {
+			VARDECL(stmt->for_loop.a);
+		}
+
+		symbolize(si, stmt->for_loop.body);
+		pop(si);
+
+		free(sym);
+		return;
+	} break;
+	case STMT_DO: {
+		block(si, stmt->do_while_loop.body);
+		resolve_expr(si, stmt->do_while_loop.cond);
+		free(sym);
+		return;
+	} break;
 	default:
 		free(sym);
 		DOUT("unimplemented symbol visitor for statement of type %d (%s)",

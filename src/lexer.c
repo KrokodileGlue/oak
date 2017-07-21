@@ -306,7 +306,6 @@ parse_raw_string_literal(struct lexer *ls, char *a)
 	if (*b == 0) {
 		ls->loc.len = b - a;
 		lexer_push_error(ls, ERR_FATAL, "unterminated delimiter specification");
-
 		return b;
 	}
 
@@ -420,6 +419,41 @@ parse_secondary_operator(char *a)
 	return len ? a + len : 0;
 }
 
+static char *parse_include(struct lexer *ls, char *a)
+{
+	char *begin = a;
+	a += 2;
+	char *b = a;
+
+	while (*b != ')' && *b) b++;
+	if (!*b) {
+		ls->loc.len = b - a;
+		lexer_push_error(ls, ERR_FATAL, "unterminated path");
+		b = a;
+		SKIP_TO_END_OF_LINE(a, b);
+	}
+
+	char *path = oak_malloc(b - a + 1);
+	strncpy(path, a, b - a);
+	path[b - a] = 0;
+	b++;
+
+	char *text = load_file(path);
+
+	if (!text) {
+		lexer_push_error(ls, ERR_FATAL, "could not load file");
+		free(path);
+		return b;
+	}
+
+	ls->loc.len = b - begin;
+	lexer_push_token(ls, TOK_STRING, begin, b);
+	ls->tok->string = text;
+	free(path);
+
+	return b;
+}
+
 bool
 tokenize(struct module *m)
 {
@@ -475,6 +509,8 @@ tokenize(struct module *m)
 
 		if (!strncmp(a, "R(", 2)) {
 			a = parse_raw_string_literal(ls, a);
+		} else if (!strncmp(a, "I(", 2)) {
+			a = parse_include(ls, a);
 		} else if (match_operator(a)) {
 			a = parse_operator(ls, a);
 		} else if (is_identifier_start(*a)) {

@@ -21,16 +21,9 @@ struct error_state {
 	bool pending, fatal;
 };
 
-struct error_state *
-new_error();
-
-void
-error_push (struct error_state *es, struct location loc, enum error_level sev, char *fmt, ...);
-
-void
-error_write(struct error_state *es, FILE *fp);
-
-void
-error_clear(struct error_state *es);
+struct error_state *new_error();
+void error_push (struct error_state *es, struct location loc, enum error_level sev, char *fmt, ...);
+void error_write(struct error_state *es, FILE *fp);
+void error_clear(struct error_state *es);
 
 #endif

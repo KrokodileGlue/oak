@@ -66,7 +66,7 @@ void token_push(struct location loc, enum token_type type, char *start, char *en
 	current->integer = 0;
 	current->is_line_end = false;
 
-	current->value = malloc(end - start + 1);
+	current->value = oak_malloc(end - start + 1);
 	strncpy(current->value, start, end - start);
 	current->value[end - start] = 0;
 
