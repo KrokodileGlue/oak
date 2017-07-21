@@ -31,7 +31,7 @@ struct symbol {
 
 struct symbolizer {
 	struct symbol      *symbol;
-	struct error_state *es;
+	struct reporter *r;
 	struct oak         *k;
 };
 

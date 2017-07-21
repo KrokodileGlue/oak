@@ -7,7 +7,7 @@
 #include "module.h"
 
 struct parser {
-	struct error_state *es;
+	struct reporter *r;
 	struct token *tok;
 };
 
