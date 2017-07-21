@@ -72,8 +72,8 @@ expect_terminator(struct parser *ps)
 	if (!strcmp(ps->tok->value, ";")) NEXT;
 }
 
-static struct statement *
-parse_stmt(struct parser *ps);
+static struct statement *parse_stmt(struct parser *ps);
+static struct statement *parse_vardecl(struct parser *ps);
 
 static struct operator *
 get_infix_op(struct parser *ps)
@@ -139,10 +139,24 @@ parse_expr(struct parser *ps, size_t prec)
 				/* we have a list comprehension */
 				left->type = EXPR_LIST_COMPREHENSION;
 				left->a = first;
-				NEXT;
-				left->b = parse_expr(ps, 0);
+
+				expect_symbol(ps, "for");
+
+				if (!strcmp(ps->tok->value, "var")) {
+					left->s = parse_vardecl(ps);
+				} else {
+					left->s = new_statement(ps->tok);
+					left->s->type = STMT_EXPR;
+					left->s->expr = parse_expr(ps, 0);
+				}
+
 				expect_symbol(ps, "in");
-				left->c = parse_expr(ps, 0);
+
+				left->b = parse_expr(ps, 0);
+				if (!strcmp(ps->tok->value, "if")) {
+					expect_symbol(ps, "if");
+					left->c = parse_expr(ps, 0);
+				}
 			} else {
 				NEXT;
 				left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));

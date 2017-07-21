@@ -362,10 +362,12 @@ cat_strings(struct token *tok)
 	while (tok && tok->next) {
 		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
 			ret = true;
+			tok->is_line_end = tok->is_line_end || tok->next->is_line_end;
 			tok->string = smart_cat(tok->string, tok->next->string);
 			tok->value = smart_cat(tok->value, tok->next->value);
 			token_delete(tok->next);
 		}
+
 		tok = tok->next;
 	}
 
@@ -419,7 +421,8 @@ parse_secondary_operator(char *a)
 	return len ? a + len : 0;
 }
 
-static char *parse_include(struct lexer *ls, char *a)
+static char *
+parse_include(struct lexer *ls, char *a)
 {
 	char *begin = a;
 	a += 2;

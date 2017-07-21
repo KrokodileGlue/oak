@@ -197,6 +197,8 @@ indent(struct ASTPrinter *ap)
 	}
 }
 
+static void print_statement(struct ASTPrinter *ap, struct statement *s);
+
 static void
 print_expression(struct ASTPrinter *ap, struct expression *e)
 {
@@ -283,10 +285,10 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			fprintf(ap->f, "(identifier %s)", e->val->value);
 			break;
 		case TOK_INTEGER:
-			fprintf(ap->f, "(integer %zd)", e->val->integer);
+			fprintf(ap->f, "(integer %zu)", e->val->integer);
 			break;
 		case TOK_STRING:
-			fprintf(ap->f, "(string \"%s\")", e->val->string);
+			fprintf(ap->f, "(string '%s')", e->val->string);
 			break;
 		case TOK_FLOAT:
 			fprintf(ap->f, "(float %f)", e->val->floating);
@@ -299,7 +301,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			assert(false);
 		}
 	} else if (e->type == EXPR_LIST) {
-		fprintf(ap->f, "(list)");
+		fprintf(ap->f, "<list>");
 		ap->depth++; split(ap);
 
 		for (size_t i = 0; i < e->num; i++) {
@@ -308,8 +310,31 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		}
 
 		ap->depth--;
+	} else if (e->type == EXPR_LIST_COMPREHENSION) {
+		fprintf(ap->f, "(list comprehension)");
+
+		ap->depth++; split(ap);
+		indent(ap);  fprintf(ap->f, "<expression>"); ap->depth++;
+		print_expression(ap, e->a); ap->depth--;
+
+		indent(ap);  fprintf(ap->f, "<index>"); ap->depth++;
+		print_statement(ap, e->s); ap->depth--;
+
+		if (!e->c) join(ap);
+
+		indent(ap);  fprintf(ap->f, "<iterator>"); ap->depth++;
+		print_expression(ap, e->b); ap->depth--;
+
+		if (e->c) {
+			join(ap);
+			indent(ap);  fprintf(ap->f, "<condition>"); ap->depth++;
+			print_expression(ap, e->c); ap->depth--;
+		}
+
+		ap->depth--;
 	} else {
-		fprintf(stderr, "impossible expression type %d\n", e->type);
+		fputc('\n', stderr);
+		DOUT("impossible expression type %d\n", e->type);
 		assert(false);
 	}
 }
@@ -325,19 +350,19 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(condition)");
+		indent(ap);  fprintf(ap->f, "<condition>");
 		ap->depth++; print_expression(ap, s->if_stmt.cond); ap->depth--;
 
 		if (s->if_stmt.otherwise) {
-			indent(ap);  fprintf(ap->f, "(then branch)");
+			indent(ap);  fprintf(ap->f, "<then branch>");
 			ap->depth++; print_statement(ap, s->if_stmt.then); ap->depth--;
 
 			join(ap);
-			indent(ap);  fprintf(ap->f, "(else branch)");
+			indent(ap);  fprintf(ap->f, "<else branch>");
 			ap->depth++; print_statement(ap, s->if_stmt.otherwise); ap->depth--;
 		} else {
 			join(ap);
-			indent(ap);  fprintf(ap->f, "(then branch)");
+			indent(ap);  fprintf(ap->f, "<then branch>");
 			ap->depth++; print_statement(ap, s->if_stmt.then); ap->depth--; join(ap);
 		}
 
@@ -391,21 +416,21 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(initializer)");
+		indent(ap);  fprintf(ap->f, "<initializer>");
 		ap->depth++; print_statement(ap, s->for_loop.a); ap->depth--;
 
 		indent(ap);
-		if (s->for_loop.c) fprintf(ap->f, "(condition)");
-		else fprintf(ap->f, "(iterator)");
+		if (s->for_loop.c) fprintf(ap->f, "<condition>");
+		else fprintf(ap->f, "<iterator>");
 		ap->depth++; print_expression(ap, s->for_loop.b); ap->depth--;
 
 		if (s->for_loop.c) {
-			indent(ap);  fprintf(ap->f, "(next)");
+			indent(ap);  fprintf(ap->f, "<next>");
 			ap->depth++; print_expression(ap, s->for_loop.c); ap->depth--;
 		}
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "(body)");
+		indent(ap);  fprintf(ap->f, "<body>");
 		ap->depth++; print_statement(ap, s->for_loop.body); ap->depth--;
 
 		ap->depth--;
@@ -414,10 +439,10 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(name)");
+		indent(ap);  fprintf(ap->f, "<name>");
 		ap->depth++; indent(ap); fprintf(ap->f, "(%s)", s->fn_def.name); ap->depth--;
 
-		indent(ap);  fprintf(ap->f, "(arguments)");
+		indent(ap);  fprintf(ap->f, "<arguments>");
 
 		ap->depth++;
 		split(ap);
@@ -430,7 +455,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth--;
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "(body)");
+		indent(ap);  fprintf(ap->f, "<body>");
 
 		ap->depth++;
 		print_statement(ap, s->for_loop.body);
@@ -447,11 +472,11 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(condition)");
+		indent(ap);  fprintf(ap->f, "<condition>");
 		ap->depth++; print_expression(ap, s->while_loop.cond); ap->depth--;
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "(body)");
+		indent(ap);  fprintf(ap->f, "<body>");
 		ap->depth++; print_statement(ap, s->while_loop.body); ap->depth--;
 
 		ap->depth--;
@@ -460,11 +485,11 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(body)");
+		indent(ap);  fprintf(ap->f, "<body>");
 		ap->depth++; print_statement(ap, s->do_while_loop.body); ap->depth--;
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "(condition)");
+		indent(ap);  fprintf(ap->f, "<condition>");
 		ap->depth++; print_expression(ap, s->do_while_loop.cond); ap->depth--;
 
 		ap->depth--;
@@ -474,7 +499,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		split(ap);
 
-		indent(ap);  fprintf(ap->f, "(name)");
+		indent(ap);  fprintf(ap->f, "<name>");
 		ap->depth++;
 		indent(ap);
 		fprintf(ap->f, "(%s)", s->class.name);
@@ -491,7 +516,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 
 		indent(ap);
-		fprintf(ap->f, "import %s as %s", s->import.name->value,
+		fprintf(ap->f, "import '%s' as '%s'", s->import.name->value,
 		        s->import.as ? s->import.as->value : s->import.name->value);
 
 		ap->depth--;
@@ -516,7 +541,7 @@ print_ast(FILE *f, struct statement **module)
 	struct statement *s = NULL;
 
 	indent(ap);
-	fprintf(ap->f, "(root)");
+	fprintf(ap->f, "<root>");
 	ap->depth++;
 	split(ap);
 	for (size_t i = 0; (s = module[i]); i++) {
