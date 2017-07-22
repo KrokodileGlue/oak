@@ -1,29 +1,24 @@
-
-
-foo.k:4:2: error: redeclaration of identifier 'b'
-	var b = [1, 2, 3, 4, f, a, b];
-	^~~
-foo.k:3:2: note: previously defined here
-	var f a b c;
-	^~~
-test.k:1:2: error: could not load module
-	import "foo.k" as foo
-	^~~~~~
 ============================== module '*main*' ==============================
-oak: import "foo.k" as foo
+import "foo.k" as foo
 
-class CLASS {
-	fn FUNCTION ARG1 ARG2 {
-		var VARIABLE-A = "foo";
-		print "test"
-		VARIABLE-A = 5;
+class GLASS {
+	fn GLASS-FUNCTION ARG1 ARG2 {
+		print ARG1
 	}
-
-	var VARIABLE-B VARIABLE-C = 2, 3;
 }
 
-# print a * 5 + -5;
+class CLASS : GLASS {
+	fn FUNCTION ARG1 ARG2 {
+		var VARIABLE-A = "foo"
+		print "test"
+		VARIABLE-A = 5
+		GLASS-FUNCTION(1, 2)
+	}
 
+	var VARIABLE-B VARIABLE-C = 2, 3
+}
+
+var a = I(test.txt)
 type       | data       | file       | index   | length | eol?  | value   
 --------------------------------------------------------------------------
    KEYWORD |     import |     test.k |       0 |      6 | false | import
@@ -31,155 +26,215 @@ type       | data       | file       | index   | length | eol?  | value
    KEYWORD |         as |     test.k |      15 |      2 | false | as
 IDENTIFIER |            |     test.k |      18 |      3 |  true | foo
    KEYWORD |      class |     test.k |      23 |      5 | false | class
-IDENTIFIER |            |     test.k |      29 |      5 | false | CLASS
+IDENTIFIER |            |     test.k |      29 |      5 | false | GLASS
     SYMBOL |          { |     test.k |      35 |      1 |  true | {
    KEYWORD |         fn |     test.k |      38 |      2 | false | fn
-IDENTIFIER |            |     test.k |      41 |      8 | false | FUNCTION
-IDENTIFIER |            |     test.k |      50 |      4 | false | ARG1
-IDENTIFIER |            |     test.k |      55 |      4 | false | ARG2
-    SYMBOL |          { |     test.k |      60 |      1 |  true | {
-   KEYWORD |        var |     test.k |      64 |      3 | false | var
-IDENTIFIER |            |     test.k |      68 |     10 | false | VARIABLE-A
-    SYMBOL |          = |     test.k |      79 |      1 | false | =
-    STRING |            |     test.k |      81 |      5 | false | "foo"
-    SYMBOL |          ; |     test.k |      86 |      1 |  true | ;
-   KEYWORD |      print |     test.k |      90 |      5 | false | print
-    STRING |            |     test.k |      96 |      6 |  true | "test"
-IDENTIFIER |            |     test.k |     105 |     10 | false | VARIABLE-A
-    SYMBOL |          = |     test.k |     116 |      1 | false | =
-   INTEGER |          5 |     test.k |     118 |      1 | false | 5
-    SYMBOL |          ; |     test.k |     119 |      1 |  true | ;
-    SYMBOL |          } |     test.k |     122 |      1 |  true | }
-   KEYWORD |        var |     test.k |     126 |      3 | false | var
-IDENTIFIER |            |     test.k |     130 |     10 | false | VARIABLE-B
-IDENTIFIER |            |     test.k |     141 |     10 | false | VARIABLE-C
-    SYMBOL |          = |     test.k |     152 |      1 | false | =
-   INTEGER |          2 |     test.k |     154 |      1 | false | 2
-    SYMBOL |          , |     test.k |     155 |      1 | false | ,
-   INTEGER |          3 |     test.k |     157 |      1 | false | 3
-    SYMBOL |          ; |     test.k |     158 |      1 |  true | ;
-    SYMBOL |          } |     test.k |     160 |      1 |  true | }
-       END |            |     test.k |     182 |      1 | false | 
-
-(root)
+IDENTIFIER |            |     test.k |      41 |     14 | false | GLASS-FUNCTION
+IDENTIFIER |            |     test.k |      56 |      4 | false | ARG1
+IDENTIFIER |            |     test.k |      61 |      4 | false | ARG2
+    SYMBOL |          { |     test.k |      66 |      1 |  true | {
+   KEYWORD |      print |     test.k |      70 |      5 | false | print
+IDENTIFIER |            |     test.k |      76 |      4 |  true | ARG1
+    SYMBOL |          } |     test.k |      82 |      1 |  true | }
+    SYMBOL |          } |     test.k |      84 |      1 |  true | }
+   KEYWORD |      class |     test.k |      87 |      5 | false | class
+IDENTIFIER |            |     test.k |      93 |      5 | false | CLASS
+    SYMBOL |          : |     test.k |      99 |      1 | false | :
+IDENTIFIER |            |     test.k |     101 |      5 | false | GLASS
+    SYMBOL |          { |     test.k |     107 |      1 |  true | {
+   KEYWORD |         fn |     test.k |     110 |      2 | false | fn
+IDENTIFIER |            |     test.k |     113 |      8 | false | FUNCTION
+IDENTIFIER |            |     test.k |     122 |      4 | false | ARG1
+IDENTIFIER |            |     test.k |     127 |      4 | false | ARG2
+    SYMBOL |          { |     test.k |     132 |      1 |  true | {
+   KEYWORD |        var |     test.k |     136 |      3 | false | var
+IDENTIFIER |            |     test.k |     140 |     10 | false | VARIABLE-A
+    SYMBOL |          = |     test.k |     151 |      1 | false | =
+    STRING |            |     test.k |     153 |      5 |  true | "foo"
+   KEYWORD |      print |     test.k |     161 |      5 | false | print
+    STRING |            |     test.k |     167 |      6 |  true | "test"
+IDENTIFIER |            |     test.k |     176 |     10 | false | VARIABLE-A
+    SYMBOL |          = |     test.k |     187 |      1 | false | =
+   INTEGER |          5 |     test.k |     189 |      1 |  true | 5
+IDENTIFIER |            |     test.k |     193 |     14 | false | GLASS-FUNCTION
+    SYMBOL |          ( |     test.k |     207 |      1 | false | (
+   INTEGER |          1 |     test.k |     208 |      1 | false | 1
+    SYMBOL |          , |     test.k |     209 |      1 | false | ,
+   INTEGER |          2 |     test.k |     211 |      1 | false | 2
+    SYMBOL |          ) |     test.k |     212 |      1 |  true | )
+    SYMBOL |          } |     test.k |     215 |      1 |  true | }
+   KEYWORD |        var |     test.k |     219 |      3 | false | var
+IDENTIFIER |            |     test.k |     223 |     10 | false | VARIABLE-B
+IDENTIFIER |            |     test.k |     234 |     10 | false | VARIABLE-C
+    SYMBOL |          = |     test.k |     245 |      1 | false | =
+   INTEGER |          2 |     test.k |     247 |      1 | false | 2
+    SYMBOL |          , |     test.k |     248 |      1 | false | ,
+   INTEGER |          3 |     test.k |     250 |      1 |  true | 3
+    SYMBOL |          } |     test.k |     252 |      1 |  true | }
+   KEYWORD |        var |     test.k |     255 |      3 | false | var
+IDENTIFIER |            |     test.k |     259 |      1 | false | a
+    SYMBOL |          = |     test.k |     261 |      1 | false | =
+    STRING |            |     test.k |     263 |     11 |  true | I(test.txt)
+       END |            |     test.k |     274 |      1 | false | 
+<root>
 |-- (stmt import)
-|   `-- import "foo.k" as foo
-`-- (stmt class)
-    |-- (name)
-    |   `-- (CLASS)
-    |-- (stmt function definition)
-    |   |-- (name)
-    |   |   `-- (FUNCTION)
-    |   |-- (arguments)
-    |   |   |-- (ARG1)
-    |   |   `-- (ARG2)
-    |   `-- (body)
-    |       `-- (stmt block)
-    |           |-- (stmt variable declaration)
-    |           |   `-- (VARIABLE-A)
-    |           |       `-- (string "foo")
-    |           |-- (stmt print)
-    |           |   `-- (string "test")
-    |           `-- (stmt expression)
-    |               `-- (binary =)
-    |                   |-- (identifier VARIABLE-A)
-    |                   `-- (integer 5)
-    `-- (stmt variable declaration)
-        |-- (VARIABLE-B)
-        |   `-- (integer 2)
-        `-- (VARIABLE-C)
-            `-- (integer 3)
+|   `-- import '"foo.k"' as 'foo'
+|-- (stmt class)
+|   |-- <name>
+|   |   `-- (GLASS)
+|   `-- (stmt function definition)
+|       |-- <name>
+|       |   `-- (GLASS-FUNCTION)
+|       |-- <arguments>
+|       |   |-- (ARG1)
+|       |   `-- (ARG2)
+|       `-- <body>
+|           `-- (stmt block)
+|               `-- (stmt print)
+|                   `-- (identifier ARG1)
+|-- (stmt class)
+|   |-- <name>
+|   |   `-- (CLASS)
+|   |-- <parent>
+|   |   `-- (GLASS)
+|   |-- (stmt function definition)
+|   |   |-- <name>
+|   |   |   `-- (FUNCTION)
+|   |   |-- <arguments>
+|   |   |   |-- (ARG1)
+|   |   |   `-- (ARG2)
+|   |   `-- <body>
+|   |       `-- (stmt block)
+|   |           |-- (stmt variable declaration)
+|   |           |   `-- (VARIABLE-A)
+|   |           |       `-- (string 'foo')
+|   |           |-- (stmt print)
+|   |           |   `-- (string 'test')
+|   |           |-- (stmt expression)
+|   |           |   `-- (binary =)
+|   |           |       |-- (identifier VARIABLE-A)
+|   |           |       `-- (integer 5)
+|   |           `-- (stmt expression)
+|   |               `-- (fn call)
+|   |                   |-- (identifier GLASS-FUNCTION)
+|   |                   `-- (arguments)
+|   |                       |-- (integer 1)
+|   |                       `-- (integer 2)
+|   `-- (stmt variable declaration)
+|       |-- (VARIABLE-B)
+|       |   `-- (integer 2)
+|       `-- (VARIABLE-C)
+|           `-- (integer 3)
+`-- (stmt variable declaration)
+    `-- (a)
+        `-- (string 'foo bar baz baz bar foo
+')
+<GLASS : class>
+  num_children=3
+  num_variables=8
+  id=210674554943
+        <GLASS-FUNCTION : function>
+          num_children=3
+          num_variables=2
+          id=3677677997840116114
+                <ARG1 : argument>
+                  id=6383868496
+                <ARG2 : argument>
+                  id=6383868497
+                <*block* : block>
+                  id=229388050762308
+        <CLASS : class>
+          num_children=3
+          num_variables=5
+          id=210669811259
+                <FUNCTION : function>
+                  num_children=3
+                  num_variables=3
+                  id=7570980975658827
+                        <ARG1 : argument>
+                          id=6383868496
+                        <ARG2 : argument>
+                          id=6383868497
+                        <*block* : block>
+                          num_children=1
+                          num_variables=1
+                          id=229388050762308
+                                <VARIABLE-A : variable>
+                                  id=8245512915541118777
+                <VARIABLE-B : variable>
+                  id=8245512915541118778
+                <VARIABLE-C : variable>
+                  id=8245512915541118779
+        <a : variable>
+          id=177670
 ============================== module 'foo' ==============================
-oak: #import "test.k" as test
+import "bar.k" as bar
 
-var f a b c;
-var b = [1, 2, 3, 4, f, a, b];
+var f a b c
+
 while -f(a = -85 * 92 - 23 ? c++ = (25 * (22 + 38)) : --c = 63)[43]:
 	print b
+
+//var b = [1, 2, 3, 4, f, a, b]
 type       | data       | file       | index   | length | eol?  | value   
 --------------------------------------------------------------------------
-   KEYWORD |        var |      foo.k |      26 |      3 | false | var
-IDENTIFIER |            |      foo.k |      30 |      1 | false | f
-IDENTIFIER |            |      foo.k |      32 |      1 | false | a
-IDENTIFIER |            |      foo.k |      34 |      1 | false | b
-IDENTIFIER |            |      foo.k |      36 |      1 | false | c
-    SYMBOL |          ; |      foo.k |      37 |      1 |  true | ;
-   KEYWORD |        var |      foo.k |      39 |      3 | false | var
-IDENTIFIER |            |      foo.k |      43 |      1 | false | b
-    SYMBOL |          = |      foo.k |      45 |      1 | false | =
-    SYMBOL |          [ |      foo.k |      47 |      1 | false | [
-   INTEGER |          1 |      foo.k |      48 |      1 | false | 1
-    SYMBOL |          , |      foo.k |      49 |      1 | false | ,
-   INTEGER |          2 |      foo.k |      51 |      1 | false | 2
-    SYMBOL |          , |      foo.k |      52 |      1 | false | ,
-   INTEGER |          3 |      foo.k |      54 |      1 | false | 3
-    SYMBOL |          , |      foo.k |      55 |      1 | false | ,
-   INTEGER |          4 |      foo.k |      57 |      1 | false | 4
-    SYMBOL |          , |      foo.k |      58 |      1 | false | ,
-IDENTIFIER |            |      foo.k |      60 |      1 | false | f
-    SYMBOL |          , |      foo.k |      61 |      1 | false | ,
-IDENTIFIER |            |      foo.k |      63 |      1 | false | a
-    SYMBOL |          , |      foo.k |      64 |      1 | false | ,
-IDENTIFIER |            |      foo.k |      66 |      1 | false | b
-    SYMBOL |          ] |      foo.k |      67 |      1 | false | ]
-    SYMBOL |          ; |      foo.k |      68 |      1 |  true | ;
-   KEYWORD |      while |      foo.k |      70 |      5 | false | while
-    SYMBOL |          - |      foo.k |      76 |      1 | false | -
-IDENTIFIER |            |      foo.k |      77 |      1 | false | f
-    SYMBOL |          ( |      foo.k |      78 |      1 | false | (
-IDENTIFIER |            |      foo.k |      79 |      1 | false | a
-    SYMBOL |          = |      foo.k |      81 |      1 | false | =
-    SYMBOL |          - |      foo.k |      83 |      1 | false | -
-   INTEGER |         85 |      foo.k |      84 |      2 | false | 85
-    SYMBOL |          * |      foo.k |      87 |      1 | false | *
-   INTEGER |         92 |      foo.k |      89 |      2 | false | 92
-    SYMBOL |          - |      foo.k |      92 |      1 | false | -
-   INTEGER |         23 |      foo.k |      94 |      2 | false | 23
-    SYMBOL |          ? |      foo.k |      97 |      1 | false | ?
-IDENTIFIER |            |      foo.k |      99 |      1 | false | c
-    SYMBOL |         ++ |      foo.k |     100 |      2 | false | ++
-    SYMBOL |          = |      foo.k |     103 |      1 | false | =
-    SYMBOL |          ( |      foo.k |     105 |      1 | false | (
-   INTEGER |         25 |      foo.k |     106 |      2 | false | 25
-    SYMBOL |          * |      foo.k |     109 |      1 | false | *
-    SYMBOL |          ( |      foo.k |     111 |      1 | false | (
-   INTEGER |         22 |      foo.k |     112 |      2 | false | 22
-    SYMBOL |          + |      foo.k |     115 |      1 | false | +
-   INTEGER |         38 |      foo.k |     117 |      2 | false | 38
-    SYMBOL |          ) |      foo.k |     119 |      1 | false | )
-    SYMBOL |          ) |      foo.k |     120 |      1 | false | )
-    SYMBOL |          : |      foo.k |     122 |      1 | false | :
-    SYMBOL |         -- |      foo.k |     124 |      2 | false | --
-IDENTIFIER |            |      foo.k |     126 |      1 | false | c
-    SYMBOL |          = |      foo.k |     128 |      1 | false | =
-   INTEGER |         63 |      foo.k |     130 |      2 | false | 63
-    SYMBOL |          ) |      foo.k |     132 |      1 | false | )
-    SYMBOL |          [ |      foo.k |     133 |      1 | false | [
-   INTEGER |         43 |      foo.k |     134 |      2 | false | 43
-    SYMBOL |          ] |      foo.k |     136 |      1 | false | ]
-    SYMBOL |          : |      foo.k |     137 |      1 |  true | :
-   KEYWORD |      print |      foo.k |     140 |      5 | false | print
-IDENTIFIER |            |      foo.k |     146 |      1 |  true | b
+   KEYWORD |     import |      foo.k |       0 |      6 | false | import
+    STRING |            |      foo.k |       7 |      7 | false | "bar.k"
+   KEYWORD |         as |      foo.k |      15 |      2 | false | as
+IDENTIFIER |            |      foo.k |      18 |      3 |  true | bar
+   KEYWORD |        var |      foo.k |      23 |      3 | false | var
+IDENTIFIER |            |      foo.k |      27 |      1 | false | f
+IDENTIFIER |            |      foo.k |      29 |      1 | false | a
+IDENTIFIER |            |      foo.k |      31 |      1 | false | b
+IDENTIFIER |            |      foo.k |      33 |      1 |  true | c
+   KEYWORD |      while |      foo.k |      36 |      5 | false | while
+    SYMBOL |          - |      foo.k |      42 |      1 | false | -
+IDENTIFIER |            |      foo.k |      43 |      1 | false | f
+    SYMBOL |          ( |      foo.k |      44 |      1 | false | (
+IDENTIFIER |            |      foo.k |      45 |      1 | false | a
+    SYMBOL |          = |      foo.k |      47 |      1 | false | =
+    SYMBOL |          - |      foo.k |      49 |      1 | false | -
+   INTEGER |         85 |      foo.k |      50 |      2 | false | 85
+    SYMBOL |          * |      foo.k |      53 |      1 | false | *
+   INTEGER |         92 |      foo.k |      55 |      2 | false | 92
+    SYMBOL |          - |      foo.k |      58 |      1 | false | -
+   INTEGER |         23 |      foo.k |      60 |      2 | false | 23
+    SYMBOL |          ? |      foo.k |      63 |      1 | false | ?
+IDENTIFIER |            |      foo.k |      65 |      1 | false | c
+    SYMBOL |         ++ |      foo.k |      66 |      2 | false | ++
+    SYMBOL |          = |      foo.k |      69 |      1 | false | =
+    SYMBOL |          ( |      foo.k |      71 |      1 | false | (
+   INTEGER |         25 |      foo.k |      72 |      2 | false | 25
+    SYMBOL |          * |      foo.k |      75 |      1 | false | *
+    SYMBOL |          ( |      foo.k |      77 |      1 | false | (
+   INTEGER |         22 |      foo.k |      78 |      2 | false | 22
+    SYMBOL |          + |      foo.k |      81 |      1 | false | +
+   INTEGER |         38 |      foo.k |      83 |      2 | false | 38
+    SYMBOL |          ) |      foo.k |      85 |      1 | false | )
+    SYMBOL |          ) |      foo.k |      86 |      1 | false | )
+    SYMBOL |          : |      foo.k |      88 |      1 | false | :
+    SYMBOL |         -- |      foo.k |      90 |      2 | false | --
+IDENTIFIER |            |      foo.k |      92 |      1 | false | c
+    SYMBOL |          = |      foo.k |      94 |      1 | false | =
+   INTEGER |         63 |      foo.k |      96 |      2 | false | 63
+    SYMBOL |          ) |      foo.k |      98 |      1 | false | )
+    SYMBOL |          [ |      foo.k |      99 |      1 | false | [
+   INTEGER |         43 |      foo.k |     100 |      2 | false | 43
+    SYMBOL |          ] |      foo.k |     102 |      1 | false | ]
+    SYMBOL |          : |      foo.k |     103 |      1 |  true | :
+   KEYWORD |      print |      foo.k |     106 |      5 | false | print
+IDENTIFIER |            |      foo.k |     112 |      1 |  true | b
        END |            |      foo.k |     146 |      1 | false | 
-
-(root)
+<root>
+|-- (stmt import)
+|   `-- import '"bar.k"' as 'bar'
 |-- (stmt variable declaration)
 |   |-- (f)
 |   |-- (a)
 |   |-- (b)
 |   `-- (c)
-|-- (stmt variable declaration)
-|   `-- (b)
-|       `-- (list)
-|           |-- (integer 1)
-|           |-- (integer 2)
-|           |-- (integer 3)
-|           |-- (integer 4)
-|           |-- (identifier f)
-|           |-- (identifier a)
-|           `-- (identifier b)
 `-- (stmt while loop)
-    |-- (condition)
+    |-- <condition>
     |   `-- (prefix -)
     |       `-- (subscript)
     |           |-- (integer 43)
@@ -208,6 +263,168 @@ IDENTIFIER |            |      foo.k |     146 |      1 |  true | b
     |                                   |-- (prefix --)
     |                                   |   `-- (identifier c)
     |                                   `-- (integer 63)
-    `-- (body)
+    `-- <body>
         `-- (stmt print)
             `-- (identifier b)
+<foo : module>
+  num_children=6
+  id=193491849
+        <bar : module>
+          num_children=4
+          id=193487034
+                <*block* : block>
+                  num_children=2
+                  num_variables=1
+                  id=0
+                        <i : variable>
+                          id=177678
+                        <*block* : block>
+                          id=0
+                <x : variable>
+                  id=177693
+                <*block* : block>
+                  num_children=1
+                  num_variables=1
+                  id=0
+                        <i : variable>
+                          id=177678
+                <y : variable>
+                  id=177694
+        <f : variable>
+          id=177675
+        <a : variable>
+          id=177670
+        <b : variable>
+          id=177671
+        <c : variable>
+          id=177672
+        <*block* : block>
+          id=0
+============================== module 'bar' ==============================
+for var i in 1 -> 10 ^ 1:
+	if i % 3 == 0:
+		print i
+
+var x y = [1, 2, 3, 4, 5], [i * 2 for var i in x if i % 3 == 0]
+// print i
+type       | data       | file       | index   | length | eol?  | value   
+--------------------------------------------------------------------------
+   KEYWORD |        for |      bar.k |       0 |      3 | false | for
+   KEYWORD |        var |      bar.k |       4 |      3 | false | var
+IDENTIFIER |            |      bar.k |       8 |      1 | false | i
+   KEYWORD |         in |      bar.k |      10 |      2 | false | in
+   INTEGER |          1 |      bar.k |      13 |      1 | false | 1
+    SYMBOL |         -> |      bar.k |      15 |      2 | false | ->
+   INTEGER |         10 |      bar.k |      18 |      2 | false | 10
+    SYMBOL |          ^ |      bar.k |      21 |      1 | false | ^
+   INTEGER |          1 |      bar.k |      23 |      1 | false | 1
+    SYMBOL |          : |      bar.k |      24 |      1 |  true | :
+   KEYWORD |         if |      bar.k |      27 |      2 | false | if
+IDENTIFIER |            |      bar.k |      30 |      1 | false | i
+    SYMBOL |          % |      bar.k |      32 |      1 | false | %
+   INTEGER |          3 |      bar.k |      34 |      1 | false | 3
+    SYMBOL |         == |      bar.k |      36 |      2 | false | ==
+   INTEGER |          0 |      bar.k |      39 |      1 | false | 0
+    SYMBOL |          : |      bar.k |      40 |      1 |  true | :
+   KEYWORD |      print |      bar.k |      44 |      5 | false | print
+IDENTIFIER |            |      bar.k |      50 |      1 |  true | i
+   KEYWORD |        var |      bar.k |      53 |      3 | false | var
+IDENTIFIER |            |      bar.k |      57 |      1 | false | x
+IDENTIFIER |            |      bar.k |      59 |      1 | false | y
+    SYMBOL |          = |      bar.k |      61 |      1 | false | =
+    SYMBOL |          [ |      bar.k |      63 |      1 | false | [
+   INTEGER |          1 |      bar.k |      64 |      1 | false | 1
+    SYMBOL |          , |      bar.k |      65 |      1 | false | ,
+   INTEGER |          2 |      bar.k |      67 |      1 | false | 2
+    SYMBOL |          , |      bar.k |      68 |      1 | false | ,
+   INTEGER |          3 |      bar.k |      70 |      1 | false | 3
+    SYMBOL |          , |      bar.k |      71 |      1 | false | ,
+   INTEGER |          4 |      bar.k |      73 |      1 | false | 4
+    SYMBOL |          , |      bar.k |      74 |      1 | false | ,
+   INTEGER |          5 |      bar.k |      76 |      1 | false | 5
+    SYMBOL |          ] |      bar.k |      77 |      1 | false | ]
+    SYMBOL |          , |      bar.k |      78 |      1 | false | ,
+    SYMBOL |          [ |      bar.k |      80 |      1 | false | [
+IDENTIFIER |            |      bar.k |      81 |      1 | false | i
+    SYMBOL |          * |      bar.k |      83 |      1 | false | *
+   INTEGER |          2 |      bar.k |      85 |      1 | false | 2
+   KEYWORD |        for |      bar.k |      87 |      3 | false | for
+   KEYWORD |        var |      bar.k |      91 |      3 | false | var
+IDENTIFIER |            |      bar.k |      95 |      1 | false | i
+   KEYWORD |         in |      bar.k |      97 |      2 | false | in
+IDENTIFIER |            |      bar.k |     100 |      1 | false | x
+   KEYWORD |         if |      bar.k |     102 |      2 | false | if
+IDENTIFIER |            |      bar.k |     105 |      1 | false | i
+    SYMBOL |          % |      bar.k |     107 |      1 | false | %
+   INTEGER |          3 |      bar.k |     109 |      1 | false | 3
+    SYMBOL |         == |      bar.k |     111 |      2 | false | ==
+   INTEGER |          0 |      bar.k |     114 |      1 | false | 0
+    SYMBOL |          ] |      bar.k |     115 |      1 |  true | ]
+       END |            |      bar.k |     127 |      1 | false | 
+<root>
+|-- (stmt for loop)
+|   |-- <initializer>
+|   |   `-- (stmt variable declaration)
+|   |       `-- (i)
+|   |-- <iterator>
+|   |   `-- (ternary ->)
+|   |       |-- (integer 1)
+|   |       |-- (integer 10)
+|   |       `-- (integer 1)
+|   `-- <body>
+|       `-- (stmt if)
+|           |-- <condition>
+|           |   `-- (binary ==)
+|           |       |-- (binary %)
+|           |       |   |-- (identifier i)
+|           |       |   `-- (integer 3)
+|           |       `-- (integer 0)
+|           `-- <then branch>
+|               `-- (stmt print)
+|                   `-- (identifier i)
+`-- (stmt variable declaration)
+    |-- (x)
+    |   `-- <list>
+    |       |-- (integer 1)
+    |       |-- (integer 2)
+    |       |-- (integer 3)
+    |       |-- (integer 4)
+    |       `-- (integer 5)
+    `-- (y)
+        `-- (list comprehension)
+            |-- <expression>
+            |   `-- (binary *)
+            |       |-- (identifier i)
+            |       `-- (integer 2)
+            |-- <index>
+            |   `-- (stmt variable declaration)
+            |       `-- (i)
+            |-- <iterator>
+            |   `-- (identifier x)
+            `-- <condition>
+                `-- (binary ==)
+                    |-- (binary %)
+                    |   |-- (identifier i)
+                    |   `-- (integer 3)
+                    `-- (integer 0)
+<bar : module>
+  num_children=4
+  id=193487034
+        <*block* : block>
+          num_children=2
+          num_variables=1
+          id=0
+                <i : variable>
+                  id=177678
+                <*block* : block>
+                  id=0
+        <x : variable>
+          id=177693
+        <*block* : block>
+          num_children=1
+          num_variables=1
+          id=0
+                <i : variable>
+                  id=177678
+        <y : variable>
+          id=177694
