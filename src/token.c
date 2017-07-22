@@ -96,9 +96,10 @@ char *token_get_str(enum token_type type)
 void token_write(struct token *tok, FILE *fp)
 {
 	fprintf(fp, "type       | data       | file       | index   | length | eol?  | value   \n");
-	fprintf(fp, "--------------------------------------------------------------------------\n");
+	fprintf(fp, "--------------------------------------------------------------------------");
 
 	while (tok) {
+		fputc('\n', fp);
 		if (tok->type <= TOK_INVALID)
 			fprintf(fp, "%10s | ", token_type_str[(size_t)tok->type]);
 		else
@@ -124,8 +125,6 @@ void token_write(struct token *tok, FILE *fp)
 		fprintf(fp, "%10s | %7zd | ", tok->loc.file, tok->loc.index);
 		fprintf(fp, "%6zd | %5s | %s",
 			tok->loc.len, tok->is_line_end ? "true" : "false", tok->value);
-
-		fputc('\n', fp);
 
 		tok = tok->next;
 	}
