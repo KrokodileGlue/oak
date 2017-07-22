@@ -74,7 +74,7 @@ void print_modules(struct oak *k)
 		for (size_t i = 0; i < k->num; i++) {
 			struct module *m = k->modules[i];
 
-			fprintf(stderr, "============================== module '%s' ==============================", m->name);
+			fprintf(stderr, "\n============================== module '%s' ==============================", m->name);
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
@@ -91,9 +91,10 @@ void print_modules(struct oak *k)
 			if (m->stage >= MODULE_STAGE_SYMBOLIZED
 			    && (k->print_symbol_table || k->print_everything)) {
 				print_symbol(stderr, 0, m->sym);
-				fputc('\n', stderr);
 			}
 		}
+
+		fputc('\n', stderr);
 	}
 }
 

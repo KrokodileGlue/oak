@@ -95,7 +95,7 @@ char *token_get_str(enum token_type type)
 
 void token_write(struct token *tok, FILE *fp)
 {
-	fprintf(fp, "type       | data       | file       | index   | length | eol?  | value   \n");
+	fprintf(fp, "\ntype       | data       | file       | index   | length | eol?  | value   \n");
 	fprintf(fp, "--------------------------------------------------------------------------");
 
 	while (tok) {
