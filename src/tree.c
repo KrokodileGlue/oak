@@ -501,9 +501,15 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		indent(ap);  fprintf(ap->f, "<name>");
 		ap->depth++;
-		indent(ap);
-		fprintf(ap->f, "(%s)", s->class.name);
+		indent(ap); fprintf(ap->f, "(%s)", s->class.name);
 		ap->depth--;
+
+		if (s->class.parent_name) {
+			indent(ap);  fprintf(ap->f, "<parent>");
+			ap->depth++;
+			indent(ap); fprintf(ap->f, "(%s)", s->class.parent_name->value);
+			ap->depth--;
+		}
 
 		for (size_t i = 0; i < s->class.num; i++) {
 			if (i == s->class.num - 1) join(ap);
@@ -550,5 +556,4 @@ print_ast(FILE *f, struct statement **module)
 	}
 
 	free(ap);
-	fprintf(f, "\n");
 }

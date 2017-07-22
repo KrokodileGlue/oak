@@ -251,6 +251,19 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		push(si, sym);
 
+		if (stmt->class.parent_name) {
+			struct symbol *parent = resolve(si, stmt->class.parent_name->value);
+
+			if (parent) {
+				if (parent->type != SYM_CLASS) {
+					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inheritable symbol");
+					error_push(si->r, parent->tok->loc, ERR_NOTE, "previous declaration here");
+				}
+
+				sym->parent = parent;
+			}
+		}
+
 		for (size_t i = 0; i < stmt->class.num; i++) {
 			symbolize(si, stmt->class.body[i]);
 		}

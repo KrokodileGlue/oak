@@ -74,11 +74,11 @@ void print_modules(struct oak *k)
 		for (size_t i = 0; i < k->num; i++) {
 			struct module *m = k->modules[i];
 
-			fprintf(stderr, "============================== module '%s' ==============================\n", m->name);
+			fprintf(stderr, "============================== module '%s' ==============================", m->name);
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
-				DOUT("%s", m->text);
+				fprintf(stderr, "\n%s", m->text);
 
 			if (m->stage >= MODULE_STAGE_LEXED
 			    && (k->print_tokens || k->print_everything))
