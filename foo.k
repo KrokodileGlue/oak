@@ -1,4 +1,4 @@
-import "bar.k" as bar
+//import "bar.k" as bar
 
 var f a b c
 

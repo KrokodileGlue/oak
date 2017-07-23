@@ -9,6 +9,8 @@ struct instructionData instruction_data[] = {
 
 	{ INSTR_ADD,        "ADD       " },
 	{ INSTR_SUB,        "SUB       " },
+	{ INSTR_MUL,        "MUL       " },
+	{ INSTR_DIV,        "DIV       " },
 
 	{ INSTR_PRINT,      "PRINT     " },
 
