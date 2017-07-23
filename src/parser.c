@@ -300,7 +300,7 @@ parse_fn_def(struct parser *ps)
 }
 
 static struct statement *
-parse_print_stmt(struct parser *ps)
+parse_print(struct parser *ps)
 {
 	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_PRINT;
@@ -325,6 +325,14 @@ parse_print_stmt(struct parser *ps)
 			    sizeof *(s->print.args) * (s->print.num));
 	expect_terminator(ps);
 
+	return s;
+}
+
+static struct statement *
+parse_println(struct parser *ps)
+{
+	struct statement *s = parse_print(ps);
+	s->type = STMT_PRINTLN;
 	return s;
 }
 
@@ -553,7 +561,8 @@ parse_stmt(struct parser *ps)
 		switch (ps->tok->keyword->type) {
 		case KEYWORD_IF:     s = parse_if_stmt(ps);	break;
 		case KEYWORD_FN:     s = parse_fn_def(ps);	break;
-		case KEYWORD_PRINT:  s = parse_print_stmt(ps);	break;
+		case KEYWORD_PRINT:  s = parse_print(ps);	break;
+		case KEYWORD_PRINTLN:s = parse_println(ps);	break;
 		case KEYWORD_VAR:
 			s = parse_vardecl(ps);
 			expect_terminator(ps);

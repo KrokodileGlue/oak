@@ -13,6 +13,8 @@ struct instruction {
 
 		INSTR_ADD,
 		INSTR_SUB,
+		INSTR_MUL,
+		INSTR_DIV,
 
 		INSTR_PRINT,
 		INSTR_END

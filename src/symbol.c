@@ -334,7 +334,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		resolve_expr(si, stmt->expr);
 		free(sym);
 		return;
-	case STMT_PRINT:
+	case STMT_PRINT: case STMT_PRINTLN:
 		for (size_t i = 0; i < stmt->print.num; i++) {
 			resolve_expr(si, stmt->print.args[i]);
 		}

@@ -33,3 +33,75 @@ add_values(struct value l, struct value r)
 
 	return ret;
 }
+
+struct value sub_values(struct value l, struct value r)
+{
+	if (l.type != r.type) {
+		// TODO: runtime error reporting
+		printf("l.type = %d\n", l.type);
+		printf("r.type = %d\n", r.type);
+		assert(false);
+	}
+
+	struct value ret;
+	ret.type = l.type;
+
+	switch (l.type) {
+	case VAL_INT:
+		ret.integer = l.integer - r.integer;
+		break;
+	default:
+		DOUT("unimplemented value adder thing for value of type %d", l.type);
+		assert(false);
+	}
+
+	return ret;
+}
+
+struct value mul_values(struct value l, struct value r)
+{
+	if (l.type != r.type) {
+		// TODO: runtime error reporting
+		printf("l.type = %d\n", l.type);
+		printf("r.type = %d\n", r.type);
+		assert(false);
+	}
+
+	struct value ret;
+	ret.type = l.type;
+
+	switch (l.type) {
+	case VAL_INT:
+		ret.integer = l.integer * r.integer;
+		break;
+	default:
+		DOUT("unimplemented value adder thing for value of type %d", l.type);
+		assert(false);
+	}
+
+	return ret;
+}
+
+struct value div_values(struct value l, struct value r)
+{
+	if (l.type != r.type) {
+		// TODO: runtime error reporting
+		printf("l.type = %d\n", l.type);
+		printf("r.type = %d\n", r.type);
+		assert(false);
+	}
+
+	struct value ret;
+	ret.type = l.type;
+
+	switch (l.type) {
+	case VAL_INT:
+		ret.integer = l.integer / r.integer;
+		break;
+	default:
+		DOUT("unimplemented value adder thing for value of type %d", l.type);
+		assert(false);
+	}
+
+	return ret;
+}
