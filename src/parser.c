@@ -596,6 +596,7 @@ parse(struct module *m)
 
 	tree[num] = NULL;
 	m->tree = tree;
+	m->num_nodes = num;
 
 	if (ps->r->fatal) {
 		error_write(ps->r, stderr);
