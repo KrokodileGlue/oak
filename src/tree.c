@@ -15,10 +15,10 @@ struct statementData statement_data[] = {
 	{ STMT_VAR_DECL,	"variable declaration"	},
 	{ STMT_BLOCK,		"block"			},
 	{ STMT_PRINT,		"print"			},
-	{ STMT_PRINTLN,	"println"			},
+	{ STMT_PRINTLN,		"println"	       	},
 	{ STMT_YIELD,		"yield"			},
 	{ STMT_CLASS,		"class"			},
-	{ STMT_IMPORT,		"import"			},
+	{ STMT_IMPORT,		"import"       		},
 	{ STMT_INVALID,		"invalid statement"	}
 };
 
@@ -369,7 +369,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
-	case STMT_PRINT:
+	case STMT_PRINT: case STMT_PRINTLN:
 		ap->depth++;
 		split(ap);
 
