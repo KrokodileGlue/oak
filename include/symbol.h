@@ -16,6 +16,7 @@ struct symbol {
 	struct symbol **children;
 	size_t          num_children;
 	size_t          num_variables;
+	size_t          address;
 
 	enum SymbolType {
 		SYM_FN,
@@ -35,9 +36,11 @@ struct symbolizer {
 	struct oak         *k;
 };
 
+struct symbolizer *new_symbolizer(struct oak *k);
 void symbolizer_free(struct symbolizer *si);
 void free_symbol(struct symbol *sym);
 bool symbolize_module(struct module *m, struct oak *k);
 void print_symbol(FILE *f, size_t depth, struct symbol *s);
+struct symbol *resolve(struct symbolizer *si, char *name);
 
 #endif

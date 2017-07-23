@@ -1,3 +1,4 @@
+#include <string.h>
 #include <assert.h>
 #include "util.h"
 
@@ -25,6 +26,12 @@ add_values(struct value l, struct value r)
 	switch (l.type) {
 	case VAL_INT:
 		ret.integer = l.integer + r.integer;
+		break;
+	case VAL_STR:
+		ret.str.text = oak_malloc(strlen(l.str.text) + strlen(r.str.text) + 1);
+		strcpy(ret.str.text, l.str.text);
+		strcpy(ret.str.text + strlen(l.str.text), r.str.text);
+		ret.str.len = strlen(ret.str.text);
 		break;
 	default:
 		DOUT("unimplemented value adder thing for value of type %d", l.type);
