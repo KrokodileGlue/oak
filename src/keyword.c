@@ -11,6 +11,7 @@ struct keyword keywords[] = {
 	{ KEYWORD_FN,      "fn"      },
 	{ KEYWORD_VAR,     "var"     },
 	{ KEYWORD_PRINT,   "print"   },
+	{ KEYWORD_PRINTLN, "println" },
 	{ KEYWORD_IN,      "in"      },
 	{ KEYWORD_YIELD,   "yield"   },
 	{ KEYWORD_WHILE,   "while"   },

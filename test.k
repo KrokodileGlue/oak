@@ -21,5 +21,5 @@ class CLASS : GLASS {
 var a = I(test.txt)
 */
 
-print "Hello, world!\n"
-print 2 + 2, "\n"
+println "Hello, world!"
+println 10 + 5 * 2

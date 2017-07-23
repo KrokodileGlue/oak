@@ -65,6 +65,15 @@ add_constant(struct compiler *c, struct token *tok)
 	return c->table.num - 1;
 }
 
+static size_t
+add_constant_value(struct compiler *c, struct value v)
+{
+	c->table.val = oak_realloc(c->table.val, sizeof c->table.val[0] * (c->table.num + 1));
+	c->table.val[c->table.num++] = v;
+
+	return c->table.num - 1;
+}
+
 static void
 compile_expression(struct compiler *c, struct expression *e)
 {
@@ -83,6 +92,10 @@ compile_expression(struct compiler *c, struct expression *e)
 				emit(c, (struct instruction){INSTR_ADD, 0});
 			} else if (!strcmp(e->tok->value, "-")) {
 				emit(c, (struct instruction){INSTR_SUB, 0});
+			} else if (!strcmp(e->tok->value, "*")) {
+				emit(c, (struct instruction){INSTR_MUL, 0});
+			} else if (!strcmp(e->tok->value, "/")) {
+				emit(c, (struct instruction){INSTR_DIV, 0});
 			}
 		} break;
 		default:
@@ -107,6 +120,20 @@ compile_statement(struct compiler *c, struct statement *s)
 			compile_expression(c, s->print.args[i]);
 			emit(c, (struct instruction){INSTR_PRINT, 0});
 		}
+	} break;
+	case STMT_PRINTLN: {
+		for (size_t i = 0; i < s->print.num; i++) {
+			compile_expression(c, s->print.args[i]);
+			emit(c, (struct instruction){INSTR_PRINT, 0});
+		}
+
+		struct value newline;
+		newline.type = VAL_STR;
+		newline.str.text = strclone("\n");
+		newline.str.len = strlen(newline.str.text);
+		size_t nl = add_constant_value(c, newline);
+		emit(c, (struct instruction){INSTR_PUSH_CONST, nl});
+		emit(c, (struct instruction){INSTR_PRINT, 0});
 	} break;
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);

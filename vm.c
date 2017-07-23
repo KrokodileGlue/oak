@@ -68,6 +68,27 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, ans);
 	} break;
 
+	case INSTR_SUB: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = sub_values(l, r);
+		push(vm, ans);
+	} break;
+
+	case INSTR_MUL: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = mul_values(l, r);
+		push(vm, ans);
+	} break;
+
+	case INSTR_DIV: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = div_values(l, r);
+		push(vm, ans);
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type, instruction_data[c.type].body);
 		assert(false);

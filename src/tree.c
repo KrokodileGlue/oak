@@ -15,6 +15,7 @@ struct statementData statement_data[] = {
 	{ STMT_VAR_DECL,	"variable declaration"	},
 	{ STMT_BLOCK,		"block"			},
 	{ STMT_PRINT,		"print"			},
+	{ STMT_PRINTLN,	"println"			},
 	{ STMT_YIELD,		"yield"			},
 	{ STMT_CLASS,		"class"			},
 	{ STMT_IMPORT,		"import"			},
@@ -86,7 +87,7 @@ free_stmt(struct statement *s)
 		if (s->if_stmt.otherwise)
 			free_stmt(s->if_stmt.otherwise);
 		break;
-	case STMT_PRINT:
+	case STMT_PRINT: case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++) {
 			free_expr(s->print.args[i]);
 		}

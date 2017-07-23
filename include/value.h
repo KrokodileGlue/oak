@@ -30,5 +30,8 @@ struct valueData {
 extern struct valueData value_data[];
 
 struct value add_values(struct value l, struct value r);
+struct value sub_values(struct value l, struct value r);
+struct value mul_values(struct value l, struct value r);
+struct value div_values(struct value l, struct value r);
 
 #endif
