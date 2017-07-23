@@ -79,14 +79,26 @@ compile_expression(struct compiler *c, struct expression *e)
 {
 	switch (e->type) {
 	case EXPR_VALUE: {
-		size_t l = add_constant(c, e->val);
-		emit(c, (struct instruction){INSTR_PUSH_CONST, l});
+		switch (e->val->type) {
+		case TOK_IDENTIFIER: {
+			struct symbol *sym = resolve(c->si, e->val->value);
+			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address});
+		} break;
+		default: {
+			size_t l = add_constant(c, e->val);
+			emit(c, (struct instruction){INSTR_PUSH_CONST, l});
+		} break;
+		}
 	} break;
+
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
 		case OP_BINARY: {
 			compile_expression(c, e->a);
 			compile_expression(c, e->b);
+
+			// HACK: have enum values for the operators so this can just be a
+			// switch statement.
 
 			if (!strcmp(e->tok->value, "+")) {
 				emit(c, (struct instruction){INSTR_ADD, 0});
@@ -103,6 +115,7 @@ compile_expression(struct compiler *c, struct expression *e)
 			assert(false);
 		}
 		break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type %d", e->type);
 		assert(false);
@@ -135,6 +148,20 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit(c, (struct instruction){INSTR_PUSH_CONST, nl});
 		emit(c, (struct instruction){INSTR_PRINT, 0});
 	} break;
+
+	case STMT_VAR_DECL: {
+		for (size_t i = 0; i < s->var_decl.num; i++) {
+			struct symbol *sym = resolve(c->si, s->var_decl.names[i]->value);
+			sym->address = i;
+		}
+
+		for (size_t i = 0; i < s->var_decl.num; i++) {
+			struct symbol *sym = resolve(c->si, s->var_decl.names[i]->value);
+			compile_expression(c, s->var_decl.init[i]);
+			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address});
+		}
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
 		assert(false);
@@ -163,10 +190,12 @@ print_constant_table(FILE *f, struct constant_table table)
 }
 
 bool
-compile(struct module *m)
+compile(struct module *m, struct oak *k)
 {
+	struct symbolizer *si = new_symbolizer(k);
 	struct compiler *c = new_compiler();
-	c->sym = m->sym;
+	si->symbol = m->sym;
+	c->si = si;
 	c->num_nodes = m->num_nodes;
 
 	for (size_t i = 0; i < c->num_nodes; i++) {

@@ -13,7 +13,7 @@ static void add(struct symbolizer *si, struct symbol *sym);
 static void symbolize(struct symbolizer *si, struct statement *stmt);
 static struct symbol *new_symbol(struct token *tok);
 
-static struct symbolizer *
+struct symbolizer *
 new_symbolizer(struct oak *k)
 {
 	struct symbolizer *si = oak_malloc(sizeof *si);
@@ -106,7 +106,7 @@ add(struct symbolizer *si, struct symbol *sym)
 	symbol->children[symbol->num_children++] = sym;
 }
 
-static struct symbol *
+struct symbol *
 resolve(struct symbolizer *si, char *name)
 {
 	uint64_t h = hash(name, strlen(name));
@@ -290,22 +290,23 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_VAR_DECL: {
-#define VARDECL(STATEMENT) \
-		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                                                  \
-			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]); \
-			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);                                                 \
-			                                                                                                                           \
-			if (redefinition) {                                                                                                        \
-				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", STATEMENT->var_decl.names[i]->value); \
-				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");                                   \
-			}                                                                                                                          \
-			                                                                                                                           \
-			struct symbol *s = new_symbol(sym->tok);                                                                                   \
-			s->type = SYM_VAR;                                                                                                         \
-			s->name = STATEMENT->var_decl.names[i]->value;                                                                                  \
-			s->id = hash(s->name, strlen(s->name));                                                                                    \
-			add(si, s);                                                                                                                \
-		}                                                                                                                                  \
+#define VARDECL(STATEMENT)                                                                                            \
+		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                \
+			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]);                  \
+			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);               \
+			                                                                                              \
+			if (redefinition) {                                                                           \
+				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", \
+				           STATEMENT->var_decl.names[i]->value);                                      \
+				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");       \
+			}                                                                                             \
+			                                                                                              \
+			struct symbol *s = new_symbol(sym->tok);                                                      \
+			s->type = SYM_VAR;                                                                            \
+			s->name = STATEMENT->var_decl.names[i]->value;                                                \
+			s->id = hash(s->name, strlen(s->name));                                                       \
+			add(si, s);                                                                                   \
+		}                                                                                                     \
 
 		VARDECL(stmt);
 		free(sym);
@@ -444,6 +445,8 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 	if (s->num_variables) {
 		INDENT; fprintf(f, "  num_variables=%zu", s->num_variables);
 	}
+
+	INDENT; fprintf(f, "address=%zu", s->address);
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);
