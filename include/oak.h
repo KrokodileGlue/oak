@@ -12,6 +12,8 @@ struct oak {
 	bool print_tokens;
 	bool print_ast;
 	bool print_symbol_table;
+	bool print_code;
+
 	bool print_everything;
 	bool print_anything;
 };

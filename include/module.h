@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include "tree.h"
+#include "code.h"
+#include "constant.h"
 
 struct module {
 	char *name, *text, *path;
@@ -10,7 +12,12 @@ struct module {
 	struct token *tok; /* keep the token stream for later free()ing */
 
 	struct statement **tree;
-	size_t num;
+	size_t num_nodes;
+
+	struct instruction *code;
+	size_t num_instr;
+
+	struct constant_table constant_table;
 
 	enum {
 		MODULE_STAGE_EMPTY,
@@ -22,7 +29,6 @@ struct module {
 };
 
 struct module *new_module(char *path);
-
 void free_module(struct module *m);
 
 #endif

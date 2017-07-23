@@ -9,6 +9,8 @@
 #include "symbol.h"
 #include "module.h"
 #include "oak.h"
+#include "compile.h"
+#include "vm.h"
 
 struct oak *
 new_oak()
@@ -40,6 +42,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 		if (!k->print_tokens)       k->print_tokens       = !strcmp(argv[i], "-pt");
 		if (!k->print_ast)          k->print_ast          = !strcmp(argv[i], "-pa");
 		if (!k->print_symbol_table) k->print_symbol_table = !strcmp(argv[i], "-ps");
+		if (!k->print_code)         k->print_code         = !strcmp(argv[i], "-pc");
 		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
 
 		if (argv[i][0] != '-')  {
@@ -52,7 +55,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 		}
 	}
 
-	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_everything);
+	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_code || k->print_everything);
 
 	if (!path) {
 		DOUT("did not receive an input file");
@@ -74,7 +77,8 @@ void print_modules(struct oak *k)
 		for (size_t i = 0; i < k->num; i++) {
 			struct module *m = k->modules[i];
 
-			fprintf(stderr, "\n============================== module '%s' ==============================", m->name);
+			if (i != 0) fputc('\n', stderr);
+			fprintf(stderr, "============================== module '%s' ==============================", m->name);
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
@@ -91,6 +95,12 @@ void print_modules(struct oak *k)
 			if (m->stage >= MODULE_STAGE_SYMBOLIZED
 			    && (k->print_symbol_table || k->print_everything)) {
 				print_symbol(stderr, 0, m->sym);
+			}
+
+			if (m->stage >= MODULE_STAGE_COMPILED
+			    && (k->print_code || k->print_everything)) {
+				print_constant_table(stderr, m->constant_table);
+				print_code(stderr, m->code, m->num_instr);
 			}
 		}
 
@@ -117,8 +127,11 @@ load_module(struct oak *k, char *path, char *name)
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k)) return NULL;
+	if (!compile(m)) return NULL;
 
-	/* TODO: compile and run */
+	/* GO GO GO */
+	execute(m);
+
 	return m;
 }
 

@@ -1,5 +1,6 @@
-import "foo.k" as foo
+// import "foo.k" as foo
 
+/*
 class GLASS {
 	fn GLASS-FUNCTION ARG1 ARG2 {
 		print ARG1
@@ -18,3 +19,7 @@ class CLASS : GLASS {
 }
 
 var a = I(test.txt)
+*/
+
+print "Hello, world!\n"
+print 2 + 2, "\n"
