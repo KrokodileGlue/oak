@@ -51,7 +51,7 @@ print(struct value v)
 void
 execute_instr(struct vm *vm, struct instruction c)
 {
-//	fprintf(stderr, "%s\n", instruction_data[c.type].body);
+//	fprintf(stderr, "%zu: %s\n", vm->ip, instruction_data[c.type].body);
 
 	switch (c.type) {
 	case INSTR_PUSH_CONST: {
@@ -91,6 +91,25 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, ans);
 	} break;
 
+	case INSTR_INC: {
+		struct value l = pop(vm);
+		l = inc_value(l);
+		push(vm, l);
+	} break;
+
+	case INSTR_DEC: {
+		struct value l = pop(vm);
+		l = dec_value(l);
+		push(vm, l);
+	} break;
+
+	case INSTR_LESS: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = is_less_than_value(l, r);
+		push(vm, ans);
+	} break;
+
 	case INSTR_PUSH_LOCAL: {
 		push(vm, vm->frames[vm->fp].vars[c.a]);
 	} break;
@@ -106,6 +125,22 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_LINE: putchar('\n'); break;
+
+	case INSTR_COND_JUMP: {
+		struct value l = pop(vm);
+		if (is_value_true(l))
+			vm->ip = c.a;
+	} break;
+
+	case INSTR_FALSE_JUMP: {
+		struct value l = pop(vm);
+		if (!is_value_true(l))
+			vm->ip = c.a;
+	} break;
+
+	case INSTR_JUMP: {
+		vm->ip = c.a;
+	} break;
 
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type, instruction_data[c.type].body);

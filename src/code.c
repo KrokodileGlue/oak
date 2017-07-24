@@ -11,6 +11,14 @@ struct instructionData instruction_data[] = {
 	{ INSTR_SUB,        "SUB       " },
 	{ INSTR_MUL,        "MUL       " },
 	{ INSTR_DIV,        "DIV       " },
+	{ INSTR_INC,        "INC       " },
+	{ INSTR_DEC,        "DEC       " },
+
+	{ INSTR_LESS,       "LESS " },
+
+	{ INSTR_COND_JUMP,  "COND_JUMP "},
+	{ INSTR_FALSE_JUMP, "FALSE_JUMP"},
+	{ INSTR_JUMP,       "JUMP      "},
 
 	{ INSTR_PRINT,      "PRINT     " },
 	{ INSTR_LINE,       "LINE      " },
@@ -22,6 +30,6 @@ void
 print_code(FILE *f, struct instruction *code, size_t num_instr)
 {
 	for (size_t i = 0; i < num_instr; i++) {
-		fprintf(f, "\n%s %zu", instruction_data[code[i].type].body, code[i].a);
+		fprintf(f, "\n%3zu: %s %zu", i, instruction_data[code[i].type].body, code[i].a);
 	}
 }

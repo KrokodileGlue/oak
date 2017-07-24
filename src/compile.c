@@ -88,6 +88,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			struct symbol *sym = resolve(scope, e->val->value);
 			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address});
 		} break;
+
 		default: {
 			size_t l = add_constant(c, e->val);
 			emit(c, (struct instruction){INSTR_PUSH_CONST, l});
@@ -112,14 +113,28 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 				emit(c, (struct instruction){INSTR_MUL, 0});
 			} else if (!strcmp(e->tok->value, "/")) {
 				emit(c, (struct instruction){INSTR_DIV, 0});
+			} else if (!strcmp(e->tok->value, "<")) {
+				emit(c, (struct instruction){INSTR_LESS, 0});
 			}
+		} break;
+		case OP_POSTFIX: {
+			compile_expression(c, e->a, scope);
+
+			if (!strcmp(e->tok->value, "++")) {
+				emit(c, (struct instruction){INSTR_INC, 0});
+			} else if (!strcmp(e->tok->value, "--")) {
+				emit(c, (struct instruction){INSTR_DEC, 0});
+			}
+
+			// HACK: this won't work if the left-hand side is not an identifier.
+			struct symbol *sym = resolve(scope, e->a->val->value);
+			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address});
 		} break;
 		default:
 			DOUT("unimplemented compiler for operator %s of type %d", e->operator->body, e->operator->type);
 			assert(false);
 		}
 		break;
-
 	default:
 		DOUT("unimplemented compiler for expression of type %d", e->type);
 		assert(false);
@@ -162,6 +177,22 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (size_t i = 0; i < s->block.num; i++) {
 			compile_statement(c, s->block.stmts[i]);
 		}
+	} break;
+
+	case STMT_FOR_LOOP: {
+		compile_statement(c, s->for_loop.a);
+		size_t start = c->num_instr - 1;
+
+		compile_expression(c, s->for_loop.b, sym);
+		emit(c, (struct instruction){INSTR_FALSE_JUMP, -1});
+
+		size_t o = c->num_instr - 1;
+		compile_statement(c, s->for_loop.body);
+
+		compile_expression(c, s->for_loop.c, sym);
+		c->code[o].a = c->num_instr;
+
+		emit(c, (struct instruction){INSTR_JUMP, start});
 	} break;
 
 	default:

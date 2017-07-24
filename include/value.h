@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 struct value {
 	enum value_type {
@@ -21,6 +22,8 @@ struct value {
 		} str;
 
 		double real;
+
+		bool boolean;
 	};
 };
 
@@ -35,5 +38,11 @@ struct value add_values(struct value l, struct value r);
 struct value sub_values(struct value l, struct value r);
 struct value mul_values(struct value l, struct value r);
 struct value div_values(struct value l, struct value r);
+
+struct value inc_value(struct value l);
+struct value dec_value(struct value l);
+struct value is_less_than_value(struct value l, struct value r);
+
+bool         is_value_true(struct value l);
 
 #endif
