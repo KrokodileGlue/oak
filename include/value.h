@@ -19,6 +19,8 @@ struct value {
 			char *text;
 			size_t len;
 		} str;
+
+		double real;
 	};
 };
 

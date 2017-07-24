@@ -39,6 +39,9 @@ print(struct value v)
 	case VAL_STR:
 		fprintf(stdout, "%s", v.str.text);
 		break;
+	case VAL_FLOAT:
+		fprintf(stdout, "%f", v.real);
+		break;
 	default:
 		DOUT("unimplemented printer for value of type %d (%s)", v.type, value_data[v.type].body);
 		assert(false);
