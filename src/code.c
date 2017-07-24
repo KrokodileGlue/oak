@@ -13,6 +13,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_DIV,        "DIV       " },
 
 	{ INSTR_PRINT,      "PRINT     " },
+	{ INSTR_LINE,       "LINE      " },
 
 	{ INSTR_END,        "END       " },
 };

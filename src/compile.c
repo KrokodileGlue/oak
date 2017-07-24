@@ -145,13 +145,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit(c, (struct instruction){INSTR_PRINT, 0});
 		}
 
-		struct value newline;
-		newline.type = VAL_STR;
-		newline.str.text = strclone("\n");
-		newline.str.len = strlen(newline.str.text);
-		size_t nl = add_constant_value(c, newline);
-		emit(c, (struct instruction){INSTR_PUSH_CONST, nl});
-		emit(c, (struct instruction){INSTR_PRINT, 0});
+		emit(c, (struct instruction){INSTR_LINE, 0});
 	} break;
 
 	case STMT_VAR_DECL: {

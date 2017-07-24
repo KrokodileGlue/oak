@@ -17,6 +17,7 @@ struct instruction {
 		INSTR_DIV,
 
 		INSTR_PRINT,
+		INSTR_LINE,
 		INSTR_END
 	} type;
 
