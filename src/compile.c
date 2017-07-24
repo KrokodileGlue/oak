@@ -180,7 +180,9 @@ print_constant_table(FILE *f, struct constant_table table)
 			fprintf(f, "%"PRId64, val.integer);
 			break;
 		case VAL_STR:
-			fprintf(f, "%s", val.str.text);
+			fprintf(f, "'");
+			print_escaped_string(f, val.str.text, val.str.len);
+			fprintf(f, "'");
 			break;
 		default:
 			DOUT("unimplemented printer for constant");

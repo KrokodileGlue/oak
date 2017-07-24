@@ -17,6 +17,7 @@ struct symbol {
 	size_t          num_children;
 	size_t          num_variables;
 	size_t          address;
+	int             scope;
 
 	enum SymbolType {
 		SYM_FN,
@@ -34,6 +35,7 @@ struct symbolizer {
 	struct symbol      *symbol;
 	struct reporter *r;
 	struct oak         *k;
+	int scope;
 };
 
 struct symbolizer *new_symbolizer(struct oak *k);

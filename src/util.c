@@ -84,6 +84,18 @@ chop_extension(char *str)
 	*a = 0;
 }
 
+void
+print_escaped_string(FILE *f, char *str, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		switch (str[i]) {
+		case '\n': fprintf(f, "\\n"); break;
+		case '\t': fprintf(f, "\\t"); break;
+		default: fputc(str[i], f); break;
+		}
+	}
+}
+
 char *
 add_extension(char *str)
 {
