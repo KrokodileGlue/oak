@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 #include "util.h"
 
 #include "value.h"
@@ -120,6 +121,62 @@ struct value div_values(struct value l, struct value r)
 	default:
 		DOUT("unimplemented value adder thing for value of type %d", l.type);
 		assert(false);
+	}
+
+	return ret;
+}
+
+bool
+is_value_true(struct value l)
+{
+	if (l.type != VAL_BOOL) {
+		assert(false);
+	}
+
+	return l.boolean;
+}
+
+struct value
+inc_value(struct value l)
+{
+	switch (l.type) {
+	case VAL_INT: l.integer++; break;
+	case VAL_FLOAT: l.real++; break;
+	default: assert(false); break;
+	}
+
+	return l;
+}
+
+struct value
+dec_value(struct value l)
+{
+	switch (l.type) {
+	case VAL_INT: l.integer--; break;
+	case VAL_FLOAT: l.real--; break;
+	default: assert(false); break;
+	}
+
+	return l;
+}
+
+struct value
+is_less_than_value(struct value l, struct value r)
+{
+	struct value ret;
+	ret.type = VAL_BOOL;
+
+	if (l.type != r.type) {
+		// TODO: runtime error reporting
+		printf("l.type = %d\n", l.type);
+		printf("r.type = %d\n", r.type);
+		assert(false);
+	}
+
+	switch (l.type) {
+	case VAL_INT: ret.boolean = l.integer < r.integer; break;
+	case VAL_FLOAT: ret.boolean = l.real < r.real; break;
+	default: assert(false);
 	}
 
 	return ret;

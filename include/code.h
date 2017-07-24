@@ -15,9 +15,18 @@ struct instruction {
 		INSTR_SUB,
 		INSTR_MUL,
 		INSTR_DIV,
+		INSTR_INC,
+		INSTR_DEC,
+
+		INSTR_LESS,
+
+		INSTR_COND_JUMP,
+		INSTR_FALSE_JUMP,
+		INSTR_JUMP,
 
 		INSTR_PRINT,
 		INSTR_LINE,
+
 		INSTR_END
 	} type;
 

@@ -167,10 +167,15 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	if (!stmt)
 		return;
 
+	si->scope++;
+
 	struct symbol *sym = new_symbol(stmt->tok);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
+	sym->scope = si->scope;
+	stmt->scope = sym->scope;
+
 	add(si, sym);
 
 	push(si, sym);
@@ -388,12 +393,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
 		push_block(si, stmt);
 
+		symbolize(si, stmt->for_loop.a);
+
 		resolve_expr(si, stmt->for_loop.b);
 		if (stmt->for_loop.c) resolve_expr(si, stmt->for_loop.c);
-
-		if (stmt->for_loop.a->type == STMT_VAR_DECL) {
-			VARDECL(stmt->for_loop.a);
-		}
 
 		symbolize(si, stmt->for_loop.body);
 		pop(si);

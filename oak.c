@@ -128,9 +128,9 @@ load_module(struct oak *k, char *path, char *name)
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k)) return NULL;
+	if (!compile(m)) return NULL;
 
 	if (!k->debug) {
-		if (!compile(m)) return NULL;
 		execute(m);
 	}
 
