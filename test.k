@@ -19,5 +19,6 @@ class CLASS : GLASS {
 }
 */
 
-
-for var i = 0; i < 10; i++: println "Hello, world!"
+var a = 10
+for var i = 0; i < a; i++:
+	println "Hello, world! ", i
