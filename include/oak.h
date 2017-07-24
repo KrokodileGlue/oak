@@ -8,6 +8,8 @@ struct oak {
 	struct module **modules;
 	size_t num;
 
+	bool debug;
+
 	bool print_input;
 	bool print_tokens;
 	bool print_ast;

@@ -43,6 +43,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 		if (!k->print_ast)          k->print_ast          = !strcmp(argv[i], "-pa");
 		if (!k->print_symbol_table) k->print_symbol_table = !strcmp(argv[i], "-ps");
 		if (!k->print_code)         k->print_code         = !strcmp(argv[i], "-pc");
+		if (!k->debug)              k->debug              = !strcmp(argv[i], "-d");
 		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
 
 		if (argv[i][0] != '-')  {
@@ -127,10 +128,11 @@ load_module(struct oak *k, char *path, char *name)
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k)) return NULL;
-	if (!compile(m)) return NULL;
 
-	/* GO GO GO */
-	execute(m);
+	if (!k->debug) {
+		if (!compile(m)) return NULL;
+		execute(m);
+	}
 
 	return m;
 }

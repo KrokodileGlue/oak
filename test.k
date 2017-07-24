@@ -22,4 +22,15 @@ class CLASS : GLASS {
 var a = "Hello, "
 var b = "world!"
 var c d = a + b, c + " Yeah."
+
 println d
+
+{
+	var foo = "foo "
+	var bar = "bar"
+	println foo + bar
+}
+
+var foo = "foo "
+var bar = "bar"
+println foo + bar
