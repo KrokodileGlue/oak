@@ -79,13 +79,13 @@ add_constant_value(struct compiler *c, struct value v)
 }
 
 static void
-compile_expression(struct compiler *c, struct expression *e)
+compile_expression(struct compiler *c, struct expression *e, struct symbol *scope)
 {
 	switch (e->type) {
 	case EXPR_VALUE: {
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
-			struct symbol *sym = resolve(c->sym, e->val->value);
+			struct symbol *sym = resolve(scope, e->val->value);
 			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address});
 		} break;
 		default: {
@@ -98,8 +98,8 @@ compile_expression(struct compiler *c, struct expression *e)
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
 		case OP_BINARY: {
-			compile_expression(c, e->a);
-			compile_expression(c, e->b);
+			compile_expression(c, e->a, scope);
+			compile_expression(c, e->b, scope);
 
 			// HACK: have enum values for the operators so this can just be a
 			// switch statement.
@@ -135,13 +135,13 @@ compile_statement(struct compiler *c, struct statement *s)
 	switch (s->type) {
 	case STMT_PRINT: {
 		for (size_t i = 0; i < s->print.num; i++) {
-			compile_expression(c, s->print.args[i]);
+			compile_expression(c, s->print.args[i], sym);
 			emit(c, (struct instruction){INSTR_PRINT, 0});
 		}
 	} break;
 	case STMT_PRINTLN: {
 		for (size_t i = 0; i < s->print.num; i++) {
-			compile_expression(c, s->print.args[i]);
+			compile_expression(c, s->print.args[i], sym);
 			emit(c, (struct instruction){INSTR_PRINT, 0});
 		}
 
@@ -159,8 +159,14 @@ compile_statement(struct compiler *c, struct statement *s)
 			struct symbol *var_sym = resolve(sym, s->var_decl.names[i]->value);
 			var_sym->address = sym->vp++;
 
-			compile_expression(c, s->var_decl.init[i]);
+			compile_expression(c, s->var_decl.init[i], sym);
 			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address});
+		}
+	} break;
+
+	case STMT_BLOCK: {
+		for (size_t i = 0; i < s->block.num; i++) {
+			compile_statement(c, s->block.stmts[i]);
 		}
 	} break;
 

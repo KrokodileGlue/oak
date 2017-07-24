@@ -335,6 +335,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		si->scope++;
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
+		sym->scope = si->scope;
 
 		push(si, sym);
 
