@@ -19,9 +19,6 @@ struct symbol {
 	size_t          address;
 	int             scope;
 
-	/* variable counter used by the compiler */
-	int             vp;
-
 	enum SymbolType {
 		SYM_FN,
 		SYM_VAR,

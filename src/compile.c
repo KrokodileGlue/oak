@@ -141,6 +141,27 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 	}
 }
 
+static int
+increase_context(struct compiler *c)
+{
+	c->context = realloc(c->context, sizeof c->context[0] * (c->num_contexts + 1));
+	c->context[c->num_contexts++] = 0;
+
+	return ++c->context[c->num_contexts - 1];
+}
+
+static int
+get_num_variables_in_context(struct compiler *c)
+{
+	return c->context[c->num_contexts - 1];
+}
+
+static void
+inc_num_variables_in_context(struct compiler *c)
+{
+	c->context[c->num_contexts - 1]++;
+}
+
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
@@ -166,7 +187,8 @@ compile_statement(struct compiler *c, struct statement *s)
 	case STMT_VAR_DECL: {
 		for (size_t i = 0; i < s->var_decl.num; i++) {
 			struct symbol *var_sym = resolve(sym, s->var_decl.names[i]->value);
-			var_sym->address = sym->vp++;
+			var_sym->address = get_num_variables_in_context(c);
+			inc_num_variables_in_context(c);
 
 			compile_expression(c, s->var_decl.init[i], sym);
 			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address});
@@ -233,6 +255,7 @@ compile(struct module *m)
 	struct compiler *c = new_compiler();
 	c->sym = m->sym;
 	c->num_nodes = m->num_nodes;
+	increase_context(c);
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		compile_statement(c, m->tree[i]);

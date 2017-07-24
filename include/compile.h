@@ -17,6 +17,11 @@ struct compiler {
 
 	struct constant_table table;
 	struct symbol *sym;
+
+	/* an array, where each element is the number of variables in the index (as a scope). */
+	/* that's a terrible explanation. i'll have to rewrite this code. */
+	int *context;
+	int num_contexts;
 };
 
 void print_constant_table(FILE *f, struct constant_table table);
