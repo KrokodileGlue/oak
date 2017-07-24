@@ -16,11 +16,10 @@ struct compiler {
 	size_t num_nodes;
 
 	struct constant_table table;
-
-	struct symbolizer *si;
+	struct symbol *sym;
 };
 
 void print_constant_table(FILE *f, struct constant_table table);
-bool compile(struct module *m, struct oak *k);
+bool compile(struct module *m);
 
 #endif

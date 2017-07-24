@@ -43,6 +43,10 @@ make_value(struct token *tok)
 		val.type = VAL_INT;
 		val.integer = tok->integer;
 		break;
+	case TOK_FLOAT:
+		val.type = VAL_FLOAT;
+		val.real = tok->floating;
+		break;
 	case TOK_STRING:
 		val.type = VAL_STR;
 		val.str.text = tok->string;
@@ -81,7 +85,7 @@ compile_expression(struct compiler *c, struct expression *e)
 	case EXPR_VALUE: {
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
-			struct symbol *sym = resolve(c->si, e->val->value);
+			struct symbol *sym = resolve(c->sym, e->val->value);
 			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address});
 		} break;
 		default: {
@@ -126,6 +130,7 @@ static void
 compile_statement(struct compiler *c, struct statement *s)
 {
 //	DOUT("compiling statement of type %d (%s)", s->type, statement_data[s->type].body);
+	struct symbol *sym = find_from_scope(c->sym, s->scope);
 
 	switch (s->type) {
 	case STMT_PRINT: {
@@ -151,14 +156,11 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_VAR_DECL: {
 		for (size_t i = 0; i < s->var_decl.num; i++) {
-			struct symbol *sym = resolve(c->si, s->var_decl.names[i]->value);
-			sym->address = i;
-		}
+			struct symbol *var_sym = resolve(sym, s->var_decl.names[i]->value);
+			var_sym->address = sym->vp++;
 
-		for (size_t i = 0; i < s->var_decl.num; i++) {
-			struct symbol *sym = resolve(c->si, s->var_decl.names[i]->value);
 			compile_expression(c, s->var_decl.init[i]);
-			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address});
+			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address});
 		}
 	} break;
 
@@ -173,7 +175,7 @@ print_constant_table(FILE *f, struct constant_table table)
 {
 	for (size_t i = 0; i < table.num; i++) {
 		struct value val = table.val[i];
-		fprintf(f, "\nconstant %zu (%s):", i, value_data[val.type].body);
+		fprintf(f, "\n[%3zu %7s] ", i, value_data[val.type].body);
 
 		switch (val.type) {
 		case VAL_INT:
@@ -184,6 +186,9 @@ print_constant_table(FILE *f, struct constant_table table)
 			print_escaped_string(f, val.str.text, val.str.len);
 			fprintf(f, "'");
 			break;
+		case VAL_FLOAT:
+			fprintf(f, "%f", val.real);
+			break;
 		default:
 			DOUT("unimplemented printer for constant");
 			assert(false);
@@ -192,12 +197,10 @@ print_constant_table(FILE *f, struct constant_table table)
 }
 
 bool
-compile(struct module *m, struct oak *k)
+compile(struct module *m)
 {
-	struct symbolizer *si = new_symbolizer(k);
 	struct compiler *c = new_compiler();
-	si->symbol = m->sym;
-	c->si = si;
+	c->sym = m->sym;
 	c->num_nodes = m->num_nodes;
 
 	for (size_t i = 0; i < c->num_nodes; i++) {

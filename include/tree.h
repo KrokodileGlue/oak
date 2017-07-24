@@ -36,6 +36,7 @@ extern struct statementData statement_data[];
 struct statement {
 	struct token *tok;
 	enum statement_type type;
+	int scope;
 
 	union {
 		struct {

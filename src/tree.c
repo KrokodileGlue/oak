@@ -346,7 +346,7 @@ static void
 print_statement(struct ASTPrinter *ap, struct statement *s)
 {
 	indent(ap);
-	fprintf(ap->f, "(stmt %s)", statement_data[s->type].body);
+	fprintf(ap->f, "(stmt %s) : %d", statement_data[s->type].body, s->scope);
 
 	switch (s->type) {
 	case STMT_IF_STMT:

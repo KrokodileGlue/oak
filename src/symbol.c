@@ -81,12 +81,27 @@ hash(char *d, size_t len)
 	return hash;
 }
 
-static void inc_variable_count(struct symbol *sym)
+static void
+inc_variable_count(struct symbol *sym)
 {
-	while (sym->parent) {
+	while (sym) {
 		sym->num_variables++;
 		sym = sym->parent;
 	}
+}
+
+// HACK: slow.
+struct symbol *
+find_from_scope(struct symbol *sym, int scope)
+{
+	if (sym->scope == scope) return sym;
+
+	for (size_t i = 0; i < sym->num_children; i++) {
+		struct symbol *ret = find_from_scope(sym->children[i], scope);
+		if (ret) return ret;
+	}
+
+	return NULL;
 }
 
 static void
@@ -107,10 +122,9 @@ add(struct symbolizer *si, struct symbol *sym)
 }
 
 struct symbol *
-resolve(struct symbolizer *si, char *name)
+resolve(struct symbol *sym, char *name)
 {
 	uint64_t h = hash(name, strlen(name));
-	struct symbol *sym = si->symbol;
 
 	while (sym) {
 		for (size_t i = 0; i < sym->num_children; i++) {
@@ -129,7 +143,7 @@ resolve(struct symbolizer *si, char *name)
 static void
 find(struct symbolizer *si, struct location loc, char *name)
 {
-	struct symbol *sym = resolve(si, name);
+	struct symbol *sym = resolve(si->symbol, name);
 	if (!sym)
 		error_push(si->r, loc, ERR_FATAL, "undeclared identifier");
 }
@@ -241,20 +255,21 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
-	si->scope++;
 	struct symbol *sym = new_symbol(stmt->tok);
 	sym->scope = si->scope;
 	sym->parent = si->symbol;
+	stmt->scope = sym->scope;
 
 	switch (stmt->type) {
 	case STMT_CLASS:
+		si->scope++;
 		sym->name = stmt->class.name;
 		sym->type = SYM_CLASS;
 
 		push(si, sym);
 
 		if (stmt->class.parent_name) {
-			struct symbol *parent = resolve(si, stmt->class.parent_name->value);
+			struct symbol *parent = resolve(si->symbol, stmt->class.parent_name->value);
 
 			if (parent) {
 				if (parent->type != SYM_CLASS) {
@@ -274,6 +289,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_FN_DEF:
+		si->scope++;
 		sym->name = stmt->fn_def.name;
 		sym->type = SYM_FN;
 
@@ -295,7 +311,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 #define VARDECL(STATEMENT)                                                                                            \
 		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                \
 			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]);                  \
-			struct symbol *redefinition = resolve(si, STATEMENT->var_decl.names[i]->value);               \
+			struct symbol *redefinition = resolve(si->symbol, STATEMENT->var_decl.names[i]->value);       \
 			                                                                                              \
 			if (redefinition) {                                                                           \
 				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", \
@@ -307,7 +323,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->type = SYM_VAR;                                                                            \
 			s->name = STATEMENT->var_decl.names[i]->value;                                                \
 			s->id = hash(s->name, strlen(s->name));                                                       \
-			s->scope = si->scope;                                                                         \
+			s->scope = -1;                                                                                \
 			add(si, s);                                                                                   \
 		}                                                                                                     \
 
@@ -316,6 +332,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 	case STMT_BLOCK: {
+		si->scope++;
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
 
@@ -327,8 +344,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		pop(si);
 	} break;
 	case STMT_IF_STMT: {
-		block(si, stmt->if_stmt.then);
-		block(si, stmt->if_stmt.otherwise);
+		si->scope++; block(si, stmt->if_stmt.then);
+		si->scope++; block(si, stmt->if_stmt.otherwise);
 		resolve_expr(si, stmt->if_stmt.cond);
 
 		free(sym);
@@ -359,12 +376,15 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 	case STMT_WHILE: {
-		block(si, stmt->while_loop.body);
 		resolve_expr(si, stmt->while_loop.cond);
+
+		si->scope++;
+		block(si, stmt->while_loop.body);
+
 		free(sym);
 		return;
 	}
-	case STMT_FOR_LOOP: {
+	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
 		push_block(si, stmt);
 
 		resolve_expr(si, stmt->for_loop.b);
@@ -408,8 +428,9 @@ symbolize_module(struct module *m, struct oak *k)
 	sym->parent = si->symbol;
 	sym->id = hash(m->name, strlen(m->name));
 	sym->module = m;
-	sym->scope = 1;
+	sym->scope = 0;
 
+	si->scope = sym->scope;
 	si->symbol = sym;
 
 	size_t i = 0;
