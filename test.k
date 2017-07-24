@@ -21,5 +21,14 @@ class CLASS : GLASS {
 var a = I(test.txt)
 */
 
+//{
 var a b c d = "Hello, ", "world!", a + b, "foo " + "bar"
 println c, " ", d, ": ", 5 * 2 + 3
+print
+R($)
+
+this is some
+	awesome text
+
+$
+//}

@@ -241,7 +241,9 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
+	si->scope++;
 	struct symbol *sym = new_symbol(stmt->tok);
+	sym->scope = si->scope;
 	sym->parent = si->symbol;
 
 	switch (stmt->type) {
@@ -305,6 +307,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->type = SYM_VAR;                                                                            \
 			s->name = STATEMENT->var_decl.names[i]->value;                                                \
 			s->id = hash(s->name, strlen(s->name));                                                       \
+			s->scope = si->scope;                                                                         \
 			add(si, s);                                                                                   \
 		}                                                                                                     \
 
@@ -398,12 +401,14 @@ bool
 symbolize_module(struct module *m, struct oak *k)
 {
 	struct symbolizer *si = new_symbolizer(k);
+
 	struct symbol *sym = new_symbol(m->tree[0]->tok);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
 	sym->parent = si->symbol;
 	sym->id = hash(m->name, strlen(m->name));
 	sym->module = m;
+	sym->scope = 1;
 
 	si->symbol = sym;
 
@@ -446,7 +451,8 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 		INDENT; fprintf(f, "  num_variables=%zu", s->num_variables);
 	}
 
-	INDENT; fprintf(f, "address=%zu", s->address);
+	INDENT; fprintf(f, "  address=%zu", s->address);
+	INDENT; fprintf(f, "  scope=%d", s->scope);
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);

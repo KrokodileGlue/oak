@@ -289,7 +289,9 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			fprintf(ap->f, "(integer %zu)", e->val->integer);
 			break;
 		case TOK_STRING:
-			fprintf(ap->f, "(string '%s')", e->val->string);
+			fprintf(ap->f, "(string '");
+			print_escaped_string(ap->f, e->val->string, strlen(e->val->string));
+			fprintf(ap->f, "')");
 			break;
 		case TOK_FLOAT:
 			fprintf(ap->f, "(float %f)", e->val->floating);
