@@ -217,6 +217,11 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit(c, (struct instruction){INSTR_JUMP, start});
 	} break;
 
+	case STMT_EXPR: {
+		compile_expression(c, s->expr, sym);
+		emit(c, (struct instruction){INSTR_POP, 0});
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
 		assert(false);
