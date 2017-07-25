@@ -19,7 +19,9 @@ class CLASS : GLASS {
 }
 */
 
-// fn f a = 2 * 2
+// fn f (a) = 2 * 2
 
-for var i = 0; i < 15; i++:
-	println "Hello, world! ", i
+for var i = 0.; i < 100000.; i++ {
+	var b = i * 5. / 3.
+	println b
+}
