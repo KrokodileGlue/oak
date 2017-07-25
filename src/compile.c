@@ -217,6 +217,16 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit(c, (struct instruction){INSTR_JUMP, start});
 	} break;
 
+	case STMT_IF_STMT: {
+		compile_expression(c, s->if_stmt.cond, sym);
+		emit(c, (struct instruction){INSTR_FALSE_JUMP, -1});
+
+		size_t start = c->num_instr - 1;
+
+		compile_statement(c, s->if_stmt.then);
+		c->code[start].a = c->num_instr - 1;
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
 		assert(false);
