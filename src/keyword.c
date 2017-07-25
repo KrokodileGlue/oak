@@ -13,7 +13,7 @@ struct keyword keywords[] = {
 	{ KEYWORD_PRINT,   "print"   },
 	{ KEYWORD_PRINTLN, "println" },
 	{ KEYWORD_IN,      "in"      },
-	{ KEYWORD_YIELD,   "yield"   },
+	{ KEYWORD_RET,     "return"  },
 	{ KEYWORD_WHILE,   "while"   },
 	{ KEYWORD_DO,      "do"      },
 	{ KEYWORD_CLASS,   "class"   },

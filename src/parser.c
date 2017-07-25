@@ -283,15 +283,22 @@ parse_fn_def(struct parser *ps)
 	s->fn_def.name = ps->tok->value;
 	NEXT;
 
+	expect_symbol(ps, "(");
+
 	while (ps->tok->type == TOK_IDENTIFIER) {
 		s->fn_def.args = oak_realloc(s->fn_def.args, sizeof *s->fn_def.args * (s->fn_def.num + 1));
 		s->fn_def.args[s->fn_def.num++] = ps->tok;
 		NEXT;
 	}
 
+	expect_symbol(ps, ")");
+
 	if (!strcmp(ps->tok->value, "=")) {
 		expect_symbol(ps, "=");
-		s->fn_def.body = parse_stmt(ps);
+		struct statement *body = new_statement(ps->tok);
+		body->type = STMT_RET;
+		body->ret.expr = parse_expr(ps, 0);
+		s->fn_def.body = body;
 	} else {
 		s->fn_def.body = parse_stmt(ps);
 	}
@@ -438,10 +445,10 @@ parse_block(struct parser *ps)
 }
 
 static struct statement *
-parse_yield(struct parser *ps)
+parse_ret(struct parser *ps)
 {
 	struct statement *s = new_statement(ps->tok);
-	s->type = STMT_YIELD;
+	s->type = STMT_RET;
 
 	NEXT;
 	s->expr = parse_expr(ps, 0);
@@ -568,7 +575,7 @@ parse_stmt(struct parser *ps)
 			expect_terminator(ps);
 			break;
 		case KEYWORD_FOR:    s = parse_for_loop(ps);	break;
-		case KEYWORD_YIELD:  s = parse_yield(ps);	break;
+		case KEYWORD_RET:    s = parse_ret(ps);		break;
 		case KEYWORD_WHILE:  s = parse_while(ps);	break;
 		case KEYWORD_DO:     s = parse_do(ps);		break;
 		case KEYWORD_CLASS:  s = parse_class(ps);	break;

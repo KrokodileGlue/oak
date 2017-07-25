@@ -227,10 +227,15 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->code[start].a = c->num_instr - 1;
 	} break;
 
+	case STMT_EXPR: {
+		compile_expression(c, s->expr, sym);
+		emit(c, (struct instruction){INSTR_POP, 0});
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
 		assert(false);
-	}
+		          }
 }
 
 void
