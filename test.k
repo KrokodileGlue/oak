@@ -19,8 +19,9 @@ class CLASS : GLASS {
 }
 */
 
-var a = 20
-for var i = 0; i < a; i++ {
-	if i < 15: println i, " is less than 15"
-	else println i, " is not less than 15"
+// fn f (a) = 2 * 2
+
+for var i = 0.; i < 100000.; i++ {
+	var b = i * 5. / 3.
+	println b
 }

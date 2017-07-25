@@ -10,6 +10,7 @@ struct instruction {
 		INSTR_POP_CONST,
 		INSTR_PUSH_LOCAL,
 		INSTR_POP_LOCAL,
+		INSTR_POP,
 
 		INSTR_ADD,
 		INSTR_SUB,

@@ -6,6 +6,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_POP_CONST,  "POP_CONST " },
 	{ INSTR_PUSH_LOCAL, "PUSH_LOCAL" },
 	{ INSTR_POP_LOCAL,  "POP_LOCAL " },
+	{ INSTR_POP,        "POP       " },
 
 	{ INSTR_ADD,        "ADD       " },
 	{ INSTR_SUB,        "SUB       " },
@@ -14,7 +15,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_INC,        "INC       " },
 	{ INSTR_DEC,        "DEC       " },
 
-	{ INSTR_LESS,       "LESS " },
+	{ INSTR_LESS,       "LESS      " },
 
 	{ INSTR_COND_JUMP,  "COND_JUMP "},
 	{ INSTR_FALSE_JUMP, "FALSE_JUMP"},
