@@ -349,9 +349,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		pop(si);
 	} break;
 	case STMT_IF_STMT: {
+		resolve_expr(si, stmt->if_stmt.cond);
 		si->scope++; block(si, stmt->if_stmt.then);
 		si->scope++; block(si, stmt->if_stmt.otherwise);
-		resolve_expr(si, stmt->if_stmt.cond);
+		si->scope -= 2;
 
 		free(sym);
 		return;
@@ -364,6 +365,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		for (size_t i = 0; i < stmt->print.num; i++) {
 			resolve_expr(si, stmt->print.args[i]);
 		}
+
 		free(sym);
 		return;
 	case STMT_IMPORT: {
