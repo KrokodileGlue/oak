@@ -124,6 +124,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->frames[vm->fp].vars[c.a] = pop(vm);
 	} break;
 
+	case INSTR_POP: {
+		pop(vm);
+	} break;
+
 	case INSTR_LINE: putchar('\n'); break;
 
 	case INSTR_COND_JUMP: {
