@@ -410,6 +410,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
+
+	case STMT_RET: {
+		resolve_expr(si, stmt->ret.expr);
+		free(sym);
+		return;
+	} break;
 	default:
 		free(sym);
 		DOUT("unimplemented symbol visitor for statement of type %d (%s)",

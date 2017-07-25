@@ -20,7 +20,7 @@ enum statement_type {
 	STMT_BLOCK,
 	STMT_PRINT,
 	STMT_PRINTLN,
-	STMT_YIELD,
+	STMT_RET,
 	STMT_CLASS,
 	STMT_IMPORT,
 	STMT_INVALID
@@ -41,7 +41,7 @@ struct statement {
 	union {
 		struct {
 			struct expression *expr;
-		} yield;
+		} ret;
 
 		struct {
 			char *name;
