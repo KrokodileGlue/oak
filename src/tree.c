@@ -16,7 +16,7 @@ struct statementData statement_data[] = {
 	{ STMT_BLOCK,		"block"			},
 	{ STMT_PRINT,		"print"			},
 	{ STMT_PRINTLN,		"println"	       	},
-	{ STMT_YIELD,		"yield"			},
+	{ STMT_RET,		"return"		},
 	{ STMT_CLASS,		"class"			},
 	{ STMT_IMPORT,		"import"       		},
 	{ STMT_INVALID,		"invalid statement"	}
@@ -117,8 +117,8 @@ free_stmt(struct statement *s)
 		free(s->fn_def.args);
 
 		break;
-	case STMT_YIELD:
-		free_expr(s->yield.expr);
+	case STMT_RET:
+		free_expr(s->ret.expr);
 
 		break;
 	case STMT_WHILE:
@@ -466,7 +466,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
-	case STMT_YIELD:
+	case STMT_RET:
 		ap->depth++;
 		print_expression(ap, s->expr);
 		ap->depth--;

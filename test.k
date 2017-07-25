@@ -19,8 +19,7 @@ class CLASS : GLASS {
 }
 */
 
-var a = 10
-var i = 0
-for i; i < a + 5; i++ {
+// fn f a = 2 * 2
+
+for var i = 0; i < 15; i++:
 	println "Hello, world! ", i
-}
