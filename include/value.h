@@ -8,6 +8,7 @@
 
 #include "error.h"
 #include "vm.h"
+#include "list.h"
 
 struct value {
 	enum value_type {
@@ -16,19 +17,20 @@ struct value {
 		VAL_FLOAT,
 		VAL_STR,
 		VAL_BOOL,
+		VAL_LIST
 	} type;
 
 	union {
 		int64_t integer;
+		double real;
+		bool boolean;
 
 		struct {
 			char *text;
 			size_t len;
 		} str;
 
-		double real;
-
-		bool boolean;
+		struct list *list;
 	};
 };
 

@@ -75,6 +75,15 @@ add_constant(struct compiler *c, struct token *tok)
 	return c->table.num - 1;
 }
 
+static size_t
+add_constant_value(struct compiler *c, struct value v)
+{
+	c->table.val = oak_realloc(c->table.val, sizeof c->table.val[0] * (c->table.num + 1));
+	c->table.val[c->table.num++] = v;
+
+	return c->table.num - 1;
+}
+
 static void
 compile_expression(struct compiler *c, struct expression *e, struct symbol *scope)
 {
@@ -99,7 +108,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			compile_expression(c, e->a, scope);
 			compile_expression(c, e->b, scope);
 
-			// HACK: have enum values for the operators so this can just be a
+			// TODO: have enum values for the operators so this can just be a
 			// switch statement.
 
 			if (!strcmp(e->tok->value, "+")) {
@@ -144,6 +153,33 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			assert(false);
 		}
 		break;
+
+	case EXPR_LIST: {
+		for (size_t i = 0; i < e->num; i++) {
+			compile_expression(c, e->args[i], scope);
+
+//			uint64_t h = hash((char *)&i, sizeof i);
+
+			/* the key for each value will just be it's index in the array. */
+			struct value val = (struct value){VAL_INT, { i } };
+			size_t v = add_constant_value(c, val);
+			emit(c, (struct instruction){INSTR_PUSH_CONST, v, e->args[i]->tok->loc});
+		}
+
+		/* push the number of elements onto the stack */
+		struct value val = (struct value){VAL_INT, { (uint64_t)e->num }};
+		size_t v = add_constant_value(c, val);
+		emit(c, (struct instruction){INSTR_PUSH_CONST, v, e->tok->loc});
+
+		emit_instr(c, INSTR_LIST);
+	} break;
+
+	case EXPR_SUBSCRIPT: {
+		compile_expression(c, e->a, scope);
+		compile_expression(c, e->b, scope);
+		emit_instr(c, INSTR_SUBSCRIPT);
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type %d", e->type);
 		assert(false);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "location.h"
 
@@ -62,6 +63,8 @@ char  *get_line       (struct location loc);
 char  *strclone       (char *str);
 char  *add_extension  (char *str);
 void   print_escaped_string(FILE *f, char *str, size_t len);
+
+uint64_t hash(char *d, size_t len);
 
 void  *oak_malloc     (size_t size);
 void  *oak_realloc    (void *mem, size_t size);

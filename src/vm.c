@@ -149,6 +149,38 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->ip = c.arg;
 	} break;
 
+	case INSTR_LIST: {
+		struct value val;
+		val.type = VAL_LIST;
+		val.list = new_list();
+
+		/* TODO: verify that we actually have an integer here. */
+		struct value len = pop(vm);
+		for (int64_t i = 0; i < len.integer; i++) {
+			struct value key = pop(vm);
+			struct value value = pop(vm);
+
+			list_insert(val.list, &key.integer, sizeof key.integer, value);
+		}
+
+		push(vm, val);
+	} break;
+
+	case INSTR_SUBSCRIPT: {
+		struct value key = pop(vm);
+		struct value list = pop(vm);
+
+		/* TODO: more types of keys */
+		uint64_t i = list_index(list.list, &key.integer, sizeof key.integer);
+
+		if (i == (uint64_t)-1) {
+			/* TODO: push nil */
+			printf("thing\n");
+		}
+
+		push(vm, list.list->val[i]);
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type, instruction_data[c.type].body);
 		assert(false);

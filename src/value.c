@@ -11,7 +11,8 @@ struct valueData value_data[] = {
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },
 	{ VAL_STR,   "string" },
-	{ VAL_BOOL,  "boolean" }
+	{ VAL_BOOL,  "boolean" },
+	{ VAL_LIST,  "list" }
 };
 
 #define BINARY_MATH_OPERATION(x)                                                    \
@@ -209,13 +210,27 @@ print_value(FILE *f, struct value val)
 		fprintf(f, "%"PRId64, val.integer);
 		break;
 	case VAL_STR:
-		print_escaped_string(f, val.str.text, val.str.len);
+		fprintf(f, "%s", val.str.text);
 		break;
 	case VAL_FLOAT:
 		fprintf(f, "%f", val.real);
 		break;
+	case VAL_LIST:
+		fputc('[', f);
+
+		for (uint64_t i = val.list->len - 1; i + 1; i--) {
+			print_value(f, val.list->val[i]);
+			if (i + 1 != 1)
+				fprintf(f, ", ");
+		}
+
+		fputc(']', f);
+		break;
+	case VAL_NIL:
+		fprintf(f, "nil");
+		break;
 	default:
-		DOUT("unimplemented printer for constant");
+		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);
 	}
 }

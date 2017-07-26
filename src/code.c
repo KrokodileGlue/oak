@@ -26,9 +26,12 @@ struct instructionData instruction_data[] = {
 	{ INSTR_JUMP,       "JUMP      "},
 
 	{ INSTR_PRINT,      "PRINT     " },
-	{ INSTR_LINE,       "LINE      " },
+	{ INSTR_LINE,       "LINE " },
 
-	{ INSTR_END,        "END       " },
+	{ INSTR_LIST,       "LIST      " },
+	{ INSTR_SUBSCRIPT,  "SUBSCRIPT " },
+
+	{ INSTR_END,        "END       " }
 };
 
 void

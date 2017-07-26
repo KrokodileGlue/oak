@@ -1,29 +1,8 @@
 // import "foo.k" as foo
 
-/*
-class GLASS {
-	fn GLASS-FUNCTION ARG1 ARG2 {
-		print ARG1
-	}
-}
+var a = ["this", "is", "a", "list"]
 
-class CLASS : GLASS {
-	fn FUNCTION ARG1 ARG2 {
-		var VARIABLE-A = "foo"
-		print "test"
-		VARIABLE-A = 5
-		GLASS-FUNCTION(1, 2)
-	}
+for var i = 0; i < 4; i++:
+	print a[i], " "
 
-	var VARIABLE-B VARIABLE-C = 2, 3
-}
-*/
-
-// fn f (a) = 2 * 2
-
-for var i = 1; i < 101; i++ {
-	if i % 3 == 0 and i % 5 == 0: println "FizzBuzz"
-	else if i % 3 == 0: println "Fizz"
-	else if i % 5 == 0: println "Buzz"
-	else println i
-}
+print "\n"
