@@ -18,6 +18,9 @@ struct compiler {
 	struct constant_table table;
 	struct symbol *sym;
 
+	struct statement *stmt;
+	struct reporter *r;
+
 	/* an array, where each element is the number of variables in the index (as a scope). */
 	/* that's a terrible explanation. i'll have to rewrite this code. */
 	int *context;
