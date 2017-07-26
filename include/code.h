@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "location.h"
+
 struct instruction {
 	enum instruction_type {
 		INSTR_PUSH_CONST,
@@ -20,6 +22,10 @@ struct instruction {
 		INSTR_DEC,
 
 		INSTR_LESS,
+		INSTR_MOD,
+
+		INSTR_CMP,
+		INSTR_AND,
 
 		INSTR_COND_JUMP,
 		INSTR_FALSE_JUMP,
@@ -31,7 +37,8 @@ struct instruction {
 		INSTR_END
 	} type;
 
-	size_t a;
+	size_t arg;
+	struct location loc;
 };
 
 struct instructionData {
