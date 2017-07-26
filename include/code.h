@@ -34,6 +34,9 @@ struct instruction {
 		INSTR_PRINT,
 		INSTR_LINE,
 
+		INSTR_LIST,
+		INSTR_SUBSCRIPT,
+
 		INSTR_END
 	} type;
 

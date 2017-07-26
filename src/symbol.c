@@ -31,7 +31,7 @@ free_symbol(struct symbol *sym)
 	for (size_t i = 0; i < sym->num_children; i++) {
 		/* if a module symbol appears in another module
 		 * it means that it was imported and it's symbol
-		 * table will be free'd elsewhere. */
+		 * list will be free'd elsewhere. */
 		if (sym->children[i]->type != SYM_MODULE)
 			free_symbol(sym->children[i]);
 	}
@@ -68,17 +68,6 @@ new_symbol(struct token *tok)
 	sym->tok = tok;
 
 	return sym;
-}
-
-static uint64_t
-hash(char *d, size_t len)
-{
-	uint64_t hash = 5381;
-
-	for (size_t i = 0; i < len; i++)
-		hash = ((hash << 5) + hash) + d[i];
-
-	return hash;
 }
 
 static void
@@ -277,7 +266,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 			if (parent) {
 				if (parent->type != SYM_CLASS) {
-					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inheritable symbol");
+					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inherilist symbol");
 					error_push(si->r, parent->tok->loc, ERR_NOTE, "previous declaration here");
 				}
 
