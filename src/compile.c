@@ -58,6 +58,10 @@ make_value(struct token *tok)
 		val.str.text = tok->string;
 		val.str.len = strlen(tok->string);
 		break;
+	case TOK_BOOL:
+		val.type = VAL_BOOL;
+		val.boolean = tok->boolean;
+		break;
 	default:
 		DOUT("unimplemented compiler for token of type %d", tok->type);
 		assert(false);
@@ -145,6 +149,13 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
 		case OPTYPE_BINARY: {
+			if (e->operator->name == OP_COMMA) {
+				compile_expression(c, e->a, scope);
+				emit_instr(c, INSTR_POP);
+				compile_expression(c, e->b, scope);
+				break;
+			}
+
 			compile_expression(c, e->a, scope);
 			compile_expression(c, e->b, scope);
 
@@ -315,8 +326,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		size_t a = c->num_instr;
 		compile_expression(c, s->for_loop.b, sym);
 
+		size_t b = c->num_instr;
 		emit_instr(c, INSTR_FALSE_JUMP);
-		size_t b = c->num_instr - 1;
 
 		compile_statement(c, s->for_loop.body);
 		compile_expression(c, s->for_loop.c, sym);
@@ -324,6 +335,19 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->code[b].arg = c->num_instr;
 
 		emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.body->tok->loc});
+	} break;
+
+	case STMT_WHILE: {
+		size_t a = c->num_instr;
+		compile_expression(c, s->while_loop.cond, sym);
+
+		size_t b = c->num_instr;
+		emit(c, (struct instruction){INSTR_FALSE_JUMP, 0, s->while_loop.cond->tok->loc});
+
+		compile_statement(c, s->while_loop.body);
+		emit(c, (struct instruction){INSTR_JUMP, a, s->while_loop.cond->tok->loc});
+
+		c->code[b].arg = c->num_instr - 1;
 	} break;
 
 	case STMT_IF_STMT: {

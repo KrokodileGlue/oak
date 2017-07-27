@@ -27,6 +27,7 @@ struct instructionData instruction_data[] = {
 
 	{ INSTR_COND_JUMP,  "COND_JUMP "},
 	{ INSTR_FALSE_JUMP, "FALSE_JUMP"},
+	{ INSTR_TRUE_JUMP,  "TRUE_JUMP "},
 	{ INSTR_JUMP,       "JUMP      "},
 	{ INSTR_FRAME,      "FRAME     "},
 	{ INSTR_POP_FRAME,  "POP_FRAME "},

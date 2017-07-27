@@ -32,7 +32,8 @@ struct valueData value_data[] = {
 	error_push(vm->r, vm->code[vm->ip].loc, ERR_FATAL, "invalid operation on types '%s' and '%s'", value_data[l.type].body, value_data[r.type].body)
 
 #define INVALID_UNARY_OPERATION \
-	error_push(vm->r, vm->code[vm->ip].loc, ERR_FATAL, "invalid operation on type '%s'", value_data[l.type].body)
+	error_push(vm->r, vm->code[vm->ip].loc, ERR_FATAL, "invalid operation on type '%s'", value_data[l.type].body); \
+	vm_panic(vm)
 
 #define NONEXISTANT_VALUE_ERROR(x)                                \
 	DOUT("internal error; found a value of type %d", x.type); \
@@ -188,8 +189,12 @@ and_values(struct vm *vm, struct value l, struct value r)
 bool
 is_value_true(struct vm *vm, struct value l)
 {
-	if (l.type != VAL_BOOL) INVALID_UNARY_OPERATION;
-	return l.boolean;
+	switch (l.type) {
+	case VAL_BOOL: return l.boolean;
+	case VAL_INT: return l.integer != 0;
+	default:
+		INVALID_UNARY_OPERATION;
+	}
 }
 
 struct value
@@ -270,6 +275,9 @@ print_value(FILE *f, struct value val)
 		}
 
 		fputc(']', f);
+		break;
+	case VAL_BOOL:
+		fprintf(f, val.boolean ? "true" : "false");
 		break;
 	case VAL_NIL:
 		fprintf(f, "nil");

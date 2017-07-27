@@ -185,6 +185,12 @@ execute_instr(struct vm *vm, struct instruction c)
 			vm->ip = c.arg;
 	} break;
 
+	case INSTR_TRUE_JUMP: {
+		struct value l = pop(vm);
+		if (is_value_true(vm, l))
+			vm->ip = c.arg;
+	} break;
+
 	case INSTR_JUMP: {
 		vm->ip = c.arg - 1;
 	} break;
