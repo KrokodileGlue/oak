@@ -19,19 +19,6 @@ class CLASS : GLASS {
 }
 */
 
-/*
-for var i = 1; i < 101; i++ {
-	if i % 3 == 0 and i % 5 == 0:
-		println "FizzBuzz"
-	else if i % 3 == 0:
-		println "Fizz"
-	else if i % 5 == 0:
-		println "Buzz"
-	else
-		println i
-}
-*/
-
 var f a b c
 
 while -f(a = -85 * 92 - 23 ? c++ = (25 * (22 + 38)) : --c = 63)[43]:

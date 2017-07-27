@@ -85,6 +85,46 @@ add_constant_value(struct compiler *c, struct value v)
 }
 
 static void
+push_integer(struct compiler *c, int64_t integer)
+{
+	struct value val;
+	val.type = VAL_INT;
+	val.integer = integer;
+	size_t addr = add_constant_value(c, val);
+	emit(c, (struct instruction){INSTR_PUSH_CONST, addr, c->stmt->tok->loc});
+}
+
+static void
+push_nil(struct compiler *c)
+{
+	struct value val;
+	val.type = VAL_NIL;
+	size_t addr = add_constant_value(c, val);
+	emit(c, (struct instruction){INSTR_PUSH_CONST, addr, c->stmt->tok->loc});
+}
+
+static void
+compile_lvalue(struct compiler *c, struct expression *e, struct symbol *scope)
+{
+	switch (e->type) {
+	case EXPR_VALUE:
+		switch (e->val->type) {
+		case TOK_IDENTIFIER: {
+			struct symbol *var = resolve(scope, e->val->value);
+			push_integer(c, var->address - 1);
+		} break;
+		default: {
+			error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
+		};
+		}
+		break;
+	default:
+		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
+		break;
+	}
+}
+
+static void
 compile_expression(struct compiler *c, struct expression *e, struct symbol *scope)
 {
 	switch (e->type) {
@@ -104,35 +144,31 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
-		case OP_BINARY: {
+		case OPTYPE_BINARY: {
 			compile_expression(c, e->a, scope);
 			compile_expression(c, e->b, scope);
 
-			// TODO: have enum values for the operators so this can just be a
-			// switch statement.
-
-			if (!strcmp(e->tok->value, "+")) {
-				emit(c, (struct instruction){INSTR_ADD, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "-")) {
-				emit(c, (struct instruction){INSTR_SUB, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "*")) {
-				emit(c, (struct instruction){INSTR_MUL, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "/")) {
-				emit(c, (struct instruction){INSTR_DIV, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "<")) {
-				emit(c, (struct instruction){INSTR_LESS, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "%")) {
-				emit(c, (struct instruction){INSTR_MOD, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "==")) {
-				emit(c, (struct instruction){INSTR_CMP, 0, e->tok->loc});
-			} else if (!strcmp(e->tok->value, "and")) {
-				emit(c, (struct instruction){INSTR_AND, 0, e->tok->loc});
-			} else {
-				DOUT("unimplemented compiler for binary operator %s", e->tok->value);
+#define o(x) \
+	emit(c, (struct instruction){INSTR_##x, 0, e->tok->loc});
+			switch (e->operator->name) {
+			case OP_ADD:   o(ADD) break;
+			case OP_SUB:   o(SUB) break;
+			case OP_MUL:   o(MUL) break;
+			case OP_DIV:   o(DIV) break;
+			case OP_LESS:  o(LESS) break;
+			case OP_MORE:  o(MORE) break;
+			case OP_MOD:   o(MOD) break;
+			case OP_EQEQ:  o(CMP) break;
+			case OP_AND:   o(AND) break;
+			case OP_NOTEQ: o(CMP) o(FLIP) break;
+			case OP_EXCLAMATION: o(FLIP) break;
+			default: {
+				DOUT("internal error; an operator of name %d was encountered", e->operator->name);
 				assert(false);
+			} break;
 			}
 		} break;
-		case OP_POSTFIX: {
+		case OPTYPE_POSTFIX: {
 			compile_expression(c, e->a, scope);
 
 			if (!strcmp(e->tok->value, "++")) {
@@ -148,6 +184,19 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			struct symbol *sym = resolve(scope, e->a->val->value);
 			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address, e->tok->loc});
 		} break;
+		case OPTYPE_PREFIX: {
+			compile_expression(c, e->a, scope);
+
+			switch (e->operator->name) {
+			case OP_LENGTH: o(LEN); break;
+			case OP_SAY: o(SAY); break;
+			case OP_TYPE: o(TYPE); break;
+			default: {
+				DOUT("internal error; an operator of name %d was encountered", e->operator->name);
+				assert(false);
+			} break;
+			}
+		} break;
 		default:
 			DOUT("unimplemented compiler for operator %s of type %d", e->operator->body, e->operator->type);
 			assert(false);
@@ -155,7 +204,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 		break;
 
 	case EXPR_LIST: {
-		for (size_t i = 0; i < e->num; i++) {
+		for (int i = e->num - 1 ? e->num - 1 : 0; i >= 0; i--) {
 			compile_expression(c, e->args[i], scope);
 
 //			uint64_t h = hash((char *)&i, sizeof i);
@@ -180,11 +229,22 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 		emit_instr(c, INSTR_SUBSCRIPT);
 	} break;
 
+	case EXPR_FN_CALL: {
+		for (size_t i = 0; i < e->num; i++) {
+			compile_expression(c, e->args[i], scope);
+		}
+
+		compile_lvalue(c, e->a, scope);
+		emit_instr(c, INSTR_CALL);
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type %d", e->type);
 		assert(false);
 	}
 }
+
+#undef o
 
 static int
 increase_context(struct compiler *c)
@@ -192,7 +252,7 @@ increase_context(struct compiler *c)
 	c->context = realloc(c->context, sizeof c->context[0] * (c->num_contexts + 1));
 	c->context[c->num_contexts++] = 0;
 
-	return ++c->context[c->num_contexts - 1];
+	return c->context[c->num_contexts - 1];
 }
 
 static int
@@ -204,7 +264,7 @@ get_num_variables_in_context(struct compiler *c)
 static void
 inc_num_variables_in_context(struct compiler *c)
 {
-	c->context[c->num_contexts - 1]++;
+	c->context[c->num_contexts - 1] += 1;
 }
 
 static void
@@ -251,8 +311,8 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_FOR_LOOP: {
 		compile_statement(c, s->for_loop.a);
-		size_t a = c->num_instr - 1;
 
+		size_t a = c->num_instr;
 		compile_expression(c, s->for_loop.b, sym);
 
 		emit_instr(c, INSTR_FALSE_JUMP);
@@ -270,26 +330,55 @@ compile_statement(struct compiler *c, struct statement *s)
 		compile_expression(c, s->if_stmt.cond, sym);
 
 		emit_instr(c, INSTR_FALSE_JUMP);
-		size_t a = c->num_instr - 1;
+		size_t a = c->num_instr;
 
 		compile_statement(c, s->if_stmt.then);
 
 		emit_instr(c, INSTR_JUMP);
-		size_t b = c->num_instr - 1;
+		size_t b = c->num_instr;
 
 		if (s->if_stmt.otherwise) {
-			c->code[a].arg = c->num_instr - 1;
+			c->code[a].arg = c->num_instr;
 			compile_statement(c, s->if_stmt.otherwise);
 		} else {
-			c->code[a].arg = c->num_instr - 1;
+			c->code[a].arg = c->num_instr;
 		}
 
-		c->code[b].arg = c->num_instr - 1;
+		c->code[b].arg = c->num_instr;
+	} break;
+
+	case STMT_FN_DEF: {
+		emit(c, (struct instruction){INSTR_JUMP, 0, s->tok->loc});
+		size_t a = c->num_instr - 1;
+		increase_context(c);
+
+		push_integer(c, sym->num_variables);
+		emit(c, (struct instruction){INSTR_FRAME, sym->num_variables, s->tok->loc});
+		sym->address = c->num_instr - 1;
+
+		for (size_t i = 0; i < s->fn_def.num; i++) {
+			struct symbol *arg_sym = resolve(sym, s->fn_def.args[i]->value);
+			arg_sym->address = get_num_variables_in_context(c);
+			inc_num_variables_in_context(c);
+
+			emit(c, (struct instruction){INSTR_POP_LOCAL, arg_sym->address, s->fn_def.args[i]->loc});
+		}
+
+		compile_statement(c, s->fn_def.body);
+
+		push_nil(c);
+		emit(c, (struct instruction){INSTR_RET, 0, s->tok->loc});
+		c->code[a].arg = c->num_instr;
 	} break;
 
 	case STMT_EXPR: {
 		compile_expression(c, s->expr, sym);
 		emit_instr(c, INSTR_POP);
+	} break;
+
+	case STMT_RET: {
+		compile_expression(c, s->expr, sym);
+		emit_instr(c, INSTR_RET);
 	} break;
 
 	default:
@@ -319,7 +408,11 @@ compile(struct module *m)
 	struct compiler *c = new_compiler();
 	c->sym = m->sym;
 	c->num_nodes = m->num_nodes;
+	c->stmt = m->tree[0];
 	increase_context(c);
+
+	push_integer(c, c->sym->num_variables);
+	emit(c, (struct instruction){INSTR_FRAME, 0, m->tree[0]->tok->loc});
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		c->stmt = m->tree[i];

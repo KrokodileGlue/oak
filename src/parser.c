@@ -80,7 +80,7 @@ get_infix_op(struct parser *ps)
 {
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strcmp(ops[i].body, ps->tok->value)
-		    && ops[i].type != OP_PREFIX) {
+		    && ops[i].type != OPTYPE_PREFIX) {
 			return ops + i;
 		}
 	}
@@ -93,7 +93,7 @@ get_prefix_op(struct parser *ps)
 {
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strcmp(ops[i].body, ps->tok->value)
-		    && ops[i].type == OP_PREFIX) {
+		    && ops[i].type == OPTYPE_PREFIX) {
 			return ops + i;
 		}
 	}
@@ -198,13 +198,13 @@ parse_expr(struct parser *ps, size_t prec)
 		e->a = left;
 
 		switch (op->type) {
-		case OP_TERNARY:
+		case OPTYPE_TERNARY:
 			NEXT;
 			e->b = parse_expr(ps, 1);
 			expect_symbol(ps, op->body2);
 			e->c = parse_expr(ps, 1);
 			break;
-		case OP_FN_CALL:
+		case OPTYPE_FN_CALL:
 			e->type = EXPR_FN_CALL;
 
 			NEXT;
@@ -219,18 +219,18 @@ parse_expr(struct parser *ps, size_t prec)
 
 			expect_symbol(ps, op->body2);
 			break;
-		case OP_BINARY:
+		case OPTYPE_BINARY:
 			NEXT;
 			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
 			break;
-		case OP_SUBCRIPT:
+		case OPTYPE_SUBCRIPT:
 			e->type = EXPR_SUBSCRIPT;
 
 			NEXT;
 			e->b = parse_expr(ps, 0);
 			expect_symbol(ps, op->body2);
 			break;
-		case OP_POSTFIX: NEXT; break;
+		case OPTYPE_POSTFIX: NEXT; break;
 		default:
 			DOUT("internal error; an invalid operator was returned.");
 			assert(false);

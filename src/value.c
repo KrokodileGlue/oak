@@ -139,6 +139,20 @@ is_less_than_value(struct vm *vm, struct value l, struct value r)
 }
 
 struct value
+is_more_than_value(struct vm *vm, struct value l, struct value r)
+{
+	struct value ret;
+	ret.type = VAL_NIL;
+
+	BINARY_MATH_OPERATION(>) else {
+		INVALID_BINARY_OPERATION;
+		vm_panic(vm);
+	}
+
+	return ret;
+}
+
+struct value
 cmp_values(struct vm *vm, struct value l, struct value r)
 {
 	struct value ret;
@@ -202,6 +216,37 @@ dec_value(struct vm *vm, struct value l)
 	return l;
 }
 
+struct value
+len_value(struct vm *vm, struct value l)
+{
+	struct value ans;
+	ans.type = VAL_INT;
+
+	switch (l.type) {
+	case VAL_LIST: ans.integer = l.list->len; break;
+	case VAL_STR:  ans.integer = l.str.len; break;
+	default: INVALID_UNARY_OPERATION; break;
+	}
+
+	return ans;
+}
+
+struct value
+flip_value(struct vm *vm, struct value l)
+{
+	struct value ans;
+	ans.type = VAL_BOOL;
+
+	switch (l.type) {
+	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
+	case VAL_FLOAT: ans.boolean = l.real    ? false : true; break;
+	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
+	default: INVALID_UNARY_OPERATION; break;
+	}
+
+	return ans;
+}
+
 void
 print_value(FILE *f, struct value val)
 {
@@ -218,9 +263,9 @@ print_value(FILE *f, struct value val)
 	case VAL_LIST:
 		fputc('[', f);
 
-		for (uint64_t i = val.list->len - 1; i + 1; i--) {
+		for (uint64_t i = 0; i < val.list->len; i++) {
 			print_value(f, val.list->val[i]);
-			if (i + 1 != 1)
+			if (i != val.list->len - 1)
 				fprintf(f, ", ");
 		}
 

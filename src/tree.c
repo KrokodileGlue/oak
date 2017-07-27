@@ -209,13 +209,13 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		struct operator *op = e->operator;
 
 		switch (op->type) {
-		case OP_PREFIX:
+		case OPTYPE_PREFIX:
 			fprintf(ap->f,"(prefix %s)", op->body);
 			ap->depth++;
 			print_expression(ap, e->a);
 			ap->depth--;
 			break;
-		case OP_BINARY:
+		case OPTYPE_BINARY:
 			fprintf(ap->f,"(binary %s)", op->body);
 
 			ap->depth++;
@@ -227,7 +227,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 			ap->depth--;
 			break;
-		case OP_TERNARY:
+		case OPTYPE_TERNARY:
 			fprintf(ap->f,"(ternary %s)", op->body);
 
 			ap->depth++;
@@ -240,13 +240,13 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 			ap->depth--;
 			break;
-		case OP_POSTFIX:
+		case OPTYPE_POSTFIX:
 			fprintf(ap->f,"(postfix %s)", op->body);
 			ap->depth++;
 			print_expression(ap, e->a);
 			ap->depth--;
 			break;
-		case OP_FN_CALL:
+		case OPTYPE_FN_CALL:
 			fprintf(ap->f,"(fn call)");
 			ap->depth++; split(ap);
 
@@ -263,7 +263,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			join(ap);
 			ap->depth -= 2;
 			break;
-		case OP_SUBCRIPT:
+		case OPTYPE_SUBCRIPT:
 			fprintf(ap->f,"(subscript)");
 			ap->depth++;
 			split(ap);
@@ -275,7 +275,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			print_expression(ap, e->a);
 			ap->depth -= 2;
 			break;
-		case OP_INVALID:
+		case OPTYPE_INVALID:
 			fprintf(stderr, "\noak: internal error; an invalid operator node was encountered.\n");
 			assert(false);
 			break;
@@ -433,7 +433,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		}
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "<body>");
+		indent(ap);  fprintf(ap->f, "<body> : %d", s->for_loop.body->scope);
 		ap->depth++; print_statement(ap, s->for_loop.body); ap->depth--;
 
 		ap->depth--;
@@ -458,7 +458,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth--;
 
 		join(ap);
-		indent(ap);  fprintf(ap->f, "<body>");
+		indent(ap);  fprintf(ap->f, "<body> : %d", s->fn_def.body->scope);
 
 		ap->depth++;
 		print_statement(ap, s->for_loop.body);
