@@ -54,6 +54,7 @@ struct value inc_value(struct vm *vm, struct value l);
 struct value dec_value(struct vm *vm, struct value l);
 struct value len_value(struct vm *vm, struct value l);
 struct value flip_value(struct vm *vm, struct value l);
+struct value neg_value(struct vm *vm, struct value l);
 
 struct value is_less_than_value(struct vm *vm, struct value l, struct value r);
 struct value is_more_than_value(struct vm *vm, struct value l, struct value r);

@@ -252,6 +252,22 @@ flip_value(struct vm *vm, struct value l)
 	return ans;
 }
 
+struct value
+neg_value(struct vm *vm, struct value l)
+{
+	struct value ans;
+	ans.type = l.type;
+
+	switch (l.type) {
+	case VAL_INT:   ans.integer = -l.integer; break;
+	case VAL_FLOAT: ans.real = -l.real;       break;
+	case VAL_BOOL:  ans.boolean = !l.boolean; break;
+	default: INVALID_UNARY_OPERATION;         break;
+	}
+
+	return ans;
+}
+
 void
 print_value(FILE *f, struct value val)
 {

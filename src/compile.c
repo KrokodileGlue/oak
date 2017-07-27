@@ -194,6 +194,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			// HACK: this won't work if the left-hand side is not an identifier.
 			struct symbol *sym = resolve(scope, e->a->val->value);
 			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address, e->tok->loc});
+			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address, e->tok->loc});
 		} break;
 		case OPTYPE_PREFIX: {
 			compile_expression(c, e->a, scope);
@@ -201,7 +202,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			switch (e->operator->name) {
 			case OP_LENGTH: o(LEN); break;
 			case OP_SAY: o(SAY); break;
+			case OP_SAYLN: o(SAY); emit_instr(c, INSTR_LINE); break;
 			case OP_TYPE: o(TYPE); break;
+			case OP_SUB: o(NEG); break;
 			default: {
 				DOUT("internal error; an operator of name %d was encountered", e->operator->name);
 				assert(false);
@@ -404,6 +407,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		compile_expression(c, s->expr, sym);
 		emit_instr(c, INSTR_RET);
 	} break;
+
+	case STMT_NULL: break;
 
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);

@@ -19,6 +19,7 @@ struct instruction {
 		INSTR_DIV,
 		INSTR_INC,
 		INSTR_DEC,
+		INSTR_NEG,
 
 		INSTR_LESS,
 		INSTR_MORE,

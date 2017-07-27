@@ -16,7 +16,9 @@ struct operator ops[] = {
 	{ "-",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SUB         },
 	{ "type","",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_TYPE        },
 	{ "say","",   14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SAY         },
+	{ "sayln","",   14, ASS_RIGHT, OPTYPE_PREFIX, OP_SAYLN       },
 	{ "length","",  14, ASS_RIGHT, OPTYPE_PREFIX, OP_LENGTH      },
+
 	{ "*",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MUL         },
 	{ "/",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_DIV         },
 	{ "%",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MOD         },
@@ -29,7 +31,7 @@ struct operator ops[] = {
 	{ "<=",  "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LEQ         },
 	{ ">=",  "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_GEQ         },
 	{ "==",  "",  9,  ASS_LEFT,  OPTYPE_BINARY  , OP_EQEQ        },
-	{ "!=",  "",  9,  ASS_LEFT,  OPTYPE_BINARY  , OP_NOTEQ        },
+	{ "!=",  "",  9,  ASS_LEFT,  OPTYPE_BINARY  , OP_NOTEQ       },
 
 	{ "&&",  "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_AND         },
 	{ "and", "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_AND         },

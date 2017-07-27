@@ -23,8 +23,8 @@ fn h (x) {
 	println "h was called with a ", type x
 }
 
-var a = 10
-while a: println a
+var a = -10
+while sayln a++;
 
 h("test"), h(2), h(true)
 

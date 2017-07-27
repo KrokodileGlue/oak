@@ -435,6 +435,11 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
+
+	case STMT_NULL: {
+		free(sym);
+		return;
+	}
 	default:
 		free(sym);
 		DOUT("unimplemented symbol visitor for statement of type %d (%s)",

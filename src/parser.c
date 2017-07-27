@@ -564,6 +564,10 @@ parse_stmt(struct parser *ps)
 
 	if (!strcmp(ps->tok->value, "{")) {
 		s = parse_block(ps);
+	} else if (!strcmp(ps->tok->value, ";")) {
+		s = new_statement(ps->tok);
+		s->type = STMT_NULL;
+		NEXT;
 	} else if (ps->tok->type == TOK_KEYWORD) {
 		switch (ps->tok->keyword->type) {
 		case KEYWORD_IF:     s = parse_if_stmt(ps);	break;

@@ -6,20 +6,21 @@
 #include "util.h"
 
 struct statementData statement_data[] = {
-	{ STMT_FN_DEF,		"function definition"	},
-	{ STMT_FOR_LOOP,	"for loop"		},
-	{ STMT_IF_STMT,		"if"			},
-	{ STMT_WHILE,		"while loop"		},
-	{ STMT_DO,		"do-while loop"		},
-	{ STMT_EXPR,		"expression"		},
-	{ STMT_VAR_DECL,	"variable declaration"	},
-	{ STMT_BLOCK,		"block"			},
-	{ STMT_PRINT,		"print"			},
-	{ STMT_PRINTLN,		"println"	       	},
-	{ STMT_RET,		"return"		},
-	{ STMT_CLASS,		"class"			},
-	{ STMT_IMPORT,		"import"       		},
-	{ STMT_INVALID,		"invalid statement"	}
+	{ STMT_FN_DEF   , "function definition"  },
+	{ STMT_FOR_LOOP , "for loop"             },
+	{ STMT_IF_STMT  , "if"                   },
+	{ STMT_WHILE    , "while loop"           },
+	{ STMT_DO       , "do-while loop"        },
+	{ STMT_EXPR     , "expression"           },
+	{ STMT_VAR_DECL , "variable declaration" },
+	{ STMT_BLOCK    , "block"                },
+	{ STMT_PRINT    , "print"                },
+	{ STMT_PRINTLN  , "println"              },
+	{ STMT_RET      , "return"               },
+	{ STMT_CLASS    , "class"                },
+	{ STMT_IMPORT   , "import"               },
+	{ STMT_NULL     , "null statement"       },
+	{ STMT_INVALID  , "invalid statement"    }
 };
 
 struct expression *
@@ -138,7 +139,7 @@ free_stmt(struct statement *s)
 		free(s->class.body);
 
 		break;
-	case STMT_IMPORT:
+	case STMT_IMPORT: case STMT_NULL:
 		break;
 	default:
 		fprintf(stderr, "unimplemented free for statement of type %d (%s)\n",

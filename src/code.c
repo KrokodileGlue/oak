@@ -13,6 +13,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_DIV,        "DIV       " },
 	{ INSTR_INC,        "INC       " },
 	{ INSTR_DEC,        "DEC       " },
+	{ INSTR_NEG,        "NEG       " },
 
 	{ INSTR_LESS,       "LESS      " },
 	{ INSTR_MORE,       "MORE      " },

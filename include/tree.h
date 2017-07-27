@@ -23,6 +23,7 @@ enum statement_type {
 	STMT_RET,
 	STMT_CLASS,
 	STMT_IMPORT,
+	STMT_NULL,
 	STMT_INVALID
 } type;
 

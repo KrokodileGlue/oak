@@ -93,6 +93,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, l);
 	} break;
 
+	case INSTR_NEG: {
+		struct value l = pop(vm);
+		l = neg_value(vm, l);
+		push(vm, l);
+	} break;
+
 	case INSTR_DEC: {
 		struct value l = pop(vm);
 		l = dec_value(vm, l);
