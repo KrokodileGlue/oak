@@ -30,10 +30,24 @@ push(struct vm *vm, struct value val)
 	vm->stack[vm->sp++] = val;
 }
 
+static void
+push_frame(struct vm *vm, size_t num_variables)
+{
+	/* HACK: more unnecessary reallocing. */
+	vm->frames = realloc(vm->frames, sizeof vm->frames[0] * (vm->fp + 1));
+	vm->frames[vm->fp++] = new_frame(num_variables);
+}
+
+static void
+pop_frame(struct vm *vm)
+{
+	vm->fp--;
+}
+
 void
 execute_instr(struct vm *vm, struct instruction c)
 {
-//	fprintf(stderr, "%zu: %s\n", vm->ip, instruction_data[c.type].body);
+//	fprintf(stderr, "%3zu: %s (%zu)\n", vm->ip, instruction_data[c.type].body, c.arg);
 
 	switch (c.type) {
 	case INSTR_PUSH_CONST: {
@@ -92,6 +106,33 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, ans);
 	} break;
 
+	case INSTR_MORE: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = is_more_than_value(vm, l, r);
+		push(vm, ans);
+	} break;
+
+	case INSTR_LEN: {
+		struct value l = pop(vm);
+		push(vm, len_value(vm, l));
+	} break;
+
+	case INSTR_SAY: {
+		struct value l = pop(vm);
+		print_value(stdout, l);
+		push(vm, l);
+	} break;
+
+	case INSTR_TYPE: {
+		struct value l = pop(vm);
+		struct value ret;
+		ret.type = VAL_STR;
+		ret.str.text = strclone(value_data[l.type].body);
+		ret.str.len = strlen(ret.str.text);
+		push(vm, ret);
+	} break;
+
 	case INSTR_MOD: {
 		struct value r = pop(vm);
 		struct value l = pop(vm);
@@ -106,6 +147,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, ans);
 	} break;
 
+	case INSTR_FLIP: {
+		struct value l = pop(vm);
+		push(vm, flip_value(vm, l));
+	} break;
+
 	case INSTR_AND: {
 		struct value r = pop(vm);
 		struct value l = pop(vm);
@@ -114,17 +160,11 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_PUSH_LOCAL: {
-		push(vm, vm->frames[vm->fp].vars[c.arg]);
+		push(vm, vm->frames[vm->fp - 1]->vars[c.arg]);
 	} break;
 
 	case INSTR_POP_LOCAL: {
-		// HACK: very hacky.
-		if (vm->frames[vm->fp].num < c.arg) {
-			vm->frames[vm->fp].num  = c.arg;
-		}
-
-		vm->frames[vm->fp].vars = realloc(vm->frames[vm->fp].vars, sizeof vm->frames->vars[0] * (vm->frames[vm->fp].num + 1));
-		vm->frames[vm->fp].vars[c.arg] = pop(vm);
+		vm->frames[vm->fp - 1]->vars[c.arg] = pop(vm);
 	} break;
 
 	case INSTR_POP: {
@@ -136,7 +176,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_COND_JUMP: {
 		struct value l = pop(vm);
 		if (is_value_true(vm, l))
-			vm->ip = c.arg;
+			vm->ip = c.arg - 1;
 	} break;
 
 	case INSTR_FALSE_JUMP: {
@@ -146,7 +186,32 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_JUMP: {
-		vm->ip = c.arg;
+		vm->ip = c.arg - 1;
+	} break;
+
+	case INSTR_CALL: {
+		struct value addr = pop(vm);
+		assert(addr.type == VAL_INT);
+
+		vm->frames[vm->fp - 1]->address = vm->ip;
+		vm->ip = addr.integer - 1;
+	} break;
+
+	case INSTR_RET: {
+		pop_frame(vm);
+		struct value ret = pop(vm);
+
+		vm->ip = vm->frames[vm->fp - 1]->address;
+		push(vm, ret);
+	} break;
+
+	case INSTR_FRAME: {
+		struct value val = pop(vm);
+		push_frame(vm, val.integer);
+	} break;
+
+	case INSTR_POP_FRAME: {
+		pop_frame(vm);
 	} break;
 
 	case INSTR_LIST: {
@@ -194,9 +259,6 @@ execute(struct module *m)
 	struct instruction *c = m->code;
 	vm->constant_table = m->constant_table;
 	vm->code = m->code;
-
-	vm->frames = oak_malloc(sizeof vm->frames[0]);
-	memset(vm->frames, 0, sizeof vm->frames[0]);
 
 	while (vm->code[vm->ip].type != INSTR_END) {
 		execute_instr(vm, c[vm->ip]);

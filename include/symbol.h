@@ -32,10 +32,15 @@ struct symbol {
 };
 
 struct symbolizer {
-	struct symbol      *symbol;
+	struct symbol   *symbol;
 	struct reporter *r;
-	struct oak         *k;
-	int scope;
+	struct oak      *k;
+
+	/* this is never decremented, it only serves to produce unique id numbers for blocks */
+	int              scope;
+
+	int             *scope_stack;
+	int              scope_pointer; /* index of the top of the scope stack */
 };
 
 struct symbolizer *new_symbolizer(struct oak *k);

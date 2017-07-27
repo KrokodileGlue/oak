@@ -9,7 +9,6 @@
 struct instruction {
 	enum instruction_type {
 		INSTR_PUSH_CONST,
-		INSTR_POP_CONST,
 		INSTR_PUSH_LOCAL,
 		INSTR_POP_LOCAL,
 		INSTR_POP,
@@ -22,14 +21,24 @@ struct instruction {
 		INSTR_DEC,
 
 		INSTR_LESS,
+		INSTR_MORE,
 		INSTR_MOD,
 
 		INSTR_CMP,
+		INSTR_FLIP,
 		INSTR_AND,
+		INSTR_LEN,
+		INSTR_SAY,
+		INSTR_TYPE,
 
 		INSTR_COND_JUMP,
 		INSTR_FALSE_JUMP,
 		INSTR_JUMP,
+		INSTR_FRAME,
+		INSTR_POP_FRAME,
+
+		INSTR_CALL,
+		INSTR_RET,
 
 		INSTR_PRINT,
 		INSTR_LINE,

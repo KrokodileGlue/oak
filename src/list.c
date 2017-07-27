@@ -45,7 +45,7 @@ list_insert(struct list *l, void *key, size_t len, struct value val)
 struct value *
 list_lookup(struct list *l, void *key, size_t len)
 {
-	uint64_t h = hash(key, len);
-	if (h == (uint64_t)-1) return NULL;
-	return &l->val[list_index(l, key, len)];
+	uint64_t i = list_index(l, key, len);
+	if (i == (uint64_t)-1) return NULL;
+	return &l->val[i];
 }

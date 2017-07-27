@@ -3,7 +3,6 @@
 
 struct instructionData instruction_data[] = {
 	{ INSTR_PUSH_CONST, "PUSH_CONST" },
-	{ INSTR_POP_CONST,  "POP_CONST " },
 	{ INSTR_PUSH_LOCAL, "PUSH_LOCAL" },
 	{ INSTR_POP_LOCAL,  "POP_LOCAL " },
 	{ INSTR_POP,        "POP       " },
@@ -16,17 +15,27 @@ struct instructionData instruction_data[] = {
 	{ INSTR_DEC,        "DEC       " },
 
 	{ INSTR_LESS,       "LESS      " },
+	{ INSTR_MORE,       "MORE      " },
 	{ INSTR_MOD,        "MOD       " },
 
 	{ INSTR_CMP,        "CMP       "},
+	{ INSTR_FLIP,       "FLIP      "},
 	{ INSTR_AND,        "AND       "},
+	{ INSTR_LEN,        "LEN       "},
+	{ INSTR_SAY,        "SAY       "},
+	{ INSTR_TYPE,       "TYPE      "},
 
 	{ INSTR_COND_JUMP,  "COND_JUMP "},
 	{ INSTR_FALSE_JUMP, "FALSE_JUMP"},
 	{ INSTR_JUMP,       "JUMP      "},
+	{ INSTR_FRAME,      "FRAME     "},
+	{ INSTR_POP_FRAME,  "POP_FRAME "},
+
+	{ INSTR_CALL,       "CALL      " },
+	{ INSTR_RET,        "RET       " },
 
 	{ INSTR_PRINT,      "PRINT     " },
-	{ INSTR_LINE,       "LINE " },
+	{ INSTR_LINE,       "LINE      " },
 
 	{ INSTR_LIST,       "LIST      " },
 	{ INSTR_SUBSCRIPT,  "SUBSCRIPT " },

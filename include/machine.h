@@ -7,6 +7,7 @@
 struct frame {
 	struct value *vars;
 	size_t num;
+	size_t address;
 };
 
 struct vm {
@@ -16,12 +17,13 @@ struct vm {
 	struct value *stack;
 	size_t sp;
 
-	struct frame *frames;
+	struct frame **frames;
 	size_t fp;
 
 	struct constant_table constant_table;
-
 	struct reporter *r;
 };
+
+struct frame *new_frame();
 
 #endif

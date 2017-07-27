@@ -30,8 +30,8 @@ free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
 		/* if a module symbol appears in another module
-		 * it means that it was imported and it's symbol
-		 * list will be free'd elsewhere. */
+		 * it means that it was imported and its symbol
+		 * table will be free()'d elsewhere. */
 		if (sym->children[i]->type != SYM_MODULE)
 			free_symbol(sym->children[i]);
 	}
@@ -66,8 +66,22 @@ new_symbol(struct token *tok)
 	memset(sym, 0, sizeof *sym);
 	sym->type = SYM_INVALID;
 	sym->tok = tok;
+	sym->scope = -1;
 
 	return sym;
+}
+
+static void
+push_scope(struct symbolizer *si, int scope)
+{
+	si->scope_stack = realloc(si->scope_stack, sizeof si->scope_stack[0] * (si->scope_pointer + 1));
+	si->scope_stack[si->scope_pointer++] = scope;
+}
+
+static void
+pop_scope(struct symbolizer *si)
+{
+	si->scope_pointer--;
 }
 
 static void
@@ -79,7 +93,7 @@ inc_variable_count(struct symbol *sym)
 	}
 }
 
-// HACK: slow.
+// TODO: make this faster.
 struct symbol *
 find_from_scope(struct symbol *sym, int scope)
 {
@@ -160,8 +174,8 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
-	sym->scope = si->scope;
-	stmt->scope = sym->scope;
+	sym->scope  = si->scope_stack[si->scope_pointer - 1];
+	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
 	add(si, sym);
 
@@ -192,15 +206,15 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	switch (e->type) {
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {
-		case OP_PREFIX: case OP_POSTFIX:
+		case OPTYPE_PREFIX: case OPTYPE_POSTFIX:
 			resolve_expr(si, e->a);
 			break;
-		case OP_BINARY:
+		case OPTYPE_BINARY:
 			resolve_expr(si, e->a);
 			resolve_expr(si, e->b);
 
 			break;
-		case OP_TERNARY:
+		case OPTYPE_TERNARY:
 			resolve_expr(si, e->a);
 			resolve_expr(si, e->b);
 			resolve_expr(si, e->c);
@@ -249,9 +263,9 @@ static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
 	struct symbol *sym = new_symbol(stmt->tok);
-	sym->scope = si->scope;
+	sym->scope  = si->scope_stack[si->scope_pointer - 1];
+	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	sym->parent = si->symbol;
-	stmt->scope = sym->scope;
 
 	switch (stmt->type) {
 	case STMT_CLASS:
@@ -266,7 +280,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 			if (parent) {
 				if (parent->type != SYM_CLASS) {
-					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inherilist symbol");
+					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inheritable symbol");
 					error_push(si->r, parent->tok->loc, ERR_NOTE, "previous declaration here");
 				}
 
@@ -283,8 +297,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		break;
 	case STMT_FN_DEF:
 		si->scope++;
+		stmt->scope = si->scope;
+		push_scope(si, si->scope);
+
 		sym->name = stmt->fn_def.name;
 		sym->type = SYM_FN;
+		sym->scope = si->scope;
 
 		push(si, sym);
 
@@ -296,8 +314,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			add(si, s);
 		}
 
-		symbolize(si, stmt->fn_def.body);
+		si->scope++; block(si, stmt->fn_def.body);
+
 		pop(si);
+		pop_scope(si);
 
 		break;
 	case STMT_VAR_DECL: {
@@ -325,10 +345,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 	case STMT_BLOCK: {
+		push_scope(si, si->scope);
+
 		si->scope++;
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
-		sym->scope = si->scope;
+		sym->scope = si->scope_stack[si->scope_pointer - 1];
 
 		push(si, sym);
 
@@ -338,10 +360,13 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		pop(si);
 	} break;
 	case STMT_IF_STMT: {
+		push_scope(si, si->scope);
+
 		resolve_expr(si, stmt->if_stmt.cond);
 		si->scope++; block(si, stmt->if_stmt.then);
 		si->scope++; block(si, stmt->if_stmt.otherwise);
-		si->scope -= 2;
+
+		pop_scope(si);
 
 		free(sym);
 		return;
@@ -382,15 +407,18 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	}
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
 		si->scope++;
-		push_block(si, stmt);
+		push_scope(si, si->scope);
 
+		push_block(si, stmt);
 		symbolize(si, stmt->for_loop.a);
 
 		resolve_expr(si, stmt->for_loop.b);
 		if (stmt->for_loop.c) resolve_expr(si, stmt->for_loop.c);
 
 		symbolize(si, stmt->for_loop.body);
+
 		pop(si);
+		pop_scope(si);
 
 		free(sym);
 		return;
@@ -430,6 +458,7 @@ symbolize_module(struct module *m, struct oak *k)
 	sym->id = hash(m->name, strlen(m->name));
 	sym->module = m;
 	sym->scope = 0;
+	push_scope(si, 0);
 
 	si->scope = sym->scope;
 	si->symbol = sym;
