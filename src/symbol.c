@@ -192,7 +192,8 @@ block(struct symbolizer *si, struct statement *stmt)
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
-	sym->scope = si->scope;
+	sym->scope = si->scope_stack[si->scope_pointer - 1];
+	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	add(si, sym);
 
 	push(si, sym);
@@ -296,13 +297,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		break;
 	case STMT_FN_DEF:
-		si->scope++;
-		stmt->scope = si->scope;
-		push_scope(si, si->scope);
+		push_scope(si, ++si->scope);
+		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
 		sym->name = stmt->fn_def.name;
 		sym->type = SYM_FN;
-		sym->scope = si->scope;
+		sym->scope = si->scope_stack[si->scope_pointer - 1];
 
 		push(si, sym);
 
@@ -314,7 +314,9 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			add(si, s);
 		}
 
-		si->scope++; block(si, stmt->fn_def.body);
+		push_scope(si, ++si->scope);
+		block(si, stmt->fn_def.body);
+		pop_scope(si);
 
 		pop(si);
 		pop_scope(si);
@@ -345,9 +347,11 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 	case STMT_BLOCK: {
+		si->scope++;
 		push_scope(si, si->scope);
 
 		si->scope++;
+		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
 		sym->scope = si->scope_stack[si->scope_pointer - 1];
@@ -359,18 +363,19 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		pop(si);
 	} break;
+
 	case STMT_IF_STMT: {
-		push_scope(si, si->scope);
+		push_scope(si, si->scope_stack[si->scope_pointer - 1]);
 
 		resolve_expr(si, stmt->if_stmt.cond);
 		si->scope++; block(si, stmt->if_stmt.then);
 		si->scope++; block(si, stmt->if_stmt.otherwise);
-
 		pop_scope(si);
 
 		free(sym);
 		return;
 	} break;
+
 	case STMT_EXPR:
 		resolve_expr(si, stmt->expr);
 		free(sym);
@@ -396,25 +401,28 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
-	case STMT_WHILE: {
-		resolve_expr(si, stmt->while_loop.cond);
 
+	case STMT_WHILE: {
+		push_scope(si, si->scope);
+
+		resolve_expr(si, stmt->while_loop.cond);
 		si->scope++;
 		block(si, stmt->while_loop.body);
+		pop_scope(si);
 
 		free(sym);
 		return;
 	}
+
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
 		si->scope++;
 		push_scope(si, si->scope);
-
 		push_block(si, stmt);
+		stmt->scope = si->scope_stack[si->scope_pointer - 1];
+
 		symbolize(si, stmt->for_loop.a);
-
-		resolve_expr(si, stmt->for_loop.b);
+		if (stmt->for_loop.b) resolve_expr(si, stmt->for_loop.b);
 		if (stmt->for_loop.c) resolve_expr(si, stmt->for_loop.c);
-
 		symbolize(si, stmt->for_loop.body);
 
 		pop(si);
@@ -423,6 +431,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
+
 	case STMT_DO: {
 		block(si, stmt->do_while_loop.body);
 		resolve_expr(si, stmt->do_while_loop.cond);

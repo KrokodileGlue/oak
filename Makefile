@@ -3,7 +3,7 @@ src += $(wildcard *.c)
 obj = $(src:.c=.o)
 
 CFLAGS = -std=c11 -Wall -Wextra -pedantic -Wunused -I include/
-LDFLAGS += -static -lm
+LDFLAGS += -lm
 
 debug: CFLAGS += -g
 release: CFLAGS += -O2

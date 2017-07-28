@@ -301,6 +301,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit_instr(c, INSTR_PRINT);
 		}
 	} break;
+
 	case STMT_PRINTLN: {
 		for (size_t i = 0; i < s->print.num; i++) {
 			compile_expression(c, s->print.args[i], sym);
@@ -360,34 +361,32 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->code[b].arg = c->num_instr - 1;
 	} break;
 
+	/* note to self: be super duper careful about editing previous instructions. */
 	case STMT_IF_STMT: {
 		compile_expression(c, s->if_stmt.cond, sym);
 
-		emit_instr(c, INSTR_FALSE_JUMP);
 		size_t a = c->num_instr;
+		emit_instr(c, INSTR_FALSE_JUMP);
 
 		compile_statement(c, s->if_stmt.then);
 
-		emit_instr(c, INSTR_JUMP);
 		size_t b = c->num_instr;
+		emit_instr(c, INSTR_JUMP);
 
-		if (s->if_stmt.otherwise) {
-			c->code[a].arg = c->num_instr;
+		c->code[a].arg = c->num_instr - 1;
+		if (s->if_stmt.otherwise)
 			compile_statement(c, s->if_stmt.otherwise);
-		} else {
-			c->code[a].arg = c->num_instr;
-		}
 
 		c->code[b].arg = c->num_instr;
 	} break;
 
 	case STMT_FN_DEF: {
+		size_t a = c->num_instr;
 		emit(c, (struct instruction){INSTR_JUMP, 0, s->tok->loc});
-		size_t a = c->num_instr - 1;
 		increase_context(c);
 
+		sym->address = c->num_instr;
 		push_integer(c, sym->num_variables);
-		sym->address = c->num_instr - 1;
 		emit(c, (struct instruction){INSTR_FRAME, sym->num_variables, s->tok->loc});
 
 		for (size_t i = 0; i < s->fn_def.num; i++) {
