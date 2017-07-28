@@ -91,9 +91,35 @@ execute_instr(struct vm *vm, struct instruction c)
 		struct value r = pop(vm);
 		struct value l = pop(vm);
 		assert(l.type == VAL_INT);
+		struct value subscript = pop(vm);
+		struct value *lvalue = &vm->frames[vm->fp - 1]->vars[l.integer];
 
-		vm->frames[vm->fp - 1]->vars[l.integer] = r;
-		push(vm, vm->frames[vm->fp - 1]->vars[l.integer]);
+		struct value *val = lvalue;
+		for (int64_t i = 0; i < subscript.integer; i++) {
+			struct value *old_val = val;
+			struct value key = pop(vm);
+			if (val->type != VAL_LIST) {
+				val->type = VAL_LIST;
+				val->list = new_list();
+			}
+			val = list_lookup(val->list, &key.integer, sizeof key.integer);
+
+			if (!val) {
+				struct value list;
+				list.type = VAL_LIST;
+				list.list = new_list();
+				list_insert(old_val->list, &key.integer, sizeof key.integer, list);
+
+				val = list_lookup(old_val->list, &key.integer, sizeof key.integer);
+			}
+		}
+
+		if (subscript.integer == 0) {
+			vm->frames[vm->fp - 1]->vars[l.integer] = r;
+			push(vm, r);
+		} else *val = r;
+
+		push(vm, r);
 	} break;
 
 	case INSTR_INC: {
@@ -171,6 +197,13 @@ execute_instr(struct vm *vm, struct instruction c)
 		struct value r = pop(vm);
 		struct value l = pop(vm);
 		struct value ans = and_values(vm, l, r);
+		push(vm, ans);
+	} break;
+
+	case INSTR_OR: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		struct value ans = or_values(vm, l, r);
 		push(vm, ans);
 	} break;
 

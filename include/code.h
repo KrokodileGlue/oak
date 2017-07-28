@@ -30,6 +30,7 @@ struct instruction {
 		INSTR_CMP,
 		INSTR_FLIP,
 		INSTR_AND,
+		INSTR_OR,
 		INSTR_LEN,
 		INSTR_SAY,
 		INSTR_TYPE,

@@ -49,6 +49,7 @@ struct value mod_values(struct vm *vm, struct value l, struct value r);
 
 struct value cmp_values(struct vm *vm, struct value l, struct value r);
 struct value and_values(struct vm *vm, struct value l, struct value r);
+struct value or_values(struct vm *vm, struct value l, struct value r);
 
 struct value inc_value(struct vm *vm, struct value l);
 struct value dec_value(struct vm *vm, struct value l);

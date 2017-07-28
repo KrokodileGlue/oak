@@ -23,6 +23,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_CMP,        "CMP       "},
 	{ INSTR_FLIP,       "FLIP      "},
 	{ INSTR_AND,        "AND       "},
+	{ INSTR_OR,         "OR        "},
 	{ INSTR_LEN,        "LEN       "},
 	{ INSTR_SAY,        "SAY       "},
 	{ INSTR_TYPE,       "TYPE      "},

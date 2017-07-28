@@ -107,21 +107,30 @@ push_nil(struct compiler *c)
 	emit(c, (struct instruction){INSTR_PUSH_CONST, addr, c->stmt->tok->loc});
 }
 
+static void compile_expression(struct compiler *c, struct expression *e, struct symbol *scope);
+
 static void
-compile_lvalue(struct compiler *c, struct expression *e, struct symbol *scope)
+compile_lvalue(struct compiler *c, struct expression *e, struct symbol *scope, int subscript)
 {
 	switch (e->type) {
 	case EXPR_VALUE:
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(scope, e->val->value);
+			push_integer(c, subscript);
 			push_integer(c, var->address);
 		} break;
-		default: {
+		default:
 			error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
-		};
+			break;
 		}
 		break;
+
+	case EXPR_SUBSCRIPT:
+		compile_expression(c, e->b, scope);
+		compile_lvalue(c, e->a, scope, subscript + 1);
+		break;
+
 	default:
 		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
 		break;
@@ -155,7 +164,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 				compile_expression(c, e->b, scope);
 				break;
 			} else if (e->operator->name == OP_EQ) {
-				compile_lvalue(c, e->a, scope);
+				compile_lvalue(c, e->a, scope, 0);
 				compile_expression(c, e->b, scope);
 				emit_instr(c, INSTR_ASSIGN);
 				break;
@@ -174,8 +183,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			case OP_LESS:  o(LESS) break;
 			case OP_MORE:  o(MORE) break;
 			case OP_MOD:   o(MOD) break;
+			case OP_MODMOD:o(MOD) push_integer(c, 0); o(CMP) break;
 			case OP_EQEQ:  o(CMP) break;
 			case OP_AND:   o(AND) break;
+			case OP_OR:    o(OR) break;
+			case OP_NOR:   o(OR) o(FLIP) break;
 			case OP_NOTEQ: o(CMP) o(FLIP) break;
 			case OP_EXCLAMATION: o(FLIP) break;
 			default: {
@@ -255,7 +267,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			compile_expression(c, e->args[i], scope);
 		}
 
-		compile_lvalue(c, e->a, scope);
+		compile_lvalue(c, e->a, scope, 0);
 		emit_instr(c, INSTR_CALL);
 	} break;
 

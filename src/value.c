@@ -186,6 +186,18 @@ and_values(struct vm *vm, struct value l, struct value r)
 	return ret;
 }
 
+struct value
+or_values(struct vm *vm, struct value l, struct value r)
+{
+	struct value ret;
+	ret.type = VAL_BOOL;
+
+	if (l.type != VAL_BOOL || r.type != VAL_BOOL) INVALID_BINARY_OPERATION;
+	ret.boolean = l.boolean || r.boolean;
+
+	return ret;
+}
+
 bool
 is_value_true(struct vm *vm, struct value l)
 {
