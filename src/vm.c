@@ -87,6 +87,15 @@ execute_instr(struct vm *vm, struct instruction c)
 		push(vm, ans);
 	} break;
 
+	case INSTR_ASSIGN: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		assert(l.type == VAL_INT);
+
+		vm->frames[vm->fp - 1]->vars[l.integer] = r;
+		push(vm, vm->frames[vm->fp - 1]->vars[l.integer]);
+	} break;
+
 	case INSTR_INC: {
 		struct value l = pop(vm);
 		l = inc_value(vm, l);

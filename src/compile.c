@@ -115,7 +115,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *scope)
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(scope, e->val->value);
-			push_integer(c, var->address - 1);
+			push_integer(c, var->address);
 		} break;
 		default: {
 			error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
@@ -154,6 +154,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 				emit_instr(c, INSTR_POP);
 				compile_expression(c, e->b, scope);
 				break;
+			} else if (e->operator->name == OP_EQ) {
+				compile_lvalue(c, e->a, scope);
+				compile_expression(c, e->b, scope);
+				emit_instr(c, INSTR_ASSIGN);
+				break;
 			}
 
 			compile_expression(c, e->a, scope);
@@ -182,19 +187,21 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 		case OPTYPE_POSTFIX: {
 			compile_expression(c, e->a, scope);
 
+			// HACK: this won't work if the left-hand side is not an identifier.
+			struct symbol *sym = resolve(scope, e->a->val->value);
+
 			if (!strcmp(e->tok->value, "++")) {
+				compile_expression(c, e->a, scope);
 				emit(c, (struct instruction){INSTR_INC, 0, e->tok->loc});
+				emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address, e->tok->loc});
 			} else if (!strcmp(e->tok->value, "--")) {
+				compile_expression(c, e->a, scope);
 				emit(c, (struct instruction){INSTR_DEC, 0, e->tok->loc});
+				emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address, e->tok->loc});
 			} else {
 				DOUT("unimplemented compiler for postfix operator %s", e->tok->value);
 				assert(false);
 			}
-
-			// HACK: this won't work if the left-hand side is not an identifier.
-			struct symbol *sym = resolve(scope, e->a->val->value);
-			emit(c, (struct instruction){INSTR_POP_LOCAL, sym->address, e->tok->loc});
-			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address, e->tok->loc});
 		} break;
 		case OPTYPE_PREFIX: {
 			compile_expression(c, e->a, scope);
@@ -380,8 +387,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		increase_context(c);
 
 		push_integer(c, sym->num_variables);
-		emit(c, (struct instruction){INSTR_FRAME, sym->num_variables, s->tok->loc});
 		sym->address = c->num_instr - 1;
+		emit(c, (struct instruction){INSTR_FRAME, sym->num_variables, s->tok->loc});
 
 		for (size_t i = 0; i < s->fn_def.num; i++) {
 			struct symbol *arg_sym = resolve(sym, s->fn_def.args[i]->value);

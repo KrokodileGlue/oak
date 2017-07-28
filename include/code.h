@@ -17,9 +17,11 @@ struct instruction {
 		INSTR_SUB,
 		INSTR_MUL,
 		INSTR_DIV,
+
 		INSTR_INC,
 		INSTR_DEC,
 		INSTR_NEG,
+		INSTR_ASSIGN,
 
 		INSTR_LESS,
 		INSTR_MORE,

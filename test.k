@@ -14,19 +14,17 @@ for var i = 1; i < 101; i++ {
 }
 */
 
-# var a = "test"
-# println "a is a ", type a
-
 fn f (x) = x * 2
 fn g (x y) = x * y
 fn h (x) {
 	println "h was called with a ", type x
 }
-
-var a = -10
-while sayln a++;
-
 h("test"), h(2), h(true)
 
+/*
 for var i = 0; i < 10; i++:
 	println i, " times ", f(i), " = ", g(i, f(i))
+*/
+
+var a = 10
+while a: println a --
