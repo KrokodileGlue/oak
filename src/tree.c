@@ -534,6 +534,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 	case STMT_INVALID:
 		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
+	case STMT_NULL: break;
 	default:
 		DOUT("unimplemented printer for statement of type %d (%s)",
 		     s->type, statement_data[s->type].body);

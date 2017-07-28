@@ -148,7 +148,10 @@ static char *
 parse_identifier(struct lexer *ls, char *a)
 {
 	char *b = a;
-	while (is_legal_in_identifier(*b) && *b) b++;
+	while (is_legal_in_identifier(*b) && *b) {
+		if (*b == '-' && b[1] == '-') break;
+		b++;
+	}
 
 	ls->loc.len = b - a;
 	lexer_push_token(ls, TOK_IDENTIFIER, a, b);
