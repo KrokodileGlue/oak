@@ -69,7 +69,7 @@ expect_terminator(struct parser *ps)
 		}
 	}
 
-	if (ps->tok->type != TOK_END) NEXT;
+	if (!strcmp(ps->tok->value, ";")) NEXT;
 }
 
 static struct statement *parse_stmt(struct parser *ps);
@@ -400,6 +400,11 @@ parse_for_loop(struct parser *ps)
 		NEXT;
 		s->for_loop.b = parse_expr(ps, 0);
 
+		if (!strcmp(ps->tok->value, ";")) {
+			NEXT;
+			s->for_loop.c = parse_expr(ps, 0);
+		}
+
 		if (!strcmp(ps->tok->value, "{")) {
 			s->for_loop.body = parse_stmt(ps);
 		} else {
@@ -407,13 +412,6 @@ parse_for_loop(struct parser *ps)
 			s->for_loop.body = parse_stmt(ps);
 		}
 	} else {
-		expect_symbol(ps, ";");
-
-		s->for_loop.b = parse_expr(ps, 0);
-		expect_symbol(ps, ";");
-
-		s->for_loop.c = parse_expr(ps, 0);
-
 		if (!strcmp(ps->tok->value, "{")) {
 			s->for_loop.body = parse_stmt(ps);
 		} else {

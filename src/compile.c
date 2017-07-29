@@ -369,7 +369,27 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.body->tok->loc});
 		} else if (s->for_loop.a && s->for_loop.b) {
 			compile_statement(c, s->for_loop.a);
+			size_t iterator = get_num_variables_in_context(c);
 			inc_num_variables_in_context(c);
+
+			compile_expression(c, s->for_loop.b, sym);
+			emit(c, (struct instruction){INSTR_MKITER, 0, s->for_loop.b->tok->loc});
+			emit(c, (struct instruction){INSTR_POP_LOCAL, iterator, s->for_loop.b->tok->loc});
+
+			size_t a = c->num_instr;
+			emit(c, (struct instruction){INSTR_ITER, iterator, s->for_loop.b->tok->loc});
+			struct symbol *var_sym = resolve(sym, s->for_loop.a->var_decl.names[0]->value);
+			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address, s->for_loop.b->tok->loc});
+
+			emit(c, (struct instruction){INSTR_PUSH_LOCAL, var_sym->address, s->for_loop.b->tok->loc});
+			push_nil(c);
+			emit(c, (struct instruction){INSTR_CMP, 0, s->for_loop.b->tok->loc});
+			size_t b = c->num_instr;
+			emit(c, (struct instruction){INSTR_TRUE_JUMP, 0, s->for_loop.b->tok->loc});
+
+			compile_statement(c, s->for_loop.body);
+			emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.b->tok->loc});
+			c->code[b].arg = c->num_instr - 1;
 		}
 	} break;
 

@@ -16,6 +16,8 @@ struct instructionData instruction_data[] = {
 	{ INSTR_NEG,        "NEG       " },
 	{ INSTR_ASSIGN,     "ASSIGN    " },
 	{ INSTR_RANGE,      "RANGE     " },
+	{ INSTR_MKITER,     "MKITER    " },
+	{ INSTR_ITER,       "ITER      " },
 
 	{ INSTR_LESS,       "LESS      " },
 	{ INSTR_LEQ,        "LEQ       " },

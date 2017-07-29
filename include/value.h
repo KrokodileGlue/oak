@@ -17,7 +17,8 @@ struct value {
 		VAL_FLOAT,
 		VAL_STR,
 		VAL_BOOL,
-		VAL_LIST
+		VAL_LIST,
+		VAL_ITER
 	} type;
 
 	union {
@@ -31,6 +32,11 @@ struct value {
 		} str;
 
 		struct list *list;
+
+		struct {
+			size_t i;
+			struct list *list;
+		} iter;
 	};
 };
 

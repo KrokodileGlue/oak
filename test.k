@@ -1,8 +1,7 @@
-for var i in 1 ~> 10: println i
+// for var i; 1 ~> 10: println i
 
-/*
 fn fizzbuzz () {
-	for var i = 1; i < 101; i++ {
+	for var i; 1 ~> 100: {
 		if i %% 3: print "Fizz"
 		if i %% 5: print "Buzz"
 		if i %% 3 nor i %% 5: print i
@@ -24,4 +23,3 @@ while sayln a--;
 h("test"), h(2), h(true)
 for var i = 0; i < 10; i++:
 	println i, " times ", f(i), " = ", g(i, f(i))
-*/

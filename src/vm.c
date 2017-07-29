@@ -193,6 +193,24 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm_list(vm);
 	} break;
 
+	case INSTR_MKITER: {
+		struct value r = pop(vm);
+		assert(r.type == VAL_LIST);
+		struct value val;
+		val.type = VAL_ITER;
+		val.iter.list = r.list;
+		val.iter.i = 0;
+		push(vm, val);
+	} break;
+#define VAR vm->frames[vm->fp - 1]->vars
+
+	case INSTR_ITER: {
+		if (VAR[c.arg].iter.i >= VAR[c.arg].iter.list->len) {
+			struct value val = (struct value){VAL_NIL, {0}};
+			push(vm, val);
+		} else push(vm, VAR[c.arg].iter.list->val[VAR[c.arg].iter.i++]);
+	} break;
+
 	case INSTR_INC: {
 		struct value l = pop(vm);
 		l = inc_value(vm, l);

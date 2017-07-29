@@ -23,6 +23,8 @@ struct instruction {
 		INSTR_NEG,
 		INSTR_ASSIGN,
 		INSTR_RANGE,
+		INSTR_MKITER,
+		INSTR_ITER,
 
 		INSTR_LESS,
 		INSTR_LEQ,
