@@ -22,6 +22,7 @@ struct instruction {
 		INSTR_DEC,
 		INSTR_NEG,
 		INSTR_ASSIGN,
+		INSTR_RANGE,
 
 		INSTR_LESS,
 		INSTR_MORE,

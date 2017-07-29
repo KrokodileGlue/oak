@@ -190,6 +190,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 			case OP_NOR:   o(OR) o(FLIP) break;
 			case OP_NOTEQ: o(CMP) o(FLIP) break;
 			case OP_EXCLAMATION: o(FLIP) break;
+			case OP_SQUIGGLE_ARROW: push_integer(c, 1); o(RANGE) break;
 			default: {
 				DOUT("internal error; an operator of name %d was encountered", e->operator->name);
 				assert(false);
@@ -329,11 +330,15 @@ compile_statement(struct compiler *c, struct statement *s)
 			var_sym->address = get_num_variables_in_context(c);
 			inc_num_variables_in_context(c);
 
-			compile_expression(c, s->var_decl.init[i], sym);
+			if (s->var_decl.init)
+				compile_expression(c, s->var_decl.init[i], sym);
+			else
+				push_nil(c);
 			/* these structures are starting to look pretty nasty.
 			 * s->var_decl.init[i]->tok->loc makes a lot of sense to me,
 			 * but there's probably a way to make things a bit tidier.*/
-			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address, s->var_decl.init[i]->tok->loc});
+			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address,
+						s->var_decl.init ? s->var_decl.init[i]->tok->loc : s->var_decl.names[i]->loc});
 		}
 	} break;
 
@@ -344,20 +349,24 @@ compile_statement(struct compiler *c, struct statement *s)
 	} break;
 
 	case STMT_FOR_LOOP: {
-		compile_statement(c, s->for_loop.a);
+		if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
+			compile_statement(c, s->for_loop.a);
 
-		size_t a = c->num_instr;
-		compile_expression(c, s->for_loop.b, sym);
+			size_t a = c->num_instr;
+			compile_expression(c, s->for_loop.b, sym);
 
-		size_t b = c->num_instr;
-		emit_instr(c, INSTR_FALSE_JUMP);
+			size_t b = c->num_instr;
+			emit_instr(c, INSTR_FALSE_JUMP);
 
-		compile_statement(c, s->for_loop.body);
-		compile_expression(c, s->for_loop.c, sym);
+			compile_statement(c, s->for_loop.body);
+			compile_expression(c, s->for_loop.c, sym);
 
-		c->code[b].arg = c->num_instr;
+			c->code[b].arg = c->num_instr;
 
-		emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.body->tok->loc});
+			emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.body->tok->loc});
+		} else if (s->for_loop.a && s->for_loop.b) {
+			compile_statement(c, s->for_loop.a);
+		}
 	} break;
 
 	case STMT_WHILE: {

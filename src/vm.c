@@ -44,6 +44,25 @@ pop_frame(struct vm *vm)
 	vm->fp--;
 }
 
+static void
+vm_list(struct vm *vm)
+{
+	struct value val;
+	val.type = VAL_LIST;
+	val.list = new_list();
+
+	/* TODO: verify that we actually have an integer here. */
+	struct value len = pop(vm);
+	for (int64_t i = 0; i < len.integer; i++) {
+		struct value key = pop(vm);
+		struct value value = pop(vm);
+
+		list_insert(val.list, &key.integer, sizeof key.integer, value);
+	}
+
+	push(vm, val);
+}
+
 void
 execute_instr(struct vm *vm, struct instruction c)
 {
@@ -120,6 +139,35 @@ execute_instr(struct vm *vm, struct instruction c)
 		} else *val = r;
 
 		push(vm, r);
+	} break;
+	case INSTR_RANGE: {
+		struct value step = pop(vm);
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+
+		assert(step.type == VAL_INT);
+		assert(l.type == VAL_INT);
+		assert(r.type == VAL_INT);
+
+		int64_t n = 0, start = r.integer, end = l.integer, m = -step.integer;
+		for (int64_t i = start; i >= end; i += m) {
+			n++;
+			struct value val;
+			val.type = VAL_INT;
+
+			/* push the value */
+			val.integer = i;
+			push(vm, val);
+
+			/* push the key */
+			val.integer = r.integer - n;
+			push(vm, val);
+		}
+
+		struct value num = (struct value){VAL_INT, {n}};
+		push(vm, num);
+
+		vm_list(vm);
 	} break;
 
 	case INSTR_INC: {
@@ -269,20 +317,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_LIST: {
-		struct value val;
-		val.type = VAL_LIST;
-		val.list = new_list();
-
-		/* TODO: verify that we actually have an integer here. */
-		struct value len = pop(vm);
-		for (int64_t i = 0; i < len.integer; i++) {
-			struct value key = pop(vm);
-			struct value value = pop(vm);
-
-			list_insert(val.list, &key.integer, sizeof key.integer, value);
-		}
-
-		push(vm, val);
+		vm_list(vm);
 	} break;
 
 	case INSTR_SUBSCRIPT: {

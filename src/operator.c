@@ -16,8 +16,8 @@ struct operator ops[] = {
 	{ "-",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SUB         },
 	{ "type","",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_TYPE        },
 	{ "say","",   14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SAY         },
-	{ "sayln","",   14, ASS_RIGHT, OPTYPE_PREFIX, OP_SAYLN       },
-	{ "length","",  14, ASS_RIGHT, OPTYPE_PREFIX, OP_LENGTH      },
+	{ "sayln","", 14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SAYLN       },
+	{ "length","",14, ASS_RIGHT, OPTYPE_PREFIX  , OP_LENGTH      },
 
 	{ "*",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MUL         },
 	{ "/",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_DIV         },
@@ -25,7 +25,8 @@ struct operator ops[] = {
 	{ "%%",  "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MODMOD      },
 	{ "+",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_ADD         },
 	{ "-",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_SUB         },
-	{ "->",  "^",  12, ASS_LEFT, OPTYPE_TERNARY , OP_ARROW       },
+	{ "~>",   "", 12, ASS_LEFT,  OPTYPE_BINARY  , OP_SQUIGGLE_ARROW },
+	{ "->",  "^", 12, ASS_LEFT,  OPTYPE_TERNARY , OP_ARROW       },
 
 	{ "<",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LESS        },
 	{ ">",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_MORE        },
