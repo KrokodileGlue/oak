@@ -343,16 +343,18 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_CALL: {
 		struct value addr = pop(vm);
 		assert(addr.type == VAL_INT);
+		pop(vm); /* discard the subscript value*/
 
 		vm->frames[vm->fp - 1]->address = vm->ip;
 		vm->ip = addr.integer - 1;
 	} break;
 
 	case INSTR_RET: {
-		pop_frame(vm);
 		struct value ret = pop(vm);
 
+		pop_frame(vm);
 		vm->ip = vm->frames[vm->fp - 1]->address;
+
 		push(vm, ret);
 	} break;
 
