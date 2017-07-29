@@ -107,9 +107,8 @@ free_stmt(struct statement *s)
 		break;
 	case STMT_FOR_LOOP:
 		free_stmt(s->for_loop.a);
-		free_expr(s->for_loop.b);
-		if (s->for_loop.c)
-			free_expr(s->for_loop.c);
+		if (s->for_loop.b) free_expr(s->for_loop.b);
+		if (s->for_loop.c) free_expr(s->for_loop.c);
 		free_stmt(s->for_loop.body);
 
 		break;
@@ -423,10 +422,16 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		indent(ap);  fprintf(ap->f, "<initializer>");
 		ap->depth++; print_statement(ap, s->for_loop.a); ap->depth--;
 
-		indent(ap);
-		if (s->for_loop.c) fprintf(ap->f, "<condition>");
-		else fprintf(ap->f, "<iterator>");
-		ap->depth++; print_expression(ap, s->for_loop.b); ap->depth--;
+		if (s->for_loop.c) {
+			indent(ap);
+			fprintf(ap->f, "<condition>");
+		} else if (s->for_loop.b) {
+			indent(ap);
+			fprintf(ap->f, "<iterator>");
+		}
+		if (s->for_loop.b) {
+			ap->depth++; print_expression(ap, s->for_loop.b); ap->depth--;
+		}
 
 		if (s->for_loop.c) {
 			indent(ap);  fprintf(ap->f, "<next>");

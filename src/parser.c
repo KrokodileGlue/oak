@@ -412,6 +412,7 @@ parse_for_loop(struct parser *ps)
 			s->for_loop.body = parse_stmt(ps);
 		}
 	} else {
+		/* TODO: error if the first thing is not an expression */
 		if (!strcmp(ps->tok->value, "{")) {
 			s->for_loop.body = parse_stmt(ps);
 		} else {
