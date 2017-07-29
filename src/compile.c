@@ -176,20 +176,21 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 #define o(x) \
 	emit(c, (struct instruction){INSTR_##x, 0, e->tok->loc});
 			switch (e->operator->name) {
-			case OP_ADD:   o(ADD) break;
-			case OP_SUB:   o(SUB) break;
-			case OP_MUL:   o(MUL) break;
-			case OP_DIV:   o(DIV) break;
-			case OP_LESS:  o(LESS) break;
-			case OP_MORE:  o(MORE) break;
-			case OP_MOD:   o(MOD) break;
-			case OP_MODMOD:o(MOD) push_integer(c, 0); o(CMP) break;
-			case OP_EQEQ:  o(CMP) break;
-			case OP_AND:   o(AND) break;
-			case OP_OR:    o(OR) break;
-			case OP_NOR:   o(OR) o(FLIP) break;
-			case OP_NOTEQ: o(CMP) o(FLIP) break;
-			case OP_EXCLAMATION: o(FLIP) break;
+			case OP_ADD:   o(ADD)                                break;
+			case OP_SUB:   o(SUB)                                break;
+			case OP_MUL:   o(MUL)                                break;
+			case OP_DIV:   o(DIV)                                break;
+			case OP_LESS:  o(LESS)                               break;
+			case OP_LEQ:   o(LEQ)                                break;
+			case OP_MORE:  o(MORE)                               break;
+			case OP_MOD:   o(MOD)                                break;
+			case OP_MODMOD:o(MOD) push_integer(c, 0); o(CMP)     break;
+			case OP_EQEQ:  o(CMP)                                break;
+			case OP_AND:   o(AND)                                break;
+			case OP_OR:    o(OR)                                 break;
+			case OP_NOR:   o(OR) o(FLIP)                         break;
+			case OP_NOTEQ: o(CMP) o(FLIP)                        break;
+			case OP_EXCLAMATION: o(FLIP)                         break;
 			case OP_SQUIGGLE_ARROW: push_integer(c, 1); o(RANGE) break;
 			default: {
 				DOUT("internal error; an operator of name %d was encountered", e->operator->name);

@@ -18,6 +18,7 @@ struct instructionData instruction_data[] = {
 	{ INSTR_RANGE,      "RANGE     " },
 
 	{ INSTR_LESS,       "LESS      " },
+	{ INSTR_LEQ,        "LEQ       " },
 	{ INSTR_MORE,       "MORE      " },
 	{ INSTR_MOD,        "MOD       " },
 

@@ -149,19 +149,42 @@ execute_instr(struct vm *vm, struct instruction c)
 		assert(l.type == VAL_INT);
 		assert(r.type == VAL_INT);
 
-		int64_t n = 0, start = r.integer, end = l.integer, m = -step.integer;
-		for (int64_t i = start; i >= end; i += m) {
-			n++;
-			struct value val;
-			val.type = VAL_INT;
+		int64_t n = 0;
+		int64_t start = r.integer;
+		int64_t stop = l.integer;
+		int64_t m = step.integer;
+		int64_t total = 0;
 
-			/* push the value */
-			val.integer = i;
-			push(vm, val);
+		if (start >= stop) {
+			total = (start - stop) / m;
+			for (int64_t i = start; i >= stop; i -= m) {
+				struct value val;
+				val.type = VAL_INT;
 
-			/* push the key */
-			val.integer = r.integer - n;
-			push(vm, val);
+				/* push the value */
+				val.integer = i;
+				push(vm, val);
+
+				/* push the key */
+				val.integer = total - n;
+				push(vm, val);
+				n++;
+			}
+		} else {
+			total = (stop - start) / m;
+			for (int64_t i = start; i <= stop; i += m) {
+				struct value val;
+				val.type = VAL_INT;
+
+				/* push the value */
+				val.integer = i;
+				push(vm, val);
+
+				/* push the key */
+				val.integer = total - n;
+				push(vm, val);
+				n++;
+			}
 		}
 
 		struct value num = (struct value){VAL_INT, {n}};
@@ -192,6 +215,14 @@ execute_instr(struct vm *vm, struct instruction c)
 		struct value r = pop(vm);
 		struct value l = pop(vm);
 		struct value ans = is_less_than_value(vm, l, r);
+		push(vm, ans);
+	} break;
+
+	case INSTR_LEQ: {
+		struct value r = pop(vm);
+		struct value l = pop(vm);
+		bool is = is_less_than_value(vm, l, r).boolean || cmp_values(vm, l, r).boolean;
+		struct value ans = (struct value){VAL_BOOL, {is}};
 		push(vm, ans);
 	} break;
 
@@ -328,8 +359,9 @@ execute_instr(struct vm *vm, struct instruction c)
 		uint64_t i = list_index(list.list, &key.integer, sizeof key.integer);
 
 		if (i == (uint64_t)-1) {
-			/* TODO: push nil */
-			printf("thing\n");
+			struct value val = (struct value){VAL_NIL, { 0 }};
+			push(vm, val);
+			break;
 		}
 
 		push(vm, list.list->val[i]);

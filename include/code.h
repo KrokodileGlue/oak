@@ -25,6 +25,7 @@ struct instruction {
 		INSTR_RANGE,
 
 		INSTR_LESS,
+		INSTR_LEQ,
 		INSTR_MORE,
 		INSTR_MOD,
 
