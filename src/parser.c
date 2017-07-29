@@ -69,7 +69,7 @@ expect_terminator(struct parser *ps)
 		}
 	}
 
-	if (!strcmp(ps->tok->value, ";")) NEXT;
+	if (ps->tok->type != TOK_END) NEXT;
 }
 
 static struct statement *parse_stmt(struct parser *ps);
@@ -396,7 +396,7 @@ parse_for_loop(struct parser *ps)
 		s->for_loop.a = e;
 	}
 
-	if (!strcmp(ps->tok->value, "in")) {
+	if (!strcmp(ps->tok->value, ";")) {
 		NEXT;
 		s->for_loop.b = parse_expr(ps, 0);
 

@@ -335,9 +335,11 @@ compile_statement(struct compiler *c, struct statement *s)
 				compile_expression(c, s->var_decl.init[i], sym);
 			else
 				push_nil(c);
-			/* these structures are starting to look pretty nasty.
+			/*
+			 * these structures are starting to look pretty nasty.
 			 * s->var_decl.init[i]->tok->loc makes a lot of sense to me,
-			 * but there's probably a way to make things a bit tidier.*/
+			 * but there's probably a way to make things a bit tidier.
+			 */
 			emit(c, (struct instruction){INSTR_POP_LOCAL, var_sym->address,
 						s->var_decl.init ? s->var_decl.init[i]->tok->loc : s->var_decl.names[i]->loc});
 		}
@@ -367,6 +369,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit(c, (struct instruction){INSTR_JUMP, a, s->for_loop.body->tok->loc});
 		} else if (s->for_loop.a && s->for_loop.b) {
 			compile_statement(c, s->for_loop.a);
+			inc_num_variables_in_context(c);
 		}
 	} break;
 

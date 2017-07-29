@@ -39,7 +39,7 @@ index_in_line(struct location loc)
 	size_t start = loc.index;
 	while (start) { /* find the beginning of the line we're in */
 		if (loc.text[start] == '\n') {
-			start++;
+			if (start < loc.index) start++;
 			break;
 		}
 		start--;
@@ -53,7 +53,7 @@ get_line(struct location loc)
 	size_t start = loc.index, end = loc.index;
 	while (start) { /* find the beginning of the line we're in */
 		if (loc.text[start] == '\n') {
-			start++;
+			if (end < start) start++;
 			break;
 		}
 		start--;

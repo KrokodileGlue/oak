@@ -1,15 +1,4 @@
-// for var i in 1 ~> 10: println i
-
-var a = 5 ~> 3
-println a
-print "\n\n["
-
-for var i = 0; i < length a; i++ {
-	print a[i]
-	if i != length a - 1: print ", "
-}
-
-say "]\n"
+for var i in 1 ~> 10: println i
 
 /*
 fn fizzbuzz () {

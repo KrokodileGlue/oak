@@ -420,6 +420,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		push_block(si, stmt);
 		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
+		if (stmt->for_loop.a && stmt->for_loop.b && !stmt->for_loop.c) {
+			inc_variable_count(si->symbol);
+		}
+
 		symbolize(si, stmt->for_loop.a);
 		if (stmt->for_loop.b) resolve_expr(si, stmt->for_loop.b);
 		if (stmt->for_loop.c) resolve_expr(si, stmt->for_loop.c);

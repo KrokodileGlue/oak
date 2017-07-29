@@ -13,6 +13,6 @@
 	#define ERROR_NOTE_COLOR	""
 	#define ERROR_LOCATION_COLOR	""
 	#define RESET_COLOR		""
-#endif /* IFDEF OAK_COLORIZE */
+#endif
 
-#endif /* IFNDEF COLOR_H */
+#endif
