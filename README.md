@@ -12,4 +12,4 @@ features are missing. So... come back later. Go away. There's nothing to see her
 
 You know the drill.
 
-    `make`
+    $ make
