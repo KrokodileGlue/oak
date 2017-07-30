@@ -534,6 +534,11 @@ tokenize(struct module *m)
 				ls->tok->type = TOK_BOOL;
 				ls->tok->boolean = strcmp(ls->tok->value, "true") ? false : true;
 			}
+
+			if (!strcmp(ls->tok->value, "pi")) {
+				ls->tok->type = TOK_FLOAT;
+				ls->tok->floating = (double)3.14159265358979323846264338327950288419716;
+			}
 		} else if (*a == '\"') {
 			a = parse_string_literal(ls, a);
 		} else if (is_dec_digit(*a) || *a == '.') {

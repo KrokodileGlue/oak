@@ -13,7 +13,10 @@ fn h (x) {
 	println "h was called with ", x, ", which is a ", type x
 }
 
+sayln R($)this is a raw string literal$
+
 fizzbuzz()
+# println pi
 
 var a = 10
 while sayln a--;
