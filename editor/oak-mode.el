@@ -1,5 +1,6 @@
-;;; oak-mode.el --- major mode for editing oak source files
+;;; oak-mode.el --- major mode for editing oak source files.
 
+;; Version: "0.0.1"
 ;; Copyright (c) 2017 "KrokodileGlue"
 
 ;; Author: KrokodileGlue <KrokodileGlue@outlook.com>
@@ -33,30 +34,71 @@
 
 ;;; Code:
 
-(defvar oak-highlights nil "Define the font-faces for the functions, constants, and operators of `oak-mode'.")
+(defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-	'(("type\\|sayln\\|say" . font-lock-function-name-face)
-	 ("pi" . font-lock-constant-face)))
-
-(font-lock-add-keywords 'oak-mode
-	'(("\\<\\(println\\|print\\|type\\|sayln\\|say\\|for\\|while\\|do\\|fn\\)\\>" . font-lock-keyword-face)))
-
-(defun oak-indent-line ()
-	"Indent a line of oak code."
-	(interactive)
-	(beginning-of-line))
+      '(("type\\|sayln\\|say" . font-lock-function-name-face)
+	("pi"                 . font-lock-constant-face)
+	("println\\|print\\|for\\|while\\|fn\\|if\\|class"            . font-lock-keyword-face)
+	("var"                 . font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
 (setq oak-mode-syntax-table
-	(let ( (syn-table (make-syntax-table)))
-	 (modify-syntax-entry ?# "<" syn-table)
-	 (modify-syntax-entry ?\/ "> 12b" syn-table)
-	 (modify-syntax-entry ?\n "> b" syn-table)
+      (let ( (syn-table (make-syntax-table)))
+
+	;; comments
+	(modify-syntax-entry ?#  "< b" syn-table)
+	(modify-syntax-entry ?/  ". 124b" syn-table)
+	(modify-syntax-entry ?*  ". 23n"   syn-table)
+	(modify-syntax-entry ?\n "> b"    syn-table)
+
+	;; allow - in words
+	(modify-syntax-entry ?-  "w"      syn-table)
+	;; make ' a general quotation character
+	(modify-syntax-entry ?'  "|"      syn-table)
 	syn-table))
 
-(define-derived-mode oak-mode fundamental-mode "oak"
-	"Major mode for editing oak source files."
-	(setq font-lock-defaults '(oak-highlights)))
+(defgroup oak-mode nil
+  "Emacs support for oak. <https://github.com/KrokodileGlue/oak>"
+  :group 'languages
+  :prefix "oak-")
+
+;;;###autoload
+(define-derived-mode oak-mode c-mode "oak"
+  "Major mode for editing oak source files."
+  :syntax-table oak-mode-syntax-table
+  (setq-local indent-line-function 'oak-indent-line)
+  (setq-local comment-start "/* ")
+  (setq-local comment-end   "*/ ")
+  (setq-local comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
+  (setq font-lock-defaults '(oak-highlights)))
+
+;; Indentation
+
+(defvar oak-indenters-bol '("class" "for" "if" "else" "while" "fn")
+  "Symbols that indicate we should increase the indentation of the next line.")
+
+(defun oak-indenters-bol-regexp ()
+  "Build a regexp from `oak-indenters-bol'."
+  (regexp-opt oak-indenters-bol 'words))
+
+(defun oak-indent-line ()
+  "Indent the current line as oak."
+  (interactive)
+
+  (let ((not-indented t) cur-indent)
+  ;; the main indentation code
+  (save-excursion
+    (while not-indented
+      (forward-line -1)
+      (if (looking-at (oak-indenters-bol-regexp))
+      (progn
+	(setq cur-indent (+ (current-indentation) tab-width))
+	(setq not-indented nil)))))
+
+  (indent-line-to cur-indent)))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.k\\'" . oak-mode))
 
 (provide 'oak-mode)
 
