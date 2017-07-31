@@ -8,9 +8,9 @@ if exists("b:current_syntax")
 endif
 
 syn keyword oak_keywords class fn for if while do var
-syn match   oak_number '[-+]\d+\.?\d*[eE]?\d*'
-syn region  oak_string start="\"" end="\"" contained
-syn region  oak_interp_string start="'" end="'" contained
+syn match   oak_number '\d\+'
+syn region  oak_string start="\"" end="\""
+syn region  oak_interp_string start="'" end="'"
 syn region  oak_region start='{' end='}' fold transparent contains=oak_keywords
 syn keyword oak_todo TODO FIXME HACK NOTE VOLATILE XXX
 syn match   oak_comment '#.*$' contains=oak_todo
