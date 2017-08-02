@@ -194,14 +194,13 @@ struct value
 cmp_values(struct vm *vm, struct value l, struct value r)
 {
 	struct value ret;
-	ret.type = VAL_NIL;
+	ret.type = VAL_BOOL;
 
 	if (l.type != r.type) {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		ret.boolean = false;
+		return ret;
 	}
 
-	ret.type = VAL_BOOL;
 	switch (l.type) {
 	case VAL_BOOL:  ret.boolean = (l.boolean == r.boolean);        break;
 	case VAL_INT:   ret.boolean = (l.integer == r.integer);        break;

@@ -66,7 +66,7 @@ vm_list(struct vm *vm)
 void
 execute_instr(struct vm *vm, struct instruction c)
 {
-	fprintf(stderr, "%3zu: %s (%zu)\n", vm->ip, instruction_data[c.type].body, c.arg);
+//	fprintf(stderr, "%3zu: %s (%zu)\n", vm->ip, instruction_data[c.type].body, c.arg);
 
 	switch (c.type) {
 	case INSTR_PUSH_CONST: {
