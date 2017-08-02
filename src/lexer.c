@@ -251,6 +251,7 @@ parse_string_literal(struct lexer *ls, char *a)
 
 	ls->loc.len = b - a + 1;
 	lexer_push_token(ls, TOK_STRING, a, b + 1);
+	ls->tok->is_interpolatable = false;
 
 	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
 	strncpy(ls->tok->string, ls->tok->value + 1, strlen(ls->tok->value));
