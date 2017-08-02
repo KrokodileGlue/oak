@@ -196,7 +196,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 
 				if (num > 1) emit_instr(c, INSTR_ADD);
 				if (!num) push_string(c, substr(e->tok->string, start, i));
-				if (!num) emit_instr(c, INSTR_ADD);
+				if (num > 1) emit_instr(c, INSTR_ADD);
 			} else {
 				size_t l = add_constant(c, e->val);
 				emit(c, (struct instruction){INSTR_PUSH_CONST, l, e->tok->loc});
