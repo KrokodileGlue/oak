@@ -1,26 +1,22 @@
-fn fizzbuzz () {
-	for 1 ~> 100 {
-		if i %% 3: print "Fizz"
-		if i %% 5: print "Buzz"
-		if i %% 3 nor i %% 5: print i
-		print "\n"
-	}
-}
+# fn fizzbuzz () {
+# 	for 1 ~> 100 {
+# 		if i %% 3: print "Fizz"
+# 		if i %% 5: print "Buzz"
+# 		if i %% 3 nor i %% 5: print i
+# 		print "\n"
+# 	}
+# }
 
-fn f (x) = x * 2
-fn g (x y) = x * y
-fn h (x) {
-	println "h was called with ", x, ", which is a ", type x
-}
+# fn f (x) = x * 2
+# fn g (x y) = x * y
+# fn h (x) {
+# 	println 'x = {x}, type(x) = {type x}'
+# }
 
-sayln R($)this is a raw string literal$
+# h("test"), h(2), h(true), h(true);
+# h("foobar"), h(420)
+# for 0 ~> 9:
+# 	println i, " x ", f(i), " = ", g(i, f(i))
 
-fizzbuzz()
-# println pi
-
-var a = 10
-while sayln a--;
-
-h("test"), h(2), h(true)
-for var i = 0; i < 10; i++:
-	println i, " x ", f(i), " = ", g(i, f(i))
+var a = 'Hello, '
+println 'a = {a}\ntype a = {type a}\n{a + "world!"}'

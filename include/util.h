@@ -64,8 +64,10 @@ char  *strclone       (char *str);
 char  *add_extension  (char *str);
 void   print_escaped_string(FILE *f, char *str, size_t len);
 char  *substr         (const char *str, size_t x, size_t y);
-char  *smart_cat(char *first, char *second);
-uint64_t hash(char *d, size_t len);
+char  *smart_cat      (char *first, char *second);
+char  *new_cat        (char *first, char *second);
+
+uint64_t hash         (char *d, size_t len);
 
 void  *oak_malloc     (size_t size);
 void  *oak_realloc    (void *mem, size_t size);

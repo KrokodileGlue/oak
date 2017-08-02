@@ -167,7 +167,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 				size_t start = 0, i, num = 0;
 
 				for (i = 0; i < strlen(e->tok->string); i++) {
-					if (e->tok->string[i] == '{' && e->tok->string[i - 1] != '\'') {
+					if (e->tok->string[i] == '{' && (i ? true : e->tok->string[i - 1] != '\'')) {
 						num++;
 
 						char *thing = substr(e->tok->string, start, i);
@@ -187,16 +187,16 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 						compile_expression(c, expr, scope);
 						emit(c, (struct instruction){INSTR_ADD, 0, tok->loc});
 
-//						DOUT("thing: %s, other: %s", thing, other);
-
 						i++;
 						start = i;
 					}
 				}
 
-				if (num > 1) emit_instr(c, INSTR_ADD);
+				if (num)
+					for (size_t i = 0; i < num - 1; i++)
+						emit_instr(c, INSTR_ADD);
+
 				if (!num) push_string(c, substr(e->tok->string, start, i));
-				if (num > 1) emit_instr(c, INSTR_ADD);
 			} else {
 				size_t l = add_constant(c, e->val);
 				emit(c, (struct instruction){INSTR_PUSH_CONST, l, e->tok->loc});

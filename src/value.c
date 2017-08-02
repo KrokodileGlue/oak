@@ -73,6 +73,8 @@ show_value(struct value val)
 struct value
 add_values(struct vm *vm, struct value l, struct value r)
 {
+//	DOUT("left: %s (%s), right: %s (%s)", show_value(l), value_data[l.type].body, show_value(r), value_data[r.type].body);
+
 	struct value ret;
 	ret.type = VAL_NIL;
 
@@ -87,10 +89,16 @@ add_values(struct vm *vm, struct value l, struct value r)
 		ret.str.len = strlen(ret.str.text);
 	} else if (l.type == VAL_STR && r.type == VAL_INT) {
 		ret.type = VAL_STR;
-		ret.str.text = smart_cat(l.str.text, show_value(r));
+		ret.str.text = new_cat(l.str.text, show_value(r));
 	} else if (r.type == VAL_STR && l.type == VAL_INT) {
 		ret.type = VAL_STR;
-		ret.str.text = smart_cat(r.str.text, show_value(l));
+		ret.str.text = new_cat(r.str.text, show_value(l));
+	} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
+		ret.type = VAL_STR;
+		ret.str.text = new_cat(l.str.text, show_value(r));
+	} else if (r.type == VAL_STR && l.type == VAL_BOOL) {
+		ret.type = VAL_STR;
+		ret.str.text = new_cat(r.str.text, show_value(l));
 	} else BINARY_MATH_OPERATION(+) else {
 		INVALID_BINARY_OPERATION;
 		vm_panic(vm);

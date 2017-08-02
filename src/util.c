@@ -70,6 +70,19 @@ smart_cat(char *first, char *second)
 	return first;
 }
 
+char *new_cat(char *first, char *second)
+{
+	size_t len = strlen(first) + strlen(second);
+	char *ret = oak_malloc(len + 1);
+
+	strcpy(ret, first);
+	strcpy(ret + strlen(first), second);
+
+	ret[len] = 0;
+
+	return ret;
+}
+
 char *
 get_line(struct location loc)
 {
