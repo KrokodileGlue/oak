@@ -36,10 +36,10 @@
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-      '(("type\\|sayln\\|say" . font-lock-function-name-face)
-	("pi"                 . font-lock-constant-face)
-	("println\\|print\\|for\\|while\\|fn\\|if\\|class"            . font-lock-keyword-face)
-	("var"                 . font-lock-type-face)))
+      '(("type\\|sayln\\|say"			.	font-lock-function-name-face)
+	("pi"					.	font-lock-constant-face)
+	("println\\|print\\|for\\|while\\|if"   .	font-lock-keyword-face)
+	("var\\|class\\|fn"			.	font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
 (setq oak-mode-syntax-table
@@ -63,39 +63,53 @@
   :prefix "oak-")
 
 ;;;###autoload
-(define-derived-mode oak-mode c-mode "oak"
+(define-derived-mode oak-mode prog-mode "oak"
   "Major mode for editing oak source files."
   :syntax-table oak-mode-syntax-table
   (setq-local indent-line-function 'oak-indent-line)
-  (setq-local comment-start "/* ")
-  (setq-local comment-end   "*/ ")
+  (setq-local comment-start "# ")
+  (setq-local comment-end   "")
   (setq-local comment-start-skip "\\(//+\\|/\\*+\\)\\s *")
   (setq font-lock-defaults '(oak-highlights)))
 
 ;; Indentation
 
-(defvar oak-indenters-bol '("class" "for" "if" "else" "while" "fn")
-  "Symbols that indicate we should increase the indentation of the next line.")
+(defun oak-indenters-eol-regexp ()
+  "Build a regexp to match an indenter at the end of a line."
+  ".*\\(:\\|{\\)$")
 
-(defun oak-indenters-bol-regexp ()
-  "Build a regexp from `oak-indenters-bol'."
-  (regexp-opt oak-indenters-bol 'words))
+(defun oak-current-line-empty-p ()
+  "Determine the emptiness of the current line."
+  (save-excursion
+    (beginning-of-line)
+    (looking-at "[:space:]*$")))
 
 (defun oak-indent-line ()
-  "Indent the current line as oak."
+  "Indent the current line as oak source."
   (interactive)
 
   (let ((not-indented t) cur-indent)
-  ;; the main indentation code
-  (save-excursion
-    (while not-indented
-      (forward-line -1)
-      (if (looking-at (oak-indenters-bol-regexp))
-      (progn
-	(setq cur-indent (+ (current-indentation) tab-width))
-	(setq not-indented nil)))))
+    ;; the main indentation code
+    (save-excursion
+      (while not-indented
+	(forward-line -1)
+	(beginning-of-line)
 
-  (indent-line-to cur-indent)))
+	(if (not (oak-current-line-empty-p))
+	    (progn
+	      (setq not-indented nil)
+	      (setq cur-indent (current-indentation))))
+
+	(if (looking-at (oak-indenters-eol-regexp))
+	    (progn
+	      (setq cur-indent (+ (current-indentation) tab-width))
+	      (setq not-indented nil)))
+
+	(if (bobp)
+	    (setq not-indented nil))))
+    (if cur-indent
+	(indent-line-to cur-indent)
+      (indent-line-to 0))))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.k\\'" . oak-mode))
