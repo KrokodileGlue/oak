@@ -84,9 +84,14 @@
     (beginning-of-line)
     (looking-at "[:space:]*$")))
 
-(defun oak-indent-line ()
+(require 'cl-lib)
+
+(cl-defun oak-indent-line ()
   "Indent the current line as oak source."
   (interactive)
+
+  (when (not (oak-current-line-empty-p))
+    (return-from oak-indent-line))
 
   (let ((not-indented t) cur-indent)
     ;; the main indentation code
