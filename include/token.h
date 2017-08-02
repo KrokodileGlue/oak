@@ -13,6 +13,7 @@
 struct token {
 	struct location loc;
 	bool is_line_end;
+	bool is_interpolatable;
 
 	char         *value; /* the body of the token */
 	struct token *next; /* doubly-linked list */

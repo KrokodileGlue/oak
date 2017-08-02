@@ -599,6 +599,29 @@ parse_stmt(struct parser *ps)
 	return s;
 }
 
+struct expression *
+parse_isolated_expr(struct token *tok)
+{
+	struct parser *ps = new_parser();
+	ps->tok = tok;
+
+
+	struct expression *expr = parse_expr(ps, 0);
+	if (ps->r->fatal) {
+		error_write(ps->r, stderr);
+		free_parser(ps);
+
+		// TODO: is there a better way to do this?
+		exit(EXIT_FAILURE);
+	} else if (ps->r->pending) {
+		error_write(ps->r, stderr);
+	}
+
+	free_parser(ps);
+
+	return expr;
+}
+
 bool
 parse(struct module *m)
 {

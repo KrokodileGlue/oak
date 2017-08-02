@@ -254,7 +254,7 @@ parse_string_literal(struct lexer *ls, char *a)
 }
 
 static char *
-parse_character_literal(struct lexer *ls, char *a)
+parse_interpolated_string(struct lexer *ls, char *a)
 {
 	char *b = a;
 	do {
@@ -266,33 +266,20 @@ parse_character_literal(struct lexer *ls, char *a)
 		SKIP_TO_END_OF_LINE(a, b);
 
 		ls->loc.len = b - a + 1;
-		lexer_push_error(ls, ERR_FATAL, "unterminated character literal");
+		lexer_push_error(ls, ERR_FATAL, "unterminated string literal");
 
 		return b;
 	}
 
-	ls->loc.len = b - a;
+	ls->loc.len = b - a + 1;
 	lexer_push_token(ls, TOK_STRING, a, b + 1);
+	ls->tok->is_interpolatable = true;
 
-	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 2);
-
+	ls->tok->string = oak_malloc(strlen(ls->tok->value) + 1);
 	strncpy(ls->tok->string, ls->tok->value + 1, strlen(ls->tok->value));
-	ls->tok->string[strlen(ls->tok->value) - 2] = 0;
+	ls->tok->string[strlen(ls->tok->value) - 2] = 0; /* cut off the ' at the end */
 
 	parse_escape_sequences(ls, ls->tok->string);
-
-	if (strlen(ls->tok->string) != 1) {
-		/* add 2 to the length because the body of the token doesn't include the ' characters */
-		ls->loc.len = b - a + 1;
-
-		lexer_push_error(ls, ERR_WARNING, "multi-element character literal will be truncated to the first element");
-	}
-
-	int64_t t = (int64_t)(ls->tok->string[0]);
-	free(ls->tok->string);
-
-	ls->tok->type = TOK_INTEGER;
-	ls->tok->integer = t;
 
 	return b + 1;
 }
@@ -340,19 +327,6 @@ parse_raw_string_literal(struct lexer *ls, char *a)
 	free(delim);
 
 	return b + delim_len;
-}
-
-static char *
-smart_cat(char *first, char *second)
-{
-	size_t len = strlen(first) + strlen(second);
-
-	first = realloc(first, len + 1);
-	strcpy(first + strlen(first), second);
-
-	first[len] = 0;
-
-	return first;
 }
 
 /* recursively concatenate adjacent strings */
@@ -460,6 +434,126 @@ parse_include(struct lexer *ls, char *a)
 	return b;
 }
 
+struct token *lex_isolated(char *text, char *path)
+{
+	struct lexer *ls = new_lexer(text, path);
+	char *a = text;
+
+	while (*a) {
+		ls->loc = (struct location){ls->text, ls->file, a - ls->text, 1};
+
+		if (is_whitespace(*a)) {
+			while (is_whitespace(*a) && *a) {
+				if (*a == '\n' && ls->tok) ls->tok->is_line_end = true;
+				a++;
+			}
+			continue;
+		}
+
+		if (!strncmp(a, "/*", 2)) {
+			char *b = a;
+			size_t depth = 0;
+
+			do {
+				if (!strncmp(b, "/*", 2)) depth++;
+				if (!strncmp(b, "*/", 2)) depth--;
+				b++;
+			} while (depth && *b);
+
+			if (*b == 0) {
+				ls->loc.len = 2;
+				lexer_push_error(ls, ERR_FATAL, "unmatched comment initializer");
+
+				while (*a != '\n' && *a) a++;
+			} else {
+				a = b + 1;
+			}
+
+			continue;
+		}
+
+		if (!strncmp(a, "*/", 2)) {
+			ls->loc.len = 2;
+			lexer_push_error(ls, ERR_FATAL, "unmatched comment terminator");
+			a += 2;
+
+			continue;
+		}
+
+		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) {
+			while (*a != '\n' && *a) a++;
+
+			continue;
+		}
+
+		if (!strncmp(a, "R(", 2)) {
+			a = parse_raw_string_literal(ls, a);
+		} else if (!strncmp(a, "I(", 2)) {
+			a = parse_include(ls, a);
+		} else if (match_operator(a)) {
+			a = parse_operator(ls, a);
+		} else if (is_identifier_start(*a)) {
+			a = parse_identifier(ls, a);
+
+			for (size_t i = 0; i < num_keywords(); i++) {
+				if (!strcmp(ls->tok->value, keywords[i].body)) {
+					ls->tok->type = TOK_KEYWORD;
+					ls->tok->keyword = keywords + i;
+					break;
+				}
+			}
+
+			if (!strcmp(ls->tok->value, "true") || !strcmp(ls->tok->value, "false")) {
+				ls->tok->type = TOK_BOOL;
+				ls->tok->boolean = strcmp(ls->tok->value, "true") ? false : true;
+			}
+
+			if (!strcmp(ls->tok->value, "pi")) {
+				ls->tok->type = TOK_FLOAT;
+				ls->tok->floating = (double)3.14159265358979323846264338327950288419716;
+			}
+		} else if (*a == '\"') {
+			a = parse_string_literal(ls, a);
+		} else if (is_dec_digit(*a) || *a == '.') {
+			a = parse_number(ls, a);
+		} else if (*a == '\'') {
+			a = parse_interpolated_string(ls, a);
+		} else if (parse_secondary_operator(a)) {
+			char *b = parse_secondary_operator(a);
+
+			ls->loc.len = b - a;
+			lexer_push_token(ls, TOK_SYMBOL, a, b);
+
+			a = b;
+		} else {
+			ls->loc.len = 1;
+			lexer_push_token(ls, TOK_SYMBOL, a, a + 1);
+			a++;
+		}
+	}
+
+	if (ls->tok) ls->tok->is_line_end = true;
+	ls->loc.len = 0;
+	lexer_push_token(ls, TOK_END, a, a);
+	cat_strings(ls->tok);
+	token_rewind(&ls->tok);
+
+	if (ls->r->fatal) {
+		fputc('\n', stderr);
+		error_write(ls->r, stderr);
+		token_clear(ls->tok);
+
+		return false;
+	} else if (ls->r->pending) {
+		error_write(ls->r, stderr);
+	}
+
+	struct token *t = ls->tok;
+	free_lexer(ls);
+
+	return t;
+}
+
 bool
 tokenize(struct module *m)
 {
@@ -544,7 +638,7 @@ tokenize(struct module *m)
 		} else if (is_dec_digit(*a) || *a == '.') {
 			a = parse_number(ls, a);
 		} else if (*a == '\'') {
-			a = parse_character_literal(ls, a);
+			a = parse_interpolated_string(ls, a);
 		} else if (parse_secondary_operator(a)) {
 			char *b = parse_secondary_operator(a);
 

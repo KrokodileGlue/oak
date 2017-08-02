@@ -7,6 +7,8 @@
 #include "keyword.h"
 #include "util.h"
 #include "token.h"
+#include "lexer.h"
+#include "parser.h"
 
 static struct compiler *
 new_compiler()
@@ -138,6 +140,18 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *scope, i
 }
 
 static void
+push_string(struct compiler *c, char *str)
+{
+	struct value val;
+	val.type = VAL_STR;
+	val.str.text = strclone(str);
+	val.str.len = strlen(str);
+
+	size_t addr = add_constant_value(c, val);
+	emit(c, (struct instruction){INSTR_PUSH_CONST, addr, c->stmt->tok->loc});
+}
+
+static void
 compile_expression(struct compiler *c, struct expression *e, struct symbol *scope)
 {
 	switch (e->type) {
@@ -146,6 +160,47 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *scop
 		case TOK_IDENTIFIER: {
 			struct symbol *sym = resolve(scope, e->val->value);
 			emit(c, (struct instruction){INSTR_PUSH_LOCAL, sym->address, e->tok->loc});
+		} break;
+
+		case TOK_STRING: {
+			if (e->tok->is_interpolatable) {
+				size_t start = 0, i, num = 0;
+
+				for (i = 0; i < strlen(e->tok->string); i++) {
+					if (e->tok->string[i] == '{' && e->tok->string[i - 1] != '\'') {
+						num++;
+
+						char *thing = substr(e->tok->string, start, i);
+						push_string(c, thing);
+						i++;
+						start = i;
+
+						while (e->tok->string[i] != '}' && e->tok->string[i]) i++;
+						if (!e->tok->string[i]) {
+							error_push(c->r, e->tok->loc, ERR_FATAL, "unterminated { in interpolated string");
+							break;
+						}
+
+						char *other = substr(e->tok->string, start, i);
+						struct token *tok = lex_isolated(other, "*interpolate*");
+						struct expression *expr = parse_isolated_expr(tok);
+						compile_expression(c, expr, scope);
+						emit(c, (struct instruction){INSTR_ADD, 0, tok->loc});
+
+//						DOUT("thing: %s, other: %s", thing, other);
+
+						i++;
+						start = i;
+					}
+				}
+
+				if (num > 1) emit_instr(c, INSTR_ADD);
+				if (!num) push_string(c, substr(e->tok->string, start, i));
+				if (!num) emit_instr(c, INSTR_ADD);
+			} else {
+				size_t l = add_constant(c, e->val);
+				emit(c, (struct instruction){INSTR_PUSH_CONST, l, e->tok->loc});
+			}
 		} break;
 
 		default: {

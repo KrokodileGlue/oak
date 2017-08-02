@@ -20,7 +20,8 @@ struct lexer {
 };
 
 void lexer_clear(struct lexer *ls);
-struct lexer *new_lexer(char *text, char *file);
+struct lexer *new_lexer(char *text, char *path);
 bool tokenize(struct module *m);
+struct token *lex_isolated(char *text, char *path);
 
 #endif

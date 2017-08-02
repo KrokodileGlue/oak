@@ -39,6 +39,37 @@ struct valueData value_data[] = {
 	DOUT("internal error; found a value of type %d", x.type); \
 	assert(false)
 
+static char *
+show_value(struct value val)
+{
+	// TODO: remove the artificial cap.
+	size_t cap = 2048;
+	char *str = oak_malloc(cap + 1);
+
+	switch (val.type) {
+	case VAL_INT:
+		snprintf(str, cap, "%"PRId64, val.integer);
+		break;
+	case VAL_STR:
+		snprintf(str, cap, "%s", val.str.text);
+		break;
+	case VAL_FLOAT:
+		snprintf(str, cap, "%f", val.real);
+		break;
+	case VAL_BOOL:
+		snprintf(str, cap, "%s", val.boolean ? "true" : "false");
+		break;
+	case VAL_NIL:
+		snprintf(str, cap, "nil");
+		break;
+	default:
+		DOUT("unimplemented printer for value of type %d", val.type);
+		assert(false);
+	}
+
+	return str;
+}
+
 struct value
 add_values(struct vm *vm, struct value l, struct value r)
 {
@@ -54,6 +85,12 @@ add_values(struct vm *vm, struct value l, struct value r)
 		strcpy(ret.str.text + strlen(l.str.text), r.str.text);
 
 		ret.str.len = strlen(ret.str.text);
+	} else if (l.type == VAL_STR && r.type == VAL_INT) {
+		ret.type = VAL_STR;
+		ret.str.text = smart_cat(l.str.text, show_value(r));
+	} else if (r.type == VAL_STR && l.type == VAL_INT) {
+		ret.type = VAL_STR;
+		ret.str.text = smart_cat(r.str.text, show_value(l));
 	} else BINARY_MATH_OPERATION(+) else {
 		INVALID_BINARY_OPERATION;
 		vm_panic(vm);
@@ -159,7 +196,10 @@ cmp_values(struct vm *vm, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
-	if (l.type != r.type) INVALID_BINARY_OPERATION;
+	if (l.type != r.type) {
+		INVALID_BINARY_OPERATION;
+		vm_panic(vm);
+	}
 
 	ret.type = VAL_BOOL;
 	switch (l.type) {
@@ -180,7 +220,11 @@ and_values(struct vm *vm, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_BOOL;
 
-	if (l.type != VAL_BOOL || r.type != VAL_BOOL) INVALID_BINARY_OPERATION;
+	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
+		INVALID_BINARY_OPERATION;
+		vm_panic(vm);
+	}
+
 	ret.boolean = l.boolean && r.boolean;
 
 	return ret;
@@ -192,7 +236,11 @@ or_values(struct vm *vm, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_BOOL;
 
-	if (l.type != VAL_BOOL || r.type != VAL_BOOL) INVALID_BINARY_OPERATION;
+	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
+		INVALID_BINARY_OPERATION;
+		vm_panic(vm);
+	}
+
 	ret.boolean = l.boolean || r.boolean;
 
 	return ret;
@@ -206,6 +254,7 @@ is_value_true(struct vm *vm, struct value l)
 	case VAL_INT: return l.integer != 0;
 	default:
 		INVALID_UNARY_OPERATION;
+		vm_panic(vm);
 	}
 }
 

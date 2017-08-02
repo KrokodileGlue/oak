@@ -47,6 +47,29 @@ index_in_line(struct location loc)
 	return loc.index - start;
 }
 
+char *substr(const char *str, size_t x, size_t y)
+{
+	char *ret = oak_malloc(y - x + 1);
+
+	strncpy(ret, str + x, y - x);
+	ret[y - x] = 0;
+
+	return ret;
+}
+
+char *
+smart_cat(char *first, char *second)
+{
+	size_t len = strlen(first) + strlen(second);
+
+	first = realloc(first, len + 1);
+	strcpy(first + strlen(first), second);
+
+	first[len] = 0;
+
+	return first;
+}
+
 char *
 get_line(struct location loc)
 {
