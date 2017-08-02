@@ -62,6 +62,12 @@ parse_escape_sequences(struct lexer *ls, char *str)
 	char *out = str;
 	size_t i = 0;
 	do {
+		if (str[i] == '\\' && str[i + 1] == '{') {
+			*out++ = str[i++];
+			*out++ = str[i];
+			continue;
+		}
+
 		char a = str[i];
 		//ls->loc.index += 1;
 
@@ -142,6 +148,8 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 		*out++ = a;
 	} while (str[i++]);
+
+//	DOUT("thing: %s", ls->tok->string);
 }
 
 static char *

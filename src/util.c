@@ -58,29 +58,37 @@ char *substr(const char *str, size_t x, size_t y)
 }
 
 char *
-smart_cat(char *first, char *second)
+smart_cat(char *lhs, char *rhs)
 {
-	size_t len = strlen(first) + strlen(second);
+	size_t len = strlen(lhs) + strlen(rhs);
 
-	first = realloc(first, len + 1);
-	strcpy(first + strlen(first), second);
+	lhs = realloc(lhs, len + 1);
+	strcpy(lhs + strlen(lhs), rhs);
 
-	first[len] = 0;
+	lhs[len] = 0;
 
-	return first;
+	return lhs;
 }
 
-char *new_cat(char *first, char *second)
+char *new_cat(char *lhs, char *rhs)
 {
-	size_t len = strlen(first) + strlen(second);
+	size_t len = strlen(lhs) + strlen(rhs);
 	char *ret = oak_malloc(len + 1);
 
-	strcpy(ret, first);
-	strcpy(ret + strlen(first), second);
+	strcpy(ret, lhs);
+	strcpy(ret + strlen(lhs), rhs);
 
 	ret[len] = 0;
 
 	return ret;
+}
+
+void remove_char(char *lhs, size_t c)
+{
+	char *ret = oak_malloc(strlen(lhs) + 1);
+	strcpy(ret, lhs);
+	strcpy(ret + c, lhs + c + 1);
+	strcpy(lhs, ret);
 }
 
 char *

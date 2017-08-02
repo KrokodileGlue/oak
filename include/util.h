@@ -64,8 +64,9 @@ char  *strclone       (char *str);
 char  *add_extension  (char *str);
 void   print_escaped_string(FILE *f, char *str, size_t len);
 char  *substr         (const char *str, size_t x, size_t y);
-char  *smart_cat      (char *first, char *second);
-char  *new_cat        (char *first, char *second);
+char  *smart_cat      (char *lhs, char *rhs);
+char  *new_cat        (char *lhs, char *rhs);
+void   remove_char    (char *lhs, size_t c);
 
 uint64_t hash         (char *d, size_t len);
 
