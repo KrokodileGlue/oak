@@ -7,17 +7,22 @@ fn fizzbuzz () {
 	}
 }
 
+fizzbuzz()
+
 fn f (x) = x * 2
 fn g (x y) = x * y
 fn h (x) {
+	// TODO: handle errors in string interpolations more elegantly.
 	println 'x = {x}, type(x) = {type x}'
 }
 
-# fizzbuzz()
-
 h("test"), h(2), h(true)
+
 for 0 ~> 9:
 	println '{i} x {f(i)} = {g(i, f(i))}'
 
-var a = 'Hello, '
-println 'a = \'{a}\'\ntype a = {type a}\n\'{a + "world!"}\''
+var a = "Hello, "
+
+println 'a = \'{a}\''
+println 'type a = {type a}'
+println '\'{a + "world!"}\''

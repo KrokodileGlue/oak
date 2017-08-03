@@ -36,10 +36,10 @@
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-      '(("type\\|sayln\\|say"			.	font-lock-function-name-face)
-	("pi"					.	font-lock-constant-face)
-	("println\\|print\\|for\\|while\\|if"   .	font-lock-keyword-face)
-	("var\\|class\\|fn"			.	font-lock-type-face)))
+      '(("type\\|sayln\\|say"			 .	font-lock-function-name-face)
+	("pi\\|0x[[:xdigit:]]+\\|[\\.[:digit:]]+".	font-lock-constant-face)
+	("println\\|print\\|for\\|while\\|if"    .	font-lock-keyword-face)
+	("var\\|class\\|fn"			 .	font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
 (setq oak-mode-syntax-table
@@ -115,6 +115,16 @@
     (if cur-indent
 	(indent-line-to cur-indent)
       (indent-line-to 0))))
+
+(font-lock-add-keywords 'oak-mode
+			'(("\\<\\(FIXME\\):" 1
+			   font-lock-warning-face t)))
+(font-lock-add-keywords 'oak-mode
+			'(("\\<\\(TODO\\):" 1
+			   font-lock-warning-face t)))
+(font-lock-add-keywords 'oak-mode
+			'(("\\<\\(HACK\\):" 1
+			   font-lock-warning-face t)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.k\\'" . oak-mode))
