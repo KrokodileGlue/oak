@@ -32,6 +32,18 @@
 ;; This package provides a major mode for the syntax highlighting, indentation,
 ;; and code formatting of the oak programming language.
 
+;; You can associate .k files with oak-mode by putting the following into your
+;; init file:
+;; (add-to-list 'auto-mode-alist '("\\.k\\'" . oak-mode))
+
+;; You can enable identifier highlighting with color-identifiers-mode in oak
+;; files by putting the following into your init file:
+;; (add-to-list
+;;  'color-identifiers:modes-alist
+;;  `(oak-mode .
+;; 	("[^.][[:space:]]*"
+;; 	"\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)" (nil))))
+
 ;;; Code:
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
@@ -125,9 +137,6 @@
 (font-lock-add-keywords 'oak-mode
 			'(("\\<\\(HACK\\):" 1
 			   font-lock-warning-face t)))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.k\\'" . oak-mode))
 
 (provide 'oak-mode)
 
