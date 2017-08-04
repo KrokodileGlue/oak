@@ -96,37 +96,38 @@
     (beginning-of-line)
     (looking-at "[:space:]*$")))
 
-(require 'cl-lib)
+(require 'cl-macs)
 
 (cl-defun oak-indent-line ()
   "Indent the current line as oak source."
   (interactive)
 
-  (when (not (oak-current-line-empty-p))
-    (return-from oak-indent-line))
+  (cl-block oak-indent-line
+	 (when (not (oak-current-line-empty-p))
+	   (cl-return-from oak-indent-line))
 
-  (let ((not-indented t) cur-indent)
-    ;; the main indentation code
-    (save-excursion
-      (while not-indented
-	(forward-line -1)
-	(beginning-of-line)
+	 (let ((not-indented t) cur-indent)
+	   ;; the main indentation code
+	   (save-excursion
+	     (while not-indented
+	       (forward-line -1)
+	       (beginning-of-line)
 
-	(if (not (oak-current-line-empty-p))
-	    (progn
-	      (setq not-indented nil)
-	      (setq cur-indent (current-indentation))))
+	       (if (not (oak-current-line-empty-p))
+		   (progn
+		     (setq not-indented nil)
+		     (setq cur-indent (current-indentation))))
 
-	(if (looking-at (oak-indenters-eol-regexp))
-	    (progn
-	      (setq cur-indent (+ (current-indentation) tab-width))
-	      (setq not-indented nil)))
+	       (if (looking-at (oak-indenters-eol-regexp))
+		   (progn
+		     (setq cur-indent (+ (current-indentation) tab-width))
+		     (setq not-indented nil)))
 
-	(if (bobp)
-	    (setq not-indented nil))))
-    (if cur-indent
-	(indent-line-to cur-indent)
-      (indent-line-to 0))))
+	       (if (bobp)
+		   (setq not-indented nil))))
+	   (if cur-indent
+	       (indent-line-to cur-indent)
+	     (indent-line-to 0)))))
 
 (font-lock-add-keywords 'oak-mode
 			'(("\\<\\(FIXME\\):" 1
