@@ -1,0 +1,38 @@
+* Exceptions
+I can't remember how run-time errors work right now. At best, i think
+it exits with some kind of vague error message. Not only will I have
+to think about exceptions, but I'll have to think about how to keep
+track of what line/file each instruction is associated with.
+
+* Register-based vm
+Right now, the VM is stack-based. There's nothing really wrong with
+that, but register-based machines are more elegant to me. A
+register-based machine would make some things much more intuitive,
+like multi-dimensional arrays.
+
+Of course, this implies rewriting the entire run-time and compiler,
+but that would have to happen anyway.
+
+* Modules
+This is mostly working at a theoretical level, but the symbol table
+stuff will have to be rewritten eventually for binary files to
+work. At the moment, the compiler doesn't know anything about modules,
+so accessing a variable or function across modules doesn't work. I'll
+have to work out the namespace resolution operator (::) as well.
+
+** TODO Rewrite symbol table generation
+
+* Garbage collection
+This is the biggest thing right now. Everything about how values work
+will have to change. There are a lot of different ways to do this. At
+the moment, I'm thinking of passing around ints that will be indexes
+into the GC's table of values. Some macros might make that approach
+not ugly.
+
+* Object-orientation
+This hasn't been implemented yet. In a pure object-oriented language,
+everything is an object, and I generally look down on multi-paradigm
+languages. I'll have to put a lot more thought into this than I have
+been. Even exceptions are objects!
+
+Inheritance kinda works right now, though!
