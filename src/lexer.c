@@ -8,9 +8,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#define MAX_HEX_ESCAPE_SEQUENCE_LEN 64
-#define MAX_OCT_ESCAPE_SEQUENCE_LEN 64
-
 void
 free_lexer(struct lexer *ls)
 {
@@ -69,7 +66,6 @@ parse_escape_sequences(struct lexer *ls, char *str)
 		}
 
 		char a = str[i];
-		//ls->loc.index += 1;
 
 		if (a == '\\') {
 			i++;
@@ -89,52 +85,44 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 			case '0': case '1': case '2': case '3':
 			case '4': case '5': case '6': case '7': {
+				int data = 0;
 				size_t j = 0;
-				char oct_sequence[MAX_OCT_ESCAPE_SEQUENCE_LEN + 1]; /* a string */
 
-				a = str[i];
-				while (is_oct_digit(a) && a && j <= MAX_OCT_ESCAPE_SEQUENCE_LEN) {
-					oct_sequence[j++] = a;
+				while (is_oct_digit(a) && a) {
+					data *= 8;
+					data += a - '0';
 					a = str[++i];
+					j++;
 				}
-				i--;
 
-				oct_sequence[j] = 0;
-				//printf("found octal escape sequence: %s\n", oct_sequence);
-
-				long int data = strtol(oct_sequence, NULL, 8);
 				if (data > 0xFF) {
 					ls->loc.index += i - j + 1;
 					ls->loc.len = j + 1; /* add 1 for the \ */
-					lexer_push_error(ls, ERR_WARNING, "octal value %ld is too large and will be masked to the lowest byte", data);
+					lexer_push_error(ls, ERR_WARNING, "value %ld is too large", data);
 					ls->loc.index -= i - j + 1;
 				}
 
-				a = (char)(data & 0xFF);
+				a = (char)data;
 			} break;
 			case 'x': {
+				int data = 0;
 				size_t j = 0;
-				char hex_sequence[MAX_HEX_ESCAPE_SEQUENCE_LEN + 1]; /* a string */
 
-				a = str[++i];
-				while (is_hex_digit(a) && a && j <= MAX_HEX_ESCAPE_SEQUENCE_LEN) {
-					hex_sequence[j++] = a;
+				while (is_hex_digit(a) && a) {
+					data *= 16;
+					data += a - '0';
 					a = str[++i];
+					j++;
 				}
-				i--;
 
-				hex_sequence[j] = 0;
-				//printf("found hex escape sequence: %s\n", hex_sequence);
-
-				long int data = strtol(hex_sequence, NULL, 16);
 				if (data > 0xFF) {
-					ls->loc.index += i - j;
-					ls->loc.len = j + 2; /* add two for the \x */
-					lexer_push_error(ls, ERR_WARNING, "hexadecimal value %ld is too large and will be masked to the lowest byte", data);
-					ls->loc.index -= i - j;
+					ls->loc.index += i - j + 1;
+					ls->loc.len = j + 1; /* add 1 for the \ */
+					lexer_push_error(ls, ERR_WARNING, "value %ld is too large", data);
+					ls->loc.index -= i - j + 1;
 				}
 
-				a = (char)(data & 0xFF);
+				a = (char)data;
 			} break;
 			default: {
 				ls->loc.index += i;
@@ -148,8 +136,6 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 		*out++ = a;
 	} while (str[i++]);
-
-//	DOUT("thing: %s", ls->tok->string);
 }
 
 static char *
@@ -179,53 +165,59 @@ parse_number(struct lexer *ls, char *a)
 		ls->loc.len = b - a;
 		lexer_push_token(ls, TOK_INTEGER, a, b);
 		ls->tok->integer = (int64_t)strtol(ls->tok->value, NULL, 16);
+
+		return b;
+	}
+
+	bool is_integer = true;
+	bool is_oct = (*a == '0'), found_exponent = false;
+
+	while (true) {
+		if (*b == 'e') {
+			if (found_exponent || is_integer) {
+				ls->loc.len = b - a;
+				lexer_push_error(ls, ERR_FATAL, "cannot use scientific notation in floating point literals");
+				break;
+			}
+
+			found_exponent = true;
+			b++;
+			if (*b == '-' || *b == '+') b++;
+			continue;
+		}
+
+		if ((is_oct && is_oct_digit(*b)) || is_dec_digit(*b)) {
+			b++;
+			continue;
+		}
+
+		if (*b == '.') {
+			if (is_integer) {
+				is_integer = false;
+			} else {
+				/*
+				 * We've run into a second . for this
+				 * number, e.g. 0.1.2 we will break,
+				 * so that example will be parsed as
+				 * 0.1, 0.2
+				 */
+				break;
+			}
+
+			b++;
+			continue;
+		}
+
+		break;
+	}
+
+	ls->loc.len = b - a;
+	if (is_integer) {
+		lexer_push_token(ls, TOK_INTEGER, a, b);
+		ls->tok->integer = (int64_t)strtol(ls->tok->value, NULL, 0);
 	} else {
-		bool is_integer = true;
-		bool is_oct = (*a == '0'), found_exponent = false;
-
-		while (true) {
-			if (*b == 'e') {
-				if (found_exponent || is_integer) {
-					ls->loc.len = b - a;
-					lexer_push_error(ls, ERR_FATAL, "incorrect use of scientific notation in numeric literal");
-					break;
-				}
-
-				found_exponent = true;
-				b++;
-				if (*b == '-' || *b == '+') b++;
-				continue;
-			}
-
-			if ((is_oct && is_oct_digit(*b)) || is_dec_digit(*b)) {
-				b++;
-				continue;
-			}
-
-			if (*b == '.') {
-				if (is_integer) {
-					is_integer = false;
-				} else {
-					/* we've run into a second . for this number, e.g. 0.1.2
-					 * we will break, so that example will be parsed as 0.1, 0.2 */
-					break;
-				}
-
-				b++;
-				continue;
-			}
-
-			break;
-		}
-
-		ls->loc.len = b - a;
-		if (is_integer) {
-			lexer_push_token(ls, TOK_INTEGER, a, b);
-			ls->tok->integer = (int64_t)strtol(ls->tok->value, NULL, 0);
-		} else {
-			lexer_push_token(ls, TOK_FLOAT, a, b);
-			ls->tok->floating = atof(ls->tok->value);
-		}
+		lexer_push_token(ls, TOK_FLOAT, a, b);
+		ls->tok->floating = atof(ls->tok->value);
 	}
 
 	return b;
@@ -361,7 +353,7 @@ cat_strings(struct token *tok)
 	return ret;
 }
 
-/* match the longest operator starting from a */
+/* match the longest operator starting from `a` */
 static struct operator *
 match_operator(char *a)
 {
@@ -443,126 +435,6 @@ parse_include(struct lexer *ls, char *a)
 	return b;
 }
 
-struct token *lex_isolated(char *text, char *path)
-{
-	struct lexer *ls = new_lexer(text, path);
-	char *a = text;
-
-	while (*a) {
-		ls->loc = (struct location){ls->text, ls->file, a - ls->text, 1};
-
-		if (is_whitespace(*a)) {
-			while (is_whitespace(*a) && *a) {
-				if (*a == '\n' && ls->tok) ls->tok->is_line_end = true;
-				a++;
-			}
-			continue;
-		}
-
-		if (!strncmp(a, "/*", 2)) {
-			char *b = a;
-			size_t depth = 0;
-
-			do {
-				if (!strncmp(b, "/*", 2)) depth++;
-				if (!strncmp(b, "*/", 2)) depth--;
-				b++;
-			} while (depth && *b);
-
-			if (*b == 0) {
-				ls->loc.len = 2;
-				lexer_push_error(ls, ERR_FATAL, "unmatched comment initializer");
-
-				while (*a != '\n' && *a) a++;
-			} else {
-				a = b + 1;
-			}
-
-			continue;
-		}
-
-		if (!strncmp(a, "*/", 2)) {
-			ls->loc.len = 2;
-			lexer_push_error(ls, ERR_FATAL, "unmatched comment terminator");
-			a += 2;
-
-			continue;
-		}
-
-		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) {
-			while (*a != '\n' && *a) a++;
-
-			continue;
-		}
-
-		if (!strncmp(a, "R(", 2)) {
-			a = parse_raw_string_literal(ls, a);
-		} else if (!strncmp(a, "I(", 2)) {
-			a = parse_include(ls, a);
-		} else if (match_operator(a)) {
-			a = parse_operator(ls, a);
-		} else if (is_identifier_start(*a)) {
-			a = parse_identifier(ls, a);
-
-			for (size_t i = 0; i < num_keywords(); i++) {
-				if (!strcmp(ls->tok->value, keywords[i].body)) {
-					ls->tok->type = TOK_KEYWORD;
-					ls->tok->keyword = keywords + i;
-					break;
-				}
-			}
-
-			if (!strcmp(ls->tok->value, "true") || !strcmp(ls->tok->value, "false")) {
-				ls->tok->type = TOK_BOOL;
-				ls->tok->boolean = strcmp(ls->tok->value, "true") ? false : true;
-			}
-
-			if (!strcmp(ls->tok->value, "pi")) {
-				ls->tok->type = TOK_FLOAT;
-				ls->tok->floating = (double)3.14159265358979323846264338327950288419716;
-			}
-		} else if (*a == '\"') {
-			a = parse_string_literal(ls, a);
-		} else if (is_dec_digit(*a) || *a == '.') {
-			a = parse_number(ls, a);
-		} else if (*a == '\'') {
-			a = parse_interpolated_string(ls, a);
-		} else if (parse_secondary_operator(a)) {
-			char *b = parse_secondary_operator(a);
-
-			ls->loc.len = b - a;
-			lexer_push_token(ls, TOK_SYMBOL, a, b);
-
-			a = b;
-		} else {
-			ls->loc.len = 1;
-			lexer_push_token(ls, TOK_SYMBOL, a, a + 1);
-			a++;
-		}
-	}
-
-	if (ls->tok) ls->tok->is_line_end = true;
-	ls->loc.len = 0;
-	lexer_push_token(ls, TOK_END, a, a);
-	cat_strings(ls->tok);
-	token_rewind(&ls->tok);
-
-	if (ls->r->fatal) {
-		fputc('\n', stderr);
-		error_write(ls->r, stderr);
-		token_clear(ls->tok);
-
-		return false;
-	} else if (ls->r->pending) {
-		error_write(ls->r, stderr);
-	}
-
-	struct token *t = ls->tok;
-	free_lexer(ls);
-
-	return t;
-}
-
 bool
 tokenize(struct module *m)
 {
@@ -636,11 +508,6 @@ tokenize(struct module *m)
 			if (!strcmp(ls->tok->value, "true") || !strcmp(ls->tok->value, "false")) {
 				ls->tok->type = TOK_BOOL;
 				ls->tok->boolean = strcmp(ls->tok->value, "true") ? false : true;
-			}
-
-			if (!strcmp(ls->tok->value, "pi")) {
-				ls->tok->type = TOK_FLOAT;
-				ls->tok->floating = (double)3.14159265358979323846264338327950288419716;
 			}
 		} else if (*a == '\"') {
 			a = parse_string_literal(ls, a);

@@ -6,13 +6,12 @@
 #include "util.h"
 #include "value.h"
 
-struct valueData value_data[] = {
+struct value_data value_data[] = {
 	{ VAL_NIL,   "nil" },
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },
 	{ VAL_STR,   "string" },
-	{ VAL_BOOL,  "boolean" },
-	{ VAL_LIST,  "list" }
+	{ VAL_BOOL,  "boolean" }
 };
 
 #define BINARY_MATH_OPERATION(x)                                                    \
@@ -28,19 +27,8 @@ struct valueData value_data[] = {
 		}                                                                   \
 	}
 
-#define INVALID_BINARY_OPERATION \
-	error_push(vm->r, vm->code[vm->ip].loc, ERR_FATAL, "invalid operation on types '%s' and '%s'", value_data[l.type].body, value_data[r.type].body)
-
-#define INVALID_UNARY_OPERATION \
-	error_push(vm->r, vm->code[vm->ip].loc, ERR_FATAL, "invalid operation on type '%s'", value_data[l.type].body); \
-	vm_panic(vm)
-
-#define NONEXISTANT_VALUE_ERROR(x)                                \
-	DOUT("internal error; found a value of type %d", x.type); \
-	assert(false)
-
 static char *
-show_value(struct value val)
+show_value(struct gc *gc, struct value val)
 {
 	// TODO: remove the artificial cap.
 	size_t cap = 2048;
@@ -51,7 +39,7 @@ show_value(struct value val)
 		snprintf(str, cap, "%"PRId64, val.integer);
 		break;
 	case VAL_STR:
-		snprintf(str, cap, "%s", val.str.text);
+		snprintf(str, cap, "%s", gc->str[val.idx]);
 		break;
 	case VAL_FLOAT:
 		snprintf(str, cap, "%f", val.real);
@@ -71,7 +59,7 @@ show_value(struct value val)
 }
 
 struct value
-add_values(struct vm *vm, struct value l, struct value r)
+add_values(struct gc *gc, struct value l, struct value r)
 {
 //	DOUT("left: %s (%s), right: %s (%s)", show_value(l), value_data[l.type].body, show_value(r), value_data[r.type].body);
 
@@ -80,75 +68,79 @@ add_values(struct vm *vm, struct value l, struct value r)
 
 	if (l.type == VAL_STR && r.type == VAL_STR) {
 		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
 
-		ret.str.text = oak_malloc(strlen(l.str.text) + strlen(r.str.text) + 1);
+		/*
+		 * We should be careful about messing with memory
+		 * that's owned by the garbage collector.
+		 */
 
-		strcpy(ret.str.text, l.str.text);
-		strcpy(ret.str.text + strlen(l.str.text), r.str.text);
+		gc->str[ret.idx] = oak_realloc(gc->str[ret.idx], strlen(gc->str[l.idx]) + strlen(gc->str[r.idx]) + 1);
 
-		ret.str.len = strlen(ret.str.text);
+		strcpy(gc->str[ret.idx], gc->str[l.idx]);
+		strcpy(gc->str[ret.idx] + strlen(gc->str[l.idx]), gc->str[r.idx]);
 	} else if (l.type == VAL_STR && r.type == VAL_INT) {
 		ret.type = VAL_STR;
-		ret.str.text = new_cat(l.str.text, show_value(r));
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = new_cat(gc->str[l.idx], show_value(gc, r));
 	} else if (r.type == VAL_STR && l.type == VAL_INT) {
 		ret.type = VAL_STR;
-		ret.str.text = new_cat(r.str.text, show_value(l));
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = new_cat(gc->str[r.idx], show_value(gc, l));
 	} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
 		ret.type = VAL_STR;
-		ret.str.text = new_cat(l.str.text, show_value(r));
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = new_cat(gc->str[l.idx], show_value(gc, r));
 	} else if (r.type == VAL_STR && l.type == VAL_BOOL) {
 		ret.type = VAL_STR;
-		ret.str.text = new_cat(r.str.text, show_value(l));
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = new_cat(gc->str[r.idx], show_value(gc, l));
 	} else BINARY_MATH_OPERATION(+) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
-struct value sub_values(struct vm *vm, struct value l, struct value r)
+struct value sub_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(-) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
-struct value mul_values(struct vm *vm, struct value l, struct value r)
+struct value mul_values(struct gc *gc, struct value l, struct value r)
 {
 	/* TODO: fancy operations on strings and lists. */
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(*) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
-struct value div_values(struct vm *vm, struct value l, struct value r)
+struct value div_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(/) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
 struct value
-mod_values(struct vm *vm, struct value l, struct value r)
+mod_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -163,43 +155,40 @@ mod_values(struct vm *vm, struct value l, struct value r)
 			ret.integer = l.integer % r.integer;
 		}
 	} else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
 struct value
-is_less_than_value(struct vm *vm, struct value l, struct value r)
+is_less_than_value(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(<) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
 struct value
-is_more_than_value(struct vm *vm, struct value l, struct value r)
+is_more_than_value(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(>) else {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	return ret;
 }
 
 struct value
-cmp_values(struct vm *vm, struct value l, struct value r)
+cmp_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_BOOL;
@@ -210,26 +199,25 @@ cmp_values(struct vm *vm, struct value l, struct value r)
 	}
 
 	switch (l.type) {
-	case VAL_BOOL:  ret.boolean = (l.boolean == r.boolean);        break;
-	case VAL_INT:   ret.boolean = (l.integer == r.integer);        break;
-	case VAL_FLOAT: ret.boolean = (l.real == r.real);              break;
-	case VAL_STR:   ret.boolean = !strcmp(l.str.text, r.str.text); break;
-	case VAL_NIL:   ret.boolean = true;                            break;
-	default:        NONEXISTANT_VALUE_ERROR(l);                    break;
+	case VAL_BOOL:  ret.boolean = (l.boolean == r.boolean);                break;
+	case VAL_INT:   ret.boolean = (l.integer == r.integer);                break;
+	case VAL_FLOAT: ret.boolean = (l.real == r.real);                      break;
+	case VAL_STR:   ret.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
+	case VAL_NIL:   ret.boolean = true;                                    break;
+	default:        assert(false);                                         break;
 	}
 
 	return ret;
 }
 
 struct value
-and_values(struct vm *vm, struct value l, struct value r)
+and_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_BOOL;
 
 	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	ret.boolean = l.boolean && r.boolean;
@@ -238,14 +226,13 @@ and_values(struct vm *vm, struct value l, struct value r)
 }
 
 struct value
-or_values(struct vm *vm, struct value l, struct value r)
+or_values(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_BOOL;
 
 	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
-		INVALID_BINARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
 
 	ret.boolean = l.boolean || r.boolean;
@@ -254,58 +241,58 @@ or_values(struct vm *vm, struct value l, struct value r)
 }
 
 bool
-is_value_true(struct vm *vm, struct value l)
+is_value_true(struct gc *gc, struct value l)
 {
 	switch (l.type) {
 	case VAL_BOOL: return l.boolean;
 	case VAL_INT: return l.integer != 0;
 	default:
-		INVALID_UNARY_OPERATION;
-		vm_panic(vm);
+		assert(false);
 	}
+
+	return -1;
 }
 
 struct value
-inc_value(struct vm *vm, struct value l)
+inc_value(struct gc *gc, struct value l)
 {
 	switch (l.type) {
 	case VAL_INT:   l.integer++;      break;
 	case VAL_FLOAT: l.real++;         break;
-	default: INVALID_UNARY_OPERATION; break;
+	default: assert(false); break;
 	}
 
 	return l;
 }
 
 struct value
-dec_value(struct vm *vm, struct value l)
+dec_value(struct gc *gc, struct value l)
 {
 	switch (l.type) {
 	case VAL_INT:   l.integer--;      break;
 	case VAL_FLOAT: l.real--;         break;
-	default: INVALID_UNARY_OPERATION; break;
+	default: assert(false); break;
 	}
 
 	return l;
 }
 
 struct value
-len_value(struct vm *vm, struct value l)
+len_value(struct gc *gc, struct value l)
 {
 	struct value ans;
 	ans.type = VAL_INT;
 
 	switch (l.type) {
-	case VAL_LIST: ans.integer = l.list->len; break;
-	case VAL_STR:  ans.integer = l.str.len; break;
-	default: INVALID_UNARY_OPERATION; break;
+	case VAL_STR:  ans.integer = strlen(gc->str[l.idx]); break;
+	default: assert(false); break;
 	}
 
 	return ans;
 }
 
 struct value
-flip_value(struct vm *vm, struct value l)
+flip_value(struct gc *gc, struct value l)
 {
 	struct value ans;
 	ans.type = VAL_BOOL;
@@ -314,14 +301,14 @@ flip_value(struct vm *vm, struct value l)
 	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
 	case VAL_FLOAT: ans.boolean = l.real    ? false : true; break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
-	default: INVALID_UNARY_OPERATION; break;
+	default: assert(false); break;
 	}
 
 	return ans;
 }
 
 struct value
-neg_value(struct vm *vm, struct value l)
+neg_value(struct gc *gc, struct value l)
 {
 	struct value ans;
 	ans.type = l.type;
@@ -330,35 +317,24 @@ neg_value(struct vm *vm, struct value l)
 	case VAL_INT:   ans.integer = -l.integer; break;
 	case VAL_FLOAT: ans.real = -l.real;       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean; break;
-	default: INVALID_UNARY_OPERATION;         break;
+	default: assert(false);         break;
 	}
 
 	return ans;
 }
 
 void
-print_value(FILE *f, struct value val)
+print_value(FILE *f, struct gc *gc, struct value val)
 {
 	switch (val.type) {
 	case VAL_INT:
 		fprintf(f, "%"PRId64, val.integer);
 		break;
 	case VAL_STR:
-		fprintf(f, "%s", val.str.text);
+		fprintf(f, "%s", gc->str[val.idx]);
 		break;
 	case VAL_FLOAT:
 		fprintf(f, "%f", val.real);
-		break;
-	case VAL_LIST:
-		fputc('[', f);
-
-		for (uint64_t i = 0; i < val.list->len; i++) {
-			print_value(f, val.list->val[i]);
-			if (i != val.list->len - 1)
-				fprintf(f, ", ");
-		}
-
-		fputc(']', f);
 		break;
 	case VAL_BOOL:
 		fprintf(f, val.boolean ? "true" : "false");

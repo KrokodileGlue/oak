@@ -1,28 +1,38 @@
-fn fizzbuzz () {
-	for 1 ~> 100 {
-		if i %% 3: print "Fizz"
-		if i %% 5: print "Buzz"
-		if i %% 3 nor i %% 5: print i
-		print "\n"
-	}
-}
+println "test"
 
-fizzbuzz()
+# fn fizzbuzz () {
+# 	for 1 ~> 100 {
+# 		if i %% 3: print "Fizz"
+# 		if i %% 5: print "Buzz"
+# 		if i %% 3 nor i %% 5: print i
+# 		print "\n"
+# 	}
+# }
 
-fn f (x) = x * 2
-fn g (x y) = x * y
-fn h (x) {
-	// TODO: handle errors in string interpolations more elegantly.
-	println 'x = {x}, type(x) = {type x}'
-}
+# fn fibonacci (n) {
+# 	if (n <= 1) {
+# 		return n
+# 	} else {
+# 		return fibonacci(n - 1) + fibonacci(n - 2)
+# 	}
+# }
 
-h("test"), h(2), h(true)
+# fizzbuzz()
 
-for 0 ~> 9:
-	println '{i} x {f(i)} = {g(i, f(i))}'
+# fn f (x) = x * 2
+# fn g (x y) = x * y
+# fn h (x) {
+# 	// TODO: handle errors in string interpolations more elegantly.
+# 	println 'x = {x}, type(x) = {type x}'
+# }
 
-var a = "Hello, "
+# h("test"), h(2), h(true)
 
-println 'a = \'{a}\''
-println 'type a = {type a}'
-println '\'{a + "world!"}\''
+# for 0 ~> 9:
+# 	println '{i} x {f(i)} = {g(i, f(i))}'
+
+# var a = "Hello, "
+
+# println 'a = \'{a}\''
+# println 'type a = {type a}'
+# println '\'{a + "world!"}\''

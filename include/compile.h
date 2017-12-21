@@ -21,10 +21,9 @@ struct compiler {
 	struct statement *stmt;
 	struct reporter *r;
 
-	/* an array, where each element is the number of variables in the index (as a scope). */
-	/* that's a terrible explanation. i'll have to rewrite this code. */
-	int *context;
-	int num_contexts;
+	int *stack_base;
+	int *stack_top;
+	int sp;
 };
 
 void print_constant_table(FILE *f, struct constant_table table);

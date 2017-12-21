@@ -29,9 +29,9 @@ void
 free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
-		/* if a module symbol appears in another module
-		 * it means that it was imported and its symbol
-		 * table will be free()'d elsewhere. */
+		/*
+		 * Module symbols are free'd by themselves.
+		 */
 		if (sym->children[i]->type != SYM_MODULE)
 			free_symbol(sym->children[i]);
 	}
@@ -130,6 +130,10 @@ resolve(struct symbol *sym, char *name)
 	uint64_t h = hash(name, strlen(name));
 
 	while (sym) {
+		if (sym->id == h && !strcmp(sym->name, name)) {
+			return sym;
+		}
+
 		for (size_t i = 0; i < sym->num_children; i++) {
 			if (sym->children[i]->id == h
 			    && !strcmp(sym->children[i]->name, name)) {
@@ -302,6 +306,11 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		sym->name = stmt->fn_def.name;
 		sym->type = SYM_FN;
+		/*
+		 * We have to set the id early to support recursive
+		 * function calls n stuff.
+		 */
+		sym->id = hash(sym->name, strlen(sym->name));
 		sym->scope = si->scope_stack[si->scope_pointer - 1];
 
 		push(si, sym);
@@ -478,6 +487,11 @@ symbolize_module(struct module *m, struct oak *k)
 {
 	struct symbolizer *si = new_symbolizer(k);
 
+	if (!m->tree || !m->tree[0]) {
+		error_push(si->r, (struct location){0,0,0,0}, ERR_FATAL, "empty modules are not permitted");
+		return false;
+	}
+
 	struct symbol *sym = new_symbol(m->tree[0]->tok);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
@@ -514,7 +528,7 @@ symbolize_module(struct module *m, struct oak *k)
 #define INDENT                             \
 	fputc('\n', f);                    \
 	for (size_t i = 0; i < depth; i++) \
-		fprintf(f, "        ");
+		fprintf(f, "  ");
 
 void
 print_symbol(FILE *f, size_t depth, struct symbol *s)

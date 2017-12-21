@@ -3,71 +3,45 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "location.h"
 
+enum instruction_type {
+	INSTR_MOVC,
+	INSTR_MOV,
+
+	INSTR_ADD,
+	INSTR_SUB,
+	INSTR_MUL,
+	INSTR_DIV,
+
+	INSTR_PRINT,
+	INSTR_LINE,
+
+	INSTR_END
+};
+
 struct instruction {
-	enum instruction_type {
-		INSTR_PUSH_CONST,
-		INSTR_PUSH_LOCAL,
-		INSTR_POP_LOCAL,
-		INSTR_POP,
+	int type;
+	uint16_t module;
 
-		INSTR_ADD,
-		INSTR_SUB,
-		INSTR_MUL,
-		INSTR_DIV,
-
-		INSTR_INC,
-		INSTR_DEC,
-		INSTR_NEG,
-		INSTR_ASSIGN,
-		INSTR_RANGE,
-		INSTR_MKITER,
-		INSTR_ITER,
-
-		INSTR_LESS,
-		INSTR_LEQ,
-		INSTR_MORE,
-		INSTR_MOD,
-
-		INSTR_CMP,
-		INSTR_FLIP,
-		INSTR_AND,
-		INSTR_OR,
-		INSTR_LEN,
-		INSTR_SAY,
-		INSTR_TYPE,
-
-		INSTR_COND_JUMP,
-		INSTR_FALSE_JUMP,
-		INSTR_TRUE_JUMP,
-		INSTR_JUMP,
-		INSTR_FRAME,
-		INSTR_POP_FRAME,
-
-		INSTR_CALL,
-		INSTR_RET,
-
-		INSTR_PRINT,
-		INSTR_LINE,
-
-		INSTR_LIST,
-		INSTR_SUBSCRIPT,
-
-		INSTR_END
-	} type;
-
-	size_t arg;
-	struct location loc;
+	union {
+		uint8_t a;
+		struct {
+			uint8_t b;
+			uint8_t c;
+		} bc;
+		uint16_t d;
+	} d;
 };
 
-struct instructionData {
-	enum instruction_type  type;
-	char                  *body;
+struct instruction_data {
+	enum instruction_type type;
+	char *name;
 };
 
-extern struct instructionData instruction_data[];
+extern struct instruction_data instruction_data[];
 
 void print_code(FILE *f, struct instruction *code, size_t num_instr);
 
