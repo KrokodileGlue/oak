@@ -36,6 +36,12 @@ emit(struct compiler *c, struct instruction instr)
 }
 
 static void
+emit_(struct compiler *c, enum instruction_type type)
+{
+	emit(c, (struct instruction){type, .d = { 0 }});
+}
+
+static void
 emit_a(struct compiler *c, enum instruction_type type, uint8_t a)
 {
 	emit(c, (struct instruction){type, .d = { a }});
@@ -91,11 +97,10 @@ compile_statement(struct compiler *c, struct statement *s)
 	switch (s->type) {
 	case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++) {
-			compile_expression(c, s->print.args[i], sym);
-			emit_instr(c, INSTR_PRINT);
+			emit_a(c, INSTR_PRINT, compile_expression(c, s->print.args[i], sym));
 		}
 
-		emit_instr(c, INSTR_LINE);
+		emit_(c, INSTR_LINE);
 		break;
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
@@ -118,7 +123,7 @@ compile(struct module *m)
 		compile_statement(c, m->tree[i]);
 	}
 
-	emit_instr(c, INSTR_END);
+	emit_(c, INSTR_END);
 
 	if (c->r->fatal) {
 		error_write(c->r, stderr);

@@ -9,6 +9,7 @@ struct gc {
 	char **str;
 };
 
+struct gc *new_gc();
 int64_t gc_alloc(struct gc *gc, enum value_type type);
 
 #endif
