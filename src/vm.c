@@ -32,7 +32,7 @@ execute(struct module *m)
 {
 	struct vm *vm = new_vm();
 	struct instruction *c = m->code;
-	vm->constant_table = m->constant_table;
+	vm->ct = m->ct;
 	vm->code = m->code;
 
 	while (vm->code[vm->ip].type != INSTR_END) {

@@ -11,6 +11,7 @@ new_module(char *path)
 	memset(m, 0, sizeof *m);
 	m->path = strclone(path);
 	m->stage = MODULE_STAGE_EMPTY;
+	m->gc = new_gc();
 
 	return m;
 }

@@ -20,7 +20,7 @@ struct vm {
 	struct frame **frames;
 	size_t fp;
 
-	struct constant_table constant_table;
+	struct constant_table *ct;
 	struct reporter *r;
 };
 

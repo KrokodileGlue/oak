@@ -5,7 +5,7 @@
 #include "value.h"
 
 struct gc {
-	uint64_t *bmp;
+	uint64_t *strbmp;
 	char **str;
 };
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "constant.h"
 #include "compile.h"
 #include "tree.h"
 #include "keyword.h"
@@ -16,7 +17,7 @@ new_compiler()
 	struct compiler *c = oak_malloc(sizeof *c);
 
 	memset(c, 0, sizeof *c);
-	memset(&c->table, 0, sizeof c->table);
+	memset(&c->ct, 0, sizeof c->ct);
 	c->r = new_reporter();
 
 	return c;
@@ -57,13 +58,32 @@ static int
 alloc_reg(struct compiler *c)
 {
 	/* TODO: make sure we have enough registers n stuff. */
+	c->stack_top = realloc(c->stack_top, (c->sp + 1) * sizeof *c->stack_top);
 	return c->stack_top[c->sp]++;
+}
+
+static struct value
+make_value_from_token(struct compiler *c, struct token *tok)
+{
+	struct value v;
+
+	switch (tok->type) {
+	case TOK_STRING: {
+		v.type = VAL_STR;
+		v.idx = gc_alloc(c->gc, VAL_STR);
+	} break;
+	default:
+		DOUT("unimplemented token-to-value converter");
+		assert(false);
+	}
+
+	return v;
 }
 
 static int
 add_constant(struct compiler *c, struct token *tok)
 {
-
+	return constant_table_add(c->ct, make_value_from_token(c, tok));
 }
 
 static int
@@ -115,6 +135,8 @@ compile(struct module *m)
 	c->sym = m->sym;
 	c->num_nodes = m->num_nodes;
 	c->stmt = m->tree[0];
+	c->ct = new_constant_table();
+	c->gc = m->gc;
 	// m->tree[0]->tok->loc
 	/* emit(c, (struct instruction){INSTR_FRAME, .d = {{0,0,0}}}); */
 
@@ -136,7 +158,7 @@ compile(struct module *m)
 	m->code = c->code;
 	m->num_instr = c->num_instr;
 	m->stage = MODULE_STAGE_COMPILED;
-	m->constant_table = c->table;
+	m->ct = c->ct;
 
 	free_compiler(c);
 

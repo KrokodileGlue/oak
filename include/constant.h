@@ -2,10 +2,15 @@
 #define CONSTANT_H
 
 #include <stdlib.h>
+#include "value.h"
 
 struct constant_table {
 	struct value *val;
 	size_t num;
+	size_t allocated;
 };
+
+struct constant_table *new_constant_table();
+int constant_table_add(struct constant_table *t, struct value v);
 
 #endif

@@ -7,6 +7,7 @@
 #include "value.h"
 #include "oak.h"
 #include "symbol.h"
+#include "gc.h"
 
 struct compiler {
 	struct instruction *code;
@@ -15,13 +16,14 @@ struct compiler {
 	struct statement **tree;
 	size_t num_nodes;
 
-	struct constant_table table;
+	struct constant_table *ct;
 	struct symbol *sym;
 
 	struct statement *stmt;
 	struct reporter *r;
+	struct gc *gc;
 
-	int *stack_base;
+	int **stack_base;
 	int *stack_top;
 	int sp;
 };

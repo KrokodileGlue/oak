@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "code.h"
 #include "constant.h"
+#include "gc.h"
 
 struct module {
 	char *name, *text, *path;
@@ -17,7 +18,8 @@ struct module {
 	struct instruction *code;
 	size_t num_instr;
 
-	struct constant_table constant_table;
+	struct constant_table *ct;
+	struct gc *gc;
 
 	enum {
 		MODULE_STAGE_EMPTY,

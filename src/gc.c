@@ -1,7 +1,16 @@
 #define _GNU_SOURCE
 #include <string.h>
 
+#include "util.h"
 #include "gc.h"
+
+struct gc *
+new_gc()
+{
+	struct gc *gc = oak_malloc(sizeof *gc);
+	memset(gc, 0, sizeof *gc);
+	return gc;
+}
 
 static int64_t
 bmp_alloc(uint64_t *bmp, int64_t slots){
