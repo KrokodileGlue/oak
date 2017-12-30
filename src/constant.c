@@ -1,6 +1,9 @@
+#include <string.h>
+#include <inttypes.h>
+#include <assert.h>
+
 #include "constant.h"
 #include "util.h"
-#include <string.h>
 
 struct constant_table *
 new_constant_table()
@@ -29,6 +32,20 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 {
 	for (size_t i = 0; i < ct->num; i++) {
 		fprintf(f, "\n[%zu : %s] ", i, value_data[ct->val[i].type].body);
-		print_value(f, gc, ct->val[i]);
+		switch (ct->val[i].type) {
+		case VAL_STR:
+			print_escaped_string(f, gc->str[ct->val[i].idx],
+			                     strlen(gc->str[ct->val[i].idx]));
+			break;
+
+		case VAL_INT:
+			fprintf(f, "%"PRId64, ct->val[i].integer);
+			break;
+
+		default:
+			DOUT("unimplemented constant printer for value of type %s",
+			     value_data[ct->val[i].type].body);
+			assert(false);
+		}
 	}
 }

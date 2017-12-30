@@ -32,7 +32,6 @@ execute_instr(struct vm *vm, struct instruction c)
 	switch (c.type) {
 	case INSTR_MOVC:
 		/* Look at this c.d.bc.c bullshit. Ridiculous. */
-		DOUT("stuff: %d", c.d.bc.c);
 		vm->frame[vm->fp][c.d.bc.b] = vm->ct->val[c.d.bc.c];
 		break;
 
