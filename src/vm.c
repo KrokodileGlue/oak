@@ -16,13 +16,11 @@ new_vm()
 }
 
 static void
-alloc_frame(struct vm *vm)
+push_frame(struct vm *vm)
 {
-	vm->frame = oak_realloc(vm->frame, vm->fp * sizeof *vm->frame);
-
-	if (!vm->frame[vm->fp]) {
-		vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
-	}
+	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
+	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
+	vm++;
 }
 
 void
@@ -33,13 +31,8 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	switch (c.type) {
 	case INSTR_MOVC:
-		/*
-		 * All we need to do is make sure the registers are
-		 * allocated.
-		 */
-		alloc_frame(vm);
-
 		/* Look at this c.d.bc.c bullshit. Ridiculous. */
+		DOUT("stuff: %d", c.d.bc.c);
 		vm->frame[vm->fp][c.d.bc.b] = vm->ct->val[c.d.bc.c];
 		break;
 
@@ -63,17 +56,22 @@ execute(struct module *m, bool debug)
 {
 	struct vm *vm = new_vm();
 	struct instruction *c = m->code;
-	vm->ct = m->ct;
 	vm->code = m->code;
-	vm->gc = m->gc;
 	vm->debug = debug;
-	vm->fp = 1;
-	alloc_frame(vm);
+	vm->ct = m->ct;
+	vm->gc = m->gc;
+	push_frame(vm);
 
 	while (vm->code[vm->ip].type != INSTR_END) {
 		execute_instr(vm, c[vm->ip]);
 		vm->ip++;
 	}
+
+	for (size_t i = 0; i < vm->fp; i++) {
+		free(vm->frame[i]);
+	}
+
+	free(vm->frame);
 }
 
 void
