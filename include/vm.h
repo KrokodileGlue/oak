@@ -9,7 +9,7 @@
 #include "value.h"
 #include "error.h"
 
-void execute(struct module *m);
+void execute(struct module *m, bool debug);
 void vm_panic(struct vm *vm);
 
 #endif

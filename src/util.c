@@ -180,7 +180,7 @@ oak_realloc(void *mem, size_t size)
 {
 	void *ptr = realloc(mem, size);
 
-	if (!ptr) {
+	if (!ptr && size) {
 		fprintf(stderr, "out of memory\n");
 		exit(EXIT_FAILURE);
 	}

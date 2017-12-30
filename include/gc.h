@@ -5,7 +5,10 @@
 #include "value.h"
 
 struct gc {
-	uint64_t *strbmp;
+	int64_t slot[NUM_ALLOCATABLE_VALUES];
+	uint64_t *bmp[NUM_ALLOCATABLE_VALUES];
+
+	/* The actual value structures. */
 	char **str;
 };
 

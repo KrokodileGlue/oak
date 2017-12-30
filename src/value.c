@@ -7,10 +7,10 @@
 #include "value.h"
 
 struct value_data value_data[] = {
+	{ VAL_STR,   "string" },
 	{ VAL_NIL,   "nil" },
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },
-	{ VAL_STR,   "string" },
 	{ VAL_BOOL,  "boolean" }
 };
 
@@ -330,18 +330,23 @@ print_value(FILE *f, struct gc *gc, struct value val)
 	case VAL_INT:
 		fprintf(f, "%"PRId64, val.integer);
 		break;
+
 	case VAL_STR:
 		fprintf(f, "%s", gc->str[val.idx]);
 		break;
+
 	case VAL_FLOAT:
 		fprintf(f, "%f", val.real);
 		break;
+
 	case VAL_BOOL:
 		fprintf(f, val.boolean ? "true" : "false");
 		break;
+
 	case VAL_NIL:
 		fprintf(f, "nil");
 		break;
+
 	default:
 		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);

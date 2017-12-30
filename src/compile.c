@@ -71,7 +71,15 @@ make_value_from_token(struct compiler *c, struct token *tok)
 	case TOK_STRING: {
 		v.type = VAL_STR;
 		v.idx = gc_alloc(c->gc, VAL_STR);
+		c->gc->str[v.idx] = oak_malloc(strlen(tok->string) + 1);
+		strcpy(c->gc->str[v.idx], tok->string);
 	} break;
+
+	case TOK_INTEGER:
+		v.type = VAL_INT;
+		v.integer = tok->integer;
+		break;
+
 	default:
 		DOUT("unimplemented token-to-value converter");
 		assert(false);
@@ -110,26 +118,35 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
-	DOUT("compiling statement of type %d (%s)", s->type, statement_data[s->type].body);
+	if (c->debug)
+		DOUT("compiling statement of type %d (%s)", s->type,
+		     statement_data[s->type].body);
 
 	struct symbol *sym = c->sym;
 
 	switch (s->type) {
 	case STMT_PRINTLN:
-		for (size_t i = 0; i < s->print.num; i++) {
-			emit_a(c, INSTR_PRINT, compile_expression(c, s->print.args[i], sym));
-		}
-
+		for (size_t i = 0; i < s->print.num; i++)
+			emit_a(c, INSTR_PRINT,
+			       compile_expression(c, s->print.args[i], sym));
 		emit_(c, INSTR_LINE);
 		break;
+
+	case STMT_PRINT:
+		for (size_t i = 0; i < s->print.num; i++)
+			emit_a(c, INSTR_PRINT,
+			       compile_expression(c, s->print.args[i], sym));
+		break;
+
 	default:
-		DOUT("unimplemented compiler for statement of type %d (%s)", s->type, statement_data[s->type].body);
+		DOUT("unimplemented compiler for statement of type %d (%s)",
+		     s->type, statement_data[s->type].body);
 		assert(false);
 	}
 }
 
 bool
-compile(struct module *m)
+compile(struct module *m, bool debug)
 {
 	struct compiler *c = new_compiler();
 	c->sym = m->sym;
@@ -137,6 +154,7 @@ compile(struct module *m)
 	c->stmt = m->tree[0];
 	c->ct = new_constant_table();
 	c->gc = m->gc;
+	c->debug = debug;
 	// m->tree[0]->tok->loc
 	/* emit(c, (struct instruction){INSTR_FRAME, .d = {{0,0,0}}}); */
 

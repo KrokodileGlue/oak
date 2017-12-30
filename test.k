@@ -1,4 +1,4 @@
-println "test"
+println "test\n", 'foo\n', 2
 
 # fn fizzbuzz () {
 # 	for 1 ~> 100 {

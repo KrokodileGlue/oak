@@ -26,9 +26,10 @@ struct compiler {
 	int **stack_base;
 	int *stack_top;
 	int sp;
+
+	bool debug;
 };
 
-void print_constant_table(FILE *f, struct constant_table table);
-bool compile(struct module *m);
+bool compile(struct module *m, bool debug);
 
 #endif

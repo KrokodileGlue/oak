@@ -3,12 +3,7 @@
 
 #include <stdlib.h>
 #include "constant.h"
-
-struct frame {
-	struct value *vars;
-	size_t num;
-	size_t address;
-};
+#include "gc.h"
 
 struct vm {
 	struct instruction *code;
@@ -17,13 +12,14 @@ struct vm {
 	struct value *stack;
 	size_t sp;
 
-	struct frame **frames;
+	struct value **frame;
 	size_t fp;
 
 	struct constant_table *ct;
 	struct reporter *r;
-};
+	struct gc *gc;
 
-struct frame *new_frame();
+	bool debug;
+};
 
 #endif

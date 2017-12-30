@@ -6,12 +6,14 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define NUM_ALLOCATABLE_VALUES 1
+
 struct value {
 	enum value_type {
+		VAL_STR,
 		VAL_NIL,
 		VAL_INT,
 		VAL_FLOAT,
-		VAL_STR,
 		VAL_BOOL
 	} type;
 

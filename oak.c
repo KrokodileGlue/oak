@@ -98,11 +98,11 @@ void print_modules(struct oak *k)
 				print_symbol(stderr, 0, m->sym);
 			}
 
-			/* if (m->stage >= MODULE_STAGE_COMPILED */
-			/*     && (k->print_code || k->print_everything)) { */
-			/* 	print_constant_table(stderr, m->constant_table); */
-			/* 	print_code(stderr, m->code, m->num_instr); */
-			/* } */
+			if (m->stage >= MODULE_STAGE_COMPILED
+			    && (k->print_code || k->print_everything)) {
+				print_constant_table(stderr, m->gc, m->ct);
+				print_code(stderr, m->code, m->num_instr);
+			}
 		}
 
 		fputc('\n', stderr);
@@ -128,11 +128,8 @@ load_module(struct oak *k, char *path, char *name)
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k)) return NULL;
-	if (!compile(m)) return NULL;
-
-	/* if (!k->debug) { */
-	/* 	execute(m); */
-	/* } */
+	if (!compile(m, k->print_code)) return NULL;
+	if (!k->debug) execute(m, k->print_code);
 
 	return m;
 }

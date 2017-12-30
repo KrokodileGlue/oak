@@ -9,9 +9,11 @@
 #include "location.h"
 
 /* debug out */
-#define DOUT(...)                             \
-	fprintf(stderr, "oak: " __VA_ARGS__); \
-	fputc('\n', stderr)
+#define DOUT(...)                                     \
+	do {                                          \
+		fprintf(stderr, "oak: " __VA_ARGS__); \
+		fputc('\n', stderr);                  \
+	} while (0)
 
 static inline bool
 is_whitespace(char c)
