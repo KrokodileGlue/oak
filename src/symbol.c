@@ -44,6 +44,7 @@ void
 symbolizer_free(struct symbolizer *si)
 {
 	error_clear(si->r);
+	free(si->scope_stack);
 	free(si);
 }
 

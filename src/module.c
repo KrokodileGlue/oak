@@ -21,10 +21,16 @@ free_module(struct module *m)
 {
 	if (m->stage >= MODULE_STAGE_LEXED)      token_clear(m->tok);
 	if (m->stage >= MODULE_STAGE_PARSED)     free_ast(m->tree);
+	if (m->stage >= MODULE_STAGE_SYMBOLIZED) free_symbol(m->sym);
+	if (m->stage >= MODULE_STAGE_COMPILED) {
+		free_gc(m->gc);
+		free_constant_table(m->ct);
+	}
 
 	free(m->text);
 	free(m->name);
 	free(m->path);
+	free(m->code);
 
 	free(m);
 }

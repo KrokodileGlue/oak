@@ -16,11 +16,24 @@ new_vm()
 }
 
 static void
+free_vm(struct vm *vm)
+{
+	for (size_t i = 1; i < vm->maxfp + 1; i++) {
+		free(vm->frame[i]);
+	}
+
+	error_clear(vm->r);
+	free(vm->frame);
+	free(vm);
+}
+
+static void
 push_frame(struct vm *vm)
 {
-	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
+	vm->frame = oak_realloc(vm->frame, (vm->fp + 2) * sizeof *vm->frame);
+	vm->fp++;
 	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
-	vm++;
+	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
 
 #define REG(X) vm->frame[vm->fp][X]
@@ -89,11 +102,7 @@ execute(struct module *m, bool debug)
 		vm->ip++;
 	}
 
-	for (size_t i = 0; i < vm->fp; i++) {
-		free(vm->frame[i]);
-	}
-
-	free(vm->frame);
+	free_vm(vm);
 }
 
 void

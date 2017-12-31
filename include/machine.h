@@ -14,6 +14,7 @@ struct vm {
 
 	struct value **frame;
 	size_t fp;
+	size_t maxfp;
 
 	struct constant_table *ct;
 	struct reporter *r;

@@ -26,6 +26,8 @@ new_compiler()
 static void
 free_compiler(struct compiler *c)
 {
+	free(c->stack_top);
+	error_clear(c->r);
 	free(c);
 }
 

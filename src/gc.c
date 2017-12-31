@@ -13,6 +13,31 @@ new_gc()
 	return gc;
 }
 
+void
+free_gc(struct gc *gc)
+{
+	/* Kinda like a final gc pass. */
+
+	uint64_t *bmp = gc->bmp[VAL_STR];
+	for (int64_t i = 0; i < gc->slot[VAL_STR] / 64; i++) {
+		for (int j = 0; j < 64; j++) {
+			if (*bmp == 0LL) break;
+			int pos = ffsll(*bmp) - 1;
+			*bmp ^= 1LL << pos;
+			if (gc->str[i * 64 + pos])
+				free(gc->str[i * 64 + pos]);
+		}
+
+		bmp++;
+	}
+
+	for (int i = 0; i < NUM_ALLOCATABLE_VALUES; i++)
+		if (gc->bmp[i]) free(gc->bmp[i]);
+
+	if (gc->str) free(gc->str);
+	free(gc);
+}
+
 static int64_t
 bmp_alloc(uint64_t *bmp, int64_t slots)
 {

@@ -91,19 +91,27 @@ add_values(struct gc *gc, struct value l, struct value r)
 	} else if (l.type == VAL_STR && r.type == VAL_INT) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = new_cat(gc->str[l.idx], show_value(gc, r));
+		char *s = show_value(gc, r);
+		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
+		free(s);
 	} else if (r.type == VAL_STR && l.type == VAL_INT) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = new_cat(gc->str[r.idx], show_value(gc, l));
+		char *s = show_value(gc, l);
+		gc->str[ret.idx] = new_cat(gc->str[r.idx], s);
+		free(s);
 	} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = new_cat(gc->str[l.idx], show_value(gc, r));
+		char *s = show_value(gc, r);
+		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
+		free(s);
 	} else if (r.type == VAL_STR && l.type == VAL_BOOL) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = new_cat(gc->str[r.idx], show_value(gc, l));
+		char *s = show_value(gc, l);
+		gc->str[ret.idx] = new_cat(gc->str[r.idx], s);
+		free(s);
 	} else BINARY_MATH_OPERATION(+) else {
 		/* TODO: do something here. */
 		assert(false);

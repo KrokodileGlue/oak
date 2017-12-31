@@ -15,6 +15,13 @@ new_constant_table()
 	return t;
 }
 
+void
+free_constant_table(struct constant_table *t)
+{
+	free(t->val);
+	free(t);
+}
+
 int
 constant_table_add(struct constant_table *t, struct value v)
 {

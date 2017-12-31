@@ -15,6 +15,7 @@ struct gc {
 };
 
 struct gc *new_gc();
+void free_gc(struct gc *gc);
 int64_t gc_alloc(struct gc *gc, enum value_type type);
 
 #endif
