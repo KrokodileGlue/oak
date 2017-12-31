@@ -53,6 +53,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.bc.b) = vm->ct->val[c.d.bc.c];
 		break;
 
+	case INSTR_MOV:
+		/* Look at this c.d.bc.c bullshit. Ridiculous. */
+		REG(c.d.bc.b) = REG(c.d.bc.c);
+		break;
+
 	case INSTR_PRINT:
 		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
 		if (vm->debug) fputs("\n", vm->f);

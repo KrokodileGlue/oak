@@ -25,6 +25,7 @@ struct compiler {
 
 	int **stack_base;
 	int *stack_top;
+	int *var;
 	int sp;
 
 	bool debug;

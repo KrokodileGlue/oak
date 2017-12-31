@@ -27,6 +27,7 @@ static void
 free_compiler(struct compiler *c)
 {
 	free(c->stack_top);
+	free(c->var);
 	error_clear(c->r);
 	free(c);
 }
@@ -67,8 +68,11 @@ push_frame(struct compiler *c)
 {
 	c->stack_top = oak_realloc(c->stack_top, (c->sp + 2)
 	                           * sizeof *c->stack_top);
+	c->var = oak_realloc(c->var, (c->sp + 2)
+	                           * sizeof *c->var);
 	c->sp++;
-	c->stack_top[c->sp] = 0;
+	c->var[c->sp] = 0;
+	c->stack_top[c->sp] = c->sym->num_variables;
 }
 
 static int
@@ -109,6 +113,17 @@ static int
 add_constant(struct compiler *c, struct token *tok)
 {
 	return constant_table_add(c->ct, make_value_from_token(c, tok));
+}
+
+static int
+nil(struct compiler *c)
+{
+	struct value v;
+	v.type = VAL_NIL;
+	int n = constant_table_add(c->ct, v);
+	int reg = alloc_reg(c);
+	emit_bc(c, INSTR_MOVC, reg, n);
+	return reg;
 }
 
 static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym);
@@ -157,6 +172,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 	switch (e->type) {
 	case EXPR_VALUE:
 		switch (e->val->type) {
+		case TOK_IDENTIFIER:
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_MOV, reg, resolve(sym, e->val->value)->address);
+			break;
+
 		default:
 			reg = alloc_reg(c);
 			emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->val));
@@ -178,11 +198,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
-	if (c->debug)
+	struct symbol *sym = c->sym;
+	if (c->debug) {
 		DOUT("compiling statement of type %d (%s)", s->type,
 		     statement_data[s->type].body);
-
-	struct symbol *sym = c->sym;
+		DOUT("in symbol `%s'", sym->name);
+	}
 
 	switch (s->type) {
 	case STMT_PRINTLN:
@@ -196,6 +217,20 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (size_t i = 0; i < s->print.num; i++)
 			emit_a(c, INSTR_PRINT,
 			       compile_expression(c, s->print.args[i], sym));
+		break;
+
+	case STMT_VAR_DECL:
+		for (size_t i = 0; i < s->var_decl.num; i++) {
+			struct symbol *var_sym = resolve(sym, s->var_decl.names[i]->value);
+			var_sym->address = c->var[c->sp]++;
+			int reg = -1;
+
+			reg = s->var_decl.init
+				? compile_expression(c, s->var_decl.init[i], sym)
+				: nil(c);
+
+			emit_bc(c, INSTR_MOV, var_sym->address, reg);
+		}
 		break;
 
 	default:
