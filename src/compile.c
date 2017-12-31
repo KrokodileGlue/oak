@@ -109,6 +109,44 @@ add_constant(struct compiler *c, struct token *tok)
 	return constant_table_add(c->ct, make_value_from_token(c, tok));
 }
 
+static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym);
+
+static int
+compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
+{
+	int reg = -1;
+
+#define o(X)	  \
+	case OP_##X: \
+		emit_efg(c, INSTR_##X, reg = alloc_reg(c), \
+		         compile_expression(c, e->a, sym), \
+		         compile_expression(c, e->b, sym)); \
+		break
+
+	switch (e->operator->type) {
+	case OPTYPE_BINARY:
+		switch (e->operator->name) {
+			o(ADD);
+			o(MUL);
+			o(DIV);
+			o(SUB);
+
+		default:
+			DOUT("unimplemented operator compiler for binary operator `%s'",
+			     e->operator->body);
+			assert(false);
+		}
+		break;
+
+	default:
+		DOUT("unimplemented operator compiler for of type `%d'",
+		     e->operator->type);
+		assert(false);
+	}
+
+	return reg;
+}
+
 static int
 compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 {
@@ -125,15 +163,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 
 	case EXPR_OPERATOR:
-		switch (e->operator->name) {
-		case OP_ADD:
-			emit_efg(c, INSTR_ADD, reg = alloc_reg(c), compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
-			break;
-
-		default:
-			DOUT("unimplemented operator compiler for operator `%s'", e->operator->body);
-			assert(false);
-		}
+		reg = compile_operator(c, e, sym);
 		break;
 
 	default:

@@ -53,6 +53,18 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.efg.e) = add_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
 
+	case INSTR_MUL:
+		REG(c.d.efg.e) = mul_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
+
+	case INSTR_DIV:
+		REG(c.d.efg.e) = div_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
+
+	case INSTR_SUB:
+		REG(c.d.efg.e) = sub_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);
