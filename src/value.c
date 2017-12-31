@@ -77,6 +77,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 	if (l.type == VAL_STR && r.type == VAL_STR) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = NULL;
 
 		/*
 		 * We should be careful about messing with memory
