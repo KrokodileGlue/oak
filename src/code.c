@@ -2,24 +2,44 @@
 #include "util.h"
 
 struct instruction_data instruction_data[] = {
-	{ INSTR_MOVC,       "MOVC      " },
-	{ INSTR_MOV,        "MOV       " },
+	{ INSTR_MOVC,  REG_BC,   "MOVC      " },
+	{ INSTR_MOV,   REG_BC,   "MOV       " },
 
-	{ INSTR_ADD,        "ADD       " },
-	{ INSTR_SUB,        "SUB       " },
-	{ INSTR_MUL,        "MUL       " },
-	{ INSTR_DIV,        "DIV       " },
+	{ INSTR_ADD,   REG_EFG,  "ADD       " },
+	{ INSTR_SUB,   REG_EFG,  "SUB       " },
+	{ INSTR_MUL,   REG_EFG,  "MUL       " },
+	{ INSTR_DIV,   REG_EFG,  "DIV       " },
 
-	{ INSTR_PRINT,      "PRINT     " },
-	{ INSTR_LINE,       "LINE      " },
+	{ INSTR_PRINT, REG_A,    "PRINT     " },
+	{ INSTR_LINE,  REG_NONE, "LINE      " },
 
-	{ INSTR_END,        "END       " }
+	{ INSTR_END,   REG_NONE, "END       " }
 };
+
+void
+print_instruction(FILE *f, struct instruction c)
+{
+	fprintf(f, "%s", instruction_data[c.type].name);
+	switch (instruction_data[c.type].regtype) {
+	case REG_A: fprintf(f, " %d", c.d.a); break;
+	case REG_BC:
+		fprintf(f, " %d, %d", c.d.bc.b, c.d.bc.c);
+		break;
+	case REG_D: fprintf(f, " %d", c.d.d); break;
+	case REG_EFG:
+		fprintf(f, " %d, %d, %d", c.d.efg.e,
+		        c.d.efg.f, c.d.efg.g);
+		break;
+	case REG_NONE: break;
+	}
+
+}
 
 void
 print_code(FILE *f, struct instruction *code, size_t num_instr)
 {
 	for (size_t i = 0; i < num_instr; i++) {
-		fprintf(f, "\n%3zu: %s %d", i, instruction_data[code[i].type].name, code[i].d.a);
+		fprintf(f, "\n%3zu: ", i);
+		print_instruction(f, code[i]);
 	}
 }

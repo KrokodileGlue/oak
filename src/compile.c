@@ -54,11 +54,26 @@ emit_bc(struct compiler *c, enum instruction_type type, uint8_t B, uint8_t C)
 	emit(c, (struct instruction){type, .d = { .bc = {B, C} }});
 }
 
+static void
+emit_efg(struct compiler *c, enum instruction_type type, uint8_t E, uint8_t F, uint8_t G)
+{
+	emit(c, (struct instruction){type, .d = { .efg = {E, F, G} }});
+}
+
+static void
+push_frame(struct compiler *c)
+{
+	c->stack_top = oak_realloc(c->stack_top, (c->sp + 2)
+	                           * sizeof *c->stack_top);
+	c->sp++;
+	c->stack_top[c->sp] = 0;
+}
+
 static int
 alloc_reg(struct compiler *c)
 {
 	/* TODO: make sure we have enough registers n stuff. */
-	c->stack_top = realloc(c->stack_top, (c->sp + 1) * sizeof *c->stack_top);
+	/* TODO: put a cap on the recursion */
 	return c->stack_top[c->sp]++;
 }
 
@@ -108,6 +123,19 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 			break;
 		}
 		break;
+
+	case EXPR_OPERATOR:
+		switch (e->operator->name) {
+		case OP_ADD:
+			emit_efg(c, INSTR_ADD, reg = alloc_reg(c), compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
+			break;
+
+		default:
+			DOUT("unimplemented operator compiler for operator `%s'", e->operator->body);
+			assert(false);
+		}
+		break;
+
 	default:
 		assert(false);
 	}
@@ -155,8 +183,8 @@ compile(struct module *m, bool debug)
 	c->ct = new_constant_table();
 	c->gc = m->gc;
 	c->debug = debug;
-	// m->tree[0]->tok->loc
-	/* emit(c, (struct instruction){INSTR_FRAME, .d = {{0,0,0}}}); */
+	c->sp = -1;
+	push_frame(c);
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		c->stmt = m->tree[i];

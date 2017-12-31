@@ -40,8 +40,6 @@ struct operator {
 };
 
 extern struct operator ops[];
-
-size_t
-num_ops();
+size_t num_ops();
 
 #endif

@@ -20,6 +20,7 @@ struct vm {
 	struct gc *gc;
 
 	bool debug;
+	FILE *f;
 };
 
 #endif

@@ -38,18 +38,23 @@ show_value(struct gc *gc, struct value val)
 	case VAL_INT:
 		snprintf(str, cap, "%"PRId64, val.integer);
 		break;
+
 	case VAL_STR:
 		snprintf(str, cap, "%s", gc->str[val.idx]);
 		break;
+
 	case VAL_FLOAT:
 		snprintf(str, cap, "%f", val.real);
 		break;
+
 	case VAL_BOOL:
 		snprintf(str, cap, "%s", val.boolean ? "true" : "false");
 		break;
+
 	case VAL_NIL:
 		snprintf(str, cap, "nil");
 		break;
+
 	default:
 		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);
@@ -61,7 +66,10 @@ show_value(struct gc *gc, struct value val)
 struct value
 add_values(struct gc *gc, struct value l, struct value r)
 {
-//	DOUT("left: %s (%s), right: %s (%s)", show_value(l), value_data[l.type].body, show_value(r), value_data[r.type].body);
+	char *ls = show_value(gc, l), *rs = show_value(gc, r);
+	if (gc->debug)
+		DOUT("performing addition --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+	free(ls); free(rs);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -96,6 +104,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 		ret.idx = gc_alloc(gc, VAL_STR);
 		gc->str[ret.idx] = new_cat(gc->str[r.idx], show_value(gc, l));
 	} else BINARY_MATH_OPERATION(+) else {
+		/* TODO: do something here. */
 		assert(false);
 	}
 

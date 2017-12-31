@@ -8,6 +8,8 @@ struct gc {
 	int64_t slot[NUM_ALLOCATABLE_VALUES];
 	uint64_t *bmp[NUM_ALLOCATABLE_VALUES];
 
+	bool debug;
+
 	/* The actual value structures. */
 	char **str;
 };

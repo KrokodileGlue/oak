@@ -23,24 +23,34 @@ push_frame(struct vm *vm)
 	vm++;
 }
 
+#define REG(X) vm->frame[vm->fp][X]
+
 void
 execute_instr(struct vm *vm, struct instruction c)
 {
-	if (vm->debug)
-		DOUT("%3zu: %s (%d)\n", vm->ip, instruction_data[c.type].name, c.d.a);
+	if (vm->debug) {
+		fprintf(vm->f, "> %3zu: ", vm->ip);
+		print_instruction(vm->f, c);
+		fputc('\n', vm->f);
+	}
 
 	switch (c.type) {
 	case INSTR_MOVC:
 		/* Look at this c.d.bc.c bullshit. Ridiculous. */
-		vm->frame[vm->fp][c.d.bc.b] = vm->ct->val[c.d.bc.c];
+		REG(c.d.bc.b) = vm->ct->val[c.d.bc.c];
 		break;
 
 	case INSTR_PRINT:
-		print_value(stdout, vm->gc, vm->frame[vm->fp][c.d.a]);
+		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
+		if (vm->debug) fputs("\n", vm->f);
 		break;
 
 	case INSTR_LINE:
-		puts("");
+		if (!vm->debug) fputc('\n', vm->f);
+		break;
+
+	case INSTR_ADD:
+		REG(c.d.efg.e) = add_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
 
 	default:
@@ -59,6 +69,7 @@ execute(struct module *m, bool debug)
 	vm->debug = debug;
 	vm->ct = m->ct;
 	vm->gc = m->gc;
+	vm->f = stderr;
 	push_frame(vm);
 
 	while (vm->code[vm->ip].type != INSTR_END) {

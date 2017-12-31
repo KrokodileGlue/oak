@@ -16,9 +16,7 @@ struct oak *
 new_oak()
 {
 	struct oak *k = oak_malloc(sizeof *k);
-
 	memset(k, 0, sizeof *k);
-
 	return k;
 }
 
@@ -43,6 +41,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 		if (!k->print_ast)          k->print_ast          = !strcmp(argv[i], "-pa");
 		if (!k->print_symbol_table) k->print_symbol_table = !strcmp(argv[i], "-ps");
 		if (!k->print_code)         k->print_code         = !strcmp(argv[i], "-pc");
+		if (!k->print_gc)           k->print_gc           = !strcmp(argv[i], "-pg");
 		if (!k->debug)              k->debug              = !strcmp(argv[i], "-d");
 		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
 
@@ -57,6 +56,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	}
 
 	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_code || k->print_everything);
+	if (k->print_anything) k->print_code = true;
 
 	if (!path) {
 		DOUT("did not receive an input file");
@@ -79,7 +79,7 @@ void print_modules(struct oak *k)
 			struct module *m = k->modules[i];
 
 			if (i != 0) fputc('\n', stderr);
-			fprintf(stderr, "============================== module '%s' ==============================", m->name);
+			fprintf(stderr, "============================== module `%s' ==============================", m->name);
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
@@ -122,6 +122,7 @@ load_module(struct oak *k, char *path, char *name)
 	struct module *m = new_module(path);
 	m->name = strclone(name);
 	m->text = text;
+	if (k->print_gc) m->gc->debug = true;
 
 	add_module(k, m);
 
