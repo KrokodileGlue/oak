@@ -11,7 +11,7 @@
 
 struct compiler {
 	struct instruction *code;
-	size_t num_instr;
+	size_t ip;
 
 	struct statement **tree;
 	size_t num_nodes;

@@ -38,7 +38,7 @@ void
 print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 {
 	for (size_t i = 0; i < ct->num; i++) {
-		fprintf(f, "\n[%zu : %s] ", i, value_data[ct->val[i].type].body);
+		fprintf(f, "\n[%3zu : %9s] ", i, value_data[ct->val[i].type].body);
 		switch (ct->val[i].type) {
 		case VAL_STR:
 			print_escaped_string(f, gc->str[ct->val[i].idx],
@@ -47,6 +47,10 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 
 		case VAL_INT:
 			fprintf(f, "%"PRId64, ct->val[i].integer);
+			break;
+
+		case VAL_NIL:
+			fprintf(f, "nil");
 			break;
 
 		default:

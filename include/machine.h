@@ -9,6 +9,9 @@ struct vm {
 	struct instruction *code;
 	size_t ip;
 
+	int *callstack;
+	size_t csp;
+
 	struct value *stack;
 	size_t sp;
 

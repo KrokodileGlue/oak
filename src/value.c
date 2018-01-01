@@ -134,6 +134,12 @@ struct value sub_values(struct gc *gc, struct value l, struct value r)
 
 struct value mul_values(struct gc *gc, struct value l, struct value r)
 {
+	if (gc->debug) {
+		char *ls = show_value(gc, l), *rs = show_value(gc, r);
+		DOUT("performing multiplication --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		free(ls); free(rs);
+	}
+
 	/* TODO: fancy operations on strings and lists. */
 	struct value ret;
 	ret.type = VAL_NIL;

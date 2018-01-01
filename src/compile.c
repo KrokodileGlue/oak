@@ -35,8 +35,8 @@ free_compiler(struct compiler *c)
 static void
 emit(struct compiler *c, struct instruction instr)
 {
-	c->code = realloc(c->code, sizeof c->code[0] * (c->num_instr + 1));
-	c->code[c->num_instr++] = instr;
+	c->code = realloc(c->code, sizeof c->code[0] * (c->ip + 1));
+	c->code[c->ip++] = instr;
 }
 
 static void
@@ -156,7 +156,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 
 	default:
-		DOUT("unimplemented operator compiler for of type `%d'",
+		DOUT("unimplemented operator compiler for type `%d'",
 		     e->operator->type);
 		assert(false);
 	}
@@ -165,9 +165,34 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 }
 
 static int
+compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
+{
+	switch (e->type) {
+	case EXPR_VALUE:
+		switch (e->val->type) {
+		case TOK_IDENTIFIER: {
+			struct symbol *var = resolve(sym, e->val->value);
+			return var->address;
+		} break;
+
+		default:
+			error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
+			break;
+		}
+		break;
+
+	default:
+		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
+		break;
+	}
+
+	assert(false);
+}
+
+static int
 compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 {
-	int reg = 0;
+	int reg = -1;
 
 	switch (e->type) {
 	case EXPR_VALUE:
@@ -188,7 +213,19 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		reg = compile_operator(c, e, sym);
 		break;
 
+	case EXPR_FN_CALL:
+		for (size_t i = 0; i < e->num; i++) {
+			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym));
+		}
+
+		emit_a(c, INSTR_CALL, compile_lvalue(c, e->a, sym));
+		reg = alloc_reg(c);
+		emit_a(c, INSTR_POP, reg);
+		break;
+
 	default:
+		DOUT("unimplemented compiler for expression of type `%d'",
+		     e->operator->type);
 		assert(false);
 	}
 
@@ -198,11 +235,10 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
-	struct symbol *sym = c->sym;
+	struct symbol *sym = find_from_scope(c->sym, s->scope);
 	if (c->debug) {
-		DOUT("compiling statement of type %d (%s)", s->type,
-		     statement_data[s->type].body);
-		DOUT("in symbol `%s'", sym->name);
+		fprintf(stderr, "compiling %d (%s) in `%s'...\n", s->type,
+		        statement_data[s->type].body, sym->name);
 	}
 
 	switch (s->type) {
@@ -230,6 +266,39 @@ compile_statement(struct compiler *c, struct statement *s)
 				: nil(c);
 
 			emit_bc(c, INSTR_MOV, var_sym->address, reg);
+		}
+		break;
+
+	case STMT_FN_DEF: {
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, 0);
+		push_frame(c);
+		sym->address = c->ip;
+
+		/*
+		 * TODO: think about what happens if you call a
+		 * function with the wrong number of arguments.
+		 */
+		for (size_t i = 0; i < s->fn_def.num; i++) {
+			struct symbol *arg_sym = resolve(sym, s->fn_def.args[i]->value);
+			arg_sym->address = c->var[c->sp]++;
+			emit_a(c, INSTR_POP, arg_sym->address);
+		}
+
+		compile_statement(c, s->fn_def.body);
+		emit_a(c, INSTR_PUSH, nil(c));
+		emit_(c, INSTR_RET);
+		c->code[a].d.a = c->ip;
+	} break;
+
+	case STMT_RET:
+		emit_a(c, INSTR_PUSH, compile_expression(c, s->ret.expr, sym));
+		emit_(c, INSTR_RET);
+		break;
+
+	case STMT_BLOCK:
+		for (size_t i = 0; i < s->block.num; i++) {
+			compile_statement(c, s->block.stmts[i]);
 		}
 		break;
 
@@ -269,7 +338,7 @@ compile(struct module *m, bool debug)
 	}
 
 	m->code = c->code;
-	m->num_instr = c->num_instr;
+	m->num_instr = c->ip;
 	m->stage = MODULE_STAGE_COMPILED;
 	m->ct = c->ct;
 

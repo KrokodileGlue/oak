@@ -24,6 +24,8 @@ free_vm(struct vm *vm)
 
 	error_clear(vm->r);
 	free(vm->frame);
+	free(vm->stack);
+	free(vm->callstack);
 	free(vm);
 }
 
@@ -34,6 +36,35 @@ push_frame(struct vm *vm)
 	vm->fp++;
 	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
+}
+
+static void
+push(struct vm *vm, struct value v)
+{
+	vm->stack = oak_realloc(vm->stack, (vm->sp + 2) * sizeof *vm->stack);
+	vm->sp++;
+	vm->stack[vm->sp] = v;
+}
+
+static struct value
+pop(struct vm *vm)
+{
+	return vm->stack[vm->sp--];
+}
+
+static void
+call(struct vm *vm, int ip)
+{
+	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 2) * sizeof *vm->callstack);
+	vm->csp++;
+	vm->callstack[vm->csp] = vm->ip;
+	vm->ip = ip;
+}
+
+static void
+ret(struct vm *vm)
+{
+	vm->ip = vm->callstack[vm->csp--];
 }
 
 #define REG(X) vm->frame[vm->fp][X]
@@ -54,8 +85,27 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_MOV:
-		/* Look at this c.d.bc.c bullshit. Ridiculous. */
 		REG(c.d.bc.b) = REG(c.d.bc.c);
+		break;
+
+	case INSTR_JMP:
+		vm->ip = c.d.a;
+		break;
+
+	case INSTR_PUSH:
+		push(vm, REG(c.d.a));
+		break;
+
+	case INSTR_POP:
+		REG(c.d.a) = pop(vm);
+		break;
+
+	case INSTR_CALL:
+		call(vm, c.d.a - 1);
+		break;
+
+	case INSTR_RET:
+		ret(vm);
 		break;
 
 	case INSTR_PRINT:

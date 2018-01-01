@@ -11,6 +11,12 @@ enum instruction_type {
 	INSTR_MOVC,
 	INSTR_MOV,
 
+	INSTR_JMP,
+	INSTR_PUSH,
+	INSTR_POP,
+	INSTR_CALL,
+	INSTR_RET,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,

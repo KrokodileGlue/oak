@@ -57,6 +57,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 
 	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_code || k->print_everything);
 	if (k->print_anything) k->print_code = true;
+	if (k->print_everything) k->print_gc = true;
 
 	if (!path) {
 		DOUT("did not receive an input file");
