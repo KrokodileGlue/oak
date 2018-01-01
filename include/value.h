@@ -6,11 +6,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define NUM_ALLOCATABLE_VALUES 1
+#define NUM_ALLOCATABLE_VALUES 2
 
 struct value {
 	enum value_type {
+		/* allocated */
 		VAL_STR,
+		VAL_ARRAY,
+
+		/* not allocated */
 		VAL_NIL,
 		VAL_INT,
 		VAL_FLOAT,

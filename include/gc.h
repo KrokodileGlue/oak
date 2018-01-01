@@ -12,6 +12,7 @@ struct gc {
 
 	/* The actual value structures. */
 	char **str;
+	struct value **array;
 };
 
 struct gc *new_gc();

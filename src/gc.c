@@ -45,7 +45,6 @@ bmp_alloc(uint64_t *bmp, int64_t slots)
 
 	for (int64_t i = 0; i < slots; i++) {
 		if (*bmp == 0xFFFFFFFFFFFFFFFFLL) {
-			/* go to the next bitmap if this one is full */
 			bmp++;
 			continue;
 		}

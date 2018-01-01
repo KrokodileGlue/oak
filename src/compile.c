@@ -231,7 +231,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
-		     e->operator->type);
+		     e->type);
 		assert(false);
 	}
 
@@ -312,6 +312,9 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (size_t i = 0; i < s->block.num; i++) {
 			compile_statement(c, s->block.stmts[i]);
 		}
+		break;
+
+	case STMT_CLASS:
 		break;
 
 	default:

@@ -11,6 +11,9 @@ println '2 * 2 = ', f(2)
 fn g = "stuff"
 println g()
 
+var c = [1, 2, 3, 4]
+println c
+
 # class foo {
 # 	var x y z
 
