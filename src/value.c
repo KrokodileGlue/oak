@@ -98,7 +98,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
 		char *s = show_value(gc, l);
-		gc->str[ret.idx] = new_cat(gc->str[r.idx], s);
+		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
 		free(s);
 	} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
 		ret.type = VAL_STR;

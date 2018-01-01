@@ -89,7 +89,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_JMP:
-		vm->ip = c.d.a;
+		vm->ip = c.d.a - 1;
 		break;
 
 	case INSTR_PUSH:
