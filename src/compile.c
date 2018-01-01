@@ -133,6 +133,7 @@ nil(struct compiler *c)
 }
 
 static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym);
+static int compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym);
 
 static int
 compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
@@ -153,6 +154,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			o(MUL);
 			o(DIV);
 			o(SUB);
+
+		case OP_EQ:
+			emit_bc(c, INSTR_MOV, compile_lvalue(c, e->a, sym),
+			        compile_expression(c, e->b, sym));
+			break;
 
 		default:
 			DOUT("unimplemented operator compiler for binary operator `%s'",
@@ -189,7 +195,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	default:
 		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
-		break;
+		return -1;
 	}
 
 	assert(false);
@@ -336,7 +342,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 		break;
 
-	case STMT_CLASS:
+	case STMT_EXPR:
+		compile_expression(c, s->expr, sym);
 		break;
 
 	default:

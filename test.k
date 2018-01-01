@@ -5,6 +5,7 @@ println a
 
 var b = 2 * 2
 println (b + 6) + a
+b = 2000
 
 println '2 * 2 = ', f(2)
 
