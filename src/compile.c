@@ -75,6 +75,12 @@ push_frame(struct compiler *c)
 	c->stack_top[c->sp] = c->sym->num_variables;
 }
 
+static void
+pop_frame(struct compiler *c)
+{
+	c->sp--;
+}
+
 static int
 alloc_reg(struct compiler *c)
 {
@@ -286,12 +292,18 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 
 		compile_statement(c, s->fn_def.body);
+		pop_frame(c);
 		emit_a(c, INSTR_PUSH, nil(c));
 		emit_(c, INSTR_RET);
 		c->code[a].d.a = c->ip;
 	} break;
 
 	case STMT_RET:
+		if (c->sp == 0) {
+			error_push(c->r, s->tok->loc, ERR_FATAL,
+			           "return statement occurs outside of function body");
+		}
+
 		emit_a(c, INSTR_PUSH, compile_expression(c, s->ret.expr, sym));
 		emit_(c, INSTR_RET);
 		break;
