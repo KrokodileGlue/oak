@@ -238,12 +238,20 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 	return reg;
 }
 
+static int
+compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
+{
+	int a = compile_expression(c, e, sym);
+	c->stack_top[c->sp] = c->sym->num_variables;
+	return a;
+}
+
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
 	struct symbol *sym = find_from_scope(c->sym, s->scope);
 	if (c->debug) {
-		fprintf(stderr, "compiling %d (%s) in `%s'...\n", s->type,
+		fprintf(stderr, "compiling %d (%s) in `%s'\n", s->type,
 		        statement_data[s->type].body, sym->name);
 	}
 
@@ -251,14 +259,14 @@ compile_statement(struct compiler *c, struct statement *s)
 	case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++)
 			emit_a(c, INSTR_PRINT,
-			       compile_expression(c, s->print.args[i], sym));
+			       compile_expr(c, s->print.args[i], sym));
 		emit_(c, INSTR_LINE);
 		break;
 
 	case STMT_PRINT:
 		for (size_t i = 0; i < s->print.num; i++)
 			emit_a(c, INSTR_PRINT,
-			       compile_expression(c, s->print.args[i], sym));
+			       compile_expr(c, s->print.args[i], sym));
 		break;
 
 	case STMT_VAR_DECL:
@@ -268,7 +276,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			int reg = -1;
 
 			reg = s->var_decl.init
-				? compile_expression(c, s->var_decl.init[i], sym)
+				? compile_expr(c, s->var_decl.init[i], sym)
 				: nil(c);
 
 			emit_bc(c, INSTR_MOV, var_sym->address, reg);
@@ -304,7 +312,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			           "return statement occurs outside of function body");
 		}
 
-		emit_a(c, INSTR_PUSH, compile_expression(c, s->ret.expr, sym));
+		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym));
 		emit_(c, INSTR_RET);
 		break;
 

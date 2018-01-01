@@ -1,13 +1,13 @@
-compiling 0 (function definition) in `f'...
-compiling 10 (return) in `*block*'...
-compiling 6 (variable declaration) in `*main*'...
-compiling 9 (println) in `*main*'...
-compiling 6 (variable declaration) in `*main*'...
-compiling 9 (println) in `*main*'...
-compiling 9 (println) in `*main*'...
-compiling 0 (function definition) in `g'...
-compiling 10 (return) in `*block*'...
-compiling 9 (println) in `*main*'...
+compiling 0 (function definition) in `f'
+compiling 10 (return) in `*block*'
+compiling 6 (variable declaration) in `*main*'
+compiling 9 (println) in `*main*'
+compiling 6 (variable declaration) in `*main*'
+compiling 9 (println) in `*main*'
+compiling 9 (println) in `*main*'
+compiling 0 (function definition) in `g'
+compiling 10 (return) in `*block*'
+compiling 9 (println) in `*main*'
 >   0: JMP        10
 >  10: MOVC       4, 2
 >  11: MOVC       5, 3
@@ -16,54 +16,56 @@ compiling 9 (println) in `*main*'...
 >  14: MOVC       8, 6
 >  15: MOVC       9, 7
 >  16: ADD        10, 9, 8
-oak: performing addition --- left: 2 (integer), right: 4 (integer)
+oak: addition --- left: 2 (integer), right: 4 (integer)
 >  17: MUL        11, 10, 7
-oak: performing multiplication --- left: 6 (integer), right: 3 (integer)
+oak: multiplication --- left: 6 (integer), right: 3 (integer)
 >  18: DIV        12, 11, 6
+oak: division --- left: 18 (integer), right: 9 (integer)
 >  19: SUB        13, 12, 5
+oak: subtraction --- left: 2 (integer), right: 1 (integer)
 >  20: ADD        14, 13, 4
-oak: performing addition --- left: 1 (integer), right: 4 (integer)
+oak: addition --- left: 1 (integer), right: 4 (integer)
 >  21: MOVC       15, 8
 >  22: MOVC       16, 9
 >  23: ADD        17, 16, 15
-oak: performing addition --- left: foo (string), right: bar (string)
+oak: addition --- left: foo (string), right: bar (string)
 >  24: ADD        18, 17, 14
-oak: performing addition --- left: foobar (string), right: 5 (integer)
+oak: addition --- left: foobar (string), right: 5 (integer)
 >  25: MOV        0, 18
->  26: MOV        19, 0
->  27: PRINT      19
+>  26: MOV        3, 0
+>  27: PRINT      3
 foobar5
 >  28: LINE
->  29: MOVC       20, 10
->  30: MOVC       21, 11
->  31: MUL        22, 21, 20
-oak: performing multiplication --- left: 2 (integer), right: 2 (integer)
->  32: MOV        1, 22
->  33: MOV        23, 0
->  34: MOVC       24, 12
->  35: MOV        25, 1
->  36: ADD        26, 25, 24
-oak: performing addition --- left: 4 (integer), right: 6 (integer)
->  37: ADD        27, 26, 23
-oak: performing addition --- left: 10 (integer), right: foobar5 (string)
->  38: PRINT      27
+>  29: MOVC       3, 10
+>  30: MOVC       4, 11
+>  31: MUL        5, 4, 3
+oak: multiplication --- left: 2 (integer), right: 2 (integer)
+>  32: MOV        1, 5
+>  33: MOV        3, 0
+>  34: MOVC       4, 12
+>  35: MOV        5, 1
+>  36: ADD        6, 5, 4
+oak: addition --- left: 4 (integer), right: 6 (integer)
+>  37: ADD        7, 6, 3
+oak: addition --- left: 10 (integer), right: foobar5 (string)
+>  38: PRINT      7
 10foobar5
 >  39: LINE
->  40: MOVC       28, 13
->  41: PRINT      28
+>  40: MOVC       3, 13
+>  41: PRINT      3
 2 * 2 =
->  42: MOVC       29, 14
->  43: PUSH       29
+>  42: MOVC       3, 14
+>  43: PUSH       3
 >  44: CALL       1
 >   1: POP        0
 >   2: MOVC       3, 0
 >   3: MOV        4, 0
 >   4: MUL        5, 4, 3
-oak: performing multiplication --- left: 2 (integer), right: 2 (integer)
+oak: multiplication --- left: 2 (integer), right: 2 (integer)
 >   5: PUSH       5
 >   6: RET
->  45: POP        30
->  46: PRINT      30
+>  45: POP        4
+>  46: PRINT      4
 4
 >  47: LINE
 >  48: JMP        55
@@ -71,8 +73,8 @@ oak: performing multiplication --- left: 2 (integer), right: 2 (integer)
 >  49: MOVC       3, 15
 >  50: PUSH       3
 >  51: RET
->  56: POP        32
->  57: PRINT      32
+>  56: POP        4
+>  57: PRINT      4
 stuff
 >  58: LINE
 ============================== module `*main*' ==============================
@@ -315,37 +317,37 @@ IDENTIFIER |            |     test.k |     163 |      1 | false | g
  23: ADD        17, 16, 15
  24: ADD        18, 17, 14
  25: MOV        0, 18
- 26: MOV        19, 0
- 27: PRINT      19
+ 26: MOV        3, 0
+ 27: PRINT      3
  28: LINE
- 29: MOVC       20, 10
- 30: MOVC       21, 11
- 31: MUL        22, 21, 20
- 32: MOV        1, 22
- 33: MOV        23, 0
- 34: MOVC       24, 12
- 35: MOV        25, 1
- 36: ADD        26, 25, 24
- 37: ADD        27, 26, 23
- 38: PRINT      27
+ 29: MOVC       3, 10
+ 30: MOVC       4, 11
+ 31: MUL        5, 4, 3
+ 32: MOV        1, 5
+ 33: MOV        3, 0
+ 34: MOVC       4, 12
+ 35: MOV        5, 1
+ 36: ADD        6, 5, 4
+ 37: ADD        7, 6, 3
+ 38: PRINT      7
  39: LINE
- 40: MOVC       28, 13
- 41: PRINT      28
- 42: MOVC       29, 14
- 43: PUSH       29
+ 40: MOVC       3, 13
+ 41: PRINT      3
+ 42: MOVC       3, 14
+ 43: PUSH       3
  44: CALL       1
- 45: POP        30
- 46: PRINT      30
+ 45: POP        4
+ 46: PRINT      4
  47: LINE
  48: JMP        55
  49: MOVC       3, 15
  50: PUSH       3
  51: RET
- 52: MOVC       31, 16
- 53: PUSH       31
+ 52: MOVC       3, 16
+ 53: PUSH       3
  54: RET
  55: CALL       49
- 56: POP        32
- 57: PRINT      32
+ 56: POP        4
+ 57: PRINT      4
  58: LINE
  59: END
