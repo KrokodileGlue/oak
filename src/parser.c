@@ -31,6 +31,7 @@ static void
 expect_symbol(struct parser *ps, char *sym)
 {
 //	DOUT("expecting %s, looking at %s\n", sym, ps->tok->value);
+
 	if (strcmp(ps->tok->value, sym)) {
 		if (ps->tok->type == TOK_END) {
 			struct token *tok = ps->tok->prev;
@@ -283,15 +284,17 @@ parse_fn_def(struct parser *ps)
 	s->fn_def.name = ps->tok->value;
 	NEXT;
 
-	expect_symbol(ps, "(");
+	if (!strcmp(ps->tok->value, "(")) {
+		expect_symbol(ps, "(");
 
-	while (ps->tok->type == TOK_IDENTIFIER) {
-		s->fn_def.args = oak_realloc(s->fn_def.args, sizeof *s->fn_def.args * (s->fn_def.num + 1));
-		s->fn_def.args[s->fn_def.num++] = ps->tok;
-		NEXT;
+		while (ps->tok->type == TOK_IDENTIFIER) {
+			s->fn_def.args = oak_realloc(s->fn_def.args, sizeof *s->fn_def.args * (s->fn_def.num + 1));
+			s->fn_def.args[s->fn_def.num++] = ps->tok;
+			NEXT;
+		}
+
+		expect_symbol(ps, ")");
 	}
-
-	expect_symbol(ps, ")");
 
 	if (!strcmp(ps->tok->value, "=")) {
 		expect_symbol(ps, "=");

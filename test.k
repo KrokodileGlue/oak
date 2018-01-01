@@ -8,19 +8,20 @@ println (b + 6) + a
 
 println '2 * 2 = ', f(2)
 
-return 5
+fn g = "stuff"
+println g()
+
 # class foo {
 # 	var x y z
 
-# 	# Maybe use a different syntax for methods than functions.
-# 	# TODO: functions that take no arguments should not require ()
-# 	fn foo () {
+# 	# Maybe methods should have a different syntax than functions.
+# 	fn foo {
 # 		x = 1
 # 		y = 2
 # 		z = 3
 # 	}
 
-# 	fn f () {
+# 	fn f {
 # 		return x + y + z
 # 	}
 # }
