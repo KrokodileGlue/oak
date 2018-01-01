@@ -68,6 +68,7 @@ ret(struct vm *vm)
 }
 
 #define REG(X) vm->frame[vm->fp][X]
+#define BIN(X) REG(c.d.efg.e) = X##_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g))
 
 void
 execute_instr(struct vm *vm, struct instruction c)
@@ -78,60 +79,30 @@ execute_instr(struct vm *vm, struct instruction c)
 		fputc('\n', vm->f);
 	}
 
+	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
+
 	switch (c.type) {
-	case INSTR_MOVC:
-		/* Look at this c.d.bc.c bullshit. Ridiculous. */
-		REG(c.d.bc.b) = vm->ct->val[c.d.bc.c];
-		break;
+	case INSTR_MOVC: REG(c.d.bc.b) = vm->ct->val[c.d.bc.c]; break;
+	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
+	case INSTR_MOV:  REG(c.d.bc.b) = REG(c.d.bc.c);         break;
+	case INSTR_JMP:  vm->ip = c.d.a - 1;                    break;
+	case INSTR_PUSH: push(vm, REG(c.d.a));                  break;
+	case INSTR_POP:  REG(c.d.a) = pop(vm);                  break;
+	case INSTR_CALL: call(vm, c.d.a - 1);                   break;
+	case INSTR_RET:  ret(vm);                               break;
+	case INSTR_ADD:  BIN(add);                              break;
+	case INSTR_SUB:  BIN(sub);                              break;
+	case INSTR_MUL:  BIN(mul);                              break;
+	case INSTR_DIV:  BIN(div);                              break;
 
-	case INSTR_MOV:
-		REG(c.d.bc.b) = REG(c.d.bc.c);
-		break;
-
-	case INSTR_JMP:
-		vm->ip = c.d.a - 1;
-		break;
-
-	case INSTR_PUSH:
-		push(vm, REG(c.d.a));
-		break;
-
-	case INSTR_POP:
-		REG(c.d.a) = pop(vm);
-		break;
-
-	case INSTR_CALL:
-		call(vm, c.d.a - 1);
-		break;
-
-	case INSTR_RET:
-		ret(vm);
+	case INSTR_PUSHBACK:
 		break;
 
 	case INSTR_PRINT:
 		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
-		if (vm->debug) fputs("\n", vm->f);
+		if (vm->debug) fputc('\n', vm->f);
 		break;
 
-	case INSTR_LINE:
-		if (!vm->debug) fputc('\n', vm->f);
-		break;
-
-	case INSTR_ADD:
-		REG(c.d.efg.e) = add_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
-		break;
-
-	case INSTR_MUL:
-		REG(c.d.efg.e) = mul_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
-		break;
-
-	case INSTR_DIV:
-		REG(c.d.efg.e) = div_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
-		break;
-
-	case INSTR_SUB:
-		REG(c.d.efg.e) = sub_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
-		break;
 
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,

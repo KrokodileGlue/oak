@@ -229,6 +229,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		emit_a(c, INSTR_POP, reg);
 		break;
 
+	case EXPR_LIST:
+		reg = alloc_reg(c);
+		for (size_t i = 0; i < e->num; i++)
+			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym));
+		break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
 		     e->type);
@@ -242,7 +248,7 @@ static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int a = compile_expression(c, e, sym);
-	c->stack_top[c->sp] = c->sym->num_variables;
+	c->stack_top[c->sp] = sym->num_variables;
 	return a;
 }
 

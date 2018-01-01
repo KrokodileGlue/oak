@@ -69,7 +69,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		DOUT("addition --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		fprintf(stderr, "addition - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
 		free(ls); free(rs);
 	}
 
@@ -126,7 +126,7 @@ struct value sub_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		DOUT("subtraction --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		fprintf(stderr, "subtraction - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
 		free(ls); free(rs);
 	}
 
@@ -144,7 +144,7 @@ struct value mul_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		DOUT("multiplication --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		fprintf(stderr, "multiplication - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
 		free(ls); free(rs);
 	}
 
@@ -163,7 +163,7 @@ struct value div_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		DOUT("division --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		fprintf(stderr, "division - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
 		free(ls); free(rs);
 	}
 
@@ -182,7 +182,7 @@ mod_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		DOUT("modulus --- left: %s (%s), right: %s (%s)", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		fprintf(stderr, "modulus - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
 		free(ls); free(rs);
 	}
 

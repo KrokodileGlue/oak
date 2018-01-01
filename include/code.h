@@ -17,6 +17,8 @@ enum instruction_type {
 	INSTR_CALL,
 	INSTR_RET,
 
+	INSTR_PUSHBACK,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,
