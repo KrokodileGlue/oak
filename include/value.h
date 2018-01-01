@@ -21,6 +21,8 @@ struct value {
 		VAL_BOOL
 	} type;
 
+	unsigned int len;
+
 	union {
 		int64_t integer;
 		double real;
@@ -43,6 +45,7 @@ struct value add_values(struct gc *gc, struct value l, struct value r);
 struct value sub_values(struct gc *gc, struct value l, struct value r);
 struct value mul_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
+struct value pushback(struct gc *gc, struct value l, struct value r);
 
 bool is_value_true(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);

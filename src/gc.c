@@ -34,7 +34,9 @@ free_gc(struct gc *gc)
 	for (int i = 0; i < NUM_ALLOCATABLE_VALUES; i++)
 		if (gc->bmp[i]) free(gc->bmp[i]);
 
+	if (gc->array) free(gc->array);
 	if (gc->str) free(gc->str);
+
 	free(gc);
 }
 
@@ -75,6 +77,12 @@ gc_alloc(struct gc *gc, enum value_type type)
 			gc->str = oak_realloc(gc->str,
 			                      gc->slot[type] * sizeof *gc->str);
 			break;
+
+		case VAL_ARRAY:
+			gc->array = oak_realloc(gc->array,
+			                      gc->slot[type] * sizeof *gc->array);
+			break;
+
 		default:
 			DOUT("unimplemented gc allocator");
 			assert(false);

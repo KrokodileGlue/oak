@@ -53,6 +53,11 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 			fprintf(f, "nil");
 			break;
 
+		case VAL_ARRAY:
+			for (unsigned int j = 0; j < ct->val[i].len; j++)
+				print_value(f, gc, gc->array[ct->val[i].idx][j]);
+			break;
+
 		default:
 			DOUT("unimplemented constant printer for value of type %s",
 			     value_data[ct->val[i].type].body);

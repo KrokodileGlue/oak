@@ -39,6 +39,12 @@ push_frame(struct vm *vm)
 }
 
 static void
+pop_frame(struct vm *vm)
+{
+	vm->fp--;
+}
+
+static void
 push(struct vm *vm, struct value v)
 {
 	vm->stack = oak_realloc(vm->stack, (vm->sp + 2) * sizeof *vm->stack);
@@ -55,6 +61,7 @@ pop(struct vm *vm)
 static void
 call(struct vm *vm, int ip)
 {
+	push_frame(vm);
 	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 2) * sizeof *vm->callstack);
 	vm->csp++;
 	vm->callstack[vm->csp] = vm->ip;
@@ -64,6 +71,7 @@ call(struct vm *vm, int ip)
 static void
 ret(struct vm *vm)
 {
+	pop_frame(vm);
 	vm->ip = vm->callstack[vm->csp--];
 }
 
@@ -96,6 +104,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DIV:  BIN(div);                              break;
 
 	case INSTR_PUSHBACK:
+		REG(c.d.bc.b) = pushback(vm->gc, REG(c.d.bc.b), REG(c.d.bc.c));
 		break;
 
 	case INSTR_PRINT:

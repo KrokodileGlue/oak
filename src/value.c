@@ -34,6 +34,7 @@ show_value(struct gc *gc, struct value val)
 	// TODO: remove the artificial cap.
 	size_t cap = 2048;
 	char *str = oak_malloc(cap + 1);
+	*str = 0;
 
 	switch (val.type) {
 	case VAL_INT:
@@ -54,6 +55,16 @@ show_value(struct gc *gc, struct value val)
 
 	case VAL_NIL:
 		snprintf(str, cap, "nil");
+		break;
+
+	case VAL_ARRAY:
+		for (unsigned int i = 0; i < val.len; i++) {
+			char *asdf = show_value(gc, gc->array[val.idx][i]);
+			char *temp = new_cat(str, asdf);
+			free(str);
+			str = temp;
+			free(asdf);
+		}
 		break;
 
 	default:
@@ -367,6 +378,21 @@ neg_value(struct gc *gc, struct value l)
 	return ans;
 }
 
+struct value pushback(struct gc *gc, struct value l, struct value r)
+{
+	if (gc->debug) {
+		char *ls = show_value(gc, l), *rs = show_value(gc, r);
+		fprintf(stderr, "pushback - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
+		free(ls); free(rs);
+	}
+
+	/* TODO: Make sure l is an array. */
+	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (l.len + 1) * sizeof *gc->array[l.idx]);
+	gc->array[l.idx][l.len] = r;
+	l.len++;
+	return l;
+}
+
 void
 print_value(FILE *f, struct gc *gc, struct value val)
 {
@@ -389,6 +415,11 @@ print_value(FILE *f, struct gc *gc, struct value val)
 
 	case VAL_NIL:
 		fprintf(f, "nil");
+		break;
+
+	case VAL_ARRAY:
+		for (unsigned int i = 0; i < val.len; i++)
+			print_value(f, gc, gc->array[val.idx][i]);
 		break;
 
 	default:
