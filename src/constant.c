@@ -54,7 +54,7 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 			break;
 
 		case VAL_ARRAY:
-			for (unsigned int j = 0; j < ct->val[i].len; j++)
+			for (unsigned int j = 0; j < gc->arrlen[ct->val[i].idx]; j++)
 				print_value(f, gc, gc->array[ct->val[i].idx][j]);
 			break;
 

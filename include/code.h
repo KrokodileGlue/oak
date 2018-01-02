@@ -38,11 +38,14 @@ struct instruction {
 
 	union {
 		uint8_t a;
+
 		struct {
 			uint8_t b;
 			uint8_t c;
 		} bc;
+
 		uint16_t d;
+
 		struct {
 			uint8_t e;
 			uint8_t f;

@@ -112,11 +112,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		 * TODO: Somewhere we should make sure that the index
 		 * is actually an integer.
 		 */
-		if (REG(c.d.efg.f).integer > REG(c.d.efg.e).len) {
-			vm->gc->array[REG(c.d.efg.e).idx] =
-				oak_realloc(vm->gc->array[REG(c.d.efg.e).idx],
-				            (REG(c.d.efg.f).integer + 1)
-				            * sizeof *vm->gc->array[REG(c.d.efg.e).idx]);
+		assert(REG(c.d.efg.e).type == VAL_ARRAY);
+		assert(REG(c.d.efg.f).type == VAL_INT);
+		grow_array(vm->gc, REG(c.d.efg.e), REG(c.d.efg.f).integer + 1);
+
+		if (vm->gc->arrlen[REG(c.d.efg.e).idx] <= REG(c.d.efg.f).integer) {
+			vm->gc->arrlen[REG(c.d.efg.e).idx] = REG(c.d.efg.f).integer + 1;
 		}
 
 		vm->gc->array[REG(c.d.efg.e).idx][REG(c.d.efg.f).integer]
@@ -124,16 +125,21 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_DEREF:
-		if (REG(c.d.efg.f).type != VAL_ARRAY) {
-			/* Some kinda error. */
-			error_push(vm->r, *c.loc, ERR_FATAL, "stupid shit");
-		}
+		grow_array(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g).integer + 1);
 
-		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
+		if (vm->gc->arrlen[REG(c.d.efg.f).idx] < REG(c.d.efg.g).integer) {
+			assert(false);
+		} else if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
 			REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx]
 				                      [REG(c.d.efg.g).integer];
 		} else {
-			REG(c.d.efg.e) = REG(c.d.efg.f);
+			struct value v;
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->arrlen[v.idx] = 0;
+			vm->gc->array[v.idx] = NULL;
+			vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer] = v;
+			REG(c.d.efg.e) = v;
 		}
 		break;
 

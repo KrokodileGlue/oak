@@ -81,6 +81,9 @@ gc_alloc(struct gc *gc, enum value_type type)
 		case VAL_ARRAY:
 			gc->array = oak_realloc(gc->array,
 			                      gc->slot[type] * sizeof *gc->array);
+
+			gc->arrlen = oak_realloc(gc->arrlen,
+			                      gc->slot[type] * sizeof *gc->arrlen);
 			break;
 
 		default:

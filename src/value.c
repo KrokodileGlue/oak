@@ -58,7 +58,7 @@ show_value(struct gc *gc, struct value val)
 		break;
 
 	case VAL_ARRAY:
-		for (unsigned int i = 0; i < val.len; i++) {
+		for (unsigned int i = 0; i < gc->arrlen[val.idx]; i++) {
 			char *asdf = show_value(gc, gc->array[val.idx][i]);
 			char *temp = new_cat(str, asdf);
 			free(str);
@@ -378,7 +378,8 @@ neg_value(struct gc *gc, struct value l)
 	return ans;
 }
 
-struct value pushback(struct gc *gc, struct value l, struct value r)
+struct value
+pushback(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
@@ -387,9 +388,21 @@ struct value pushback(struct gc *gc, struct value l, struct value r)
 	}
 
 	/* TODO: Make sure l is an array. */
-	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (l.len + 1) * sizeof *gc->array[l.idx]);
-	gc->array[l.idx][l.len] = r;
-	l.len++;
+	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (gc->arrlen[l.idx] + 1) * sizeof *gc->array[l.idx]);
+	gc->array[l.idx][gc->arrlen[l.idx]] = r;
+	gc->arrlen[l.idx]++;
+	return l;
+}
+
+struct value
+grow_array(struct gc *gc, struct value l, int r)
+{
+	/* TODO: Unretard this. */
+	if ((int)gc->arrlen[l.idx] <= r) {
+		gc->array[l.idx] = oak_realloc(gc->array[l.idx],
+		     (r + 1) * sizeof *gc->array[l.idx]);
+	}
+
 	return l;
 }
 
@@ -418,7 +431,7 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		break;
 
 	case VAL_ARRAY:
-		for (unsigned int i = 0; i < val.len; i++)
+		for (unsigned int i = 0; i < gc->arrlen[val.idx]; i++)
 			print_value(f, gc, gc->array[val.idx][i]);
 		break;
 

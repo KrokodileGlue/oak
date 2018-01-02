@@ -13,6 +13,7 @@ struct gc {
 	/* The actual value structures. */
 	char **str;
 	struct value **array;
+	unsigned int *arrlen;
 };
 
 struct gc *new_gc();

@@ -257,7 +257,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		v.len = 0;
+		c->gc->arrlen[v.idx] = 0;
 		c->gc->array[v.idx] = NULL;
 
 		emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v));
