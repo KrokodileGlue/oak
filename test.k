@@ -14,3 +14,5 @@ println g()
 
 var c = [1, [2, "asdf"], 3, b, 5, [6, g()], 7]
 println c
+c[0] = "---"
+println c

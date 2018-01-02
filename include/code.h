@@ -18,6 +18,8 @@ enum instruction_type {
 	INSTR_RET,
 
 	INSTR_PUSHBACK,
+	INSTR_ASET,
+	INSTR_DEREF,
 
 	INSTR_ADD,
 	INSTR_SUB,

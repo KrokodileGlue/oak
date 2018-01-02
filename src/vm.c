@@ -107,6 +107,22 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.bc.b) = pushback(vm->gc, REG(c.d.bc.b), REG(c.d.bc.c));
 		break;
 
+	case INSTR_ASET:
+		/*
+		 * TODO: Somewhere we should make sure that the index
+		 * is actually an integer.
+		 */
+		if (REG(c.d.efg.f).integer > REG(c.d.efg.e).len) {
+			vm->gc->array[REG(c.d.efg.e).idx] =
+				oak_realloc(vm->gc->array[REG(c.d.efg.e).idx],
+				            (REG(c.d.efg.f).integer + 1)
+				            * sizeof *vm->gc->array[REG(c.d.efg.e).idx]);
+		}
+
+		vm->gc->array[REG(c.d.efg.e).idx][REG(c.d.efg.f).integer]
+			= REG(c.d.efg.g);
+		break;
+
 	case INSTR_PRINT:
 		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
 		if (vm->debug) fputc('\n', vm->f);

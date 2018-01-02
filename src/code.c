@@ -2,26 +2,28 @@
 #include "util.h"
 
 struct instruction_data instruction_data[] = {
-	{ INSTR_MOVC,  REG_BC,   "MOVC      " },
-	{ INSTR_MOV,   REG_BC,   "MOV       " },
+	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
+	{ INSTR_MOV,      REG_BC,   "MOV       " },
 
-	{ INSTR_JMP,   REG_A,    "JMP       " },
-	{ INSTR_PUSH,  REG_A,    "PUSH      " },
-	{ INSTR_POP,   REG_A,    "POP       " },
-	{ INSTR_CALL,  REG_A,    "CALL      " },
-	{ INSTR_RET,   REG_NONE, "RET       " },
+	{ INSTR_JMP,      REG_A,    "JMP       " },
+	{ INSTR_PUSH,     REG_A,    "PUSH      " },
+	{ INSTR_POP,      REG_A,    "POP       " },
+	{ INSTR_CALL,     REG_A,    "CALL      " },
+	{ INSTR_RET,      REG_NONE, "RET       " },
 
-	{ INSTR_PUSHBACK,REG_BC, "PUSHBACK  " },
+	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
+	{ INSTR_ASET,     REG_EFG,  "ASET      " },
+	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
 
-	{ INSTR_ADD,   REG_EFG,  "ADD       " },
-	{ INSTR_SUB,   REG_EFG,  "SUB       " },
-	{ INSTR_MUL,   REG_EFG,  "MUL       " },
-	{ INSTR_DIV,   REG_EFG,  "DIV       " },
+	{ INSTR_ADD,      REG_EFG,  "ADD       " },
+	{ INSTR_SUB,      REG_EFG,  "SUB       " },
+	{ INSTR_MUL,      REG_EFG,  "MUL       " },
+	{ INSTR_DIV,      REG_EFG,  "DIV       " },
 
-	{ INSTR_PRINT, REG_A,    "PRINT     " },
-	{ INSTR_LINE,  REG_NONE, "LINE      " },
+	{ INSTR_PRINT,    REG_A,    "PRINT     " },
+	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
-	{ INSTR_END,   REG_NONE, "END       " }
+	{ INSTR_END,      REG_NONE, "END       " }
 };
 
 void

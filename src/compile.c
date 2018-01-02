@@ -156,8 +156,16 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			o(SUB);
 
 		case OP_EQ:
-			emit_bc(c, INSTR_MOV, compile_lvalue(c, e->a, sym),
-			        compile_expression(c, e->b, sym));
+			if (e->a->type == EXPR_SUBSCRIPT) {
+				emit_efg(c, INSTR_ASET,
+				         compile_lvalue(c, e->a->a, sym),
+				         compile_expression(c, e->a->b, sym),
+				         compile_expression(c, e->b, sym));
+
+			} else {
+				emit_bc(c, INSTR_MOV, compile_lvalue(c, e->a, sym),
+				        compile_expression(c, e->b, sym));
+			}
 			break;
 
 		default:
@@ -192,6 +200,14 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 			break;
 		}
 		break;
+
+	case EXPR_SUBSCRIPT: {
+		int reg = alloc_reg(c);
+		emit_efg(c, INSTR_DEREF, reg,
+		         compile_lvalue(c, e->a, sym),
+		         compile_expression(c, e->b, sym));
+		return reg;
+	} break;
 
 	default:
 		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
