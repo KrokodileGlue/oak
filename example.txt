@@ -4,79 +4,150 @@ compiling 6 (variable declaration) in `*main*'
 compiling 9 (println) in `*main*'
 compiling 6 (variable declaration) in `*main*'
 compiling 9 (println) in `*main*'
+compiling 5 (expression) in `*main*'
 compiling 9 (println) in `*main*'
 compiling 0 (function definition) in `g'
 compiling 10 (return) in `*block*'
 compiling 9 (println) in `*main*'
+compiling 6 (variable declaration) in `*main*'
+compiling 9 (println) in `*main*'
+compiling 5 (expression) in `*main*'
+compiling 5 (expression) in `*main*'
+compiling 5 (expression) in `*main*'
+compiling 9 (println) in `*main*'
 >   0: JMP        10
->  10: MOVC       4, 2
->  11: MOVC       5, 3
->  12: MOVC       6, 4
->  13: MOVC       7, 5
->  14: MOVC       8, 6
->  15: MOVC       9, 7
->  16: ADD        10, 9, 8
-oak: addition --- left: 2 (integer), right: 4 (integer)
->  17: MUL        11, 10, 7
-oak: multiplication --- left: 6 (integer), right: 3 (integer)
->  18: DIV        12, 11, 6
-oak: division --- left: 18 (integer), right: 9 (integer)
->  19: SUB        13, 12, 5
-oak: subtraction --- left: 2 (integer), right: 1 (integer)
->  20: ADD        14, 13, 4
-oak: addition --- left: 1 (integer), right: 4 (integer)
->  21: MOVC       15, 8
->  22: MOVC       16, 9
->  23: ADD        17, 16, 15
-oak: addition --- left: foo (string), right: bar (string)
->  24: ADD        18, 17, 14
-oak: addition --- left: foobar (string), right: 5 (integer)
->  25: MOV        0, 18
->  26: MOV        3, 0
->  27: PRINT      3
+>  10: MOVC       5, 2
+>  11: MOVC       6, 3
+>  12: MOVC       7, 4
+>  13: MOVC       8, 5
+>  14: MOVC       9, 6
+>  15: MOVC       10, 7
+>  16: ADD        11, 10, 9
+addition - left: 2 (integer), right: 4 (integer)
+>  17: MUL        12, 11, 8
+multiplication - left: 6 (integer), right: 3 (integer)
+>  18: DIV        13, 12, 7
+division - left: 18 (integer), right: 9 (integer)
+>  19: SUB        14, 13, 6
+subtraction - left: 2 (integer), right: 1 (integer)
+>  20: ADD        15, 14, 5
+addition - left: 1 (integer), right: 4 (integer)
+>  21: MOVC       16, 8
+>  22: MOVC       17, 9
+>  23: ADD        18, 17, 16
+addition - left: foo (string), right: bar (string)
+>  24: ADD        19, 18, 15
+addition - left: foobar (string), right: 5 (integer)
+>  25: MOV        0, 19
+>  26: MOV        4, 0
+>  27: PRINT      4
 foobar5
 >  28: LINE
->  29: MOVC       3, 10
->  30: MOVC       4, 11
->  31: MUL        5, 4, 3
-oak: multiplication --- left: 2 (integer), right: 2 (integer)
->  32: MOV        1, 5
->  33: MOV        3, 0
->  34: MOVC       4, 12
->  35: MOV        5, 1
->  36: ADD        6, 5, 4
-oak: addition --- left: 4 (integer), right: 6 (integer)
->  37: ADD        7, 6, 3
-oak: addition --- left: 10 (integer), right: foobar5 (string)
->  38: PRINT      7
+>  29: MOVC       4, 10
+>  30: MOVC       5, 11
+>  31: MUL        6, 5, 4
+multiplication - left: 2 (integer), right: 2 (integer)
+>  32: MOV        1, 6
+>  33: MOV        4, 0
+>  34: MOVC       5, 12
+>  35: MOV        6, 1
+>  36: ADD        7, 6, 5
+addition - left: 4 (integer), right: 6 (integer)
+>  37: ADD        8, 7, 4
+addition - left: 10 (integer), right: foobar5 (string)
+>  38: PRINT      8
 10foobar5
 >  39: LINE
->  40: MOVC       3, 13
->  41: PRINT      3
+>  40: MOVC       4, 13
+>  41: MOV        1, 4
+>  42: MOVC       5, 14
+>  43: PRINT      5
 2 * 2 =
->  42: MOVC       3, 14
->  43: PUSH       3
->  44: CALL       1
+>  44: MOVC       4, 15
+>  45: PUSH       4
+>  46: CALL       1
 >   1: POP        0
->   2: MOVC       3, 0
->   3: MOV        4, 0
->   4: MUL        5, 4, 3
-oak: multiplication --- left: 2 (integer), right: 2 (integer)
->   5: PUSH       5
+>   2: MOVC       4, 0
+>   3: MOV        5, 0
+>   4: MUL        6, 5, 4
+multiplication - left: 2 (integer), right: 2 (integer)
+>   5: PUSH       6
 >   6: RET
->  45: POP        4
->  46: PRINT      4
+>  47: POP        5
+>  48: PRINT      5
 4
->  47: LINE
->  48: JMP        55
->  55: CALL       49
->  49: MOVC       3, 15
->  50: PUSH       3
->  51: RET
->  56: POP        4
->  57: PRINT      4
+>  49: LINE
+>  50: JMP        57
+>  57: CALL       51
+>  51: MOVC       4, 16
+>  52: PUSH       4
+>  53: RET
+>  58: POP        5
+>  59: PRINT      5
 stuff
->  58: LINE
+>  60: LINE
+>  61: MOVC       4, 18
+>  62: MOVC       5, 19
+>  63: PUSHBACK   4, 5
+pushback - left:  (array), right: 1 (integer)
+>  64: MOVC       6, 20
+>  65: MOVC       7, 21
+>  66: PUSHBACK   6, 7
+pushback - left:  (array), right: 2 (integer)
+>  67: MOVC       8, 22
+>  68: PUSHBACK   6, 8
+pushback - left: 2 (array), right: asdf (string)
+>  69: PUSHBACK   4, 6
+pushback - left: 1 (array), right: 2asdf (array)
+>  70: MOVC       9, 23
+>  71: PUSHBACK   4, 9
+pushback - left: 12asdf (array), right: 3 (integer)
+>  72: MOV        10, 1
+>  73: PUSHBACK   4, 10
+pushback - left: 12asdf3 (array), right: 2000 (integer)
+>  74: MOVC       11, 24
+>  75: PUSHBACK   4, 11
+pushback - left: 12asdf32000 (array), right: 5 (integer)
+>  76: MOVC       12, 25
+>  77: MOVC       13, 26
+>  78: PUSHBACK   12, 13
+pushback - left:  (array), right: 6 (integer)
+>  79: CALL       51
+>  51: MOVC       4, 16
+>  52: PUSH       4
+>  53: RET
+>  80: POP        14
+>  81: PUSHBACK   12, 14
+pushback - left: 6 (array), right: stuff (string)
+>  82: PUSHBACK   4, 12
+pushback - left: 12asdf320005 (array), right: 6stuff (array)
+>  83: MOVC       15, 27
+>  84: PUSHBACK   4, 15
+pushback - left: 12asdf3200056stuff (array), right: 7 (integer)
+>  85: MOV        2, 4
+>  86: MOV        4, 2
+>  87: PRINT      4
+12asdf3200056stuff7
+>  88: LINE
+>  89: MOVC       4, 28
+>  90: MOVC       5, 29
+>  91: MOVC       7, 30
+>  92: DEREF      6, 2, 7
+>  93: ASET       6, 5, 4
+>  94: MOVC       8, 31
+>  95: MOVC       9, 32
+>  96: MOVC       11, 33
+>  97: DEREF      10, 2, 11
+>  98: ASET       10, 9, 8
+>  99: MOVC       12, 34
+> 100: MOVC       13, 35
+> 101: MOVC       15, 36
+> 102: DEREF      14, 2, 15
+> 103: ASET       14, 13, 12
+> 104: MOV        16, 2
+> 105: PRINT      16
+---???2___________________3200056stuff7
+> 106: LINE
 ============================== module `*main*' ==============================
 fn f (x) = x * 2
 
@@ -85,34 +156,19 @@ println a
 
 var b = 2 * 2
 println (b + 6) + a
+b = 2000
 
 println '2 * 2 = ', f(2)
 
 fn g = "stuff"
 println g()
 
-# var c = [1, 2, 3, 4]
-# println c
-
-# class foo {
-# 	var x y z
-
-# 	# Maybe methods should have a different syntax than functions.
-# 	fn foo {
-# 		x = 1
-# 		y = 2
-# 		z = 3
-# 	}
-
-# 	fn f {
-# 		return x + y + z
-# 	}
-# }
-
-# var c = foo()
-# println c.f()
-# c.x = 2
-# println c.f()
+var c = [1, [2, "asdf"], 3, b, 5, [6, g()], 7]
+println c
+c[0][0] = "---"
+c[0][1] = "???"
+c[1][1] = "___________________"
+println c
 
 type       | data       | file       | index   | length | eol?  | value
 --------------------------------------------------------------------------
@@ -163,22 +219,84 @@ IDENTIFIER |            |     test.k |     102 |      1 | false | b
     SYMBOL |          ) |     test.k |     107 |      1 | false | )
     SYMBOL |          + |     test.k |     109 |      1 | false | +
 IDENTIFIER |            |     test.k |     111 |      1 |  true | a
-   KEYWORD |    println |     test.k |     114 |      7 | false | println
-    STRING |            |     test.k |     122 |     10 | false | '2 * 2 = '
-    SYMBOL |          , |     test.k |     132 |      1 | false | ,
-IDENTIFIER |            |     test.k |     134 |      1 | false | f
-    SYMBOL |          ( |     test.k |     135 |      1 | false | (
-   INTEGER |          2 |     test.k |     136 |      1 | false | 2
-    SYMBOL |          ) |     test.k |     137 |      1 |  true | )
-   KEYWORD |         fn |     test.k |     140 |      2 | false | fn
-IDENTIFIER |            |     test.k |     143 |      1 | false | g
-    SYMBOL |          = |     test.k |     145 |      1 | false | =
-    STRING |            |     test.k |     147 |      7 |  true | "stuff"
-   KEYWORD |    println |     test.k |     155 |      7 | false | println
-IDENTIFIER |            |     test.k |     163 |      1 | false | g
-    SYMBOL |          ( |     test.k |     164 |      1 | false | (
-    SYMBOL |          ) |     test.k |     165 |      1 |  true | )
-       END |            |     test.k |     444 |      0 | false |
+IDENTIFIER |            |     test.k |     113 |      1 | false | b
+    SYMBOL |          = |     test.k |     115 |      1 | false | =
+   INTEGER |       2000 |     test.k |     117 |      4 |  true | 2000
+   KEYWORD |    println |     test.k |     123 |      7 | false | println
+    STRING |            |     test.k |     131 |     10 | false | '2 * 2 = '
+    SYMBOL |          , |     test.k |     141 |      1 | false | ,
+IDENTIFIER |            |     test.k |     143 |      1 | false | f
+    SYMBOL |          ( |     test.k |     144 |      1 | false | (
+   INTEGER |          2 |     test.k |     145 |      1 | false | 2
+    SYMBOL |          ) |     test.k |     146 |      1 |  true | )
+   KEYWORD |         fn |     test.k |     149 |      2 | false | fn
+IDENTIFIER |            |     test.k |     152 |      1 | false | g
+    SYMBOL |          = |     test.k |     154 |      1 | false | =
+    STRING |            |     test.k |     156 |      7 |  true | "stuff"
+   KEYWORD |    println |     test.k |     164 |      7 | false | println
+IDENTIFIER |            |     test.k |     172 |      1 | false | g
+    SYMBOL |          ( |     test.k |     173 |      1 | false | (
+    SYMBOL |          ) |     test.k |     174 |      1 |  true | )
+   KEYWORD |        var |     test.k |     177 |      3 | false | var
+IDENTIFIER |            |     test.k |     181 |      1 | false | c
+    SYMBOL |          = |     test.k |     183 |      1 | false | =
+    SYMBOL |          [ |     test.k |     185 |      1 | false | [
+   INTEGER |          1 |     test.k |     186 |      1 | false | 1
+    SYMBOL |          , |     test.k |     187 |      1 | false | ,
+    SYMBOL |          [ |     test.k |     189 |      1 | false | [
+   INTEGER |          2 |     test.k |     190 |      1 | false | 2
+    SYMBOL |          , |     test.k |     191 |      1 | false | ,
+    STRING |            |     test.k |     193 |      6 | false | "asdf"
+    SYMBOL |          ] |     test.k |     199 |      1 | false | ]
+    SYMBOL |          , |     test.k |     200 |      1 | false | ,
+   INTEGER |          3 |     test.k |     202 |      1 | false | 3
+    SYMBOL |          , |     test.k |     203 |      1 | false | ,
+IDENTIFIER |            |     test.k |     205 |      1 | false | b
+    SYMBOL |          , |     test.k |     206 |      1 | false | ,
+   INTEGER |          5 |     test.k |     208 |      1 | false | 5
+    SYMBOL |          , |     test.k |     209 |      1 | false | ,
+    SYMBOL |          [ |     test.k |     211 |      1 | false | [
+   INTEGER |          6 |     test.k |     212 |      1 | false | 6
+    SYMBOL |          , |     test.k |     213 |      1 | false | ,
+IDENTIFIER |            |     test.k |     215 |      1 | false | g
+    SYMBOL |          ( |     test.k |     216 |      1 | false | (
+    SYMBOL |          ) |     test.k |     217 |      1 | false | )
+    SYMBOL |          ] |     test.k |     218 |      1 | false | ]
+    SYMBOL |          , |     test.k |     219 |      1 | false | ,
+   INTEGER |          7 |     test.k |     221 |      1 | false | 7
+    SYMBOL |          ] |     test.k |     222 |      1 |  true | ]
+   KEYWORD |    println |     test.k |     224 |      7 | false | println
+IDENTIFIER |            |     test.k |     232 |      1 |  true | c
+IDENTIFIER |            |     test.k |     234 |      1 | false | c
+    SYMBOL |          [ |     test.k |     235 |      1 | false | [
+   INTEGER |          0 |     test.k |     236 |      1 | false | 0
+    SYMBOL |          ] |     test.k |     237 |      1 | false | ]
+    SYMBOL |          [ |     test.k |     238 |      1 | false | [
+   INTEGER |          0 |     test.k |     239 |      1 | false | 0
+    SYMBOL |          ] |     test.k |     240 |      1 | false | ]
+    SYMBOL |          = |     test.k |     242 |      1 | false | =
+    STRING |            |     test.k |     244 |      5 |  true | "---"
+IDENTIFIER |            |     test.k |     250 |      1 | false | c
+    SYMBOL |          [ |     test.k |     251 |      1 | false | [
+   INTEGER |          0 |     test.k |     252 |      1 | false | 0
+    SYMBOL |          ] |     test.k |     253 |      1 | false | ]
+    SYMBOL |          [ |     test.k |     254 |      1 | false | [
+   INTEGER |          1 |     test.k |     255 |      1 | false | 1
+    SYMBOL |          ] |     test.k |     256 |      1 | false | ]
+    SYMBOL |          = |     test.k |     258 |      1 | false | =
+    STRING |            |     test.k |     260 |      5 |  true | "???"
+IDENTIFIER |            |     test.k |     266 |      1 | false | c
+    SYMBOL |          [ |     test.k |     267 |      1 | false | [
+   INTEGER |          1 |     test.k |     268 |      1 | false | 1
+    SYMBOL |          ] |     test.k |     269 |      1 | false | ]
+    SYMBOL |          [ |     test.k |     270 |      1 | false | [
+   INTEGER |          1 |     test.k |     271 |      1 | false | 1
+    SYMBOL |          ] |     test.k |     272 |      1 | false | ]
+    SYMBOL |          = |     test.k |     274 |      1 | false | =
+    STRING |            |     test.k |     276 |     21 |  true | "___________________"
+   KEYWORD |    println |     test.k |     298 |      7 | false | println
+IDENTIFIER |            |     test.k |     306 |      1 |  true | c
+       END |            |     test.k |     307 |      0 | false |
 <root>
 |-- (stmt function definition) : 1
 |   |-- <name>
@@ -220,6 +338,10 @@ IDENTIFIER |            |     test.k |     163 |      1 | false | g
 |       |   |-- (identifier b)
 |       |   `-- (integer 6)
 |       `-- (identifier a)
+|-- (stmt expression) : 0
+|   `-- (binary =)
+|       |-- (identifier b)
+|       `-- (integer 2000)
 |-- (stmt println) : 0
 |   |-- (string '2 * 2 = ')
 |   `-- (fn call)
@@ -233,13 +355,63 @@ IDENTIFIER |            |     test.k |     163 |      1 | false | g
 |   `-- <body> : 4
 |       `-- (stmt return) : 4
 |           `-- (string 'stuff')
+|-- (stmt println) : 0
+|   `-- (fn call)
+|       |-- (identifier g)
+|       `-- (arguments)
+|-- (stmt variable declaration) : 0
+|   `-- (c)
+|       `-- <list>
+|           |-- (integer 1)
+|           |-- <list>
+|           |   |-- (integer 2)
+|           |   `-- (string 'asdf')
+|           |-- (integer 3)
+|           |-- (identifier b)
+|           |-- (integer 5)
+|           |-- <list>
+|           |   |-- (integer 6)
+|           |   `-- (fn call)
+|           |       |-- (identifier g)
+|           |       `-- (arguments)
+|           `-- (integer 7)
+|-- (stmt println) : 0
+|   `-- (identifier c)
+|-- (stmt expression) : 0
+|   `-- (binary =)
+|       |-- (subscript)
+|       |   |-- (integer 0)
+|       |   `-- (of)
+|       |       `-- (subscript)
+|       |           |-- (integer 0)
+|       |           `-- (of)
+|       |               `-- (identifier c)
+|       `-- (string '---')
+|-- (stmt expression) : 0
+|   `-- (binary =)
+|       |-- (subscript)
+|       |   |-- (integer 1)
+|       |   `-- (of)
+|       |       `-- (subscript)
+|       |           |-- (integer 0)
+|       |           `-- (of)
+|       |               `-- (identifier c)
+|       `-- (string '???')
+|-- (stmt expression) : 0
+|   `-- (binary =)
+|       |-- (subscript)
+|       |   |-- (integer 1)
+|       |   `-- (of)
+|       |       `-- (subscript)
+|       |           |-- (integer 1)
+|       |           `-- (of)
+|       |               `-- (identifier c)
+|       `-- (string '___________________')
 `-- (stmt println) : 0
-    `-- (fn call)
-        |-- (identifier g)
-        `-- (arguments)
+    `-- (identifier c)
 <*main* : module>
-  num_children=4
-  num_variables=3
+  num_children=5
+  num_variables=4
   address=0
   scope=0
   id=6951165696990
@@ -267,13 +439,17 @@ IDENTIFIER |            |     test.k |     163 |      1 | false | g
     id=177671
   <g : function>
     num_children=1
-    address=49
+    address=51
     scope=3
     id=177676
     <*block* : block>
       address=0
       scope=4
       id=0
+  <c : variable>
+    address=2
+    scope=-1
+    id=177672
 [  0 :   integer] 2
 [  1 :       nil] nil
 [  2 :   integer] 4
@@ -287,67 +463,135 @@ IDENTIFIER |            |     test.k |     163 |      1 | false | g
 [ 10 :   integer] 2
 [ 11 :   integer] 2
 [ 12 :   integer] 6
-[ 13 :    string] 2 * 2 =
-[ 14 :   integer] 2
-[ 15 :    string] stuff
-[ 16 :       nil] nil
+[ 13 :   integer] 2000
+[ 14 :    string] 2 * 2 =
+[ 15 :   integer] 2
+[ 16 :    string] stuff
+[ 17 :       nil] nil
+[ 18 :     array] ---???2___________________3200056stuff7
+[ 19 :   integer] 1
+[ 20 :     array] 2___________________
+[ 21 :   integer] 2
+[ 22 :    string] asdf
+[ 23 :   integer] 3
+[ 24 :   integer] 5
+[ 25 :     array] 6stuff
+[ 26 :   integer] 6
+[ 27 :   integer] 7
+[ 28 :    string] ---
+[ 29 :   integer] 0
+[ 30 :   integer] 0
+[ 31 :    string] ???
+[ 32 :   integer] 1
+[ 33 :   integer] 0
+[ 34 :    string] ___________________
+[ 35 :   integer] 1
+[ 36 :   integer] 1
   0: JMP        10
   1: POP        0
-  2: MOVC       3, 0
-  3: MOV        4, 0
-  4: MUL        5, 4, 3
-  5: PUSH       5
+  2: MOVC       4, 0
+  3: MOV        5, 0
+  4: MUL        6, 5, 4
+  5: PUSH       6
   6: RET
-  7: MOVC       3, 1
-  8: PUSH       3
+  7: MOVC       4, 1
+  8: PUSH       4
   9: RET
- 10: MOVC       4, 2
- 11: MOVC       5, 3
- 12: MOVC       6, 4
- 13: MOVC       7, 5
- 14: MOVC       8, 6
- 15: MOVC       9, 7
- 16: ADD        10, 9, 8
- 17: MUL        11, 10, 7
- 18: DIV        12, 11, 6
- 19: SUB        13, 12, 5
- 20: ADD        14, 13, 4
- 21: MOVC       15, 8
- 22: MOVC       16, 9
- 23: ADD        17, 16, 15
- 24: ADD        18, 17, 14
- 25: MOV        0, 18
- 26: MOV        3, 0
- 27: PRINT      3
+ 10: MOVC       5, 2
+ 11: MOVC       6, 3
+ 12: MOVC       7, 4
+ 13: MOVC       8, 5
+ 14: MOVC       9, 6
+ 15: MOVC       10, 7
+ 16: ADD        11, 10, 9
+ 17: MUL        12, 11, 8
+ 18: DIV        13, 12, 7
+ 19: SUB        14, 13, 6
+ 20: ADD        15, 14, 5
+ 21: MOVC       16, 8
+ 22: MOVC       17, 9
+ 23: ADD        18, 17, 16
+ 24: ADD        19, 18, 15
+ 25: MOV        0, 19
+ 26: MOV        4, 0
+ 27: PRINT      4
  28: LINE
- 29: MOVC       3, 10
- 30: MOVC       4, 11
- 31: MUL        5, 4, 3
- 32: MOV        1, 5
- 33: MOV        3, 0
- 34: MOVC       4, 12
- 35: MOV        5, 1
- 36: ADD        6, 5, 4
- 37: ADD        7, 6, 3
- 38: PRINT      7
+ 29: MOVC       4, 10
+ 30: MOVC       5, 11
+ 31: MUL        6, 5, 4
+ 32: MOV        1, 6
+ 33: MOV        4, 0
+ 34: MOVC       5, 12
+ 35: MOV        6, 1
+ 36: ADD        7, 6, 5
+ 37: ADD        8, 7, 4
+ 38: PRINT      8
  39: LINE
- 40: MOVC       3, 13
- 41: PRINT      3
- 42: MOVC       3, 14
- 43: PUSH       3
- 44: CALL       1
- 45: POP        4
- 46: PRINT      4
- 47: LINE
- 48: JMP        55
- 49: MOVC       3, 15
- 50: PUSH       3
- 51: RET
- 52: MOVC       3, 16
- 53: PUSH       3
- 54: RET
- 55: CALL       49
- 56: POP        4
- 57: PRINT      4
- 58: LINE
- 59: END
+ 40: MOVC       4, 13
+ 41: MOV        1, 4
+ 42: MOVC       5, 14
+ 43: PRINT      5
+ 44: MOVC       4, 15
+ 45: PUSH       4
+ 46: CALL       1
+ 47: POP        5
+ 48: PRINT      5
+ 49: LINE
+ 50: JMP        57
+ 51: MOVC       4, 16
+ 52: PUSH       4
+ 53: RET
+ 54: MOVC       4, 17
+ 55: PUSH       4
+ 56: RET
+ 57: CALL       51
+ 58: POP        5
+ 59: PRINT      5
+ 60: LINE
+ 61: MOVC       4, 18
+ 62: MOVC       5, 19
+ 63: PUSHBACK   4, 5
+ 64: MOVC       6, 20
+ 65: MOVC       7, 21
+ 66: PUSHBACK   6, 7
+ 67: MOVC       8, 22
+ 68: PUSHBACK   6, 8
+ 69: PUSHBACK   4, 6
+ 70: MOVC       9, 23
+ 71: PUSHBACK   4, 9
+ 72: MOV        10, 1
+ 73: PUSHBACK   4, 10
+ 74: MOVC       11, 24
+ 75: PUSHBACK   4, 11
+ 76: MOVC       12, 25
+ 77: MOVC       13, 26
+ 78: PUSHBACK   12, 13
+ 79: CALL       51
+ 80: POP        14
+ 81: PUSHBACK   12, 14
+ 82: PUSHBACK   4, 12
+ 83: MOVC       15, 27
+ 84: PUSHBACK   4, 15
+ 85: MOV        2, 4
+ 86: MOV        4, 2
+ 87: PRINT      4
+ 88: LINE
+ 89: MOVC       4, 28
+ 90: MOVC       5, 29
+ 91: MOVC       7, 30
+ 92: DEREF      6, 2, 7
+ 93: ASET       6, 5, 4
+ 94: MOVC       8, 31
+ 95: MOVC       9, 32
+ 96: MOVC       11, 33
+ 97: DEREF      10, 2, 11
+ 98: ASET       10, 9, 8
+ 99: MOVC       12, 34
+100: MOVC       13, 35
+101: MOVC       15, 36
+102: DEREF      14, 2, 15
+103: ASET       14, 13, 12
+104: MOV        16, 2
+105: PRINT      16
+106: LINE
+107: END
