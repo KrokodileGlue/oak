@@ -36,6 +36,7 @@ static void
 emit(struct compiler *c, struct instruction instr)
 {
 	c->code = realloc(c->code, sizeof c->code[0] * (c->ip + 1));
+	instr.loc = &c->stmt->tok->loc;
 	c->code[c->ip++] = instr;
 }
 
@@ -197,7 +198,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		default:
 			error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
-			break;
+			return -1;
 		}
 		break;
 

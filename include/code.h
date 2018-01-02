@@ -34,6 +34,7 @@ enum instruction_type {
 
 struct instruction {
 	int type;
+	struct location *loc;
 
 	union {
 		uint8_t a;

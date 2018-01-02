@@ -123,6 +123,20 @@ execute_instr(struct vm *vm, struct instruction c)
 			= REG(c.d.efg.g);
 		break;
 
+	case INSTR_DEREF:
+		if (REG(c.d.efg.f).type != VAL_ARRAY) {
+			/* Some kinda error. */
+			error_push(vm->r, *c.loc, ERR_FATAL, "stupid shit");
+		}
+
+		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
+			REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx]
+				                      [REG(c.d.efg.g).integer];
+		} else {
+			REG(c.d.efg.e) = REG(c.d.efg.f);
+		}
+		break;
+
 	case INSTR_PRINT:
 		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
 		if (vm->debug) fputc('\n', vm->f);
