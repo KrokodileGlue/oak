@@ -299,9 +299,16 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		}
 
 		pop(si);
-
 		break;
-	case STMT_FN_DEF:
+
+	case STMT_FN_DEF: {
+		struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.name);
+		if (redefinition) {
+			error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function",
+			           stmt->fn_def.name);
+			error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");
+		}
+
 		push_scope(si, ++si->scope);
 		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
@@ -317,6 +324,14 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		push(si, sym);
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
+			/* Maybe we should allow the user to shadow global variables. */
+			struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.args[i]->value);
+			if (redefinition) {
+				error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function argument",
+				           stmt->fn_def.args[i]->value);
+				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");
+			}
+
 			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
@@ -330,8 +345,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		pop(si);
 		pop_scope(si);
+	} break;
 
-		break;
 	case STMT_VAR_DECL: {
 #define VARDECL(STATEMENT)                                                                                            \
 		for (size_t i = 0; i < STATEMENT->var_decl.num; i++) {                                                \
@@ -339,7 +354,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			struct symbol *redefinition = resolve(si->symbol, STATEMENT->var_decl.names[i]->value);       \
 			                                                                                              \
 			if (redefinition) {                                                                           \
-				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier '%s'", \
+				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier `%s'", \
 				           STATEMENT->var_decl.names[i]->value);                                      \
 				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");       \
 			}                                                                                             \
@@ -357,6 +372,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	} break;
+
 	case STMT_BLOCK: {
 		si->scope++;
 		push_scope(si, si->scope);
@@ -398,6 +414,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		free(sym);
 		return;
+
 	case STMT_IMPORT: {
 		struct module *m = load_module(si->k, stmt->import.name->string, stmt->import.as->value);
 
@@ -473,6 +490,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 	}
+
 	default:
 		free(sym);
 		DOUT("unimplemented symbol visitor for statement of type %d (%s)",
