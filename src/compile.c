@@ -9,7 +9,7 @@
 #include "util.h"
 #include "token.h"
 #include "lexer.h"
-#include "parser.h"
+#include "parse.h"
 
 static struct compiler *
 new_compiler()

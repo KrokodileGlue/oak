@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "error.h"
 #include "util.h"
-#include "parser.h"
+#include "parse.h"
 #include "symbol.h"
 #include "module.h"
 #include "oak.h"

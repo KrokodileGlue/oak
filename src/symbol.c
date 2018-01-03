@@ -6,7 +6,7 @@
 #include "symbol.h"
 #include "token.h"
 #include "lexer.h"
-#include "parser.h"
+#include "parse.h"
 #include "module.h"
 
 static void add(struct symbolizer *si, struct symbol *sym);
