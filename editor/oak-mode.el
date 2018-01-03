@@ -50,7 +50,7 @@
 (setq oak-highlights
       '(("type\\|sayln\\|say"			 .	font-lock-function-name-face)
 	("pi\\|0x[[:xdigit:]]+\\|[\\.[:digit:]]+\\|true\\|false" .	font-lock-constant-face)
-	("println\\|print\\|for\\|while\\|if"    .	font-lock-keyword-face)
+	("println\\|print\\|for\\|while\\|if\\|return\\|else"    .	font-lock-keyword-face)
 	("var\\|class\\|fn"			 .	font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
