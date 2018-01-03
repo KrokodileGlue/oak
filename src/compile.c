@@ -164,8 +164,17 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				         compile_expression(c, e->b, sym));
 
 			} else {
-				emit_bc(c, INSTR_MOV, compile_lvalue(c, e->a, sym),
-				        compile_expression(c, e->b, sym));
+				int addr = compile_lvalue(c, e->a, sym);
+				if (addr >= 256) {
+					emit_bc(c, INSTR_GMOV, addr - 256,
+					        compile_expression(c, e->b, sym));
+					emit_bc(c, INSTR_MOVG, reg = alloc_reg(c),
+					        addr - 256);
+				} else {
+					emit_bc(c, INSTR_MOV, addr,
+					        compile_expression(c, e->b, sym));
+					reg = addr;
+				}
 			}
 			break;
 
@@ -193,6 +202,8 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(sym, e->val->value);
+			if (var->global)
+				return var->address + 256;
 			return var->address;
 		} break;
 
@@ -203,6 +214,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 
 	case EXPR_SUBSCRIPT: {
+		/* TODO: Implement global array dereferencing. */
 		int reg = alloc_reg(c);
 		emit_efg(c, INSTR_DEREF, reg,
 		         compile_lvalue(c, e->a, sym),
@@ -228,7 +240,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		switch (e->val->type) {
 		case TOK_IDENTIFIER:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_MOV, reg, resolve(sym, e->val->value)->address);
+			struct symbol *var = resolve(sym, e->val->value);
+			if (var->global) {
+				emit_bc(c, INSTR_MOVG, reg, var->address);
+			} else {
+				emit_bc(c, INSTR_MOV, reg, var->address);
+			}
 			break;
 
 		default:
@@ -279,7 +296,7 @@ static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int a = compile_expression(c, e, sym);
-	c->stack_top[c->sp] = sym->num_variables;
+	/* c->stack_top[c->sp] = c->sym->num_variables; */
 	return a;
 }
 
@@ -321,6 +338,11 @@ compile_statement(struct compiler *c, struct statement *s)
 		break;
 
 	case STMT_FN_DEF: {
+		if (c->sp) {
+			error_push(c->r, s->tok->loc, ERR_FATAL, "function definition occurs within a function definition");
+			return;
+		}
+
 		size_t a = c->ip;
 		emit_a(c, INSTR_JMP, 0);
 		push_frame(c);

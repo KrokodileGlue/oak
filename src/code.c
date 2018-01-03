@@ -4,6 +4,8 @@
 struct instruction_data instruction_data[] = {
 	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
 	{ INSTR_MOV,      REG_BC,   "MOV       " },
+	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
+	{ INSTR_MOVG,     REG_BC,   "MOVG      " },
 
 	{ INSTR_JMP,      REG_A,    "JMP       " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },

@@ -18,6 +18,7 @@ struct symbol {
 	size_t          num_variables;
 	size_t          address;
 	int             scope;
+	bool            global;
 
 	enum SymbolType {
 		SYM_FN,

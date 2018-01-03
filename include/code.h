@@ -10,7 +10,10 @@
 enum instruction_type {
 	INSTR_MOVC,
 	INSTR_MOV,
+	INSTR_GMOV,
+	INSTR_MOVG,
 
+	/* TODO: Make call and jmp use d instead of a. */
 	INSTR_JMP,
 	INSTR_PUSH,
 	INSTR_POP,

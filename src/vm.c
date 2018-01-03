@@ -102,6 +102,8 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_SUB:  BIN(sub);                              break;
 	case INSTR_MUL:  BIN(mul);                              break;
 	case INSTR_DIV:  BIN(div);                              break;
+	case INSTR_GMOV: vm->frame[1][c.d.bc.b] = REG(c.d.bc.c); break;
+	case INSTR_MOVG: REG(c.d.bc.b) = vm->frame[1][c.d.bc.c]; break;
 
 	case INSTR_PUSHBACK:
 		REG(c.d.bc.b) = pushback(vm->gc, REG(c.d.bc.b), REG(c.d.bc.c));

@@ -349,6 +349,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->name = STATEMENT->var_decl.names[i]->value;                                                \
 			s->id = hash(s->name, strlen(s->name));                                                       \
 			s->scope = -1;                                                                                \
+			s->global = si->scope_pointer == 1;                                                           \
 			add(si, s);                                                                                   \
 		}                                                                                                     \
 
@@ -546,6 +547,7 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 
 	INDENT; fprintf(f, "  address=%zu", s->address);
 	INDENT; fprintf(f, "  scope=%d", s->scope);
+	INDENT; fprintf(f, "  global=%s", s->global ? "true" : "false");
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);

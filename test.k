@@ -19,19 +19,11 @@
 # c[1][1] = "___________________"
 # println c
 
-# This doesn't work.
-# TODO: Implement global variables properly.
-var a = 0
+var d = 0
 
-fn f {
-	a = a + 1
-}
+fn f = (d = d + 1)
 
-f()
-println a
-f()
-println a
-f()
-println a
-f()
-println a
+println f()
+println f()
+println f()
+println f()
