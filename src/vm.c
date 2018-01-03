@@ -129,9 +129,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DEREF:
 		grow_array(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g).integer + 1);
 
-		if (vm->gc->arrlen[REG(c.d.efg.f).idx] < REG(c.d.efg.g).integer) {
-			assert(false);
-		} else if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
+		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
 			REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx]
 				                      [REG(c.d.efg.g).integer];
 		} else {

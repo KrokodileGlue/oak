@@ -401,6 +401,10 @@ grow_array(struct gc *gc, struct value l, int r)
 	if ((int)gc->arrlen[l.idx] <= r) {
 		gc->array[l.idx] = oak_realloc(gc->array[l.idx],
 		     (r + 1) * sizeof *gc->array[l.idx]);
+		for (int i = gc->arrlen[l.idx]; i < r; i++) {
+			gc->array[l.idx][i].type = VAL_NIL;
+		}
+		gc->arrlen[l.idx] = r;
 	}
 
 	return l;
@@ -427,7 +431,6 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		break;
 
 	case VAL_NIL:
-		fprintf(f, "nil");
 		break;
 
 	case VAL_ARRAY:
