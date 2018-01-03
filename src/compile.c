@@ -178,6 +178,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			}
 			break;
 
+		case OP_EQEQ:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
+			break;
+
 		default:
 			DOUT("unimplemented operator compiler for binary operator `%s'",
 			     e->operator->body);
@@ -303,6 +308,8 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
 static void
 compile_statement(struct compiler *c, struct statement *s)
 {
+	if (!s) return;
+
 	struct symbol *sym = find_from_scope(c->sym, s->scope);
 	if (c->debug) {
 		fprintf(stderr, "compiling %d (%s) in `%s'\n", s->type,
@@ -383,6 +390,18 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_EXPR:
 		compile_expression(c, s->expr, sym);
+		break;
+
+	case STMT_IF_STMT:
+		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym));
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1);
+		compile_statement(c, s->if_stmt.then);
+		size_t b = c->ip;
+		emit_a(c, INSTR_JMP, -1);
+		c->code[a].d.a = c->ip;
+		compile_statement(c, s->if_stmt.otherwise);
+		c->code[b].d.a = c->ip;
 		break;
 
 	default:

@@ -148,6 +148,14 @@ execute_instr(struct vm *vm, struct instruction c)
 		if (vm->debug) fputc('\n', vm->f);
 		break;
 
+	case INSTR_COND:
+		if (is_truthy(vm->gc, REG(c.d.a)))
+			vm->ip++;
+		break;
+
+	case INSTR_CMP:
+		REG(c.d.efg.e) = cmp_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
 
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,

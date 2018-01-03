@@ -296,16 +296,15 @@ or_values(struct gc *gc, struct value l, struct value r)
 }
 
 bool
-is_value_true(struct gc *gc, struct value l)
+is_truthy(struct gc *gc, struct value l)
 {
+	/* TODO: Flesh this stuff out. */
 	switch (l.type) {
 	case VAL_BOOL: return l.boolean;
 	case VAL_INT: return l.integer != 0;
 	default:
-		assert(false);
+		return false;
 	}
-
-	return -1;
 }
 
 struct value

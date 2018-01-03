@@ -45,8 +45,9 @@ struct value mul_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
 struct value grow_array(struct gc *gc, struct value l, int r);
 struct value pushback(struct gc *gc, struct value l, struct value r);
+struct value cmp_values(struct gc *gc, struct value l, struct value r);
 
-bool is_value_true(struct gc *gc, struct value l);
+bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);
 
 #endif

@@ -24,6 +24,9 @@ enum instruction_type {
 	INSTR_ASET,
 	INSTR_DEREF,
 
+	INSTR_COND,
+	INSTR_CMP,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,
