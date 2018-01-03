@@ -157,6 +157,15 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.efg.e) = cmp_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
 
+	case INSTR_TYPE: {
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = oak_malloc(strlen(value_data[REG(c.d.bc.c).type].body) + 1);
+		strcpy(vm->gc->str[v.idx], value_data[REG(c.d.bc.c).type].body);
+		REG(c.d.bc.b) = v;
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);

@@ -19,6 +19,7 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_COND,     REG_A,    "COND      " },
 	{ INSTR_CMP,      REG_EFG,  "CMP       " },
+	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
 
 	{ INSTR_ADD,      REG_EFG,  "ADD       " },
 	{ INSTR_SUB,      REG_EFG,  "SUB       " },

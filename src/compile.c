@@ -184,7 +184,21 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			break;
 
 		default:
-			DOUT("unimplemented operator compiler for binary operator `%s'",
+			DOUT("unimplemented compiler for binary operator `%s'",
+			     e->operator->body);
+			assert(false);
+		}
+		break;
+
+	case OPTYPE_PREFIX:
+		switch (e->operator->name) {
+		case OP_TYPE:
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_TYPE, reg, compile_expression(c, e->a, sym));
+			break;
+
+		default:
+			DOUT("unimplemented compiler for prefix operator `%s'",
 			     e->operator->body);
 			assert(false);
 		}

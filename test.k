@@ -27,11 +27,14 @@ println h()
 println h()
 println h()
 
-print "checking if d == 4... "
+print 'checking if g() == "stuff"... '
 
-if d == 4:
+if g() == "stuff":
 	println "[TRUE]"
 else
 	println "[FALSE]"
 
-println "ending."
+println type a
+println type b
+println type c
+println type d
