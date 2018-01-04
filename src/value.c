@@ -76,13 +76,21 @@ show_value(struct gc *gc, struct value val)
 	return str;
 }
 
+static void
+print_debug(struct gc *gc, struct value l)
+{
+	print_value(stderr, gc, l);
+	fprintf(stderr, " (%s)", value_data[l.type].body);
+}
+
 struct value
 add_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "addition - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "addition - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	struct value ret;
@@ -138,9 +146,10 @@ struct value
 sub_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "subtraction - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "subtraction - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	struct value ret;
@@ -157,9 +166,10 @@ struct value
 mul_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "multiplication - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "multiplication - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	/* TODO: fancy operations on strings and lists. */
@@ -177,9 +187,10 @@ struct value
 div_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "division - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "division - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	struct value ret;
@@ -196,9 +207,10 @@ struct value
 mod_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "modulus - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "modulus - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	struct value ret;
@@ -385,9 +397,10 @@ struct value
 pushback(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
-		char *ls = show_value(gc, l), *rs = show_value(gc, r);
-		fprintf(stderr, "pushback - left: %s (%s), right: %s (%s)\n", ls, value_data[l.type].body, rs, value_data[r.type].body);
-		free(ls); free(rs);
+		fprintf(stderr, "pushback - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
 	}
 
 	/* TODO: Make sure l is an array. */

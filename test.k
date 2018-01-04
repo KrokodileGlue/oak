@@ -37,7 +37,7 @@ fn fib (x) {
 	return fib(x - 1) + fib(x - 2)
 }
 
-for var i = 0; i < 30; i++:
+for var i = 0; i < 20; i++:
 	pl i, ': ', fib(i)
 
 pl type a
@@ -85,5 +85,10 @@ t("this"), t("that"), t(2), t(true), t([1, 2, "stuff"]), t(1.2)
 
 var n = 0
 while n < 10: pl n++
+n = 0
+do pl n++; while n < 10
 
 pl "stuff: ", 3 * 3.1415926535897932
+
+# # var foo = { a => 2, b => 'stuff' }
+# # pl foo["a"]

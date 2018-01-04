@@ -48,9 +48,16 @@ pop_frame(struct vm *vm)
 static void
 push(struct vm *vm, struct value v)
 {
-	vm->stack = oak_realloc(vm->stack, (vm->sp + 2) * sizeof *vm->stack);
 	vm->sp++;
+
+	if (vm->sp <= vm->maxsp) {
+		vm->stack[vm->sp] = v;
+		return;
+	}
+
+	vm->stack = oak_realloc(vm->stack, (vm->sp + 1) * sizeof *vm->stack);
 	vm->stack[vm->sp] = v;
+	vm->maxsp = vm->sp > vm->maxsp ? vm->sp : vm->maxsp;
 }
 
 static struct value

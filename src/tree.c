@@ -57,7 +57,15 @@ free_expr(struct expression *e)
 		for (size_t i = 0; i < e->num; i++) {
 			free_expr(e->args[i]);
 		}
+		if (e->b) free_expr(e->b);
 		free(e->args);
+	} else if (e->type == EXPR_LIST) {
+		if (e->args) {
+			for (size_t i = 0; i < e->num; i++) {
+				free_expr(e->args[i]);
+			}
+			free(e->args);
+		}
 	} else {
 		if (e->a) free_expr(e->a);
 		if (e->b) free_expr(e->b);
@@ -74,6 +82,7 @@ free_stmt(struct statement *s)
 	case STMT_EXPR:
 		free_expr(s->expr);
 		break;
+
 	case STMT_BLOCK:
 		for (size_t i = 0; i < s->block.num; i++) {
 			free_stmt(s->block.stmts[i]);

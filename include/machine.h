@@ -14,6 +14,7 @@ struct vm {
 
 	struct value *stack;
 	size_t sp;
+	size_t maxsp;
 
 	struct value **frame;
 	size_t fp;

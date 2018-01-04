@@ -62,6 +62,10 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 				print_value(f, gc, gc->array[ct->val[i].idx][j]);
 			break;
 
+		case VAL_BOOL:
+			fprintf(f, "%s", ct->val[i].boolean ? "true" : "false");
+			break;
+
 		default:
 			DOUT("unimplemented constant printer for value of type %s",
 			     value_data[ct->val[i].type].body);

@@ -160,7 +160,7 @@ parse_expr(struct parser *ps, size_t prec)
 				}
 			} else {
 				NEXT;
-				left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
+				left->args = oak_realloc(left->args, (left->num + 1) * sizeof *left->args);
 				left->args[left->num++] = first;
 				do {
 					left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
@@ -205,6 +205,7 @@ parse_expr(struct parser *ps, size_t prec)
 			expect_symbol(ps, op->body2);
 			e->c = parse_expr(ps, 1);
 			break;
+
 		case OPTYPE_FN_CALL:
 			e->type = EXPR_FN_CALL;
 
@@ -213,17 +214,19 @@ parse_expr(struct parser *ps, size_t prec)
 				ps->tok = ps->tok->prev;
 				do {
 					NEXT;
-					e->args = oak_realloc(e->args, sizeof e->args[0] * (e->num + 1));
+					e->args = oak_realloc(e->args, (e->num + 1) * sizeof *e->args);
 					e->args[e->num++] = parse_expr(ps, 1);
 				} while (!strcmp(ps->tok->value, ","));
 			}
 
 			expect_symbol(ps, op->body2);
 			break;
+
 		case OPTYPE_BINARY:
 			NEXT;
 			e->b = parse_expr(ps, op->ass == ASS_LEFT ? op->prec : op->prec - 1);
 			break;
+
 		case OPTYPE_SUBCRIPT:
 			e->type = EXPR_SUBSCRIPT;
 
@@ -231,6 +234,7 @@ parse_expr(struct parser *ps, size_t prec)
 			e->b = parse_expr(ps, 0);
 			expect_symbol(ps, op->body2);
 			break;
+
 		case OPTYPE_POSTFIX: NEXT; break;
 		default:
 			DOUT("internal error; an invalid operator was returned.");
