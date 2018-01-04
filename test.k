@@ -45,12 +45,18 @@
 # println type c
 # println type d
 
-var dim = 10
+var dim = 20
 var field = []
 
 for var y = 0; y < dim; y++ {
 	for var x = 0; x < dim; x++ {
-		field[x][y] = 1
+		field[x][y] = " "
+		if x == y: field[x][y] = "#"
+		if x == 0: field[x][y] = "#"
+		if y == 0: field[x][y] = "#"
+		if x == dim - 1: field[x][y] = "#"
+		if y == dim - 1: field[x][y] = "#"
+		if y == dim - x: field[x][y] = "#"
 	}
 }
 

@@ -155,6 +155,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			o(MUL);
 			o(DIV);
 			o(SUB);
+			o(MOD);
 
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
@@ -322,6 +323,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		for (size_t i = 0; i < e->num; i++)
 			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym));
 		break;
+
+	case EXPR_SUBSCRIPT: {
+		int addr = compile_lvalue(c, e->a, sym);
+		reg = alloc_reg(c);
+		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym));
+	} break;
 
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",

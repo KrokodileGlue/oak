@@ -16,6 +16,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
 	{ INSTR_ASET,     REG_EFG,  "ASET      " },
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
+	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
 
 	{ INSTR_COND,     REG_A,    "COND      " },
 	{ INSTR_CMP,      REG_EFG,  "CMP       " },
@@ -27,6 +28,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_SUB,      REG_EFG,  "SUB       " },
 	{ INSTR_MUL,      REG_EFG,  "MUL       " },
 	{ INSTR_DIV,      REG_EFG,  "DIV       " },
+	{ INSTR_MOD,      REG_EFG,  "MOD       " },
 
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },

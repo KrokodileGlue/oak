@@ -23,6 +23,7 @@ enum instruction_type {
 	INSTR_PUSHBACK,
 	INSTR_ASET,
 	INSTR_DEREF,
+	INSTR_SUBSCR,
 
 	INSTR_COND,
 	INSTR_CMP,
@@ -34,6 +35,7 @@ enum instruction_type {
 	INSTR_SUB,
 	INSTR_MUL,
 	INSTR_DIV,
+	INSTR_MOD,
 
 	INSTR_PRINT,
 	INSTR_LINE,
