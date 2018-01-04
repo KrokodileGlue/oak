@@ -86,6 +86,8 @@ ret(struct vm *vm)
 }
 
 #define REG(X) vm->frame[vm->fp][X]
+#define GLOBAL(X) vm->frame[1][X]
+#define CONST(X) vm->ct->val[X]
 #define BIN(X) REG(c.d.efg.e) = X##_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g))
 
 void
@@ -100,7 +102,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
 
 	switch (c.type) {
-	case INSTR_MOVC: REG(c.d.bc.b) = vm->ct->val[c.d.bc.c]; break;
+	case INSTR_MOVC: REG(c.d.bc.b) = CONST(c.d.bc.c);       break;
 	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
 	case INSTR_MOV:  REG(c.d.bc.b) = REG(c.d.bc.c);         break;
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
@@ -114,16 +116,23 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_MOD:  BIN(mod);                              break;
 	case INSTR_OR:   BIN(or);                               break;
-	case INSTR_GMOV: vm->frame[1][c.d.bc.b] = REG(c.d.bc.c); break;
-	case INSTR_MOVG: REG(c.d.bc.b) = vm->frame[1][c.d.bc.c]; break;
-	case INSTR_INC: REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
-	case INSTR_GINC: vm->frame[1][c.d.a] = inc_value(vm->gc, vm->frame[1][c.d.a]); break;
+	case INSTR_GMOV: GLOBAL(c.d.bc.b) = REG(c.d.bc.c);      break;
+	case INSTR_MOVG: REG(c.d.bc.b) = GLOBAL(c.d.bc.c);      break;
+	case INSTR_INC:  REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
+	case INSTR_GINC: GLOBAL(c.d.a) = inc_value(vm->gc, GLOBAL(c.d.a)); break;
 	case INSTR_SUBSCR:
-		REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer];
+		REG(c.d.efg.e) = copy_value(vm->gc, vm->gc->array[REG(c.d.efg.f).idx]
+		                            [REG(c.d.efg.g).integer]);
 		break;
 
+	case INSTR_COPY:  REG(c.d.bc.b) = copy_value(vm->gc, REG(c.d.bc.c)); break;
+	case INSTR_COPYC: REG(c.d.bc.b) = copy_value(vm->gc, CONST(c.d.bc.c)); break;
+	case INSTR_COPYG: REG(c.d.bc.b) = copy_value(vm->gc, GLOBAL(c.d.bc.c)); break;
+
 	case INSTR_PUSHBACK:
-		REG(c.d.bc.b) = pushback(vm->gc, REG(c.d.bc.b), REG(c.d.bc.c));
+		REG(c.d.bc.b) = pushback(vm->gc,
+		                         REG(c.d.bc.b),
+		                         REG(c.d.bc.c));
 		break;
 
 	case INSTR_ASET:
@@ -131,6 +140,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		 * TODO: Somewhere we should make sure that the index
 		 * is actually an integer.
 		 */
+
 		assert(REG(c.d.efg.e).type == VAL_ARRAY);
 		assert(REG(c.d.efg.f).type == VAL_INT);
 		grow_array(vm->gc, REG(c.d.efg.e), REG(c.d.efg.f).integer + 1);
@@ -140,6 +150,20 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 		vm->gc->array[REG(c.d.efg.e).idx][REG(c.d.efg.f).integer]
+			= REG(c.d.efg.g);
+		break;
+
+	case INSTR_GASET:
+		assert(GLOBAL(c.d.efg.e).type == VAL_ARRAY);
+		assert(REG(c.d.efg.f).type == VAL_INT);
+		grow_array(vm->gc, GLOBAL(c.d.efg.e), REG(c.d.efg.f).integer + 1);
+
+		if (vm->gc->arrlen[GLOBAL(c.d.efg.e).idx] <= REG(c.d.efg.f).integer) {
+			vm->gc->arrlen[GLOBAL(c.d.efg.e).idx] =
+				REG(c.d.efg.f).integer + 1;
+		}
+
+		vm->gc->array[GLOBAL(c.d.efg.e).idx][REG(c.d.efg.f).integer]
 			= REG(c.d.efg.g);
 		break;
 

@@ -19,3 +19,7 @@ have to do more research into gc techniques.
 ** Postfix if (when?)
 ** The `die' keyword
 ** Remove classes
+** Functions should be first-class objects.
+INSTR_JMP and INSTR_CALL should use register arguments. Function
+definitions should be able to appear in expressions; evaluating a
+function definition in an expression context should return a VAL_FN.

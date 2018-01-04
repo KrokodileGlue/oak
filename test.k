@@ -90,5 +90,16 @@ do pl n++; while n < 10
 
 pl "stuff: ", 3 * 3.1415926535897932
 
-# # var foo = { a => 2, b => 'stuff' }
-# # pl foo["a"]
+# var foo = { a => 2, b => 'stuff' }
+# pl foo["a"]
+
+var array = [1, 2, 3, 4]
+
+fn function (x) {
+	x[0] = "asdf"
+	pl x
+}
+
+pl array
+function(array)
+pl array

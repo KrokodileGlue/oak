@@ -170,6 +170,7 @@ mul_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	/* TODO: fancy operations on strings and lists. */
@@ -191,6 +192,7 @@ div_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	struct value ret;
@@ -211,6 +213,7 @@ mod_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	struct value ret;
@@ -339,8 +342,8 @@ struct value
 dec_value(struct gc *gc, struct value l)
 {
 	switch (l.type) {
-	case VAL_INT:   l.integer--;      break;
-	case VAL_FLOAT: l.real--;         break;
+	case VAL_INT:   l.integer--; break;
+	case VAL_FLOAT: l.real--;    break;
 	default: assert(false); break;
 	}
 
@@ -359,6 +362,26 @@ len_value(struct gc *gc, struct value l)
 	}
 
 	return ans;
+}
+
+struct value
+copy_value(struct gc *gc, struct value l)
+{
+	if (l.type == VAL_ARRAY) {
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->arrlen[v.idx] = 0;
+		gc->array[v.idx] = NULL;
+
+		for (size_t i = 0; i < gc->arrlen[l.idx]; i++) {
+			pushback(gc, v, copy_value(gc, gc->array[l.idx][i]));
+		}
+
+		l = v;
+	}
+
+	return l;
 }
 
 struct value
@@ -401,10 +424,12 @@ pushback(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	/* TODO: Make sure l is an array. */
-	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (gc->arrlen[l.idx] + 1) * sizeof *gc->array[l.idx]);
+	assert(l.type == VAL_ARRAY);
+	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (gc->arrlen[l.idx] + 1) * sizeof **gc->array);
 	gc->array[l.idx][gc->arrlen[l.idx]] = r;
 	gc->arrlen[l.idx]++;
 	return l;

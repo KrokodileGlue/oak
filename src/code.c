@@ -7,6 +7,10 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
 	{ INSTR_MOVG,     REG_BC,   "MOVG      " },
 
+	{ INSTR_COPY,     REG_BC,   "COPY      " },
+	{ INSTR_COPYG,    REG_BC,   "COPYG     " },
+	{ INSTR_COPYC,    REG_BC,   "COPYC     " },
+
 	{ INSTR_JMP,      REG_D,    "JMP       " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
@@ -15,6 +19,7 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
 	{ INSTR_ASET,     REG_EFG,  "ASET      " },
+	{ INSTR_GASET,    REG_EFG,  "GASET     " },
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
 

@@ -13,7 +13,10 @@ enum instruction_type {
 	INSTR_GMOV,
 	INSTR_MOVG,
 
-	/* TODO: Make call and jmp use d instead of a. */
+	INSTR_COPY,
+	INSTR_COPYG,
+	INSTR_COPYC,
+
 	INSTR_JMP,
 	INSTR_PUSH,
 	INSTR_POP,
@@ -22,6 +25,7 @@ enum instruction_type {
 
 	INSTR_PUSHBACK,
 	INSTR_ASET,
+	INSTR_GASET,
 	INSTR_DEREF,
 	INSTR_SUBSCR,
 

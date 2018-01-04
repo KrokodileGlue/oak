@@ -175,10 +175,18 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
-				emit_efg(c, INSTR_ASET,
-				         compile_lvalue(c, e->a->a, sym),
-				         compile_expression(c, e->a->b, sym),
-				         compile_expression(c, e->b, sym));
+				reg = compile_lvalue(c, e->a->a, sym);
+				if (reg >= 256) {
+					emit_efg(c, INSTR_GASET,
+					         reg - 256,
+					         compile_expression(c, e->a->b, sym),
+					         compile_expression(c, e->b, sym));
+				} else {
+					emit_efg(c, INSTR_ASET,
+					         reg,
+					         compile_expression(c, e->a->b, sym),
+					         compile_expression(c, e->b, sym));
+				}
 
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
@@ -314,15 +322,15 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 			reg = alloc_reg(c);
 			struct symbol *var = resolve(sym, e->val->value);
 			if (var->global) {
-				emit_bc(c, INSTR_MOVG, reg, var->address);
+				emit_bc(c, INSTR_COPYG, reg, var->address);
 			} else {
-				emit_bc(c, INSTR_MOV, reg, var->address);
+				emit_bc(c, INSTR_COPY, reg, var->address);
 			}
 			break;
 
 		default:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->val));
+			emit_bc(c, INSTR_COPYC, reg, add_constant(c, e->val));
 			break;
 		}
 		break;
