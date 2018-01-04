@@ -62,6 +62,7 @@ pop(struct vm *vm)
 static void
 call(struct vm *vm, int ip)
 {
+	/* TODO: Optimize everything. Lol. */
 	push_frame(vm);
 	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 2) * sizeof *vm->callstack);
 	vm->csp++;
@@ -72,6 +73,7 @@ call(struct vm *vm, int ip)
 static void
 ret(struct vm *vm)
 {
+	assert(vm->csp != 0);
 	pop_frame(vm);
 	vm->ip = vm->callstack[vm->csp--];
 }

@@ -37,8 +37,8 @@ fn fib (x) {
 	return fib(x - 1) + fib(x - 2)
 }
 
-for var i = 0; i < 30; i++:
-	println i, ': ', fib(i)
+# for var i = 0; i < 30; i++:
+# 	println i, ': ', fib(i)
 
 println type a
 println type b
@@ -63,14 +63,20 @@ for var y = 0; y < dim; y++ {
 	print "\n"
 }
 
-# println "P3"
-# println dim, " ", dim
-# println "1"
+println 'test'
 
-# for var y = 0; y < dim; y++ {
-# 	for var x = 0; x < dim; x++ {
-#  		if y == x or y == dim - x:
-# 			println "0 0 0"
-# 		else println "1 1 1"
-# 	}
-# }
+fn ppm_square (dimen) {
+	println "P3"
+	println dimen, " ", dimen
+	println "1"
+
+	for var y = 0; y < dimen; y++ {
+		for var x = 0; x < dimen; x++ {
+	 		if y == x or y == dimen - x:
+				println "0 0 0"
+			else println "1 1 1"
+		}
+	}
+}
+
+# ppm_square(dim)

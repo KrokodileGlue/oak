@@ -404,7 +404,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, 0);
+		emit_d(c, INSTR_JMP, -1);
 		push_frame(c);
 		sym->address = c->ip;
 
@@ -422,7 +422,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		pop_frame(c);
 		emit_a(c, INSTR_PUSH, nil(c));
 		emit_(c, INSTR_RET);
-		c->code[a].d.a = c->ip;
+		c->code[a].d.d = c->ip;
 	} break;
 
 	case STMT_RET:
