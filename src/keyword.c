@@ -10,6 +10,8 @@ struct keyword keywords[] = {
 	{ KEYWORD_ELSE,    "else"    },
 	{ KEYWORD_FN,      "fn"      },
 	{ KEYWORD_VAR,     "var"     },
+	{ KEYWORD_PRINT,   "p"       },
+	{ KEYWORD_PRINTLN, "pl"      },
 	{ KEYWORD_PRINT,   "print"   },
 	{ KEYWORD_PRINTLN, "println" },
 	{ KEYWORD_IN,      "in"      },

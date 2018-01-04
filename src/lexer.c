@@ -497,10 +497,10 @@ tokenize(struct module *m)
 		} else if (is_identifier_start(*a)) {
 			a = parse_identifier(ls, a);
 
-			for (size_t i = 0; i < num_keywords(); i++) {
+			for (size_t i = 0; i < KEYWORD_INVALID; i++) {
 				if (!strcmp(ls->tok->value, keywords[i].body)) {
 					ls->tok->type = TOK_KEYWORD;
-					ls->tok->keyword = keywords + i;
+					ls->tok->keyword = &keywords[i];
 					break;
 				}
 			}

@@ -114,6 +114,11 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		v.integer = tok->integer;
 		break;
 
+	case TOK_BOOL:
+		v.type = VAL_BOOL;
+		v.boolean = tok->boolean;
+		break;
+
 	default:
 		DOUT("unimplemented token-to-value converter");
 		assert(false);
@@ -198,6 +203,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_OR:
 			reg = alloc_reg(c);
 			emit_efg(c, INSTR_OR, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
+			break;
+
+		case OP_COMMA:
+			compile_expression(c, e->a, sym);
+			reg = compile_expression(c, e->b, sym);
 			break;
 
 		default:

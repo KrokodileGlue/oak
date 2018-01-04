@@ -586,6 +586,10 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_DO:     s = parse_do(ps);		break;
 		case KEYWORD_CLASS:  s = parse_class(ps);	break;
 		case KEYWORD_IMPORT: s = parse_import(ps);	break;
+		case KEYWORD_ELSE:
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "unmatched `else' statement");
+			NEXT;
+			break;
 
 		default:
 			DOUT("unimplemented statement parser for %d (%s)", ps->tok->keyword->type, ps->tok->keyword->body);
