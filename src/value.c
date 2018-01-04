@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
+#include <float.h>
 
 #include "util.h"
 #include "value.h"
@@ -425,7 +426,7 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		break;
 
 	case VAL_FLOAT:
-		fprintf(f, "%f", val.real);
+		fprintf(f, "%.*g", DECIMAL_DIG - 5, val.real);
 		break;
 
 	case VAL_BOOL:

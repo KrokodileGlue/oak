@@ -114,6 +114,11 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		v.integer = tok->integer;
 		break;
 
+	case TOK_FLOAT:
+		v.type = VAL_FLOAT;
+		v.real = tok->floating;
+		break;
+
 	case TOK_BOOL:
 		v.type = VAL_BOOL;
 		v.boolean = tok->boolean;

@@ -49,6 +49,10 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 			fprintf(f, "%"PRId64, ct->val[i].integer);
 			break;
 
+		case VAL_FLOAT:
+			fprintf(f, "%f", ct->val[i].real);
+			break;
+
 		case VAL_NIL:
 			fprintf(f, "nil");
 			break;

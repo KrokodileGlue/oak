@@ -50,18 +50,16 @@ var dim = 50
 fn square (dim) {
 	var field = []
 
-	for var y = 0; y < dim; y++ {
+	for var y = 0; y < dim; y++:
 		for var x = 0; x < dim; x++ {
 			field[x][y] = " "
 			if y == x or y == dim - x:
 				 field[x][y] = "#"
 		}
-	}
 
 	for var y = 0; y < dim; y++ {
-		for var x = 0; x < dim; x++ {
+		for var x = 0; x < dim; x++:
 			p field[x][y]
-		}
 		p "\n"
 	}
 }
@@ -71,11 +69,9 @@ fn ppm_square (dim) {
 	pl dim, " ", dim
 	pl dim
 
-	for var y = 0; y < dim; y++ {
-		for var x = 0; x < dim; x++ {
+	for var y = 0; y < dim; y++:
+		for var x = 0; x < dim; x++:
 	 		p x + " " + y + " 0 "
-		}
-	}
 
 	p "\n"
 }
@@ -85,7 +81,9 @@ square(dim)
 
 fn t (x) pl type x
 
-t("this"), t("that"), t(2), t(true), t([1, 2, "stuff"])
+t("this"), t("that"), t(2), t(true), t([1, 2, "stuff"]), t(1.2)
 
 var n = 0
 while n < 10: pl n++
+
+pl "stuff: ", 3 * 3.1415926535897932
