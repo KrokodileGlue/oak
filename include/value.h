@@ -44,6 +44,7 @@ struct value sub_values(struct gc *gc, struct value l, struct value r);
 struct value mul_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
 struct value mod_values(struct gc *gc, struct value l, struct value r);
+struct value or_values(struct gc *gc, struct value l, struct value r);
 struct value inc_value(struct gc *gc, struct value l);
 
 struct value grow_array(struct gc *gc, struct value l, int r);

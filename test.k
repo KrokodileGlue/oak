@@ -45,18 +45,14 @@ println type b
 println type c
 println type d
 
-var dim = 20
+var dim = 50
 var field = []
 
 for var y = 0; y < dim; y++ {
 	for var x = 0; x < dim; x++ {
 		field[x][y] = " "
-		if x == y: field[x][y] = "#"
-		if x == 0: field[x][y] = "#"
-		if y == 0: field[x][y] = "#"
-		if x == dim - 1: field[x][y] = "#"
-		if y == dim - 1: field[x][y] = "#"
-		if y == dim - x: field[x][y] = "#"
+		if y == x or y == dim - x:
+			 field[x][y] = "#"
 	}
 }
 
@@ -66,3 +62,15 @@ for var y = 0; y < dim; y++ {
 	}
 	print "\n"
 }
+
+# println "P3"
+# println dim, " ", dim
+# println "1"
+
+# for var y = 0; y < dim; y++ {
+# 	for var x = 0; x < dim; x++ {
+#  		if y == x or y == dim - x:
+# 			println "0 0 0"
+# 		else println "1 1 1"
+# 	}
+# }

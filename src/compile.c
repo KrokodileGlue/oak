@@ -195,6 +195,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
 			break;
 
+		case OP_OR:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_OR, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
+			break;
+
 		default:
 			DOUT("unimplemented compiler for binary operator `%s'",
 			     e->operator->body);

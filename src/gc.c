@@ -82,9 +82,9 @@ gc_alloc(struct gc *gc, enum value_type type)
 	if (idx == -1) {
 		gc->slot[type] += 64;
 		gc->bmp[type] = oak_realloc(gc->bmp[type],
-		                            (gc->slot[type] / 64) * sizeof *gc->bmp[type]);
-		memset(gc->bmp[type] + (gc->slot[type] - 64) / 64, 0,
-		       (gc->slot[type] / 64) * sizeof *gc->bmp[type]);
+		                            ((gc->slot[type] / 64) + 1) * sizeof *gc->bmp[type]);
+		memset(&gc->bmp[type][(gc->slot[type] - 64) / 64], 0,
+		       sizeof *gc->bmp[type]);
 
 		switch (type) {
 		case VAL_STR:

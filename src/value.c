@@ -133,7 +133,8 @@ add_values(struct gc *gc, struct value l, struct value r)
 	return ret;
 }
 
-struct value sub_values(struct gc *gc, struct value l, struct value r)
+struct value
+sub_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
@@ -151,7 +152,8 @@ struct value sub_values(struct gc *gc, struct value l, struct value r)
 	return ret;
 }
 
-struct value mul_values(struct gc *gc, struct value l, struct value r)
+struct value
+mul_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
@@ -170,7 +172,8 @@ struct value mul_values(struct gc *gc, struct value l, struct value r)
 	return ret;
 }
 
-struct value div_values(struct gc *gc, struct value l, struct value r)
+struct value
+div_values(struct gc *gc, struct value l, struct value r)
 {
 	if (gc->debug) {
 		char *ls = show_value(gc, l), *rs = show_value(gc, r);
