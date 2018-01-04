@@ -48,10 +48,10 @@
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-      '(("type\\|sayln\\|say"			 .	font-lock-function-name-face)
-	("pi\\|0x[[:xdigit:]]+\\|[\\.[:digit:]]+\\|true\\|false" .	font-lock-constant-face)
-	("println\\|print\\|for\\|while\\|if\\|return\\|else"    .	font-lock-keyword-face)
-	("var\\|class\\|fn"			 .	font-lock-type-face)))
+      '(("\\b\\(type\\|sayln\\|say\\)\\b"			 .	font-lock-function-name-face)
+	("\\b\\(pi\\|0x[[:xdigit:]]+\\|[\\.[:digit:]]+\\|true\\|false\\)\\b" .	font-lock-constant-face)
+	("\\b\\(pl\\|p\\|println\\|print\\|for\\|while\\|if\\|return\\|else\\)\\b"    .	font-lock-keyword-face)
+	("\\b\\(var\\|class\\|fn\\)\\b"			 .	font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
 (setq oak-mode-syntax-table
