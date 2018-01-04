@@ -94,10 +94,10 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_MOVC: REG(c.d.bc.b) = vm->ct->val[c.d.bc.c]; break;
 	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
 	case INSTR_MOV:  REG(c.d.bc.b) = REG(c.d.bc.c);         break;
-	case INSTR_JMP:  vm->ip = c.d.a - 1;                    break;
+	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
 	case INSTR_PUSH: push(vm, REG(c.d.a));                  break;
 	case INSTR_POP:  REG(c.d.a) = pop(vm);                  break;
-	case INSTR_CALL: call(vm, c.d.a - 1);                   break;
+	case INSTR_CALL: call(vm, c.d.d - 1);                   break;
 	case INSTR_RET:  ret(vm);                               break;
 	case INSTR_ADD:  BIN(add);                              break;
 	case INSTR_SUB:  BIN(sub);                              break;

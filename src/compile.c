@@ -53,6 +53,12 @@ emit_a(struct compiler *c, enum instruction_type type, uint8_t a)
 }
 
 static void
+emit_d(struct compiler *c, enum instruction_type type, uint16_t a)
+{
+	emit(c, (struct instruction){type, .d = { .d = a }});
+}
+
+static void
 emit_bc(struct compiler *c, enum instruction_type type, uint8_t B, uint8_t C)
 {
 	emit(c, (struct instruction){type, .d = { .bc = {B, C} }});
@@ -305,7 +311,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym));
 		}
 
-		emit_a(c, INSTR_CALL, compile_lvalue(c, e->a, sym));
+		emit_d(c, INSTR_CALL, compile_lvalue(c, e->a, sym));
 		reg = alloc_reg(c);
 		emit_a(c, INSTR_POP, reg);
 		break;
@@ -393,7 +399,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 
 		size_t a = c->ip;
-		emit_a(c, INSTR_JMP, 0);
+		emit_d(c, INSTR_JMP, 0);
 		push_frame(c);
 		sym->address = c->ip;
 
@@ -437,13 +443,13 @@ compile_statement(struct compiler *c, struct statement *s)
 	case STMT_IF_STMT:
 		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym));
 		size_t a = c->ip;
-		emit_a(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1);
 		compile_statement(c, s->if_stmt.then);
 		size_t b = c->ip;
-		emit_a(c, INSTR_JMP, -1);
-		c->code[a].d.a = c->ip;
+		emit_d(c, INSTR_JMP, -1);
+		c->code[a].d.d = c->ip;
 		compile_statement(c, s->if_stmt.otherwise);
-		c->code[b].d.a = c->ip;
+		c->code[b].d.d = c->ip;
 		break;
 
 	case STMT_FOR_LOOP:
@@ -457,12 +463,12 @@ compile_statement(struct compiler *c, struct statement *s)
 			size_t a = c->ip;
 			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym));
 			size_t b = c->ip;
-			emit_a(c, INSTR_JMP, -1);
+			emit_d(c, INSTR_JMP, -1);
 			compile_statement(c, s->for_loop.body);
 			compile_expression(c, s->for_loop.c, sym);
 
-			emit_a(c, INSTR_JMP, a);
-			c->code[b].d.a = c->ip;
+			emit_d(c, INSTR_JMP, a);
+			c->code[b].d.d = c->ip;
 
 			break;
 		}

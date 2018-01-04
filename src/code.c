@@ -7,10 +7,10 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
 	{ INSTR_MOVG,     REG_BC,   "MOVG      " },
 
-	{ INSTR_JMP,      REG_A,    "JMP       " },
+	{ INSTR_JMP,      REG_D,    "JMP       " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
-	{ INSTR_CALL,     REG_A,    "CALL      " },
+	{ INSTR_CALL,     REG_D,    "CALL      " },
 	{ INSTR_RET,      REG_NONE, "RET       " },
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },

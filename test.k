@@ -1,49 +1,49 @@
-# fn f (x) = x * 2
+fn f (x) = x * 2
 
-# var a = 'foo' + 'bar' + ((2 + 4) * 3 / 9 - 1 + 4)
-# println a
+var a = 'foo' + 'bar' + ((2 + 4) * 3 / 9 - 1 + 4)
+println a
 
-# var b = 2 * 2
-# println (b + 6) + a
-# b = 2000
+var b = 2 * 2
+println (b + 6) + a
+b = 2000
 
-# println '2 * 2 = ', f(2)
+println '2 * 2 = ', f(2)
 
-# fn g = "stuff"
-# println g()
+fn g = "stuff"
+println g()
 
-# var c = [1, 2, 3, 4]
-# println c
-# c[0][5] = 0
-# c[0][4] = 1
-# c[50][0] = 2
-# println c
+var c = [1, 2, 3, 4]
+println c
+c[0][5] = 0
+c[0][4] = 1
+c[50][0] = 2
+println c
 
-# var d = 0
-# fn h = (d = d + 1)
+var d = 0
+fn h = (d = d + 1)
 
-# for var i = 0; i < 30; i++:
-# 	println h()
+for var i = 0; i < 30; i++:
+	println h()
 
-# print 'checking if g() == "stuff"... '
+print 'checking if g() == "stuff"... '
 
-# if g() == "stuff":
-# 	println "[TRUE]"
-# else
-# 	println "[FALSE]"
+if g() == "stuff":
+	println "[TRUE]"
+else
+	println "[FALSE]"
 
-# fn fib (x) {
-# 	if x < 2: return x
-# 	return fib(x - 1) + fib(x - 2)
-# }
+fn fib (x) {
+	if x < 2: return x
+	return fib(x - 1) + fib(x - 2)
+}
 
-# for var i = 0; i < 30; i++:
-# 	println i, ': ', fib(i)
+for var i = 0; i < 30; i++:
+	println i, ': ', fib(i)
 
-# println type a
-# println type b
-# println type c
-# println type d
+println type a
+println type b
+println type c
+println type d
 
 var dim = 20
 var field = []
