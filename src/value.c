@@ -217,7 +217,7 @@ mod_values(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
-is_less_than_value(struct gc *gc, struct value l, struct value r)
+value_less(struct gc *gc, struct value l, struct value r)
 {
 	struct value ret;
 	ret.type = VAL_NIL;

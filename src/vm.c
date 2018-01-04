@@ -32,8 +32,9 @@ free_vm(struct vm *vm)
 static void
 push_frame(struct vm *vm)
 {
-	vm->frame = oak_realloc(vm->frame, (vm->fp + 2) * sizeof *vm->frame);
 	vm->fp++;
+	if (vm->fp <= vm->maxfp) return;
+	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
 	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
@@ -104,6 +105,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_GMOV: vm->frame[1][c.d.bc.b] = REG(c.d.bc.c); break;
 	case INSTR_MOVG: REG(c.d.bc.b) = vm->frame[1][c.d.bc.c]; break;
+	case INSTR_INC: REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
 
 	case INSTR_PUSHBACK:
 		REG(c.d.bc.b) = pushback(vm->gc, REG(c.d.bc.b), REG(c.d.bc.c));
@@ -155,6 +157,10 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_CMP:
 		REG(c.d.efg.e) = cmp_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
+
+	case INSTR_LESS:
+		REG(c.d.efg.e) = value_less(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
 
 	case INSTR_TYPE: {

@@ -183,6 +183,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
 			break;
 
+		case OP_LESS:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym));
+			break;
+
 		default:
 			DOUT("unimplemented compiler for binary operator `%s'",
 			     e->operator->body);
@@ -199,6 +204,22 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		default:
 			DOUT("unimplemented compiler for prefix operator `%s'",
+			     e->operator->body);
+			assert(false);
+		}
+		break;
+
+	case OPTYPE_POSTFIX:
+		switch (e->operator->name) {
+		case OP_ADDADD: {
+			int a = compile_lvalue(c, e->a, sym);
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_MOV, reg, a);
+			emit_a(c, INSTR_INC, a);
+		} break;
+
+		default:
+			DOUT("unimplemented compiler for postfix operator `%s'",
 			     e->operator->body);
 			assert(false);
 		}
@@ -315,7 +336,7 @@ static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int a = compile_expression(c, e, sym);
-	/* c->stack_top[c->sp] = c->sym->num_variables; */
+	c->stack_top[c->sp] = c->sym->num_variables;
 	return a;
 }
 
@@ -417,6 +438,27 @@ compile_statement(struct compiler *c, struct statement *s)
 		compile_statement(c, s->if_stmt.otherwise);
 		c->code[b].d.a = c->ip;
 		break;
+
+	case STMT_FOR_LOOP:
+		if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
+			if (s->for_loop.a->type == STMT_EXPR) {
+				compile_expr(c, s->for_loop.a->expr, sym);
+			} else if (s->for_loop.a->type == STMT_VAR_DECL) {
+				compile_statement(c, s->for_loop.a);
+			}
+
+			size_t a = c->ip;
+			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym));
+			size_t b = c->ip;
+			emit_a(c, INSTR_JMP, -1);
+			compile_statement(c, s->for_loop.body);
+			compile_expression(c, s->for_loop.c, sym);
+
+			emit_a(c, INSTR_JMP, a);
+			c->code[b].d.a = c->ip;
+
+			break;
+		}
 
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)",

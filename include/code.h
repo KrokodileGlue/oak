@@ -26,6 +26,8 @@ enum instruction_type {
 
 	INSTR_COND,
 	INSTR_CMP,
+	INSTR_LESS,
+	INSTR_INC,
 	INSTR_TYPE,
 
 	INSTR_ADD,

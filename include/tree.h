@@ -52,8 +52,9 @@ struct statement {
 		} fn_def;
 
 		/*
-		 * for loops are a bit weird, for-each and c-style loops are distinguished
-		 * by the c field; if it's NULL then it's for-each, otherwise it's c-style.
+		 * For loops are a bit weird; the particular type of
+		 * for loop is encoded by whether b and c fields are
+		 * non-NULL.
 		 */
 		struct {
 			struct statement *a;
