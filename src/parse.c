@@ -159,14 +159,14 @@ parse_expr(struct parser *ps, size_t prec)
 					left->c = parse_expr(ps, 0);
 				}
 			} else {
-				NEXT;
+				if (strcmp(ps->tok->value, "]")) NEXT;
 				left->args = oak_realloc(left->args, (left->num + 1) * sizeof *left->args);
 				left->args[left->num++] = first;
-				do {
+				while (strcmp(ps->tok->value, "]")) {
 					left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
 					left->args[left->num++] = parse_expr(ps, 1);
 					if (!strcmp(ps->tok->value, ",")) NEXT;
-				} while (strcmp(ps->tok->value, "]"));
+				}
 			}
 
 			expect_symbol(ps, "]");
