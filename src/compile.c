@@ -487,6 +487,13 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->code[b].d.d = c->ip;
 	} break;
 
+	case STMT_DO: {
+		size_t a = c->ip;
+		compile_statement(c, s->do_while_loop.body);
+		emit_a(c, INSTR_NCOND, compile_expr(c, s->do_while_loop.cond, sym));
+		emit_d(c, INSTR_JMP, a);
+	} break;
+
 	case STMT_FOR_LOOP:
 		if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
 			if (s->for_loop.a->type == STMT_EXPR) {

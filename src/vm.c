@@ -163,6 +163,11 @@ execute_instr(struct vm *vm, struct instruction c)
 			vm->ip++;
 		break;
 
+	case INSTR_NCOND:
+		if (!is_truthy(vm->gc, REG(c.d.a)))
+			vm->ip++;
+		break;
+
 	case INSTR_CMP:
 		REG(c.d.efg.e) = cmp_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
