@@ -86,3 +86,6 @@ square(dim)
 fn t (x) pl type x
 
 t("this"), t("that"), t(2), t(true), t([1, 2, "stuff"])
+
+var n = 0
+while n < 10: pl n++
