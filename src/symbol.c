@@ -325,12 +325,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
 			/* Maybe we should allow the user to shadow global variables. */
-			struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.args[i]->value);
-			if (redefinition) {
-				error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function argument",
-				           stmt->fn_def.args[i]->value);
-				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");
-			}
+			/* struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.args[i]->value); */
+			/* if (redefinition) { */
+			/* 	error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function argument", */
+			/* 	           stmt->fn_def.args[i]->value); */
+			/* 	error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here"); */
+			/* } */
 
 			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_ARGUMENT;
@@ -374,14 +374,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	} break;
 
 	case STMT_BLOCK: {
-		si->scope++;
-		push_scope(si, si->scope);
+		push_scope(si, ++si->scope);
 
-		si->scope++;
-		stmt->scope = si->scope_stack[si->scope_pointer - 1];
+		stmt->scope = si->scope;
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
-		sym->scope = si->scope_stack[si->scope_pointer - 1];
+		sym->scope = si->scope;
 
 		push(si, sym);
 
@@ -389,6 +387,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			symbolize(si, stmt->block.stmts[i]);
 
 		pop(si);
+		pop_scope(si);
 	} break;
 
 	case STMT_IF_STMT: {
@@ -407,6 +406,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		resolve_expr(si, stmt->expr);
 		free(sym);
 		return;
+
 	case STMT_PRINT: case STMT_PRINTLN:
 		for (size_t i = 0; i < stmt->print.num; i++) {
 			resolve_expr(si, stmt->print.args[i]);
@@ -443,16 +443,16 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	}
 
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
-		si->scope++;
-		push_scope(si, si->scope);
+		push_scope(si, ++si->scope);
 		push_block(si, stmt);
 		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
-		if (!stmt->for_loop.c) {
+		if (stmt->for_loop.a->type == STMT_VAR_DECL) {
 			inc_variable_count(si->symbol);
 		}
 
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {
+			/* wtf is this shit */
 			struct symbol *s = new_symbol(sym->tok);
 			s->type = SYM_VAR;
 			s->name = "i";
