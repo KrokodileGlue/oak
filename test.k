@@ -20,7 +20,7 @@ c[50][0] = 2
 println c
 
 var d = 0
-fn h = (d = d + 1)
+fn h = d++
 
 for var i = 0; i < 30; i++:
 	println h()
@@ -37,8 +37,8 @@ fn fib (x) {
 	return fib(x - 1) + fib(x - 2)
 }
 
-# for var i = 0; i < 30; i++:
-# 	println i, ': ', fib(i)
+for var i = 0; i < 30; i++:
+	println i, ': ', fib(i)
 
 println type a
 println type b

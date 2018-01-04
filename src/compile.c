@@ -226,8 +226,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_ADDADD: {
 			int a = compile_lvalue(c, e->a, sym);
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_MOV, reg, a);
-			emit_a(c, INSTR_INC, a);
+			if (a >= 256) {
+				emit_bc(c, INSTR_MOVG, reg, a - 256);
+				emit_a(c, INSTR_GINC, a - 256);
+			} else {
+				emit_bc(c, INSTR_MOV, reg, a);
+				emit_a(c, INSTR_INC, a);
+			}
 		} break;
 
 		default:

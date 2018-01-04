@@ -110,6 +110,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_GMOV: vm->frame[1][c.d.bc.b] = REG(c.d.bc.c); break;
 	case INSTR_MOVG: REG(c.d.bc.b) = vm->frame[1][c.d.bc.c]; break;
 	case INSTR_INC: REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
+	case INSTR_GINC: vm->frame[1][c.d.a] = inc_value(vm->gc, vm->frame[1][c.d.a]); break;
 	case INSTR_SUBSCR:
 		REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer];
 		break;
