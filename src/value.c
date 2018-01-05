@@ -91,6 +91,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	struct value ret;
@@ -150,6 +151,7 @@ sub_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
+		fputc('\n', stderr);
 	}
 
 	struct value ret;
