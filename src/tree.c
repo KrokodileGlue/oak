@@ -17,7 +17,6 @@ struct statementData statement_data[] = {
 	{ STMT_PRINT    , "print"                },
 	{ STMT_PRINTLN  , "println"              },
 	{ STMT_RET      , "return"               },
-	{ STMT_CLASS    , "class"                },
 	{ STMT_IMPORT   , "import"               },
 	{ STMT_NULL     , "null statement"       },
 	{ STMT_INVALID  , "invalid statement"    }
@@ -89,22 +88,23 @@ free_stmt(struct statement *s)
 		}
 
 		free(s->block.stmts);
-
 		break;
+
 	case STMT_IF_STMT:
 		free_expr(s->if_stmt.cond);
 		free_stmt(s->if_stmt.then);
 		if (s->if_stmt.otherwise)
 			free_stmt(s->if_stmt.otherwise);
 		break;
+
 	case STMT_PRINT: case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++) {
 			free_expr(s->print.args[i]);
 		}
 
 		free(s->print.args);
-
 		break;
+
 	case STMT_VAR_DECL:
 		for (size_t i = 0; i < s->var_decl.num_init; i++) {
 			free_expr(s->var_decl.init[i]);
@@ -112,43 +112,37 @@ free_stmt(struct statement *s)
 
 		free(s->var_decl.init);
 		free(s->var_decl.names);
-
 		break;
+
 	case STMT_FOR_LOOP:
 		free_stmt(s->for_loop.a);
 		if (s->for_loop.b) free_expr(s->for_loop.b);
 		if (s->for_loop.c) free_expr(s->for_loop.c);
 		free_stmt(s->for_loop.body);
-
 		break;
+
 	case STMT_FN_DEF:
 		free_stmt(s->fn_def.body);
 		free(s->fn_def.args);
-
 		break;
+
 	case STMT_RET:
 		free_expr(s->ret.expr);
-
 		break;
+
 	case STMT_WHILE:
 		free_expr(s->while_loop.cond);
 		free_stmt(s->while_loop.body);
-
 		break;
+
 	case STMT_DO:
 		free_expr(s->do_while_loop.cond);
 		free_stmt(s->do_while_loop.body);
-
 		break;
-	case STMT_CLASS:
-		for (size_t i = 0; i < s->class.num; i++) {
-			free_stmt(s->class.body[i]);
-		}
-		free(s->class.body);
 
-		break;
 	case STMT_IMPORT: case STMT_NULL:
 		break;
+
 	default:
 		fprintf(stderr, "unimplemented free for statement of type %d (%s)\n",
 		        s->type, statement_data[s->type].body);
@@ -380,6 +374,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_PRINT: case STMT_PRINTLN:
 		ap->depth++;
 		split(ap);
@@ -391,11 +386,13 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_EXPR:
 		ap->depth++;
 		print_expression(ap, s->expr);
 		ap->depth--;
 		break;
+
 	case STMT_BLOCK:
 		ap->depth++;
 		split(ap);
@@ -407,6 +404,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_VAR_DECL:
 		ap->depth++;
 		split(ap);
@@ -424,6 +422,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_FOR_LOOP:
 		ap->depth++;
 		split(ap);
@@ -453,6 +452,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_FN_DEF:
 		ap->depth++;
 		split(ap);
@@ -464,11 +464,13 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth++;
 		split(ap);
+
 		for (size_t i = 0; i < s->fn_def.num; i++) {
 			if (i == s->fn_def.num - 1) join(ap);
 			indent(ap);
 			fprintf(ap->f, "(%s)", s->fn_def.args[i]->value);
 		}
+
 		join(ap);
 		ap->depth--;
 
@@ -481,11 +483,13 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_RET:
 		ap->depth++;
 		print_expression(ap, s->expr);
 		ap->depth--;
 		break;
+
 	case STMT_WHILE:
 		ap->depth++;
 		split(ap);
@@ -499,6 +503,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_DO:
 		ap->depth++;
 		split(ap);
@@ -512,30 +517,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
-	case STMT_CLASS:
-		ap->depth++;
 
-		split(ap);
-
-		indent(ap);  fprintf(ap->f, "<name>");
-		ap->depth++;
-		indent(ap); fprintf(ap->f, "(%s)", s->class.name);
-		ap->depth--;
-
-		if (s->class.parent_name) {
-			indent(ap);  fprintf(ap->f, "<parent>");
-			ap->depth++;
-			indent(ap); fprintf(ap->f, "(%s)", s->class.parent_name->value);
-			ap->depth--;
-		}
-
-		for (size_t i = 0; i < s->class.num; i++) {
-			if (i == s->class.num - 1) join(ap);
-			print_statement(ap, s->class.body[i]);
-		}
-
-		ap->depth--;
-		break;
 	case STMT_IMPORT:
 		ap->depth++;
 
@@ -545,9 +527,11 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 
 		ap->depth--;
 		break;
+
 	case STMT_INVALID:
 		fprintf(ap->f, "invalid statement; %s\n", s->tok->value);
 		break;
+
 	case STMT_NULL: break;
 	default:
 		DOUT("unimplemented printer for statement of type %d (%s)",

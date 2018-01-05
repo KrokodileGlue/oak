@@ -21,7 +21,6 @@ enum statement_type {
 	STMT_PRINT,
 	STMT_PRINTLN,
 	STMT_RET,
-	STMT_CLASS,
 	STMT_IMPORT,
 	STMT_NULL,
 	STMT_INVALID
@@ -97,14 +96,6 @@ struct statement {
 			struct expression *cond;
 			struct statement *body;
 		} while_loop;
-
-		struct {
-			char *name;
-			/* the name of the class this class inherits from */
-			struct token *parent_name;
-			struct statement **body;
-			size_t num;
-		} class;
 
 		struct {
 			struct token *name;

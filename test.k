@@ -132,5 +132,11 @@ fn djoin (x y) {
 pl join(', ', array)
 pl djoin(', ', array)
 
+var it = fn that (x) {
+	pl type x
+}
+
+it([])
+
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

@@ -51,7 +51,6 @@ symbolizer_free(struct symbolizer *si)
 static char *sym_str[] = {
 	"function",
 	"variable",
-	"class",
 	"global",
 	"block",
 	"argument",
@@ -274,33 +273,6 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	sym->parent = si->symbol;
 
 	switch (stmt->type) {
-	case STMT_CLASS:
-		si->scope++;
-		sym->name = stmt->class.name;
-		sym->type = SYM_CLASS;
-
-		push(si, sym);
-
-		if (stmt->class.parent_name) {
-			struct symbol *parent = resolve(si->symbol, stmt->class.parent_name->value);
-
-			if (parent) {
-				if (parent->type != SYM_CLASS) {
-					error_push(si->r, stmt->tok->loc, ERR_FATAL, "class inherits from non-inheritable symbol");
-					error_push(si->r, parent->tok->loc, ERR_NOTE, "previous declaration here");
-				}
-
-				sym->parent = parent;
-			}
-		}
-
-		for (size_t i = 0; i < stmt->class.num; i++) {
-			symbolize(si, stmt->class.body[i]);
-		}
-
-		pop(si);
-		break;
-
 	case STMT_FN_DEF: {
 		struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.name);
 		if (redefinition) {

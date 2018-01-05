@@ -494,46 +494,6 @@ parse_do(struct parser *ps)
 }
 
 static struct statement *
-parse_class(struct parser *ps)
-{
-	struct statement *s = new_statement(ps->tok);
-	s->type = STMT_CLASS;
-
-	NEXT;
-	if (ps->tok->type != TOK_IDENTIFIER)
-		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
-	s->class.name = ps->tok->value;
-	NEXT;
-
-	if (!strcmp(ps->tok->value, ":")) {
-		NEXT;
-		s->class.parent_name = ps->tok;
-		NEXT;
-	}
-
-	expect_symbol(ps, "{");
-
-	while (strcmp(ps->tok->value, "}")) {
-		struct token *tok = ps->tok; /* so that the error is reported at the right place */
-		s->class.body = oak_realloc(s->class.body, sizeof s->class.body[0] * (s->class.num + 1));
-		s->class.body[s->class.num] = parse_stmt(ps);
-
-		if (s->class.body[s->class.num]->type == STMT_FN_DEF
-		    || s->class.body[s->class.num]->type == STMT_VAR_DECL) {
-			// good.
-		} else {
-			error_push(ps->r, tok->loc, ERR_FATAL, "class bodies may not contain arbitrary code");
-		}
-
-		s->class.num++;
-	}
-
-	expect_symbol(ps, "}");
-
-	return s;
-}
-
-static struct statement *
 parse_import(struct parser *ps)
 {
 	struct statement *s = new_statement(ps->tok);
@@ -588,7 +548,6 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_RET:    s = parse_ret(ps);		break;
 		case KEYWORD_WHILE:  s = parse_while(ps);	break;
 		case KEYWORD_DO:     s = parse_do(ps);		break;
-		case KEYWORD_CLASS:  s = parse_class(ps);	break;
 		case KEYWORD_IMPORT: s = parse_import(ps);	break;
 		case KEYWORD_ELSE:
 			error_push(ps->r, ps->tok->loc, ERR_FATAL, "unmatched `else' statement");
