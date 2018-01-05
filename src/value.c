@@ -79,7 +79,9 @@ show_value(struct gc *gc, struct value val)
 static void
 print_debug(struct gc *gc, struct value l)
 {
+	fputc('\'', stderr);
 	print_value(stderr, gc, l);
+	fputc('\'', stderr);
 	fprintf(stderr, " (%s)", value_data[l.type].body);
 }
 
@@ -140,6 +142,12 @@ add_values(struct gc *gc, struct value l, struct value r)
 		ret.idx = gc_alloc(gc, VAL_STR);
 		char *s = show_value(gc, r);
 		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
+		free(s);
+	} else if (l.type == VAL_ARRAY && r.type == VAL_STR) {
+		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
+		char *s = show_value(gc, l);
+		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
 		free(s);
 	} else BINARY_MATH_OPERATION(+) else {
 		/* TODO: do something here. */

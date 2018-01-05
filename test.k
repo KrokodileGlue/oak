@@ -110,10 +110,10 @@ fn join (x y) {
 	var r = ''
 
 	for var i = 0; i < length y - 1; i++ {
-		r = r + y[i] + x
+		r += y[i] + x
 	}
 
-	r = r + y[length y - 1]
+	r += y[length y - 1]
 	return r
 }
 
