@@ -16,6 +16,7 @@ struct symbol {
 	struct symbol **children;
 	size_t          num_children;
 	size_t          num_variables;
+	size_t          num_arguments;
 	size_t          address;
 	int             scope;
 	bool            global;
@@ -37,11 +38,14 @@ struct symbolizer {
 	struct reporter *r;
 	struct oak      *k;
 
-	/* this is never decremented, it only serves to produce unique id numbers for blocks */
+	/*
+	 * This is never decremented, it only serves to produce unique
+	 * id numbers for blocks.
+	 */
 	int              scope;
-
 	int             *scope_stack;
-	int              scope_pointer; /* index of the top of the scope stack */
+	/* The index of the top of the scope stack. */
+	int              scope_pointer;
 };
 
 struct symbolizer *new_symbolizer(struct oak *k);

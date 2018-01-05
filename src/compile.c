@@ -380,6 +380,15 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		break;
 
 	case EXPR_FN_CALL:
+		if (e->a->type == EXPR_VALUE && e->a->val->type == TOK_IDENTIFIER) {
+			struct symbol *fs = resolve(sym, e->a->val->value);
+			if (e->num != fs->num_arguments) {
+				error_push(c->r, e->tok->loc, ERR_FATAL,
+				           "function is called with an incorrect number of parameters");
+				return -1;
+			}
+		}
+
 		for (int i = e->num - 1; i >= 0; i--) {
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true));
 		}

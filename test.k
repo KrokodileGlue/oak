@@ -9,7 +9,7 @@ b = 2000
 
 pl '2 * 2 = ', f(2)
 
-fn g = "stuff"
+fn g = 'stuff'
 pl g()
 
 var c = [1, 2, 3, 4]
@@ -27,10 +27,10 @@ for var i = 0; i < 30; i++:
 
 p 'checking if g() == "stuff"... '
 
-if g() == "stuff":
-	pl "[TRUE]"
+if g() == 'stuff':
+	pl '[TRUE]'
 else
-	pl "[FALSE]"
+	pl '[FALSE]'
 
 fn fib (x) {
 	if x < 2: return x
@@ -52,28 +52,28 @@ fn square (dim) {
 
 	for var y = 0; y < dim; y++:
 		for var x = 0; x < dim; x++ {
-			field[x][y] = " "
+			field[x][y] = ' '
 			if y == x or y == dim - x:
-				 field[x][y] = "#"
+				 field[x][y] = '#'
 		}
 
 	for var y = 0; y < dim; y++ {
 		for var x = 0; x < dim; x++:
 			p field[x][y]
-		p "\n"
+		p '\n'
 	}
 }
 
 fn ppm_square (dim) {
-	pl "P3"
-	pl dim, " ", dim
+	pl 'P3'
+	pl dim, ' ', dim
 	pl dim
 
 	for var y = 0; y < dim; y++:
 		for var x = 0; x < dim; x++:
-	 		p x + " " + y + " 0 "
+	 		p x + ' ' + y + ' 0 '
 
-	p "\n"
+	p '\n'
 }
 
 square(dim)
@@ -81,19 +81,19 @@ square(dim)
 
 fn t (x) pl type x
 
-t("this"), t("that"), t(2), t(true), t([1, 2, "stuff"]), t(1.2)
+t('this'), t('that'), t(2), t(true), t([1, 2, 'stuff']), t(1.2)
 
 var n = 0
 while n < 10: pl n++
 n = 0
 do pl n++; while n < 10
 
-pl "stuff: ", 3 * 3.1415926535897932
+pl 'stuff: ', 3 * 3.1415926535897932
 
 var array = [1, 2, 3, 4]
 
 fn function (x) {
-	x[0] = "asdf"
+	x[0] = 'asdf'
 	pl x
 }
 
@@ -104,7 +104,7 @@ pl length array
 array[0] = ['abc', 'def']
 
 for var i = 0; i < length array; i++:
-	pl i + ": " + array[i]
+	pl i + ': ' + array[i]
 
 fn join (x y) {
 	var r = ''
@@ -113,11 +113,24 @@ fn join (x y) {
 		r += y[i] + x
 	}
 
-	r += y[length y - 1]
-	return r
+	return r + y[length y - 1]
 }
 
-pl join(", ", array)
+fn djoin (x y) {
+	var r = ''
+
+	for var i = 0; i < length y - 1; i++ {
+		if type y[i] == 'array':
+			r += djoin(x, y[i]) + x
+		else
+			r += y[i] + x
+	}
+
+	return r + y[length y - 1]
+}
+
+pl join(', ', array)
+pl djoin(', ', array)
 
 # var foo = { a => 2, b => 'stuff' }
-# pl foo["a"]
+# pl foo['a']

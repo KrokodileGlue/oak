@@ -336,6 +336,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
 			s->id = hash(s->name, strlen(s->name));
+			si->symbol->num_arguments++;
 			add(si, s);
 		}
 
@@ -561,6 +562,10 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 
 	if (s->num_variables) {
 		INDENT; fprintf(f, "  num_variables=%zu", s->num_variables);
+	}
+
+	if (s->num_arguments) {
+		INDENT; fprintf(f, "  num_arguments=%zu", s->num_arguments);
 	}
 
 	INDENT; fprintf(f, "  address=%zu", s->address);
