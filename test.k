@@ -90,9 +90,6 @@ do pl n++; while n < 10
 
 pl "stuff: ", 3 * 3.1415926535897932
 
-# var foo = { a => 2, b => 'stuff' }
-# pl foo["a"]
-
 var array = [1, 2, 3, 4]
 
 fn function (x) {
@@ -103,3 +100,24 @@ fn function (x) {
 pl array
 function(array)
 pl array
+pl length array
+array[0] = ['abc', 'def']
+
+for var i = 0; i < length array; i++:
+	pl i + ": " + array[i]
+
+fn join (x y) {
+	var r = ''
+
+	for var i = 0; i < length y - 1; i++ {
+		r = r + y[i] + x
+	}
+
+	r = r + y[length y - 1]
+	return r
+}
+
+pl join(", ", array)
+
+# var foo = { a => 2, b => 'stuff' }
+# pl foo["a"]

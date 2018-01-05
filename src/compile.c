@@ -237,6 +237,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_bc(c, INSTR_TYPE, reg, compile_expression(c, e->a, sym));
 			break;
 
+		case OP_LENGTH:
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_LEN, reg, compile_expression(c, e->a, sym));
+			break;
+
 		default:
 			DOUT("unimplemented compiler for prefix operator `%s'",
 			     e->operator->body);
@@ -296,9 +301,17 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 	case EXPR_SUBSCRIPT: {
 		/* TODO: Implement global array dereferencing. */
 		int reg = alloc_reg(c);
-		emit_efg(c, INSTR_DEREF, reg,
-		         compile_lvalue(c, e->a, sym),
-		         compile_expression(c, e->b, sym));
+		int l = compile_lvalue(c, e->a, sym);
+
+		if (l >= 256) {
+			emit_efg(c, INSTR_GDEREF, reg,
+			         l - 256,
+			         compile_expression(c, e->b, sym));
+		} else {
+			emit_efg(c, INSTR_DEREF, reg,
+			         l,
+			         compile_expression(c, e->b, sym));
+		}
 		return reg;
 	} break;
 
@@ -340,7 +353,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 
 	case EXPR_FN_CALL:
-		for (size_t i = 0; i < e->num; i++) {
+		for (int i = e->num - 1; i >= 0; i--) {
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym));
 		}
 

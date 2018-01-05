@@ -184,6 +184,23 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 		break;
 
+	case INSTR_GDEREF:
+		grow_array(vm->gc, GLOBAL(c.d.efg.f), REG(c.d.efg.g).integer + 1);
+
+		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
+			REG(c.d.efg.e) = vm->gc->array[GLOBAL(c.d.efg.f).idx]
+				                      [REG(c.d.efg.g).integer];
+		} else {
+			struct value v;
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->arrlen[v.idx] = 0;
+			vm->gc->array[v.idx] = NULL;
+			vm->gc->array[GLOBAL(c.d.efg.f).idx][REG(c.d.efg.g).integer] = v;
+			REG(c.d.efg.e) = v;
+		}
+		break;
+
 	case INSTR_PRINT:
 		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
 		if (vm->debug) fputc('\n', vm->f);
@@ -215,6 +232,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		strcpy(vm->gc->str[v.idx], value_data[REG(c.d.bc.c).type].body);
 		REG(c.d.bc.b) = v;
 	} break;
+
+	case INSTR_LEN:
+		REG(c.d.bc.b) = value_len(vm->gc, REG(c.d.bc.c));
+		break;
 
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,

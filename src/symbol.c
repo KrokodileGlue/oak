@@ -48,7 +48,7 @@ symbolizer_free(struct symbolizer *si)
 	free(si);
 }
 
-static char sym_str[][32] = {
+static char *sym_str[] = {
 	"function",
 	"variable",
 	"class",

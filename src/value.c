@@ -135,6 +135,12 @@ add_values(struct gc *gc, struct value l, struct value r)
 		char *s = show_value(gc, l);
 		gc->str[ret.idx] = new_cat(gc->str[r.idx], s);
 		free(s);
+	} else if (l.type == VAL_STR && r.type == VAL_ARRAY) {
+		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
+		char *s = show_value(gc, r);
+		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
+		free(s);
 	} else BINARY_MATH_OPERATION(+) else {
 		/* TODO: do something here. */
 		assert(false);
@@ -353,13 +359,14 @@ dec_value(struct gc *gc, struct value l)
 }
 
 struct value
-len_value(struct gc *gc, struct value l)
+value_len(struct gc *gc, struct value l)
 {
 	struct value ans;
 	ans.type = VAL_INT;
 
 	switch (l.type) {
 	case VAL_STR:  ans.integer = strlen(gc->str[l.idx]); break;
+	case VAL_ARRAY: ans.integer = gc->arrlen[l.idx]; break;
 	default: assert(false); break;
 	}
 

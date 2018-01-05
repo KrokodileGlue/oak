@@ -21,6 +21,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_ASET,     REG_EFG,  "ASET      " },
 	{ INSTR_GASET,    REG_EFG,  "GASET     " },
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
+	{ INSTR_GDEREF,   REG_EFG,  "GDEREF    " },
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
 
 	{ INSTR_COND,     REG_A,    "COND      " },
@@ -30,6 +31,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_INC,      REG_A,    "INC       " },
 	{ INSTR_GINC,     REG_A,    "GINC      " },
 	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
+	{ INSTR_LEN,      REG_BC,   "LEN       " },
 
 	{ INSTR_ADD,      REG_EFG,  "ADD       " },
 	{ INSTR_SUB,      REG_EFG,  "SUB       " },

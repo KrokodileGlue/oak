@@ -27,6 +27,7 @@ enum instruction_type {
 	INSTR_ASET,
 	INSTR_GASET,
 	INSTR_DEREF,
+	INSTR_GDEREF,
 	INSTR_SUBSCR,
 
 	INSTR_COND,
@@ -36,6 +37,7 @@ enum instruction_type {
 	INSTR_INC,
 	INSTR_GINC,
 	INSTR_TYPE,
+	INSTR_LEN,
 
 	INSTR_ADD,
 	INSTR_SUB,
