@@ -35,7 +35,16 @@ free_compiler(struct compiler *c)
 static void
 emit(struct compiler *c, struct instruction instr)
 {
-	c->code = realloc(c->code, sizeof c->code[0] * (c->ip + 1));
+	if (!c->instr_alloc) {
+		c->instr_alloc = 1024;
+		c->code = oak_malloc(c->instr_alloc * sizeof *c->code);
+	}
+
+	if ((c->ip + 1) >= c->instr_alloc) {
+		c->instr_alloc *= 2;
+		c->code = oak_realloc(c->code, c->instr_alloc * sizeof *c->code);
+	}
+
 	instr.loc = &c->stmt->tok->loc;
 	c->code[c->ip++] = instr;
 }
