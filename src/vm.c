@@ -235,6 +235,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.efg.e) = value_less(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
 		break;
 
+	case INSTR_MORE:
+		REG(c.d.efg.e) = value_more(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		break;
+
 	case INSTR_TYPE: {
 		struct value v;
 		v.type = VAL_STR;

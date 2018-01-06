@@ -34,6 +34,7 @@ enum instruction_type {
 	INSTR_NCOND,
 	INSTR_CMP,
 	INSTR_LESS,
+	INSTR_MORE,
 	INSTR_INC,
 	INSTR_GINC,
 	INSTR_TYPE,

@@ -128,9 +128,17 @@ fn djoin (x y) {
 pl join(', ', array)
 pl djoin(', ', array)
 
+# TODO: fix invalid memory access when variable initalizers are ruined
+# by "when"
 var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
 pl it[1] + it[-500]
+
+fn {
+}
+
+fn {
+}
 
 for var i = 0; i < 40; i++ {
 	next when i % 2 == 0

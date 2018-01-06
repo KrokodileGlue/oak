@@ -263,6 +263,14 @@ mod_values(struct gc *gc, struct value l, struct value r)
 struct value
 value_less(struct gc *gc, struct value l, struct value r)
 {
+	if (gc->debug) {
+		fprintf(stderr, "less - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
+		fputc('\n', stderr);
+	}
+
 	struct value ret;
 	ret.type = VAL_NIL;
 
@@ -270,17 +278,41 @@ value_less(struct gc *gc, struct value l, struct value r)
 		assert(false);
 	}
 
+	if (ret.integer == 0) {
+		ret.type = VAL_BOOL;
+		ret.boolean = false;
+	} else {
+		ret.type = VAL_BOOL;
+		ret.boolean = true;
+	}
+
 	return ret;
 }
 
 struct value
-is_more_than_value(struct gc *gc, struct value l, struct value r)
+value_more(struct gc *gc, struct value l, struct value r)
 {
+	if (gc->debug) {
+		fprintf(stderr, "more - left: ");
+		print_debug(gc, l);
+		fprintf(stderr, ", right: ");
+		print_debug(gc, r);
+		fputc('\n', stderr);
+	}
+
 	struct value ret;
 	ret.type = VAL_NIL;
 
 	BINARY_MATH_OPERATION(>) else {
 		assert(false);
+	}
+
+	if (ret.integer == 0) {
+		ret.type = VAL_BOOL;
+		ret.boolean = false;
+	} else {
+		ret.type = VAL_BOOL;
+		ret.boolean = true;
 	}
 
 	return ret;
