@@ -37,6 +37,7 @@ struct statement {
 	struct token *tok;
 	enum statement_type type;
 	int scope;
+	struct expression *condition;
 
 	union {
 		struct {

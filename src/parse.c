@@ -55,7 +55,7 @@ expect_symbol(struct parser *ps, char *sym)
 static void
 expect_terminator(struct parser *ps)
 {
-	if (strcmp(ps->tok->value, ";") && strcmp(ps->tok->value, "}") && !ps->tok->prev->is_line_end) {
+	if (strcmp(ps->tok->value, ";") && strcmp(ps->tok->value, "}") && strcmp(ps->tok->value, "when") && !ps->tok->prev->is_line_end) {
 		if (ps->tok->type == TOK_END) {
 			struct token *tok = ps->tok->prev;
 
@@ -567,6 +567,11 @@ parse_stmt(struct parser *ps)
 		s->type = STMT_EXPR;
 		s->expr = parse_expr(ps, 0);
 		expect_terminator(ps);
+	}
+
+	if (!strcmp(ps->tok->value, "when")) {
+		NEXT;
+		s->condition = parse_expr(ps, 0);
 	}
 
 	return s;

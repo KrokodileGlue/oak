@@ -480,6 +480,13 @@ compile_statement(struct compiler *c, struct statement *s)
 		        statement_data[s->type].body, sym->name);
 	}
 
+	size_t start = -1;
+	if (s->condition) {
+		emit_a(c, INSTR_COND, compile_expr(c, s->condition, sym, false));
+		start = c->ip;
+		emit_d(c, INSTR_JMP, -1);
+	}
+
 	switch (s->type) {
 	case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++)
@@ -613,6 +620,9 @@ compile_statement(struct compiler *c, struct statement *s)
 		     s->type, statement_data[s->type].body);
 		assert(false);
 	}
+
+	if (s->condition)
+		c->code[start].d.d = c->ip;
 
 	return ret;
 }

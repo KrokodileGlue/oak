@@ -117,7 +117,7 @@ fn join (x y) {
 }
 
 fn djoin (x y) {
-	if type y != 'array': return y
+	return y when type y != 'array'
 	var r = ''
 
 	for var i = 0; i < length y - 1; i++ {
