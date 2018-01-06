@@ -271,6 +271,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_bc(c, INSTR_LEN, reg, compile_expression(c, e->a, sym, false));
 			break;
 
+		case OP_SUB:
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false));
+			break;
+
 		default:
 			DOUT("unimplemented compiler for prefix operator `%s'",
 			     e->operator->body);

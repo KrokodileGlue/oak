@@ -135,7 +135,7 @@ pl djoin(', ', array)
 var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
 pl it[1]
-pl it[2]
+pl it[-500]
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']
