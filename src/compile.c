@@ -331,6 +331,28 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 		break;
 
+	case OPTYPE_TERNARY:
+		switch (e->operator->name) {
+		case OP_QUESTION: {
+			reg = alloc_reg(c);
+			emit_a(c, INSTR_COND, compile_expression(c, e->a, sym, false));
+			size_t a = c->ip;
+			emit_d(c, INSTR_JMP, -1);
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->b, sym, false));
+			size_t b = c->ip;
+			emit_d(c, INSTR_JMP, -1);
+			c->code[a].d.d = c->ip;
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->c, sym, false));
+			c->code[b].d.d = c->ip;
+		} break;
+
+		default:
+			DOUT("unimplemented compiler for ternary operator `%s'",
+			     e->operator->body);
+			assert(false);
+		}
+		break;
+
 	default:
 		DOUT("unimplemented operator compiler for type `%d'",
 		     e->operator->type);

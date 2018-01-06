@@ -7,7 +7,7 @@ pl 'P3'
 pl width, ' ', height
 pl 80
 
-fn abs (x) = x < 0 ? x : -x
+fn abs (x) = x < 0 ? -x : x
 
 for var y = 0; y < height; y++ {
 	for var x = -offset; x < width - offset; x++ {
