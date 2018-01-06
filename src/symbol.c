@@ -214,50 +214,58 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		case OPTYPE_PREFIX: case OPTYPE_POSTFIX:
 			resolve_expr(si, e->a);
 			break;
+
 		case OPTYPE_BINARY:
 			resolve_expr(si, e->a);
 			resolve_expr(si, e->b);
-
 			break;
+
 		case OPTYPE_TERNARY:
 			resolve_expr(si, e->a);
 			resolve_expr(si, e->b);
 			resolve_expr(si, e->c);
 			break;
+
 		default:
 			DOUT("unimplemented symbolizer for operator of type %d", e->operator->type);
 			break;
 		}
 		break;
+
 	case EXPR_VALUE:
-		if (e->val->type == TOK_IDENTIFIER) {
+		if (e->val->type == TOK_IDENTIFIER)
 			find(si, e->tok->loc, e->val->value);
-		} break;
+		break;
+
 	case EXPR_SUBSCRIPT:
 		resolve_expr(si, e->a);
 		resolve_expr(si, e->b);
 		break;
+
 	case EXPR_FN_CALL:
 		resolve_expr(si, e->a);
 		for (size_t i = 0; i < e->num; i++)
 			resolve_expr(si, e->args[i]);
+		break;
 
-		break;
 	case EXPR_LIST:
-		for (size_t i = 0; i < e->num; i++) {
+		for (size_t i = 0; i < e->num; i++)
 			resolve_expr(si, e->args[i]);
-		}
 		break;
+
 	case EXPR_LIST_COMPREHENSION:
 		push_block(si, e->s);
-
 		symbolize(si, e->s);
 		resolve_expr(si, e->a);
 		resolve_expr(si, e->b);
 		if (e->c) resolve_expr(si, e->c);
-
 		pop(si);
 		break;
+
+	case EXPR_FN_DEF:
+		symbolize(si, e->s);
+		break;
+
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
 		break;

@@ -160,6 +160,7 @@ nil(struct compiler *c)
 
 static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym, bool copy);
 static int compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym);
+static int compile_statement(struct compiler *c, struct statement *s);
 
 static int
 compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
@@ -362,7 +363,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		case TOK_IDENTIFIER:
 			reg = alloc_reg(c);
 			struct symbol *var = resolve(sym, e->val->value);
-			if (copy) {
+			if (var->type == SYM_FN) {
+				struct value v;
+				v.type = VAL_FN;
+				v.integer = var->address;
+				emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v));
+			} else if (copy) {
 				if (var->global) {
 					emit_bc(c, INSTR_COPYG, reg, var->address);
 				} else {
@@ -391,7 +397,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_FN_CALL:
 		if (e->a->type == EXPR_VALUE && e->a->val->type == TOK_IDENTIFIER) {
 			struct symbol *fs = resolve(sym, e->a->val->value);
-			if (e->num != fs->num_arguments) {
+			if (fs->type == SYM_FN && e->num != fs->num_arguments) {
 				error_push(c->r, e->tok->loc, ERR_FATAL,
 				           "function is called with an incorrect number of parameters");
 				return -1;
@@ -402,10 +408,17 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true));
 		}
 
-		emit_d(c, INSTR_CALL, compile_lvalue(c, e->a, sym));
+		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false));
 		reg = alloc_reg(c);
 		emit_a(c, INSTR_POP, reg);
 		break;
+
+	case EXPR_FN_DEF: {
+		struct value v;
+		v.type = VAL_FN;
+		v.integer = compile_statement(c, e->s);
+		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v));
+	} break;
 
 	case EXPR_LIST:
 		reg = alloc_reg(c);
@@ -444,10 +457,11 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 	return a;
 }
 
-static void
+static int
 compile_statement(struct compiler *c, struct statement *s)
 {
-	if (!s) return;
+	if (!s) return -1;
+	int ret = c->ip;
 
 	struct symbol *sym = find_from_scope(c->sym, s->scope);
 	if (c->debug) {
@@ -485,14 +499,16 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_FN_DEF: {
 		if (c->sp) {
-			error_push(c->r, s->tok->loc, ERR_FATAL, "function definition occurs within a function definition");
-			return;
+			error_push(c->r, s->tok->loc, ERR_FATAL,
+			           "function definition occurs within a function definition");
+			return ret;
 		}
 
 		size_t a = c->ip;
 		emit_d(c, INSTR_JMP, -1);
 		push_frame(c);
 		sym->address = c->ip;
+		ret = c->ip;
 
 		/*
 		 * TODO: think about what happens if you call a
@@ -586,6 +602,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		     s->type, statement_data[s->type].body);
 		assert(false);
 	}
+
+	return ret;
 }
 
 bool

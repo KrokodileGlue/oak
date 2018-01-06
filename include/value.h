@@ -18,7 +18,8 @@ struct value {
 		VAL_NIL,
 		VAL_INT,
 		VAL_FLOAT,
-		VAL_BOOL
+		VAL_BOOL,
+		VAL_FN
 	} type;
 
 	union {

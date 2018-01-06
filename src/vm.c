@@ -67,14 +67,15 @@ pop(struct vm *vm)
 }
 
 static void
-call(struct vm *vm, int ip)
+call(struct vm *vm, struct value v)
 {
 	/* TODO: Optimize everything. Lol. */
+	assert(v.type == VAL_FN);
 	push_frame(vm);
 	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 2) * sizeof *vm->callstack);
 	vm->csp++;
 	vm->callstack[vm->csp] = vm->ip;
-	vm->ip = ip;
+	vm->ip = v.integer - 1;
 }
 
 static void
@@ -108,7 +109,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
 	case INSTR_PUSH: push(vm, REG(c.d.a));                  break;
 	case INSTR_POP:  REG(c.d.a) = pop(vm);                  break;
-	case INSTR_CALL: call(vm, c.d.d - 1);                   break;
+	case INSTR_CALL: call(vm, REG(c.d.a));                  break;
 	case INSTR_RET:  ret(vm);                               break;
 	case INSTR_ADD:  BIN(add);                              break;
 	case INSTR_SUB:  BIN(sub);                              break;

@@ -13,7 +13,8 @@ struct value_data value_data[] = {
 	{ VAL_NIL,   "nil" },
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },
-	{ VAL_BOOL,  "boolean" }
+	{ VAL_BOOL,  "boolean" },
+	{ VAL_FN,    "function" }
 };
 
 #define BINARY_MATH_OPERATION(x)                                                    \

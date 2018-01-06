@@ -75,6 +75,7 @@ expect_terminator(struct parser *ps)
 
 static struct statement *parse_stmt(struct parser *ps);
 static struct statement *parse_vardecl(struct parser *ps);
+static struct statement *parse_fn_def(struct parser *ps);
 
 static struct operator *
 get_infix_op(struct parser *ps)
@@ -117,7 +118,10 @@ parse_expr(struct parser *ps, size_t prec)
 	struct expression *left = new_expression(ps->tok);
 	struct operator *op = get_prefix_op(ps);
 
-	if (op || !strcmp(ps->tok->value, "(")) {
+	if (!strcmp(ps->tok->value, "fn")) {
+		left->type = EXPR_FN_DEF;
+		left->s = parse_fn_def(ps);
+	} else if (op || !strcmp(ps->tok->value, "(")) {
 		left->type = EXPR_OPERATOR;
 		left->operator = op;
 
@@ -279,14 +283,13 @@ parse_fn_def(struct parser *ps)
 	struct statement *s = new_statement(ps->tok);
 	s->type = STMT_FN_DEF;
 
-	if (ps->tok->type != TOK_IDENTIFIER) {
-		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
+	if (ps->tok->type == TOK_IDENTIFIER) {
+		/* error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier"); */
+		s->fn_def.name = ps->tok->value;
+		NEXT;
+	} else {
+		s->fn_def.name = "";
 	}
-
-	if (ps->tok->type != TOK_IDENTIFIER)
-		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier");
-	s->fn_def.name = ps->tok->value;
-	NEXT;
 
 	if (!strcmp(ps->tok->value, "(")) {
 		expect_symbol(ps, "(");

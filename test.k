@@ -64,7 +64,7 @@ fn square (dim) {
 	}
 }
 
-fn ppm_square (dim) {
+fn ppm-square (dim) {
 	pl 'P3'
 	pl dim, ' ', dim
 	pl dim
@@ -77,7 +77,7 @@ fn ppm_square (dim) {
 }
 
 square(dim)
-# ppm_square(dim)
+# ppm-square(dim)
 
 fn t (x) pl type x
 
@@ -132,10 +132,12 @@ fn djoin (x y) {
 pl join(', ', array)
 pl djoin(', ', array)
 
-var it = fn that (x) {
+var it = fn (x) {
 	pl type x
 }
 
+it(2)
+it('string')
 it([])
 
 # var foo = { a => 2, b => 'stuff' }

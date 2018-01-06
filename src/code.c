@@ -14,7 +14,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_JMP,      REG_D,    "JMP       " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
-	{ INSTR_CALL,     REG_D,    "CALL      " },
+	{ INSTR_CALL,     REG_A,    "CALL      " },
 	{ INSTR_RET,      REG_NONE, "RET       " },
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
