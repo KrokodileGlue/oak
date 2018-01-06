@@ -132,13 +132,10 @@ fn djoin (x y) {
 pl join(', ', array)
 pl djoin(', ', array)
 
-var it = fn (x) {
-	pl type x
-}
-
-it(2)
-it('string')
-it([])
+var it = [fn { pl type array }, 2, 3, 4]
+it[0]()
+pl it[1]
+pl it[2]
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

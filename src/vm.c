@@ -122,6 +122,13 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_INC:  REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
 	case INSTR_GINC: GLOBAL(c.d.a) = inc_value(vm->gc, GLOBAL(c.d.a)); break;
 	case INSTR_SUBSCR:
+		if (REG(c.d.efg.g).integer >= vm->gc->arrlen[REG(c.d.efg.f).idx]) {
+			struct value v;
+			v.type = VAL_NIL;
+			REG(c.d.efg.e) = v;
+			break;
+		}
+
 		REG(c.d.efg.e) = copy_value(vm->gc, vm->gc->array[REG(c.d.efg.f).idx]
 		                            [REG(c.d.efg.g).integer]);
 		break;
