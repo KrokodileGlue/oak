@@ -23,15 +23,17 @@ enum statement_type {
 	STMT_RET,
 	STMT_IMPORT,
 	STMT_NULL,
+	STMT_LAST,
+	STMT_NEXT,
 	STMT_INVALID
 } type;
 
-struct statementData {
+struct statement_data {
 	enum statement_type  type;
 	char                *body;
 };
 
-extern struct statementData statement_data[];
+extern struct statement_data statement_data[];
 
 struct statement {
 	struct token *tok;

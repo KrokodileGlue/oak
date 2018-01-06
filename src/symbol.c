@@ -467,6 +467,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 
+	case STMT_LAST:
+	case STMT_NEXT:
 	case STMT_NULL: {
 		free(sym);
 		return;

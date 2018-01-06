@@ -5,7 +5,7 @@
 #include "tree.h"
 #include "util.h"
 
-struct statementData statement_data[] = {
+struct statement_data statement_data[] = {
 	{ STMT_FN_DEF   , "function definition"  },
 	{ STMT_FOR_LOOP , "for loop"             },
 	{ STMT_IF_STMT  , "if"                   },
@@ -19,6 +19,8 @@ struct statementData statement_data[] = {
 	{ STMT_RET      , "return"               },
 	{ STMT_IMPORT   , "import"               },
 	{ STMT_NULL     , "null statement"       },
+	{ STMT_LAST     , "last"                 },
+	{ STMT_NEXT     , "next"                 },
 	{ STMT_INVALID  , "invalid statement"    }
 };
 
@@ -46,6 +48,8 @@ new_statement(struct token *tok)
 	return s;
 }
 
+void free_stmt(struct statement *s);
+
 void
 free_expr(struct expression *e)
 {
@@ -65,6 +69,8 @@ free_expr(struct expression *e)
 			}
 			free(e->args);
 		}
+	} else if (e->type == EXPR_FN_DEF) {
+		free_stmt(e->s);
 	} else {
 		if (e->a) free_expr(e->a);
 		if (e->b) free_expr(e->b);
@@ -140,7 +146,10 @@ free_stmt(struct statement *s)
 		free_stmt(s->do_while_loop.body);
 		break;
 
-	case STMT_IMPORT: case STMT_NULL:
+	case STMT_IMPORT:
+	case STMT_NULL:
+	case STMT_LAST:
+	case STMT_NEXT:
 		break;
 
 	default:
@@ -148,6 +157,7 @@ free_stmt(struct statement *s)
 		        s->type, statement_data[s->type].body);
 	}
 
+	if (s->condition) free_expr(s->condition);
 	free(s);
 }
 
@@ -337,6 +347,11 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			print_expression(ap, e->c); ap->depth--;
 		}
 
+		ap->depth--;
+	} else if (e->type == EXPR_FN_DEF) {
+		fprintf(ap->f, "(function)");
+		ap->depth++; split(ap);
+		print_statement(ap, e->s);
 		ap->depth--;
 	} else {
 		fputc('\n', stderr);

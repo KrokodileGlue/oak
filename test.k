@@ -107,24 +107,19 @@ for var i = 0; i < length array; i++:
 	pl i + ': ' + array[i]
 
 fn join (x y) {
-	var r = ''
-
-	for var i = 0; i < length y - 1; i++ {
+	var r
+	for var i = 0; i < length y - 1; i++:
 		r += y[i] + x
-	}
-
 	return r + y[length y - 1]
 }
 
 fn djoin (x y) {
 	return y when type y != 'array'
-	var r = ''
+	var r
 
 	for var i = 0; i < length y - 1; i++ {
-		if type y[i] == 'array':
-			r += djoin(x, y[i]) + x
-		else
-			r += y[i] + x
+		if type y[i] == 'array': r += djoin(x, y[i]) + x
+		else r += y[i] + x
 	}
 
 	return r + djoin(x, y[length y - 1])
@@ -136,6 +131,12 @@ pl djoin(', ', array)
 var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
 pl it[1] + it[-500]
+
+for var i = 0; i < 40; i++ {
+	next when i % 2 == 0
+	pl i
+	last when i == 19
+}
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

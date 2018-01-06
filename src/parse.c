@@ -60,12 +60,12 @@ expect_terminator(struct parser *ps)
 			struct token *tok = ps->tok->prev;
 
 			error_push(ps->r, tok->loc, ERR_FATAL,
-				   "unexpected end-of-file; expected a statement terminator");
+				   "unexpected end-of-file; expected an expression terminator");
 		} else {
 			error_push(ps->r, ps->tok->loc, ERR_FATAL,
 				   "unexpected token '"
 				   ERROR_LOCATION_COLOR "%s" RESET_COLOR
-				   "'; expected a statement terminator",
+				   "'; expected an expression terminator",
 				   ps->tok->value);
 		}
 	}
@@ -557,6 +557,18 @@ parse_stmt(struct parser *ps)
 			NEXT;
 			break;
 
+		case KEYWORD_LAST:
+			s = new_statement(ps->tok);
+			s->type = STMT_LAST;
+			NEXT;
+			break;
+
+		case KEYWORD_NEXT:
+			s = new_statement(ps->tok);
+			s->type = STMT_NEXT;
+			NEXT;
+			break;
+
 		default:
 			DOUT("unimplemented statement parser for %d (%s)", ps->tok->keyword->type, ps->tok->keyword->body);
 			NEXT;
@@ -569,7 +581,7 @@ parse_stmt(struct parser *ps)
 		expect_terminator(ps);
 	}
 
-	if (!strcmp(ps->tok->value, "when")) {
+	if (!strcmp(ps->tok->value, "when") && s) {
 		NEXT;
 		s->condition = parse_expr(ps, 0);
 	}

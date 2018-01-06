@@ -66,6 +66,10 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 			fprintf(f, "%s", ct->val[i].boolean ? "true" : "false");
 			break;
 
+		case VAL_FN:
+			fprintf(f, "%"PRId64, ct->val[i].integer);
+			break;
+
 		default:
 			DOUT("unimplemented constant printer for value of type %s",
 			     value_data[ct->val[i].type].body);

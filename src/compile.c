@@ -28,6 +28,8 @@ free_compiler(struct compiler *c)
 {
 	free(c->stack_top);
 	free(c->var);
+	free(c->next);
+	free(c->last);
 	error_clear(c->r);
 	free(c);
 }
@@ -95,6 +97,20 @@ static void
 pop_frame(struct compiler *c)
 {
 	c->sp--;
+}
+
+static void
+push_last(struct compiler *c, size_t a)
+{
+	c->last = oak_realloc(c->last, (c->lp + 1) * sizeof *c->last);
+	c->last[c->lp++] = a;
+}
+
+static void
+push_next(struct compiler *c, size_t a)
+{
+	c->next = oak_realloc(c->next, (c->np + 1) * sizeof *c->next);
+	c->next[c->np++] = a;
 }
 
 static int
@@ -468,6 +484,20 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 	return a;
 }
 
+#define LOOP_START(X)	  \
+	do { \
+		for (int i = np; i < c->np; i++) \
+			c->code[c->next[i]].d.d = X; \
+		c->np = np; \
+	} while (0)
+
+#define LOOP_END	  \
+	do { \
+		for (int i = lp; i < c->lp; i++) \
+			c->code[c->last[i]].d.d = c->ip; \
+		c->lp = lp; \
+	} while (0)
+
 static int
 compile_statement(struct compiler *c, struct statement *s)
 {
@@ -486,6 +516,9 @@ compile_statement(struct compiler *c, struct statement *s)
 		start = c->ip;
 		emit_d(c, INSTR_JMP, -1);
 	}
+
+	int lp = c->lp;
+	int np = c->np;
 
 	switch (s->type) {
 	case STMT_PRINTLN:
@@ -585,13 +618,22 @@ compile_statement(struct compiler *c, struct statement *s)
 		compile_statement(c, s->while_loop.body);
 		emit_d(c, INSTR_JMP, a);
 		c->code[b].d.d = c->ip;
+
+		LOOP_START(a);
+		LOOP_END;
 	} break;
 
 	case STMT_DO: {
 		size_t a = c->ip;
 		compile_statement(c, s->do_while_loop.body);
+		for (int i = np; i < c->np; i++)
+			c->code[c->next[i]].d.d = c->ip;
+		c->np = np;
 		emit_a(c, INSTR_NCOND, compile_expr(c, s->do_while_loop.cond, sym, false));
 		emit_d(c, INSTR_JMP, a);
+		for (int i = lp; i < c->lp; i++)
+			c->code[i].d.d = c->ip;
+		c->lp = lp;
 	} break;
 
 	case STMT_FOR_LOOP:
@@ -607,13 +649,26 @@ compile_statement(struct compiler *c, struct statement *s)
 			size_t b = c->ip;
 			emit_d(c, INSTR_JMP, -1);
 			compile_statement(c, s->for_loop.body);
+			size_t start = c->ip;
 			compile_expression(c, s->for_loop.c, sym, false);
 
 			emit_d(c, INSTR_JMP, a);
 			c->code[b].d.d = c->ip;
 
-			break;
+			LOOP_START(start);
+			LOOP_END;
 		}
+		break;
+
+	case STMT_LAST:
+		push_last(c, c->ip);
+		emit_d(c, INSTR_JMP, -1);
+		break;
+
+	case STMT_NEXT:
+		push_next(c, c->ip);
+		emit_d(c, INSTR_JMP, -1);
+		break;
 
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)",
