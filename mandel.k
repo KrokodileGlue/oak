@@ -1,38 +1,38 @@
-var width = 1024
-var height = 780
-
-var offset = 150
-
-pl 'P3'
-pl width, ' ', height
-pl 80
-
 fn abs (x) = x < 0 ? -x : x
 
-for var y = 0; y < height; y++ {
-	for var x = -offset; x < width - offset; x++ {
-		var a = x - width / 2
-		var b = y - height / 2
+fn iter (depth a b) {
+	var res
 
-		var res
+	var oa = a
+	var ob = b
 
-		var oa = a
-		var ob = b
+	for var n = 0; n < 32; n++ {
+		res = n
+		var aa = a * a / 256
+		var bb = b * b / 256
+		var temp = aa + bb
 
-		for var n = 0; n < 32; n++ {
-			res = n
-			var aa = a * a / 256
-			var bb = b * b / 256
+		temp = abs(temp)
+		last when temp > 2048
 
-			var temp = aa + bb
+		b = a * b * 2 / 256 + ob
+		a = aa - bb + oa
+	}
 
-			temp = abs(temp)
-			last when temp > 2048
+	return res
+}
 
-			b = a * b * 2 / 256 + ob
-			a = aa - bb + oa
+fn mandel (width height offset) {
+	pl 'P3'
+	pl width, ' ', height
+	pl 80
+
+	for var y = 0; y < height; y++ {
+		for var x = -offset; x < width - offset; x++ {
+			var res = iter(32, x - width / 2, y - height / 2)
+			pl res / 2, ' ', res, ' ', res * 4
 		}
-
-		pl res / 2, ' ', res, ' ', res * 4
 	}
 }
+
+mandel(1024, 780, 150)
