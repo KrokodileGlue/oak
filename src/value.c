@@ -150,6 +150,14 @@ add_values(struct gc *gc, struct value l, struct value r)
 		char *s = show_value(gc, l);
 		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
 		free(s);
+	} else if (l.type == VAL_STR && r.type == VAL_NIL) {
+		ret = copy_value(gc, l);
+	} else if (l.type == VAL_NIL && r.type == VAL_STR) {
+		ret = copy_value(gc, r);
+	} else if (l.type == VAL_INT && r.type == VAL_NIL) {
+		ret = copy_value(gc, l);
+	} else if (l.type == VAL_NIL && r.type == VAL_INT) {
+		ret = copy_value(gc, r);
 	} else BINARY_MATH_OPERATION(+) else {
 		/* TODO: do something here. */
 		assert(false);
@@ -495,6 +503,10 @@ print_value(FILE *f, struct gc *gc, struct value val)
 	case VAL_ARRAY:
 		for (unsigned int i = 0; i < gc->arrlen[val.idx]; i++)
 			print_value(f, gc, gc->array[val.idx][i]);
+		break;
+
+	case VAL_FN:
+		fprintf(f, "%"PRId64, val.integer);
 		break;
 
 	default:

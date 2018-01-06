@@ -101,7 +101,7 @@ pl array
 function(array)
 pl array
 pl length array
-array[0] = ['abc', 'def']
+array[0] = ['abc', 'def', [0, 1, 2]]
 
 for var i = 0; i < length array; i++:
 	pl i + ': ' + array[i]
@@ -117,6 +117,7 @@ fn join (x y) {
 }
 
 fn djoin (x y) {
+	if type y != 'array': return y
 	var r = ''
 
 	for var i = 0; i < length y - 1; i++ {
@@ -126,7 +127,7 @@ fn djoin (x y) {
 			r += y[i] + x
 	}
 
-	return r + y[length y - 1]
+	return r + djoin(x, y[length y - 1])
 }
 
 pl join(', ', array)
@@ -134,8 +135,7 @@ pl djoin(', ', array)
 
 var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
-pl it[1]
-pl it[-500]
+pl it[1] + it[-500]
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

@@ -237,6 +237,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
 			break;
 
+		case OP_NOTEQ: {
+			int temp = alloc_reg(c);
+			emit_efg(c, INSTR_CMP, temp, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
+			emit_bc(c, INSTR_FLIP, reg = alloc_reg(c), temp);
+		} break;
+
 		case OP_LESS:
 			reg = alloc_reg(c);
 			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));

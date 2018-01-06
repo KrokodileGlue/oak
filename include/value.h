@@ -49,6 +49,7 @@ struct value or_values(struct gc *gc, struct value l, struct value r);
 struct value inc_value(struct gc *gc, struct value l);
 struct value copy_value(struct gc *gc, struct value l);
 struct value neg_value(struct gc *gc, struct value l);
+struct value flip_value(struct gc *gc, struct value l);
 
 struct value grow_array(struct gc *gc, struct value l, int r);
 struct value pushback(struct gc *gc, struct value l, struct value r);

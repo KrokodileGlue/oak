@@ -134,6 +134,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		                            [REG(c.d.efg.g).integer]);
 		break;
 
+	case INSTR_FLIP:  REG(c.d.bc.b) = flip_value(vm->gc, REG(c.d.bc.c)); break;
 	case INSTR_NEG:   REG(c.d.bc.b) = neg_value(vm->gc, REG(c.d.bc.c)); break;
 	case INSTR_COPY:  REG(c.d.bc.b) = copy_value(vm->gc, REG(c.d.bc.c)); break;
 	case INSTR_COPYC: REG(c.d.bc.b) = copy_value(vm->gc, CONST(c.d.bc.c)); break;
