@@ -127,6 +127,7 @@ add(struct symbolizer *si, struct symbol *sym)
 struct symbol *
 resolve(struct symbol *sym, char *name)
 {
+	if (!strlen(name)) return NULL;
 	uint64_t h = hash(name, strlen(name));
 
 	while (sym) {
