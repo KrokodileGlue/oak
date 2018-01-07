@@ -5,6 +5,8 @@
 #include "constant.h"
 #include "gc.h"
 
+#define MAX_CALL_DEPTH 1024
+
 struct vm {
 	struct instruction *code;
 	size_t ip;
@@ -12,8 +14,8 @@ struct vm {
 	/* Return locations. */
 	int *callstack;
 	/* Detailed information about each call. */
-	struct value *calls;
-	int *args;
+	struct value calls[MAX_CALL_DEPTH];
+	int args[MAX_CALL_DEPTH];
 	size_t csp;
 
 	struct value *stack;

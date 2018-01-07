@@ -18,14 +18,17 @@ new_vm()
 static void
 free_vm(struct vm *vm)
 {
-	for (size_t i = 1; i < vm->maxfp + 1; i++) {
+	if (!vm) return;
+
+	for (size_t i = 1; i < vm->maxfp + 1; i++)
 		free(vm->frame[i]);
-	}
 
 	error_clear(vm->r);
-	free(vm->frame);
-	free(vm->stack);
-	free(vm->callstack);
+
+	if (vm->frame) free(vm->frame);
+	if (vm->stack) free(vm->stack);
+	if (vm->callstack) free(vm->callstack);
+
 	free(vm);
 }
 
@@ -70,7 +73,18 @@ static void
 call(struct vm *vm, struct value v)
 {
 	/* TODO: Optimize everything. Lol. */
-	assert(v.type == VAL_FN);
+	if (v.type != VAL_FN) {
+		error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL,
+		           "attempt to call a non-callable object as function");
+		return;
+	}
+
+	if (vm->csp >= MAX_CALL_DEPTH - 1) {
+		error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL,
+		           "program exceeded the maximum call depth of %d",
+		           MAX_CALL_DEPTH);
+		return;
+	}
 
 	if (vm->debug)
 		fprintf(stderr, "<function call : `%s' : %p : %zu argument%s>\n",
@@ -83,10 +97,7 @@ call(struct vm *vm, struct value v)
 	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 1) * sizeof *vm->callstack);
 	vm->callstack[vm->csp] = vm->ip;
 
-	vm->args = oak_realloc(vm->args, (vm->csp + 1) * sizeof *vm->args);
 	vm->args[vm->csp] = vm->sp;
-
-	vm->calls = oak_realloc(vm->calls, (vm->csp + 1) * sizeof *vm->calls);
 	vm->calls[vm->csp] = v;
 
 	vm->ip = v.integer - 1;
@@ -104,14 +115,21 @@ static void
 stacktrace(struct vm *vm)
 {
 	fprintf(stderr, "Stack trace:\n");
+	size_t depth = 0;
+	if (vm->csp > 10) depth = vm->csp - 10;
 
-	for (size_t i = 1; i <= vm->csp; i++) {
-		fprintf(stderr, "\t%3zu: <`%s' : %p>",
-		        i, vm->calls[i].name, (void *)&vm->code[vm->callstack[i]]);
-		fprintf(stderr, " @%5"PRIu64", %d argument%s\n",
-		        vm->calls[i].integer, vm->args[i],
-		        vm->args[i] == 1 ? "" : "s");
+	for (size_t i = vm->csp; i > depth; i--) {
+		struct instruction c = vm->code[vm->callstack[i]];
+		fprintf(stderr, "\t%2zu: <`%10s' : %p : %d argument%s>",
+		        i, vm->calls[i].name, (void *)&vm->code[vm->callstack[i]],
+		        vm->args[i], vm->args[i] == 1 ? "" : "s");
+		fprintf(stderr, "@%"PRIu64" ", vm->calls[i].integer);
+		fprintf(stderr, "%s:%zu:%zu\n",
+		        c.loc->file, line_number(*c.loc), column_number(*c.loc));
 	}
+
+	if (depth != 0)
+		fprintf(stderr, "\t--- Truncated ---\n");
 }
 
 #define REG(X) vm->frame[vm->fp][X]
@@ -312,7 +330,7 @@ execute(struct module *m, bool debug)
 
 	if (vm->r->pending) {
 		error_write(vm->r, stderr);
-		stacktrace(vm);
+		if (vm->csp) stacktrace(vm);
 	}
 
 	free_vm(vm);
