@@ -348,12 +348,14 @@ or_values(struct gc *gc, struct value l, struct value r)
 bool
 is_truthy(struct gc *gc, struct value l)
 {
-	/* TODO: Flesh this stuff out. */
 	switch (l.type) {
-	case VAL_BOOL: return l.boolean;
-	case VAL_INT: return l.integer != 0;
-	default:
-		return false;
+	case VAL_BOOL:  return l.boolean;
+	case VAL_INT:   return l.integer != 0;
+	case VAL_STR:   return !!strlen(gc->str[l.idx]);
+	case VAL_ARRAY: return !!gc->arrlen[l.idx];
+	case VAL_FLOAT: return !!l.real;
+	case VAL_NIL:   return false;
+	case VAL_FN:    return true;
 	}
 }
 
