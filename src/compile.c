@@ -35,7 +35,7 @@ free_compiler(struct compiler *c)
 }
 
 static void
-emit(struct compiler *c, struct instruction instr)
+emit(struct compiler *c, struct instruction instr, struct location *loc)
 {
 	if (!c->instr_alloc) {
 		c->instr_alloc = 1024;
@@ -47,38 +47,38 @@ emit(struct compiler *c, struct instruction instr)
 		c->code = oak_realloc(c->code, c->instr_alloc * sizeof *c->code);
 	}
 
-	instr.loc = &c->stmt->tok->loc;
+	instr.loc = loc;
 	c->code[c->ip++] = instr;
 }
 
 static void
-emit_(struct compiler *c, enum instruction_type type)
+emit_(struct compiler *c, enum instruction_type type, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { 0 }});
+	emit(c, (struct instruction){type, .d = { 0 }}, loc);
 }
 
 static void
-emit_a(struct compiler *c, enum instruction_type type, uint8_t a)
+emit_a(struct compiler *c, enum instruction_type type, uint8_t a, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { a }});
+	emit(c, (struct instruction){type, .d = { a }}, loc);
 }
 
 static void
-emit_d(struct compiler *c, enum instruction_type type, uint16_t a)
+emit_d(struct compiler *c, enum instruction_type type, uint16_t a, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { .d = a }});
+	emit(c, (struct instruction){type, .d = { .d = a }}, loc);
 }
 
 static void
-emit_bc(struct compiler *c, enum instruction_type type, uint8_t B, uint8_t C)
+emit_bc(struct compiler *c, enum instruction_type type, uint8_t B, uint8_t C, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { .bc = {B, C} }});
+	emit(c, (struct instruction){type, .d = { .bc = {B, C} }}, loc);
 }
 
 static void
-emit_efg(struct compiler *c, enum instruction_type type, uint8_t E, uint8_t F, uint8_t G)
+emit_efg(struct compiler *c, enum instruction_type type, uint8_t E, uint8_t F, uint8_t G, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { .efg = {E, F, G} }});
+	emit(c, (struct instruction){type, .d = { .efg = {E, F, G} }}, loc);
 }
 
 static void
@@ -170,7 +170,7 @@ nil(struct compiler *c)
 	v.type = VAL_NIL;
 	int n = constant_table_add(c->ct, v);
 	int reg = alloc_reg(c);
-	emit_bc(c, INSTR_MOVC, reg, n);
+	emit_bc(c, INSTR_MOVC, reg, n, &c->stmt->tok->loc);
 	return reg;
 }
 
@@ -187,7 +187,8 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 	case OP_##X: \
 		emit_efg(c, INSTR_##X, reg = alloc_reg(c), \
 		         compile_expression(c, e->a, sym, false), \
-		         compile_expression(c, e->b, sym, false)); \
+		         compile_expression(c, e->b, sym, false), \
+		         &e->tok->loc); \
 		break
 
 	switch (e->operator->type) {
@@ -206,24 +207,28 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 					emit_efg(c, INSTR_GASET,
 					         reg - 256,
 					         compile_expression(c, e->a->b, sym, false),
-					         compile_expression(c, e->b, sym, true));
+					         compile_expression(c, e->b, sym, true),
+					         &e->tok->loc);
 				} else {
 					emit_efg(c, INSTR_ASET,
 					         reg,
 					         compile_expression(c, e->a->b, sym, false),
-					         compile_expression(c, e->b, sym, true));
+					         compile_expression(c, e->b, sym, true),
+					         &e->tok->loc);
 				}
 
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				if (addr >= 256) {
 					emit_bc(c, INSTR_GMOV, addr - 256,
-					        compile_expression(c, e->b, sym, true));
+					        compile_expression(c, e->b, sym, true),
+					        &e->tok->loc);
 					emit_bc(c, INSTR_MOVG, reg = alloc_reg(c),
-					        addr - 256);
+					        addr - 256, &e->tok->loc);
 				} else {
 					emit_bc(c, INSTR_MOV, addr,
-					        compile_expression(c, e->b, sym, true));
+					        compile_expression(c, e->b, sym, true),
+					        &e->tok->loc);
 					reg = addr;
 				}
 			}
@@ -236,13 +241,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int addr = compile_lvalue(c, e->a, sym);
 				if (addr >= 256) {
 					emit_bc(c, INSTR_GMOV, addr - 256,
-					        compile_expression(c, e->b, sym, false));
+					        compile_expression(c, e->b, sym, false), &e->tok->loc);
 					emit_bc(c, INSTR_MOVG, reg = alloc_reg(c),
-					        addr - 256);
+					        addr - 256, &e->tok->loc);
 				} else {
 					int n = alloc_reg(c);
-					emit_bc(c, INSTR_MOV, n, addr);
-					emit_efg(c, INSTR_ADD, addr, n, compile_expression(c, e->b, sym, false));
+					emit_bc(c, INSTR_MOV, n, addr, &e->tok->loc);
+					emit_efg(c, INSTR_ADD, addr, n, compile_expression(c, e->b, sym, false), &e->tok->loc);
 					reg = addr;
 				}
 			}
@@ -250,28 +255,28 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_EQEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
+			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_NOTEQ: {
 			int temp = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, temp, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
-			emit_bc(c, INSTR_FLIP, reg = alloc_reg(c), temp);
+			emit_efg(c, INSTR_CMP, temp, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_bc(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
 		} break;
 
 		case OP_LESS:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
+			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_MORE:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_MORE, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
+			emit_efg(c, INSTR_MORE, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_OR:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_OR, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false));
+			emit_efg(c, INSTR_OR, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_COMMA:
@@ -290,17 +295,17 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		switch (e->operator->name) {
 		case OP_TYPE:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_TYPE, reg, compile_expression(c, e->a, sym, false));
+			emit_bc(c, INSTR_TYPE, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			break;
 
 		case OP_LENGTH:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_LEN, reg, compile_expression(c, e->a, sym, false));
+			emit_bc(c, INSTR_LEN, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			break;
 
 		case OP_SUB:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false));
+			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			break;
 
 		default:
@@ -316,11 +321,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int a = compile_lvalue(c, e->a, sym);
 			reg = alloc_reg(c);
 			if (a >= 256) {
-				emit_bc(c, INSTR_MOVG, reg, a - 256);
-				emit_a(c, INSTR_GINC, a - 256);
+				emit_bc(c, INSTR_MOVG, reg, a - 256, &e->tok->loc);
+				emit_a(c, INSTR_GINC, a - 256, &e->tok->loc);
 			} else {
-				emit_bc(c, INSTR_MOV, reg, a);
-				emit_a(c, INSTR_INC, a);
+				emit_bc(c, INSTR_MOV, reg, a, &e->tok->loc);
+				emit_a(c, INSTR_INC, a, &e->tok->loc);
 			}
 		} break;
 
@@ -335,14 +340,14 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		switch (e->operator->name) {
 		case OP_QUESTION: {
 			reg = alloc_reg(c);
-			emit_a(c, INSTR_COND, compile_expression(c, e->a, sym, false));
+			emit_a(c, INSTR_COND, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			size_t a = c->ip;
-			emit_d(c, INSTR_JMP, -1);
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->b, sym, false));
+			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->b, sym, false), &e->tok->loc);
 			size_t b = c->ip;
-			emit_d(c, INSTR_JMP, -1);
+			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
 			c->code[a].d.d = c->ip;
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->c, sym, false));
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->c, sym, false), &e->tok->loc);
 			c->code[b].d.d = c->ip;
 		} break;
 
@@ -389,11 +394,13 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		if (l >= 256) {
 			emit_efg(c, INSTR_GDEREF, reg,
 			         l - 256,
-			         compile_expression(c, e->b, sym, false));
+			         compile_expression(c, e->b, sym, false),
+			         &e->tok->loc);
 		} else {
 			emit_efg(c, INSTR_DEREF, reg,
 			         l,
-			         compile_expression(c, e->b, sym, false));
+			         compile_expression(c, e->b, sym, false),
+			         &e->tok->loc);
 		}
 		return reg;
 	} break;
@@ -421,25 +428,26 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				struct value v;
 				v.type = VAL_FN;
 				v.integer = var->address;
-				emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v));
+				v.name = var->name;
+				emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
 				if (var->global) {
-					emit_bc(c, INSTR_COPYG, reg, var->address);
+					emit_bc(c, INSTR_COPYG, reg, var->address, &e->tok->loc);
 				} else {
-					emit_bc(c, INSTR_COPY, reg, var->address);
+					emit_bc(c, INSTR_COPY, reg, var->address, &e->tok->loc);
 				}
 			} else {
 				if (var->global) {
-					emit_bc(c, INSTR_MOVG, reg, var->address);
+					emit_bc(c, INSTR_MOVG, reg, var->address, &e->tok->loc);
 				} else {
-					emit_bc(c, INSTR_MOV, reg, var->address);
+					emit_bc(c, INSTR_MOV, reg, var->address, &e->tok->loc);
 				}
 			}
 			break;
 
 		default:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_COPYC, reg, add_constant(c, e->val));
+			emit_bc(c, INSTR_COPYC, reg, add_constant(c, e->val), &e->tok->loc);
 			break;
 		}
 		break;
@@ -459,19 +467,19 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		}
 
 		for (int i = e->num - 1; i >= 0; i--) {
-			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true));
+			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
 		}
 
-		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false));
+		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false), &e->tok->loc);
 		reg = alloc_reg(c);
-		emit_a(c, INSTR_POP, reg);
+		emit_a(c, INSTR_POP, reg, &e->tok->loc);
 		break;
 
 	case EXPR_FN_DEF: {
 		struct value v;
 		v.type = VAL_FN;
 		v.integer = compile_statement(c, e->s);
-		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v));
+		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 	} break;
 
 	case EXPR_LIST:
@@ -482,16 +490,16 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		c->gc->arrlen[v.idx] = 0;
 		c->gc->array[v.idx] = NULL;
 
-		emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v));
+		emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 		for (size_t i = 0; i < e->num; i++)
-			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym, true));
+			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
 		break;
 
 	case EXPR_SUBSCRIPT: {
 		int addr = compile_lvalue(c, e->a, sym);
 		reg = alloc_reg(c);
-		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false));
+		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
 	} break;
 
 	default:
@@ -539,9 +547,9 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	size_t start = -1;
 	if (s->condition) {
-		emit_a(c, INSTR_COND, compile_expr(c, s->condition, sym, false));
+		emit_a(c, INSTR_COND, compile_expr(c, s->condition, sym, false), &s->tok->loc);
 		start = c->ip;
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 	}
 
 	int lp = c->lp;
@@ -551,14 +559,16 @@ compile_statement(struct compiler *c, struct statement *s)
 	case STMT_PRINTLN:
 		for (size_t i = 0; i < s->print.num; i++)
 			emit_a(c, INSTR_PRINT,
-			       compile_expr(c, s->print.args[i], sym, false));
-		emit_(c, INSTR_LINE);
+			       compile_expr(c, s->print.args[i], sym, false),
+			       &s->tok->loc);
+
+		emit_(c, INSTR_LINE, &s->tok->loc);
 		break;
 
 	case STMT_PRINT:
 		for (size_t i = 0; i < s->print.num; i++)
 			emit_a(c, INSTR_PRINT,
-			       compile_expr(c, s->print.args[i], sym, false));
+			       compile_expr(c, s->print.args[i], sym, false), &s->tok->loc);
 		break;
 
 	case STMT_VAR_DECL:
@@ -571,7 +581,7 @@ compile_statement(struct compiler *c, struct statement *s)
 				? compile_expr(c, s->var_decl.init[i], sym, true)
 				: nil(c);
 
-			emit_bc(c, INSTR_MOV, var_sym->address, reg);
+			emit_bc(c, INSTR_MOV, var_sym->address, reg, &s->tok->loc);
 		}
 		break;
 
@@ -583,7 +593,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		push_frame(c);
 		sym->address = c->ip;
 		ret = c->ip;
@@ -595,13 +605,13 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (size_t i = 0; i < s->fn_def.num; i++) {
 			struct symbol *arg_sym = resolve(sym, s->fn_def.args[i]->value);
 			arg_sym->address = c->var[c->sp]++;
-			emit_a(c, INSTR_POP, arg_sym->address);
+			emit_a(c, INSTR_POP, arg_sym->address, &s->tok->loc);
 		}
 
 		compile_statement(c, s->fn_def.body);
 		pop_frame(c);
-		emit_a(c, INSTR_PUSH, nil(c));
-		emit_(c, INSTR_RET);
+		emit_a(c, INSTR_PUSH, nil(c), &s->tok->loc);
+		emit_(c, INSTR_RET, &s->tok->loc);
 		c->code[a].d.d = c->ip;
 	} break;
 
@@ -611,8 +621,8 @@ compile_statement(struct compiler *c, struct statement *s)
 			           "return statement occurs outside of function body");
 		}
 
-		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym, true));
-		emit_(c, INSTR_RET);
+		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym, true), &s->tok->loc);
+		emit_(c, INSTR_RET, &s->tok->loc);
 		break;
 
 	case STMT_BLOCK:
@@ -626,12 +636,12 @@ compile_statement(struct compiler *c, struct statement *s)
 		break;
 
 	case STMT_IF_STMT:
-		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym, false));
+		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym, false), &s->tok->loc);
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		compile_statement(c, s->if_stmt.then);
 		size_t b = c->ip;
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		c->code[a].d.d = c->ip;
 		compile_statement(c, s->if_stmt.otherwise);
 		c->code[b].d.d = c->ip;
@@ -639,11 +649,11 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_WHILE: {
 		size_t a = c->ip;
-		emit_a(c, INSTR_COND, compile_expr(c, s->while_loop.cond, sym, false));
+		emit_a(c, INSTR_COND, compile_expr(c, s->while_loop.cond, sym, false), &s->tok->loc);
 		size_t b = c->ip;
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		compile_statement(c, s->while_loop.body);
-		emit_d(c, INSTR_JMP, a);
+		emit_d(c, INSTR_JMP, a, &s->tok->loc);
 		c->code[b].d.d = c->ip;
 
 		LOOP_START(a);
@@ -656,8 +666,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (int i = np; i < c->np; i++)
 			c->code[c->next[i]].d.d = c->ip;
 		c->np = np;
-		emit_a(c, INSTR_NCOND, compile_expr(c, s->do_while_loop.cond, sym, false));
-		emit_d(c, INSTR_JMP, a);
+		emit_a(c, INSTR_NCOND, compile_expr(c, s->do_while_loop.cond, sym, false), &s->tok->loc);
+		emit_d(c, INSTR_JMP, a, &s->tok->loc);
 		for (int i = lp; i < c->lp; i++)
 			c->code[i].d.d = c->ip;
 		c->lp = lp;
@@ -672,14 +682,14 @@ compile_statement(struct compiler *c, struct statement *s)
 			}
 
 			size_t a = c->ip;
-			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym, false));
+			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
 			size_t b = c->ip;
-			emit_d(c, INSTR_JMP, -1);
+			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 			compile_statement(c, s->for_loop.body);
 			size_t start = c->ip;
 			compile_expression(c, s->for_loop.c, sym, false);
 
-			emit_d(c, INSTR_JMP, a);
+			emit_d(c, INSTR_JMP, a, &s->tok->loc);
 			c->code[b].d.d = c->ip;
 
 			LOOP_START(start);
@@ -689,16 +699,17 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_LAST:
 		push_last(c, c->ip);
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		break;
 
 	case STMT_NEXT:
 		push_next(c, c->ip);
-		emit_d(c, INSTR_JMP, -1);
+		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		break;
 
 	case STMT_DIE:
-		emit_a(c, INSTR_KILL, compile_expression(c, s->expr, sym, false));
+		emit_a(c, INSTR_KILL, compile_expression(c, s->expr, sym, false),
+		       &s->tok->loc);
 		break;
 
 	default:
@@ -731,7 +742,7 @@ compile(struct module *m, bool debug)
 		compile_statement(c, m->tree[i]);
 	}
 
-	emit_(c, INSTR_END);
+	emit_(c, INSTR_END, &c->stmt->tok->loc);
 
 	if (c->r->fatal) {
 		error_write(c->r, stderr);

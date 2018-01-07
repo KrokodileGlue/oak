@@ -71,10 +71,24 @@ call(struct vm *vm, struct value v)
 {
 	/* TODO: Optimize everything. Lol. */
 	assert(v.type == VAL_FN);
+
+	if (vm->debug)
+		fprintf(stderr, "<function call : `%s' : %p : %zu argument%s>\n",
+		        v.name ? v.name : "nameless function", (void *)&vm->code[vm->ip], vm->sp,
+		        vm->sp == 1 ? "" : "s");
+
 	push_frame(vm);
-	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 2) * sizeof *vm->callstack);
 	vm->csp++;
+
+	vm->callstack = oak_realloc(vm->callstack, (vm->csp + 1) * sizeof *vm->callstack);
 	vm->callstack[vm->csp] = vm->ip;
+
+	vm->args = oak_realloc(vm->args, (vm->csp + 1) * sizeof *vm->args);
+	vm->args[vm->csp] = vm->sp;
+
+	vm->calls = oak_realloc(vm->calls, (vm->csp + 1) * sizeof *vm->calls);
+	vm->calls[vm->csp] = v;
+
 	vm->ip = v.integer - 1;
 }
 
@@ -84,6 +98,20 @@ ret(struct vm *vm)
 	assert(vm->csp != 0);
 	pop_frame(vm);
 	vm->ip = vm->callstack[vm->csp--];
+}
+
+static void
+stacktrace(struct vm *vm)
+{
+	fprintf(stderr, "Stack trace:\n");
+
+	for (size_t i = 1; i <= vm->csp; i++) {
+		fprintf(stderr, "\t%3zu: <`%s' : %p>",
+		        i, vm->calls[i].name, (void *)&vm->code[vm->callstack[i]]);
+		fprintf(stderr, " @%5"PRIu64", %d argument%s\n",
+		        vm->calls[i].integer, vm->args[i],
+		        vm->args[i] == 1 ? "" : "s");
+	}
 }
 
 #define REG(X) vm->frame[vm->fp][X]
@@ -282,8 +310,10 @@ execute(struct module *m, bool debug)
 		vm->ip++;
 	}
 
-	if (vm->r->pending)
+	if (vm->r->pending) {
 		error_write(vm->r, stderr);
+		stacktrace(vm);
+	}
 
 	free_vm(vm);
 }

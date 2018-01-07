@@ -9,7 +9,11 @@ struct vm {
 	struct instruction *code;
 	size_t ip;
 
+	/* Return locations. */
 	int *callstack;
+	/* Detailed information about each call. */
+	struct value *calls;
+	int *args;
 	size_t csp;
 
 	struct value *stack;

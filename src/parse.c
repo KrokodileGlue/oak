@@ -576,6 +576,11 @@ parse_stmt(struct parser *ps)
 			s->expr = parse_expr(ps, 0);
 			break;
 
+		case KEYWORD_WHEN:
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "`when' keyword must follow statement");
+			NEXT;
+			break;
+
 		default:
 			DOUT("unimplemented statement parser for %d (%s)", ps->tok->keyword->type, ps->tok->keyword->body);
 			NEXT;

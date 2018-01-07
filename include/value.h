@@ -28,6 +28,8 @@ struct value {
 		bool boolean;
 		int64_t idx;
 	};
+
+	char *name;
 };
 
 #include "error.h"
