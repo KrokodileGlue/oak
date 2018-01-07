@@ -127,19 +127,23 @@ add(struct symbolizer *si, struct symbol *sym)
 struct symbol *
 resolve(struct symbol *sym, char *name)
 {
-	if (!strlen(name)) return NULL;
+	if (!name || !*name) return NULL;
 	uint64_t h = hash(name, strlen(name));
 
 	while (sym) {
-		if (sym->id == h && !strcmp(sym->name, name)) {
+		if (sym->id == h && !strcmp(sym->name, name))
 			return sym;
-		}
 
 		for (size_t i = 0; i < sym->num_children; i++) {
 			if (sym->children[i]->id == h
 			    && !strcmp(sym->children[i]->name, name)) {
 				return sym->children[i];
 			}
+		}
+
+		if (sym->type == SYM_FN) {
+			while (sym->type != SYM_MODULE) sym = sym->parent;
+			continue;
 		}
 
 		sym = sym->parent;

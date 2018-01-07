@@ -140,5 +140,19 @@ for var i = 0; i < 40; i++ {
 	last when i == 19
 }
 
+fn scope {
+	var hard-normal-daddy = 300
+
+	fn internal (x) {
+		pl type x
+		# error: undeclared identifier
+		# pl hard-normal-daddy
+	}
+
+	internal('test')
+}
+
+scope()
+
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

@@ -586,12 +586,6 @@ compile_statement(struct compiler *c, struct statement *s)
 		break;
 
 	case STMT_FN_DEF: {
-		if (c->sp) {
-			error_push(c->r, s->tok->loc, ERR_FATAL,
-			           "function definition occurs within a function definition");
-			return ret;
-		}
-
 		size_t a = c->ip;
 		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		push_frame(c);
