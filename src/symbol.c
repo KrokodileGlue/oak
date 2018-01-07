@@ -468,6 +468,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	} break;
 
+	case STMT_DIE:
 	case STMT_LAST:
 	case STMT_NEXT:
 	case STMT_NULL: {

@@ -25,6 +25,7 @@ enum statement_type {
 	STMT_NULL,
 	STMT_LAST,
 	STMT_NEXT,
+	STMT_DIE,
 	STMT_INVALID
 } type;
 

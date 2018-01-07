@@ -86,8 +86,8 @@ print_debug(struct gc *gc, struct value l)
 	fprintf(stderr, " (%s)", value_data[l.type].body);
 }
 
-struct value
-add_values(struct gc *gc, struct value l, struct value r)
+static void
+_log(struct gc *gc, const char *msg, struct value l, struct value r)
 {
 	if (gc->debug) {
 		fprintf(stderr, "addition - left: ");
@@ -96,6 +96,12 @@ add_values(struct gc *gc, struct value l, struct value r)
 		print_debug(gc, r);
 		fputc('\n', stderr);
 	}
+}
+
+struct value
+add_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "addition", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -169,13 +175,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 struct value
 sub_values(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "subtraction - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "subtraction", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -190,13 +190,7 @@ sub_values(struct gc *gc, struct value l, struct value r)
 struct value
 mul_values(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "multiplication - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "multiplication", l, r);
 
 	/* TODO: fancy operations on strings and lists. */
 	struct value ret;
@@ -212,13 +206,7 @@ mul_values(struct gc *gc, struct value l, struct value r)
 struct value
 div_values(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "division - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "division", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -233,13 +221,7 @@ div_values(struct gc *gc, struct value l, struct value r)
 struct value
 mod_values(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "modulus - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "modulus", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -263,13 +245,7 @@ mod_values(struct gc *gc, struct value l, struct value r)
 struct value
 value_less(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "less - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "lessthan", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -292,13 +268,7 @@ value_less(struct gc *gc, struct value l, struct value r)
 struct value
 value_more(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "more - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "morethan", l, r);
 
 	struct value ret;
 	ret.type = VAL_NIL;
@@ -344,6 +314,8 @@ cmp_values(struct gc *gc, struct value l, struct value r)
 struct value
 and_values(struct gc *gc, struct value l, struct value r)
 {
+	_log(gc, "and", l, r);
+
 	struct value ret;
 	ret.type = VAL_BOOL;
 
@@ -359,6 +331,8 @@ and_values(struct gc *gc, struct value l, struct value r)
 struct value
 or_values(struct gc *gc, struct value l, struct value r)
 {
+	_log(gc, "or", l, r);
+
 	struct value ret;
 	ret.type = VAL_BOOL;
 
@@ -477,13 +451,7 @@ neg_value(struct gc *gc, struct value l)
 struct value
 pushback(struct gc *gc, struct value l, struct value r)
 {
-	if (gc->debug) {
-		fprintf(stderr, "pushback - left: ");
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
+	_log(gc, "pushback", l, r);
 
 	/* TODO: Make sure l is an array. */
 	assert(l.type == VAL_ARRAY);

@@ -134,12 +134,6 @@ var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
 pl it[1] + it[-500]
 
-fn {
-}
-
-fn {
-}
-
 for var i = 0; i < 40; i++ {
 	next when i % 2 == 0
 	pl i

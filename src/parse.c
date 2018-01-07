@@ -569,6 +569,12 @@ parse_stmt(struct parser *ps)
 			NEXT;
 			break;
 
+		case KEYWORD_DIE:
+			s = new_statement(ps->tok);
+			s->type = STMT_DIE;
+			NEXT;
+			break;
+
 		default:
 			DOUT("unimplemented statement parser for %d (%s)", ps->tok->keyword->type, ps->tok->keyword->body);
 			NEXT;

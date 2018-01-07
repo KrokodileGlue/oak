@@ -697,6 +697,10 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit_d(c, INSTR_JMP, -1);
 		break;
 
+	case STMT_DIE:
+		emit_(c, INSTR_END);
+		break;
+
 	default:
 		DOUT("unimplemented compiler for statement of type %d (%s)",
 		     s->type, statement_data[s->type].body);

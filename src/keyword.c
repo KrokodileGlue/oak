@@ -16,6 +16,7 @@ struct keyword keywords[] = {
 	{ KEYWORD_PRINTLN, "println" },
 	{ KEYWORD_LAST,    "last"    },
 	{ KEYWORD_NEXT,    "next"    },
+	{ KEYWORD_DIE,     "die"     },
 	{ KEYWORD_IN,      "in"      },
 	{ KEYWORD_RET,     "return"  },
 	{ KEYWORD_WHILE,   "while"   },

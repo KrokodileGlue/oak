@@ -21,6 +21,7 @@ struct statement_data statement_data[] = {
 	{ STMT_NULL     , "null statement"       },
 	{ STMT_LAST     , "last"                 },
 	{ STMT_NEXT     , "next"                 },
+	{ STMT_DIE      , "die"                  },
 	{ STMT_INVALID  , "invalid statement"    }
 };
 
@@ -146,6 +147,7 @@ free_stmt(struct statement *s)
 		free_stmt(s->do_while_loop.body);
 		break;
 
+	case STMT_DIE:
 	case STMT_IMPORT:
 	case STMT_NULL:
 	case STMT_LAST:

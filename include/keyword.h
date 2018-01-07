@@ -14,6 +14,7 @@ enum keyword_type {
 	KEYWORD_PRINTLN,
 	KEYWORD_LAST,
 	KEYWORD_NEXT,
+	KEYWORD_DIE,
 	KEYWORD_IN,
 	KEYWORD_RET,
 	KEYWORD_WHILE,
@@ -25,8 +26,8 @@ enum keyword_type {
 };
 
 struct keyword {
-	enum keyword_type	 type;
-	char			*body;
+	enum keyword_type type;
+	char *body;
 };
 
 extern struct keyword keywords[];
