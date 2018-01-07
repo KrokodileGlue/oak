@@ -18,6 +18,9 @@ struct vm {
 	int args[MAX_CALL_DEPTH];
 	size_t csp;
 
+	struct value *imp;
+	size_t impp;
+
 	struct value *stack;
 	size_t sp;
 	size_t maxsp;

@@ -163,10 +163,15 @@ fn range(x y) {
 
 {
 	for var i; range(5, 10): pl i
+
 	pl '========'
 
 	var i
 	for i; range(5, 10): pl i
+
+	pl '========'
+
+	for range(5, 10): pl _
 }
 
 # var foo = { a => 2, b => 'stuff' }

@@ -303,6 +303,19 @@ execute_instr(struct vm *vm, struct instruction c)
 		error_push(vm->r, *c.loc, ERR_KILLED, vm->gc->str[REG(c.d.a).idx]);
 		break;
 
+	case INSTR_PUSHIMP:
+		vm->imp = oak_realloc(vm->imp, (vm->impp + 1) * sizeof *vm->imp);
+		vm->imp[vm->impp++] = REG(c.d.a);
+		break;
+
+	case INSTR_POPIMP:
+		vm->impp--;
+		break;
+
+	case INSTR_GETIMP:
+		REG(c.d.a) = vm->imp[vm->impp - 1];
+		break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);
