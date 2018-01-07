@@ -118,6 +118,16 @@ parse_expr(struct parser *ps, size_t prec)
 	struct expression *left = new_expression(ps->tok);
 	struct operator *op = get_prefix_op(ps);
 
+	if (!strcmp(ps->tok->value, "map")) {
+		left->type = EXPR_MAP;
+		NEXT;
+		expect_symbol(ps, "{");
+		left->a = parse_expr(ps, 0);
+		expect_symbol(ps, "}");
+		left->b = parse_expr(ps, 0);
+		return left;
+	}
+
 	if (!strcmp(ps->tok->value, "fn")) {
 		left->type = EXPR_FN_DEF;
 		left->s = parse_fn_def(ps);

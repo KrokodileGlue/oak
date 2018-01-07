@@ -28,6 +28,7 @@ free_vm(struct vm *vm)
 	if (vm->frame) free(vm->frame);
 	if (vm->stack) free(vm->stack);
 	if (vm->callstack) free(vm->callstack);
+	if (vm->imp) free(vm->imp);
 
 	free(vm);
 }

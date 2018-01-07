@@ -508,6 +508,45 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
 	} break;
 
+	case EXPR_MAP: {
+		reg = alloc_reg(c);
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(c->gc, VAL_ARRAY);
+		c->gc->arrlen[v.idx] = 0;
+		c->gc->array[v.idx] = NULL;
+		emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+		int iter = alloc_reg(c);
+
+		v.type = VAL_INT;
+		v.integer = -1;
+
+		int expr = compile_expression(c, e->b, sym, false);
+		emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &e->tok->loc);
+		size_t start = c->ip;
+		emit_a(c, INSTR_INC, iter, &e->tok->loc);
+		int len = alloc_reg(c);
+		emit_bc(c, INSTR_LEN, len, expr, &e->tok->loc);
+		int cond = alloc_reg(c);
+		emit_efg(c, INSTR_LESS, cond, iter, len, &e->tok->loc);
+		emit_a(c, INSTR_COND, cond, &e->tok->loc);
+
+		size_t a = c->ip;
+		emit_d(c, INSTR_JMP, -1, &e->tok->loc);
+		int temp = alloc_reg(c);
+		emit_efg(c, INSTR_SUBSCR, temp, expr, iter, &e->tok->loc);
+		emit_a(c, INSTR_PUSHIMP, temp, &e->tok->loc);
+
+		int thing = compile_expression(c, e->a, sym, false);
+		emit_bc(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
+
+		emit_a(c, INSTR_POPIMP, temp, &e->tok->loc);
+		emit_d(c, INSTR_JMP, start, &e->tok->loc);
+		c->code[a].d.d = c->ip;
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
 		     e->type);

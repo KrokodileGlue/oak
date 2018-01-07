@@ -172,6 +172,10 @@ fn range(x y) {
 	pl '========'
 
 	for range(5, 10): pl _
+
+	pl '========'
+
+	pl join(', ', map { _ * _ } range(0, 10))
 }
 
 # var foo = { a => 2, b => 'stuff' }

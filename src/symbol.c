@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "util.h"
 #include "symbol.h"
@@ -271,9 +272,25 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		symbolize(si, e->s);
 		break;
 
+	case EXPR_MAP: {
+		push_block(si, e->s);
+
+		struct symbol *s = new_symbol(e->tok);
+		s->type = SYM_VAR;
+		s->name = "_";
+		s->id = hash(s->name, strlen(s->name));
+		s->scope = -1;
+
+		add(si, s);
+		resolve_expr(si, e->a);
+		pop(si);
+
+		resolve_expr(si, e->b);
+	} break;
+
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
-		break;
+		assert(false);
 	}
 }
 

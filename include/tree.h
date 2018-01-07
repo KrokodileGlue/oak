@@ -121,6 +121,7 @@ struct expression {
 		EXPR_LIST,
 		EXPR_LIST_COMPREHENSION,
 		EXPR_SUBSCRIPT,
+		EXPR_MAP,
 		EXPR_INVALID
 	} type;
 
