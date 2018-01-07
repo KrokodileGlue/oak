@@ -252,6 +252,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.bc.b) = value_len(vm->gc, REG(c.d.bc.c));
 		break;
 
+	case INSTR_KILL:
+		assert(REG(c.d.a).type == VAL_STR);
+		error_push(vm->r, *c.loc, ERR_KILLED, vm->gc->str[REG(c.d.a).idx]);
+		break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);
@@ -273,8 +278,12 @@ execute(struct module *m, bool debug)
 
 	while (vm->code[vm->ip].type != INSTR_END) {
 		execute_instr(vm, c[vm->ip]);
+		if (vm->r->pending) break;
 		vm->ip++;
 	}
+
+	if (vm->r->pending)
+		error_write(vm->r, stderr);
 
 	free_vm(vm);
 }

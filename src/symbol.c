@@ -469,6 +469,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	} break;
 
 	case STMT_DIE:
+		resolve_expr(si, stmt->expr);
+		free(sym);
+		return;
+
 	case STMT_LAST:
 	case STMT_NEXT:
 	case STMT_NULL: {

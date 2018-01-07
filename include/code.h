@@ -52,6 +52,7 @@ enum instruction_type {
 	INSTR_PRINT,
 	INSTR_LINE,
 
+	INSTR_KILL,
 	INSTR_END
 };
 

@@ -10,7 +10,7 @@
 struct Error {
 	struct location loc;
 	enum error_level {
-		ERR_NOTE, ERR_WARNING, ERR_FATAL
+		ERR_NOTE, ERR_WARNING, ERR_FATAL, ERR_KILLED
 	} sev;
 	char *msg;
 };

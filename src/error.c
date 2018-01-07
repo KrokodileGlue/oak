@@ -7,7 +7,7 @@
 #include "util.h"
 #include "color.h"
 
-static char error_level_strs[][32] = { "note", "warning", "error" };
+static const char *error_level_strs[] = { "note", "warning", "error", "killed" };
 
 struct reporter *
 new_reporter()

@@ -570,9 +570,10 @@ parse_stmt(struct parser *ps)
 			break;
 
 		case KEYWORD_DIE:
+			NEXT;
 			s = new_statement(ps->tok);
 			s->type = STMT_DIE;
-			NEXT;
+			s->expr = parse_expr(ps, 0);
 			break;
 
 		default:

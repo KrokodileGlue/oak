@@ -46,6 +46,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
+	{ INSTR_KILL,     REG_A,    "KILL      " },
 	{ INSTR_END,      REG_NONE, "END       " }
 };
 

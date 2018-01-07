@@ -698,7 +698,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		break;
 
 	case STMT_DIE:
-		emit_(c, INSTR_END);
+		emit_a(c, INSTR_KILL, compile_expression(c, s->expr, sym, false));
 		break;
 
 	default:

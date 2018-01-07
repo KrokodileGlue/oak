@@ -148,6 +148,9 @@ free_stmt(struct statement *s)
 		break;
 
 	case STMT_DIE:
+		free_expr(s->expr);
+		break;
+
 	case STMT_IMPORT:
 	case STMT_NULL:
 	case STMT_LAST:
