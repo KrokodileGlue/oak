@@ -689,6 +689,47 @@ compile_statement(struct compiler *c, struct statement *s)
 			LOOP_START(start);
 			LOOP_END;
 		}
+
+		if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
+			int reg = -1;
+			if (s->for_loop.a->type == STMT_VAR_DECL) {
+				if (s->for_loop.a->var_decl.num != 1) {
+					error_push(c->r, s->tok->loc, ERR_FATAL,
+					           "variable declaration for-loop initalizers must declare only one variable");
+				}
+
+				compile_statement(c, s->for_loop.a);
+				reg = resolve(sym, s->for_loop.a->var_decl.names[0]->value)->address;
+			} else {
+				reg = compile_lvalue(c, s->for_loop.a->expr, sym);
+			}
+
+			int iter = alloc_reg(c);
+
+			struct value v;
+			v.type = VAL_INT;
+			v.integer = -1;
+
+			int expr = compile_expression(c, s->for_loop.b, sym, false);
+			emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &s->tok->loc);
+			size_t start = c->ip;
+			emit_a(c,   INSTR_INC, iter, &s->tok->loc);
+			int len = alloc_reg(c);
+			emit_bc(c,  INSTR_LEN, len, expr, &s->tok->loc);
+			int cond = alloc_reg(c);
+			emit_efg(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
+			emit_a(c, INSTR_COND, cond, &s->tok->loc);
+			size_t a = c->ip;
+			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_efg(c, INSTR_SUBSCR, reg, expr, iter, &s->tok->loc);
+
+			compile_statement(c, s->for_loop.body);
+			emit_d(c, INSTR_JMP, start, &s->tok->loc);
+
+			LOOP_START(start);
+			LOOP_END;
+			c->code[a].d.d = c->ip;
+		}
 		break;
 
 	case STMT_LAST:

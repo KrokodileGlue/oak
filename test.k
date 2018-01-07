@@ -144,15 +144,30 @@ fn scope {
 	var hard-normal-daddy = 300
 
 	fn internal (x) {
-		pl type x
+		p type x
 		# error: undeclared identifier
 		# pl hard-normal-daddy
 	}
 
-	internal('test')
+	pl 'this should say array: ', internal([])
 }
 
 scope()
+
+fn range(x y) {
+	var ret = []
+	for var i = 0; i < y - x; i++:
+		ret[i] = i + x
+	return ret
+}
+
+{
+	for var i; range(5, 10): pl i
+	pl '========'
+
+	var i
+	for i; range(5, 10): pl i
+}
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']
