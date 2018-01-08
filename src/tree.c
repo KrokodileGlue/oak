@@ -223,6 +223,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 {
 	indent(ap);
 
+	/* Why is this not a switch? */
 	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL || e->type == EXPR_SUBSCRIPT) {
 		struct operator *op = e->operator;
 
@@ -357,6 +358,15 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		fprintf(ap->f, "(function)");
 		ap->depth++; split(ap);
 		print_statement(ap, e->s);
+		ap->depth--;
+	} else if (e->type == EXPR_MAP) {
+		fprintf(ap->f, "(map)");
+		ap->depth++; split(ap);
+		indent(ap); fprintf(ap->f, "<expression>"); ap->depth++;
+		print_expression(ap, e->a); ap->depth--;
+		join(ap);
+		indent(ap); fprintf(ap->f, "<list>"); ap->depth++;
+		print_expression(ap, e->b); ap->depth--;
 		ap->depth--;
 	} else {
 		fputc('\n', stderr);
