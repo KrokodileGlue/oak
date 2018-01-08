@@ -46,6 +46,7 @@ enum instruction_type {
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,
+	INSTR_POW,
 	INSTR_DIV,
 	INSTR_MOD,
 	INSTR_OR,

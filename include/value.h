@@ -45,6 +45,7 @@ extern struct value_data value_data[];
 struct value add_values(struct gc *gc, struct value l, struct value r);
 struct value sub_values(struct gc *gc, struct value l, struct value r);
 struct value mul_values(struct gc *gc, struct value l, struct value r);
+struct value pow_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
 struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value or_values(struct gc *gc, struct value l, struct value r);

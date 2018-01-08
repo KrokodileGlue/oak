@@ -161,6 +161,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_ADD:  BIN(add);                              break;
 	case INSTR_SUB:  BIN(sub);                              break;
 	case INSTR_MUL:  BIN(mul);                              break;
+	case INSTR_POW:  BIN(pow);                              break;
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_MOD:  BIN(mod);                              break;
 	case INSTR_OR:   BIN(or);                               break;

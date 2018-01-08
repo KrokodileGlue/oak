@@ -284,6 +284,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			reg = compile_expression(c, e->b, sym, true);
 			break;
 
+		case OP_POW:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_POW, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			break;
+
 		default:
 			DOUT("unimplemented compiler for binary operator `%s'",
 			     e->operator->body);

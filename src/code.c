@@ -40,6 +40,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_ADD,      REG_EFG,  "ADD       " },
 	{ INSTR_SUB,      REG_EFG,  "SUB       " },
 	{ INSTR_MUL,      REG_EFG,  "MUL       " },
+	{ INSTR_POW,      REG_EFG,  "POW       " },
 	{ INSTR_DIV,      REG_EFG,  "DIV       " },
 	{ INSTR_MOD,      REG_EFG,  "MOD       " },
 	{ INSTR_OR,       REG_EFG,  "OR        " },

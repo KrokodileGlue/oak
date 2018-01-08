@@ -20,6 +20,7 @@ struct operator ops[] = {
 	{ "length","",14, ASS_RIGHT, OPTYPE_PREFIX  , OP_LENGTH      },
 
 	{ "*",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MUL         },
+	{ "**",  "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_POW         },
 	{ "/",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_DIV         },
 	{ "%",   "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MOD         },
 	{ "%%",  "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MODMOD      },

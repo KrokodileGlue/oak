@@ -61,6 +61,7 @@ struct operator {
 		OP_SAYLN,
 		OP_MODMOD,
 		OP_NOR,
+		OP_POW,
 		OP_SQUIGGLE_ARROW
 	} name;
 };
