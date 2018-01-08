@@ -584,9 +584,8 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
-	int a = compile_expression(c, e, sym, copy);
 	c->stack_top[c->sp] = c->sym->num_variables;
-	return a;
+	return compile_expression(c, e, sym, copy);
 }
 
 #define LOOP_START(X)	  \
@@ -765,7 +764,6 @@ compile_statement(struct compiler *c, struct statement *s)
 			LOOP_END;
 		}
 
-		/* The iter register will probably be overwritten. I should fix this. */
 		if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
 			int reg = -1;
 			if (s->for_loop.a->type == STMT_VAR_DECL) {
@@ -780,18 +778,19 @@ compile_statement(struct compiler *c, struct statement *s)
 				reg = compile_lvalue(c, s->for_loop.a->expr, sym);
 			}
 
-			int iter = alloc_reg(c);
+			int iter = c->var[c->sp]++;
 
 			struct value v;
 			v.type = VAL_INT;
 			v.integer = -1;
 
-			int expr = compile_expression(c, s->for_loop.b, sym, false);
+			int expr = c->var[c->sp]++;
+			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
 			emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &s->tok->loc);
 			size_t start = c->ip;
-			emit_a(c,   INSTR_INC, iter, &s->tok->loc);
+			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
-			emit_bc(c,  INSTR_LEN, len, expr, &s->tok->loc);
+			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);
 			emit_efg(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
 			emit_a(c, INSTR_COND, cond, &s->tok->loc);
@@ -814,18 +813,19 @@ compile_statement(struct compiler *c, struct statement *s)
 				return start;
 			}
 
-			int iter = alloc_reg(c);
+			int iter = c->var[c->sp]++;
 
 			struct value v;
 			v.type = VAL_INT;
 			v.integer = -1;
 
-			int expr = compile_expression(c, s->for_loop.a->expr, sym, false);
+			int expr = c->var[c->sp]++;
+			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
 			emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &s->tok->loc);
 			size_t start = c->ip;
-			emit_a(c,   INSTR_INC, iter, &s->tok->loc);
+			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
-			emit_bc(c,  INSTR_LEN, len, expr, &s->tok->loc);
+			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);
 			emit_efg(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
 			emit_a(c, INSTR_COND, cond, &s->tok->loc);

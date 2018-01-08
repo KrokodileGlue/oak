@@ -453,6 +453,11 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		if (stmt->for_loop.a->type == STMT_VAR_DECL)
 			inc_variable_count(si->symbol);
 
+		if (!stmt->for_loop.b || !stmt->for_loop.c) {
+			inc_variable_count(si->symbol);
+			inc_variable_count(si->symbol);
+		}
+
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {
 			/* wtf is this shit */
 			struct symbol *s = new_symbol(sym->tok);

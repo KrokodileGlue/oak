@@ -177,8 +177,9 @@ fn range(x y) {
 
 	pl join(', ', map { 2 ** _ } range(0, 63))
 	var ar = map { 0 } range(0, 256)
+	pl ar
 	for ar {
-		pl _, ', '
+		p _, ', '
 	}
 }
 
