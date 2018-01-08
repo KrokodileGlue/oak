@@ -615,6 +615,11 @@ compile_statement(struct compiler *c, struct statement *s)
 		        statement_data[s->type].body, sym->name);
 	}
 
+	if (s->type == STMT_VAR_DECL && s->condition) {
+		error_push(c->r, s->condition->tok->prev->loc, ERR_FATAL, "thou shalt not fuck with variable declarations");
+		return -1;
+	}
+
 	size_t start = -1;
 	if (s->condition) {
 		emit_a(c, INSTR_COND, compile_expr(c, s->condition, sym, false), &s->tok->loc);
