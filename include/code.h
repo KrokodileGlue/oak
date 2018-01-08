@@ -32,6 +32,7 @@ enum instruction_type {
 	INSTR_DEREF,
 	INSTR_GDEREF,
 	INSTR_SUBSCR,
+	INSTR_MATCH,
 
 	INSTR_COND,
 	INSTR_NCOND,

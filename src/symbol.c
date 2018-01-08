@@ -288,6 +288,9 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		resolve_expr(si, e->b);
 	} break;
 
+	case EXPR_REGEX:
+		break;
+
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
 		assert(false);

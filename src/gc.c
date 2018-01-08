@@ -100,6 +100,11 @@ gc_alloc(struct gc *gc, enum value_type type)
 			                      gc->slot[type] * sizeof *gc->arrlen);
 			break;
 
+		case VAL_REGEX:
+			gc->regex = oak_realloc(gc->regex,
+			                        gc->slot[type] * sizeof *gc->regex);
+			break;
+
 		default:
 			DOUT("unimplemented gc allocator");
 			assert(false);

@@ -6,13 +6,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define NUM_ALLOCATABLE_VALUES 2
+#include "ktre.h"
+
+#define NUM_ALLOCATABLE_VALUES 3
 
 struct value {
 	enum value_type {
 		/* allocated */
 		VAL_STR,
 		VAL_ARRAY,
+		VAL_REGEX,
 
 		/* not allocated */
 		VAL_NIL,

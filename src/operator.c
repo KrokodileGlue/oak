@@ -43,6 +43,7 @@ struct operator ops[] = {
 	{ "nor", "",  4,  ASS_LEFT,  OPTYPE_BINARY  , OP_NOR         },
 	{ "?",   ":", 3,  ASS_LEFT,  OPTYPE_TERNARY , OP_QUESTION    },
 	{ "=",   "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_EQ          },
+	{ "=~",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_SQUIGGLEEQ  },
 	{ "+=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_ADDEQ       },
 	{ "-=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_SUBEQ       },
 	{ ",",   "",  1,  ASS_RIGHT, OPTYPE_BINARY  , OP_COMMA       }

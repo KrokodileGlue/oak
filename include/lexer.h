@@ -14,9 +14,9 @@
 
 struct lexer {
 	char *text, *file;
-	struct reporter   *r;
-	struct token      *tok;
-	struct location    loc;
+	struct reporter *r;
+	struct token    *tok;
+	struct location  loc;
 };
 
 void lexer_clear(struct lexer *ls);

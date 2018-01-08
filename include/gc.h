@@ -14,6 +14,7 @@ struct gc {
 	char **str;
 	struct value **array;
 	unsigned int *arrlen;
+	struct ktre **regex;
 };
 
 struct gc *new_gc();

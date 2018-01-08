@@ -72,6 +72,8 @@ free_expr(struct expression *e)
 		}
 	} else if (e->type == EXPR_FN_DEF) {
 		free_stmt(e->s);
+	} else if (e->type == EXPR_REGEX) {
+
 	} else {
 		if (e->a) free_expr(e->a);
 		if (e->b) free_expr(e->b);
@@ -367,6 +369,21 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		join(ap);
 		indent(ap); fprintf(ap->f, "<list>"); ap->depth++;
 		print_expression(ap, e->b); ap->depth--;
+		ap->depth--;
+	} else if (e->type == EXPR_REGEX) {
+		fprintf(ap->f, "(regular expression)");
+		ap->depth++; split(ap);
+		indent(ap); fprintf(ap->f, "<expression>"); ap->depth++;
+		fprintf(ap->f, "'%s'", e->tok->regex); ap->depth--;
+
+		if (e->tok->substitution) {
+			indent(ap); fprintf(ap->f, "<substitution>"); ap->depth++;
+			fprintf(ap->f, "'%s'", e->tok->substitution); ap->depth--;
+		}
+
+		join(ap);
+		indent(ap); fprintf(ap->f, "<flags>"); ap->depth++;
+		fprintf(ap->f, "'%s'", e->tok->flags); ap->depth--;
 		ap->depth--;
 	} else {
 		fputc('\n', stderr);

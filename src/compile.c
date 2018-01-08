@@ -149,6 +149,22 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		v.boolean = tok->boolean;
 		break;
 
+	case TOK_REGEX: {
+		int opt = 0;
+
+		for (size_t i = 0; i < strlen(tok->flags); i++) {
+			switch (tok->flags[i]) {
+			case 'i': opt |= KTRE_INSENSITIVE; break;
+			case 'g': opt |= KTRE_GLOBAL; break;
+			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
+			}
+		}
+
+		v.type = VAL_REGEX;
+		v.idx = gc_alloc(c->gc, VAL_REGEX);
+		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
+	} break;
+
 	default:
 		DOUT("unimplemented token-to-value converter");
 		assert(false);
@@ -307,6 +323,16 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			         temp,
 			         zero,
 			         &e->tok->loc);
+		} break;
+
+		case OP_SQUIGGLEEQ: {
+			int var = compile_lvalue(c, e->a, sym);
+			reg = alloc_reg(c);
+
+			if (reg >= 256)
+				emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
+			else
+				emit_efg(c, INSTR_MATCH, reg, var - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
 		} break;
 
 		default:
@@ -571,6 +597,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_d(c, INSTR_JMP, start, &e->tok->loc);
 		c->code[a].d.d = c->ip;
 	} break;
+
+	case EXPR_REGEX:
+		reg = alloc_reg(c);
+		emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->tok), &e->tok->loc);
+		break;
 
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",

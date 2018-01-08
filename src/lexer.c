@@ -435,6 +435,49 @@ parse_include(struct lexer *ls, char *a)
 	return b;
 }
 
+static char *
+parse_regex(struct lexer *ls, char *a)
+{
+	char delim = 0;
+	char *b = a;
+
+	/* TODO: qw// n stuff */
+	if (*a == 's') {
+	} else {
+		delim = *b;
+		b++;
+
+		/*
+		 * A regular expression cannot appear at the beginning
+		 * of the program, so it's okay to look behind.
+		 */
+		while ((*b && *b != delim)
+		       && *b != '\n'
+		       && !(*b == delim &&
+		           (b[-1] == '\\' ? b[-2] == '\\' : false))) {
+			b++;
+		}
+
+		b--;
+		ls->loc.len = b - a + 2;
+		lexer_push_token(ls, TOK_REGEX, a, b + 2);
+		ls->tok->substitution = NULL;
+		ls->tok->regex = oak_malloc(b - a + 1);
+		strncpy(ls->tok->regex, a + 1, b - a);
+		ls->tok->regex[b - a] = 0;
+		b += 2;
+		a = b;
+
+		while (*b && isalpha(*b)) b++;
+
+		ls->tok->flags = oak_malloc(b - a + 1);
+		strncpy(ls->tok->flags, a, b - a);
+		ls->tok->flags[b - a] = 0;
+	}
+
+	return b;
+}
+
 bool
 tokenize(struct module *m)
 {
@@ -488,7 +531,29 @@ tokenize(struct module *m)
 			continue;
 		}
 
-		if (!strncmp(a, "R(", 2)) {
+		/* TODO: qw// n stuff */
+		if (ls->tok
+		    && (!strcmp(ls->tok->value, "(")
+		    || !strcmp(ls->tok->value, ",")
+		    || !strcmp(ls->tok->value, "=~"))
+		    && !is_identifier_start(*a)
+		    && !is_hex_digit(*a)
+		    && *a != '('
+		    && *a != ')'
+		    && *a != '['
+		    && *a != ']'
+		    && *a != ','
+		    && *a != '*'
+		    && *a != '\''
+		    && *a != '"'
+		    && *a != '.'
+		    && !isalnum(*a)
+		    && ls->tok->type != TOK_IDENTIFIER
+		    && ls->tok->type != TOK_INTEGER
+		    && (match_operator(a)
+		        ? (match_operator(a)->type != OPTYPE_PREFIX) : true)) {
+			a = parse_regex(ls, a);
+		} else if (!strncmp(a, "R(", 2)) {
 			a = parse_raw_string_literal(ls, a);
 		} else if (!strncmp(a, "I(", 2)) {
 			a = parse_include(ls, a);

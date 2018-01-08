@@ -10,6 +10,7 @@
 struct value_data value_data[] = {
 	{ VAL_STR,   "string" },
 	{ VAL_ARRAY, "array" },
+	{ VAL_REGEX, "regex" },
 	{ VAL_NIL,   "nil" },
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },

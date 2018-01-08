@@ -27,6 +27,7 @@ struct token {
 		TOK_INTEGER,
 		TOK_FLOAT,
 		TOK_BOOL,
+		TOK_REGEX,
 		TOK_END,
 		TOK_INVALID
 	} type;
@@ -38,25 +39,19 @@ struct token {
 		int64_t         integer;
 		double          floating;
 		bool            boolean;
+		struct {
+			char *regex;
+			char *flags;
+			char *substitution;
+		};
 	};
 };
 
-void
-token_push(struct location loc, enum token_type type, char *start, char *end, struct token **prev);
-
-char *
-token_get_str(enum token_type type);
-
-void
-token_clear(struct token *tok);
-
-void
-token_delete(struct token *tok);
-
-void
-token_write(struct token *tok, FILE *fp);
-
-void
-token_rewind(struct token **tok);
+void token_push(struct location loc, enum token_type type, char *start, char *end, struct token **prev);
+char *token_get_str(enum token_type type);
+void token_clear(struct token *tok);
+void token_delete(struct token *tok);
+void token_write(struct token *tok, FILE *fp);
+void token_rewind(struct token **tok);
 
 #endif

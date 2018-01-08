@@ -318,6 +318,42 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.a) = vm->imp[vm->impp - 1];
 		break;
 
+	case INSTR_MATCH: {
+		int **vec = NULL;
+		struct ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
+		char *subject = vm->gc->str[REG(c.d.efg.f).idx];
+		bool ret = ktre_exec(re, subject, &vec);
+
+		REG(c.d.efg.e).type = VAL_ARRAY;
+		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
+		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+
+		if (ret) {
+			for (int i = 0; i < re->num_matches; i++) {
+				struct value v;
+				v.type = VAL_STR;
+				v.idx = gc_alloc(vm->gc, VAL_STR);
+				vm->gc->str[v.idx] = oak_malloc(vec[i][1] + 1);
+				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
+				vm->gc->str[v.idx][vec[i][1]] = 0;
+				pushback(vm->gc, REG(c.d.efg.e), v);
+
+				for (int j = 1; j < re->num_groups; j++) {
+					/* TODO: $1, $2 n stuff */
+					/* DOUT("\ngroup %d: `%.*s`", j, vec[i][j * 2 + 1], subject + vec[i][j * 2]); */
+				}
+			}
+		} else if (re->err) {
+			/* TODO: Make the runtime fail n stuff. */
+			fprintf(stderr, "\nfailed at runtime with error code %d: %s\n",
+			        re->err, re->err_str ? re->err_str : "no error message");
+			fprintf(stderr, "\t%s\n\t", re->pat);
+			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
+			fprintf(stderr, "^");
+		}
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);

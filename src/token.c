@@ -13,6 +13,7 @@ static char token_type_str[][64] = {
 	"INTEGER",
 	"FLOAT",
 	"BOOL",
+	"REGEX",
 	"END",
 	"INVALID"
 };
