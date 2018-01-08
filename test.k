@@ -176,6 +176,10 @@ fn range(x y) {
 	pl '========'
 
 	pl join(', ', map { 2 ** _ } range(0, 63))
+	var ar = map { 0 } range(0, 256)
+	for ar {
+		pl _, ', '
+	}
 }
 
 # var foo = { a => 2, b => 'stuff' }
