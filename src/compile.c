@@ -289,6 +289,26 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_POW, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
+		case OP_MODMOD: {
+			int temp = alloc_reg(c);
+			emit_efg(c, INSTR_MOD, temp,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false),
+			         &e->tok->loc);
+
+			struct value v;
+			v.type = VAL_INT;
+			v.integer = 0;
+
+			int zero = alloc_reg(c);
+			emit_bc(c, INSTR_MOVC, zero, constant_table_add(c->ct, v), &e->tok->loc);
+
+			emit_efg(c, INSTR_CMP, reg,
+			         temp,
+			         zero,
+			         &e->tok->loc);
+		} break;
+
 		default:
 			DOUT("unimplemented compiler for binary operator `%s'",
 			     e->operator->body);

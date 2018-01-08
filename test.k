@@ -135,7 +135,7 @@ it[0]()
 pl it[1] + it[-500]
 
 for var i = 0; i < 40; i++ {
-	next when i % 2 == 0
+	next when i %% 2
 	pl i
 	last when i == 19
 }
