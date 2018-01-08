@@ -209,6 +209,11 @@ pow_values(struct gc *gc, struct value l, struct value r)
 	_log(gc, "power", l, r);
 
 	if (l.type == VAL_INT || r.type == VAL_INT) {
+		if (r.integer == 0) {
+			l.integer = 1;
+			return l;
+		}
+
 		int64_t base = l.integer;
 		for (int i = 0; i < r.integer - 1; i++)
 			l.integer *= base;
