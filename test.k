@@ -175,7 +175,7 @@ fn range(x y) {
 
 	pl '========'
 
-	pl join(', ', map { 2 ** _ } range(0, 10))
+	pl join(', ', map { 2 ** _ } range(0, 63))
 }
 
 # var foo = { a => 2, b => 'stuff' }
