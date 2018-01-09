@@ -386,6 +386,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		if (REG(c.d.bc.c).type != VAL_INT)
 			assert(false);
 
+		if (REG(c.d.bc.c).integer >= vm->re->num_groups) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "group does not exist");
+			return;
+		}
+
 		REG(c.d.bc.b).type = VAL_STR;
 		int i = vm->re->num_matches - 1;
 		int **vec = ktre_getvec(vm->re);

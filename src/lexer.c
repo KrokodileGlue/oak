@@ -515,7 +515,7 @@ tokenize(struct module *m)
 	char *a = m->text;
 
 	while (*a) {
-		ls->loc = (struct location){ls->text, ls->file, a - ls->text, 1};
+		ls->loc = (struct location){ ls->text, ls->file, a - ls->text, 1 };
 
 		if (is_whitespace(*a)) {
 			while (is_whitespace(*a) && *a) {

@@ -203,7 +203,7 @@ parse_expr(struct parser *ps, size_t prec)
 			left->val = ps->tok;
 			NEXT;
 		} else {
-			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value or prefix operator");
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value, or prefix operator");
 			NEXT;
 		}
 	}
