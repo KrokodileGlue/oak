@@ -440,6 +440,7 @@ parse_regex(struct lexer *ls, char *a)
 {
 	char delim = 0;
 	char *b = a;
+	DOUT("LOOKING AT: %c", *a);
 
 	/* TODO: qw// n stuff */
 	if (*a == 's') {
@@ -451,11 +452,15 @@ parse_regex(struct lexer *ls, char *a)
 		 * A regular expression cannot appear at the beginning
 		 * of the program, so it's okay to look behind.
 		 */
-		while ((*b && *b != delim)
-		       && *b != '\n'
-		       && !(*b == delim &&
-		           (b[-1] == '\\' ? b[-2] == '\\' : false))) {
+		while (*b && *b != '\n') {
+			if (*b == delim && b[-1] != '\\' ? b[-2] != '\\' : false)
+				break;
 			b++;
+		}
+
+		if (*b == '\n') {
+			lexer_push_error(ls, ERR_FATAL, "unterminated regular expression");
+			return b;
 		}
 
 		b--;
@@ -489,7 +494,7 @@ parse_group(struct lexer *ls, char *a)
 		ls->loc.len = b - a;
 		lexer_push_error(ls, ERR_FATAL, "group reference requires number");
 		SKIP_TO_END_OF_LINE(a, b);
-		return a;
+		return b;
 	}
 
 	ls->loc.len = b - a;
@@ -574,12 +579,11 @@ tokenize(struct module *m)
 		    && *a != ')'
 		    && *a != '['
 		    && *a != ']'
-		    && *a != ','
 		    && *a != '*'
 		    && *a != '\''
 		    && *a != '"'
 		    && *a != '.'
-		    && !isalnum(*a)
+		    && *a != '$'
 		    && ls->tok->type != TOK_IDENTIFIER
 		    && ls->tok->type != TOK_INTEGER
 		    && (match_operator(a)
