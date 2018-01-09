@@ -165,6 +165,11 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
 	} break;
 
+	case TOK_GROUP:
+		v.type = VAL_INT;
+		v.integer = tok->integer;
+		break;
+
 	default:
 		DOUT("unimplemented token-to-value converter");
 		assert(false);
@@ -602,6 +607,13 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		reg = alloc_reg(c);
 		emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->tok), &e->tok->loc);
 		break;
+
+	case EXPR_GROUP: {
+		reg = alloc_reg(c);
+		int temp = alloc_reg(c);
+		emit_bc(c, INSTR_MOVC, temp, add_constant(c, e->tok), &e->tok->loc);
+		emit_bc(c, INSTR_GROUP, reg, temp, &e->tok->loc);
+	} break;
 
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",

@@ -123,6 +123,7 @@ struct expression {
 		EXPR_SUBSCRIPT,
 		EXPR_MAP,
 		EXPR_REGEX,
+		EXPR_GROUP,
 		EXPR_INVALID
 	} type;
 

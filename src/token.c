@@ -14,6 +14,7 @@ static char token_type_str[][64] = {
 	"FLOAT",
 	"BOOL",
 	"REGEX",
+	"GROUP",
 	"END",
 	"INVALID"
 };
@@ -46,11 +47,23 @@ void token_clear(struct token *tok)
 		if (tok->next) {
 			free(tok->value);
 			if (tok->type == TOK_STRING) free(tok->string);
+
+			if (tok->type == TOK_REGEX) {
+				free(tok->flags);
+				free(tok->regex);
+			}
+
 			tok = tok->next;
 			if (tok && tok->prev) free(tok->prev);
 		} else {
 			free(tok->value);
 			if (tok->type == TOK_STRING) free(tok->string);
+
+			if (tok->type == TOK_REGEX) {
+				free(tok->flags);
+				free(tok->regex);
+			}
+
 			free(tok);
 			tok = NULL;
 		}

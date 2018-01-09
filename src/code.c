@@ -26,7 +26,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
 	{ INSTR_GDEREF,   REG_EFG,  "GDEREF    " },
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
+
 	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
+	{ INSTR_GROUP,    REG_BC,   "GROUP     " },
 
 	{ INSTR_COND,     REG_A,    "COND      " },
 	{ INSTR_NCOND,    REG_A,    "NCOND     " },

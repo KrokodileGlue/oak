@@ -289,6 +289,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	} break;
 
 	case EXPR_REGEX:
+	case EXPR_GROUP:
 		break;
 
 	default:

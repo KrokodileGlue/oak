@@ -478,6 +478,36 @@ parse_regex(struct lexer *ls, char *a)
 	return b;
 }
 
+static char *
+parse_group(struct lexer *ls, char *a)
+{
+	char *b = a + 1;
+
+	while (*b && is_dec_digit(*b)) b++;
+
+	if (b == a + 1) {
+		ls->loc.len = b - a;
+		lexer_push_error(ls, ERR_FATAL, "group reference requires number");
+		SKIP_TO_END_OF_LINE(a, b);
+		return a;
+	}
+
+	ls->loc.len = b - a;
+	lexer_push_token(ls, TOK_GROUP, a, b);
+
+	int i = 0;
+	a++;
+	while (is_dec_digit(*a)) {
+		i *= 10;
+		i += *a - '0';
+		a++;
+	}
+
+	ls->tok->integer = i;
+
+	return b;
+}
+
 bool
 tokenize(struct module *m)
 {
@@ -532,7 +562,9 @@ tokenize(struct module *m)
 		}
 
 		/* TODO: qw// n stuff */
-		if (ls->tok
+		if (*a == '$') {
+			a = parse_group(ls, a);
+		} else if (ls->tok
 		    && (!strcmp(ls->tok->value, "(")
 		    || !strcmp(ls->tok->value, ",")
 		    || !strcmp(ls->tok->value, "=~"))

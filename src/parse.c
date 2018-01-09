@@ -198,6 +198,10 @@ parse_expr(struct parser *ps, size_t prec)
 			left->type = EXPR_REGEX;
 			left->val = ps->tok;
 			NEXT;
+		} else if (ps->tok->type == TOK_GROUP) {
+			left->type = EXPR_GROUP;
+			left->val = ps->tok;
+			NEXT;
 		} else {
 			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value or prefix operator");
 			NEXT;

@@ -29,6 +29,7 @@ free_vm(struct vm *vm)
 	if (vm->stack) free(vm->stack);
 	if (vm->callstack) free(vm->callstack);
 	if (vm->imp) free(vm->imp);
+	if (vm->subject) free(vm->subject);
 
 	free(vm);
 }
@@ -200,7 +201,13 @@ execute_instr(struct vm *vm, struct instruction c)
 		 * is actually an integer.
 		 */
 
-		assert(REG(c.d.efg.e).type == VAL_ARRAY);
+		if (REG(c.d.efg.e).type != VAL_ARRAY) {
+			REG(c.d.efg.e).type = VAL_ARRAY;
+			REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+			vm->gc->array[REG(c.d.efg.e).idx] = NULL;
+		}
+
 		assert(REG(c.d.efg.f).type == VAL_INT);
 		grow_array(vm->gc, REG(c.d.efg.e), REG(c.d.efg.f).integer + 1);
 
@@ -319,10 +326,26 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_MATCH: {
+		if (REG(c.d.efg.g).type != VAL_REGEX) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply match to non regular expression value");
+			return;
+		}
+
+		if (REG(c.d.efg.f).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply regular expression to non-string value");
+			return;
+		}
+
+		if (vm->subject) free(vm->subject);
+
 		int **vec = NULL;
 		struct ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
 		char *subject = vm->gc->str[REG(c.d.efg.f).idx];
 		bool ret = ktre_exec(re, subject, &vec);
+
+		vm->subject = oak_malloc(strlen(subject) + 1);
+		strcpy(vm->subject, subject);
+		vm->re = re;
 
 		REG(c.d.efg.e).type = VAL_ARRAY;
 		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
@@ -352,6 +375,34 @@ execute_instr(struct vm *vm, struct instruction c)
 			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
 			fprintf(stderr, "^");
 		}
+
+		/* for (int i = 0; i < re->num_matches; i++) */
+		/* 	free(vec[i]); */
+
+		/* free(vec); */
+	} break;
+
+	case INSTR_GROUP: {
+		if (REG(c.d.bc.c).type != VAL_INT)
+			assert(false);
+
+		REG(c.d.bc.b).type = VAL_STR;
+		int i = vm->re->num_matches - 1;
+		int **vec = ktre_getvec(vm->re);
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+
+		vm->gc->str[v.idx] = oak_malloc(vec[i][REG(c.d.bc.c).integer * 2 + 1] + 1);
+		strncpy(vm->gc->str[v.idx], vm->subject + vec[i][REG(c.d.bc.c).integer * 2], vec[i][REG(c.d.bc.c).integer * 2 + 1]);
+		vm->gc->str[v.idx][vec[i][REG(c.d.bc.c).integer * 2 + 1]] = 0;
+
+		for (int i = 0; i < vm->re->num_matches; i++)
+			free(vec[i]);
+
+		free(vec);
+		REG(c.d.bc.b) = v;
 	} break;
 
 	default:

@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "keyword.h"
 #include "util.h"
 #include "token.h"
@@ -72,8 +74,7 @@ free_expr(struct expression *e)
 		}
 	} else if (e->type == EXPR_FN_DEF) {
 		free_stmt(e->s);
-	} else if (e->type == EXPR_REGEX) {
-
+	} else if (e->type == EXPR_REGEX || e->type == EXPR_GROUP) {
 	} else {
 		if (e->a) free_expr(e->a);
 		if (e->b) free_expr(e->b);
@@ -373,8 +374,9 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 	} else if (e->type == EXPR_REGEX) {
 		fprintf(ap->f, "(regular expression)");
 		ap->depth++; split(ap);
+		if (!strlen(e->tok->flags)) join(ap);
 		indent(ap); fprintf(ap->f, "<expression>"); ap->depth++;
-		fprintf(ap->f, "'%s'", e->tok->regex); ap->depth--;
+		indent(ap); fprintf(ap->f, "'%s'", e->tok->regex); ap->depth--;
 
 		if (e->tok->substitution) {
 			indent(ap); fprintf(ap->f, "<substitution>"); ap->depth++;
@@ -382,9 +384,16 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		}
 
 		join(ap);
-		indent(ap); fprintf(ap->f, "<flags>"); ap->depth++;
-		fprintf(ap->f, "'%s'", e->tok->flags); ap->depth--;
+
+		if (strlen(e->tok->flags)) {
+			indent(ap); fprintf(ap->f, "<flags>"); ap->depth++;
+			indent(ap); fprintf(ap->f, "'%s'", e->tok->flags);
+			ap->depth--;
+		}
+
 		ap->depth--;
+	} else if (e->type == EXPR_GROUP) {
+		fprintf(ap->f, "(group %"PRId64")", e->val->integer);
 	} else {
 		fputc('\n', stderr);
 		DOUT("impossible expression type %d\n", e->type);

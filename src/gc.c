@@ -44,12 +44,26 @@ free_gc(struct gc *gc)
 		bmp++;
 	}
 
+	bmp = gc->bmp[VAL_REGEX];
+	for (int64_t i = 0; i < gc->slot[VAL_REGEX] / 64; i++) {
+		for (int j = 0; j < 64; j++) {
+			if (*bmp == 0LL) break;
+			int pos = ffsll(*bmp) - 1;
+			*bmp ^= 1LL << pos;
+			if (gc->regex[i * 64 + pos])
+				ktre_free(gc->regex[i * 64 + pos]);
+		}
+
+		bmp++;
+	}
+
 	for (int i = 0; i < NUM_ALLOCATABLE_VALUES; i++)
 		if (gc->bmp[i]) free(gc->bmp[i]);
 
-	if (gc->array) free(gc->array);
-	if (gc->str) free(gc->str);
+	if (gc->array)  free(gc->array);
+	if (gc->str)    free(gc->str);
 	if (gc->arrlen) free(gc->arrlen);
+	if (gc->regex)  free(gc->regex);
 
 	free(gc);
 }

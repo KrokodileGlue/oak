@@ -33,6 +33,9 @@ struct vm {
 	struct reporter *r;
 	struct gc *gc;
 
+	struct ktre *re;
+	char *subject;
+
 	bool debug;
 	FILE *f;
 };

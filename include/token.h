@@ -28,6 +28,7 @@ struct token {
 		TOK_FLOAT,
 		TOK_BOOL,
 		TOK_REGEX,
+		TOK_GROUP,
 		TOK_END,
 		TOK_INVALID
 	} type;

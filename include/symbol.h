@@ -24,7 +24,6 @@ struct symbol {
 	enum SymbolType {
 		SYM_FN,
 		SYM_VAR,
-		SYM_CLASS,
 		SYM_GLOBAL,
 		SYM_BLOCK,
 		SYM_ARGUMENT,
