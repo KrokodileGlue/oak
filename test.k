@@ -128,8 +128,6 @@ fn djoin (x y) {
 pl join(', ', array)
 pl djoin(', ', array)
 
-# TODO: fix invalid memory access when variable initalizers are ruined
-# by "when"
 var it = [fn { pl type array }, 2, 3, 4]
 it[0]()
 pl it[1] + it[-500]
@@ -183,7 +181,7 @@ fn range(x y) {
 var string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
 
 for string =~ /\w+/g: pl _
-pl join(':', string =~ /\w+/g);
+pl join(':', string =~ /\w+/g)
 
 if string =~ /^(.*?), (.*)$/:
 	pl 'group 1: "' + $1 + '", group 2: "' + $2 + '"'

@@ -5,6 +5,7 @@
 #include "constant.h"
 #include "gc.h"
 
+/* This is kinda retarded. */
 #define MAX_CALL_DEPTH 1024
 
 struct vm {
@@ -13,6 +14,7 @@ struct vm {
 
 	/* Return locations. */
 	int *callstack;
+
 	/* Detailed information about each call. */
 	struct value calls[MAX_CALL_DEPTH];
 	int args[MAX_CALL_DEPTH];
