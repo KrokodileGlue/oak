@@ -440,7 +440,6 @@ parse_regex(struct lexer *ls, char *a)
 {
 	char delim = 0;
 	char *b = a;
-	DOUT("LOOKING AT: %c", *a);
 
 	/* TODO: qw// n stuff */
 	if (*a == 's') {
