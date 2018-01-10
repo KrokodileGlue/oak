@@ -180,6 +180,7 @@ struct ktre_info ktre_free(ktre *re);
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #define WHITESPACE " \t\r\n\v\f"
 #define DIGIT      "0123456789"
@@ -1146,7 +1147,7 @@ parse_character_class_character(struct ktre *re)
 	char *a = NULL;
 
 	if (*re->sp == '[') {
-		for (int i = 0; i < sizeof pclasses / sizeof pclasses[0]; i++) {
+		for (size_t i = 0; i < sizeof pclasses / sizeof pclasses[0]; i++) {
 			if (!strncmp(re->sp, pclasses[i].name, strlen(pclasses[i].name))) {
 				append_str(re, &a, pclasses[i].class);
 				re->sp += strlen(pclasses[i].name);
@@ -2024,7 +2025,7 @@ compile(struct ktre *re, struct node *n, bool rev)
 #define PATCH_A(loc, _a) if (re->c) re->c[loc].a = _a
 #define PATCH_B(loc, _b) if (re->c) re->c[loc].b = _b
 #define PATCH_C(loc, _c) if (re->c) re->c[loc].c = _c
-	int a = -1, b = -1, old = -1;
+	int a = -1, b = -1;
 
 	if (!n) return;
 
@@ -2323,7 +2324,7 @@ print_finish(struct ktre *re, const char *subject, const char *regex, bool ret, 
 }
 #else
 #define print_compile_error(x)
-#define print_finish(a,b,c,d,e,f)
+#define print_finish(a,b,c,d,e,f) do {} while (0)
 #endif
 
 struct ktre *
@@ -2721,7 +2722,8 @@ run(struct ktre *re, const char *subject, int ***vec)
 			break;
 
 		case INSTR_EOL:
-			if ((subject[sp] == '\n' && sp >= 0) || sp == strlen(subject))
+			if ((subject[sp] == '\n' && sp >= 0)
+			    || sp == (int)strlen(subject))
 				THREAD[TP].ip++;
 			else
 				--TP;
@@ -2734,7 +2736,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			break;
 
 		case INSTR_EOS:
-			if (sp == strlen(subject))
+			if (sp == (int)strlen(subject))
 				THREAD[TP].ip++;
 			else
 				--TP;
@@ -2743,7 +2745,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 		case INSTR_WB:
 			THREAD[TP].ip++;
 
-			if (sp < 0 || sp >= strlen(subject)) {
+			if (sp < 0 || sp >= (int)strlen(subject)) {
 				--TP;
 				continue;
 			}
@@ -2764,7 +2766,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 		case INSTR_NWB:
 			THREAD[TP].ip++;
 
-			if (sp < 0 || sp >= strlen(subject)) {
+			if (sp < 0 || sp >= (int)strlen(subject)) {
 				--TP;
 				continue;
 			}
@@ -2785,7 +2787,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 		case INSTR_CHAR:
 			THREAD[TP].ip++;
 
-			if (sp < 0 || sp >= strlen(subject)) {
+			if (sp < 0 || sp >= (int)strlen(subject)) {
 				--TP;
 				continue;
 			}

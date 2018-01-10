@@ -91,7 +91,7 @@ static void
 _log(struct gc *gc, const char *msg, struct value l, struct value r)
 {
 	if (gc->debug) {
-		fprintf(stderr, "addition - left: ");
+		fprintf(stderr, "%s - left: ", msg);
 		print_debug(gc, l);
 		fprintf(stderr, ", right: ");
 		print_debug(gc, r);
@@ -358,12 +358,10 @@ or_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_BOOL;
 
-	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
-		assert(false);
-	}
+	if (l.type != VAL_BOOL || r.type != VAL_BOOL)
+		return (struct value){ VAL_ERR, { 0 }, 0 };
 
 	ret.boolean = l.boolean || r.boolean;
-
 	return ret;
 }
 
@@ -376,30 +374,34 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_STR:   return !!strlen(gc->str[l.idx]);
 	case VAL_ARRAY: return !!gc->arrlen[l.idx];
 	case VAL_FLOAT: return !!l.real;
+	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
 	case VAL_FN:    return true;
+	case VAL_ERR:   assert(false);
 	}
+
+	return false;
 }
 
 struct value
-inc_value(struct gc *gc, struct value l)
+inc_value(struct value l)
 {
 	switch (l.type) {
 	case VAL_INT:   l.integer++;      break;
 	case VAL_FLOAT: l.real++;         break;
-	default: assert(false); break;
+	default: return (struct value){ VAL_ERR, { 0 }, 0 };
 	}
 
 	return l;
 }
 
 struct value
-dec_value(struct gc *gc, struct value l)
+dec_value(struct value l)
 {
 	switch (l.type) {
 	case VAL_INT:   l.integer--; break;
 	case VAL_FLOAT: l.real--;    break;
-	default: assert(false); break;
+	default: return (struct value){ VAL_ERR, { 0 }, 0 };
 	}
 
 	return l;
@@ -441,32 +443,30 @@ copy_value(struct gc *gc, struct value l)
 }
 
 struct value
-flip_value(struct gc *gc, struct value l)
+flip_value(struct value l)
 {
-	struct value ans;
-	ans.type = VAL_BOOL;
+	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0};
 
 	switch (l.type) {
 	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
 	case VAL_FLOAT: ans.boolean = l.real    ? false : true; break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
-	default: assert(false); break;
+	default: return (struct value){ VAL_ERR, { 0 }, 0 };
 	}
 
 	return ans;
 }
 
 struct value
-neg_value(struct gc *gc, struct value l)
+neg_value(struct value l)
 {
-	struct value ans;
-	ans.type = l.type;
+	struct value ans = (struct value){ l.type, { 0 }, 0};
 
 	switch (l.type) {
 	case VAL_INT:   ans.integer = -l.integer; break;
 	case VAL_FLOAT: ans.real = -l.real;       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean; break;
-	default: assert(false);         break;
+	default: return (struct value){ VAL_ERR, { 0 }, 0 };
 	}
 
 	return ans;

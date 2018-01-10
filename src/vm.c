@@ -168,8 +168,9 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_OR:   BIN(or);                               break;
 	case INSTR_GMOV: GLOBAL(c.d.bc.b) = REG(c.d.bc.c);      break;
 	case INSTR_MOVG: REG(c.d.bc.b) = GLOBAL(c.d.bc.c);      break;
-	case INSTR_INC:  REG(c.d.a) = inc_value(vm->gc, REG(c.d.a)); break;
-	case INSTR_GINC: GLOBAL(c.d.a) = inc_value(vm->gc, GLOBAL(c.d.a)); break;
+	case INSTR_INC:  REG(c.d.a) = inc_value(REG(c.d.a));    break;
+	case INSTR_GINC:
+		GLOBAL(c.d.a) = inc_value(GLOBAL(c.d.a));       break;
 	case INSTR_SUBSCR:
 		if (REG(c.d.efg.g).integer >= vm->gc->arrlen[REG(c.d.efg.f).idx]
 		    || REG(c.d.efg.g).integer < 0) {
@@ -183,8 +184,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		                            [REG(c.d.efg.g).integer]);
 		break;
 
-	case INSTR_FLIP:  REG(c.d.bc.b) = flip_value(vm->gc, REG(c.d.bc.c)); break;
-	case INSTR_NEG:   REG(c.d.bc.b) = neg_value(vm->gc, REG(c.d.bc.c)); break;
+	case INSTR_FLIP:  REG(c.d.bc.b) = flip_value(REG(c.d.bc.c)); break;
+	case INSTR_NEG:   REG(c.d.bc.b) = neg_value(REG(c.d.bc.c)); break;
 	case INSTR_COPY:  REG(c.d.bc.b) = copy_value(vm->gc, REG(c.d.bc.c)); break;
 	case INSTR_COPYC: REG(c.d.bc.b) = copy_value(vm->gc, CONST(c.d.bc.c)); break;
 	case INSTR_COPYG: REG(c.d.bc.b) = copy_value(vm->gc, GLOBAL(c.d.bc.c)); break;
