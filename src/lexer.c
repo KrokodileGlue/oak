@@ -453,7 +453,7 @@ parse_regex(struct lexer *ls, char *a)
 		 */
 		while (*b && *b != '\n') {
 			if (*b == delim) {
-				if (!(b[-1] == '\\' && b[-2] == '\\'))
+				if (!(b[-1] == '\\' && b[-2] != '\\'))
 					break;
 			}
 			b++;
