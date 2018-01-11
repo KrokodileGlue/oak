@@ -394,6 +394,13 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth--;
 	} else if (e->type == EXPR_GROUP) {
 		fprintf(ap->f, "(group %"PRId64")", e->val->integer);
+	} else if (e->type == EXPR_SPLIT) {
+		fprintf(ap->f, "(split)");
+		ap->depth++; split(ap);
+		print_expression(ap, e->b);
+		join(ap);
+		print_expression(ap, e->a);
+		ap->depth--;
 	} else {
 		fputc('\n', stderr);
 		DOUT("impossible expression type %d\n", e->type);
