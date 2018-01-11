@@ -560,7 +560,7 @@ tokenize(struct module *m)
 			continue;
 		}
 
-		if (!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) {
+		if ((!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) && (ls->tok ? strcmp(ls->tok->value, "split") : true)) {
 			while (*a != '\n' && *a) a++;
 
 			continue;

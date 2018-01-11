@@ -3338,6 +3338,7 @@ char **ktre_split(ktre *re, const char *subject, int *len)
 	int j = 0;
 
 	for (int i = 0; i < re->num_matches; i++) {
+		if (vec[i][0] == 0 || vec[i][0] == (int)strlen(subject)) continue;
 		r = realloc(r, (*len + 1) * sizeof *r);
 
 		r[*len] = malloc(vec[i][0] - j + 1);
