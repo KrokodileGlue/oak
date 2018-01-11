@@ -605,7 +605,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 	case EXPR_REGEX:
 		reg = alloc_reg(c);
-		emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->tok), &e->tok->loc);
+		emit_bc(c, INSTR_MOVC, reg, add_constant(c, e->val), &e->tok->loc);
 		break;
 
 	case EXPR_GROUP: {
@@ -613,6 +613,15 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		int temp = alloc_reg(c);
 		emit_bc(c, INSTR_MOVC, temp, add_constant(c, e->tok), &e->tok->loc);
 		emit_bc(c, INSTR_GROUP, reg, temp, &e->tok->loc);
+	} break;
+
+	case EXPR_SPLIT: {
+		if (e->a->type == EXPR_REGEX)
+			e->a->val->flags = smart_cat(e->a->val->flags, "g");
+
+		int regex = compile_expression(c, e->a, sym, false);
+		int subject = compile_expression(c, e->b, sym, false);
+		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 
 	default:

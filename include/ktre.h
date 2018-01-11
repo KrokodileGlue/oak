@@ -167,6 +167,7 @@ _Bool ktre_exec(ktre *re, const char *subject, int ***vec);
 _Bool ktre_match(const char *subject, const char *pat, int opt, int ***vec);
 char *ktre_filter(ktre *re, const char *subject, const char *replacement, const char *indicator);
 char *ktre_replace(const char *subject, const char *pat, const char *replacement, const char *indicator, int opt);
+char **ktre_split(ktre *re, const char *subject, int *len);
 int **ktre_getvec(const ktre *re);
 struct ktre_info ktre_free(ktre *re);
 
@@ -1909,8 +1910,8 @@ parse(struct ktre *re)
 static void
 print_node(struct ktre *re, struct node *n)
 {
-#define join arm[l - 1] = 0
-#define split arm[l - 1] = 1
+#define joinarm arm[l - 1] = 0
+#define splitarm arm[l - 1] = 1
 	static int depth = 0;
 	static int l = 0, arm[2048] = { 0 };
 
@@ -1946,8 +1947,8 @@ print_node(struct ktre *re, struct node *n)
 	do {                                \
 		DBG(__VA_ARGS__);           \
 		DBG(" %d", n->loc); \
-		l++; split;                 \
-		print_node(re, n->a); join; \
+		l++; splitarm;                 \
+		print_node(re, n->a); joinarm; \
 		print_node(re, n->b);       \
 		l--;                        \
 	} while(0)
@@ -3320,6 +3321,42 @@ skip_capture:
 	print_finish(re, subject, re->pat, ret, vec, a);
 
 	return a;
+}
+
+char **ktre_split(ktre *re, const char *subject, int *len)
+{
+	DBG("\nsubject: %s", subject);
+
+	*len = 0;
+	int **vec = NULL;
+	if (!run(re, subject, &vec) || re->err) {
+		print_finish(re, subject, re->pat, false, vec, NULL);
+		return NULL;
+	}
+
+	char **r = NULL;
+	int j = 0;
+
+	for (int i = 0; i < re->num_matches; i++) {
+		r = realloc(r, (*len + 1) * sizeof *r);
+
+		r[*len] = malloc(vec[i][0] - j + 1);
+		strncpy(r[*len], subject + j, vec[i][0] - j);
+
+		r[*len][vec[i][0] - j] = 0;
+		j = vec[i][0] + vec[i][1];
+
+		(*len)++;
+	}
+
+	if ((int)strlen(subject) >= j) {
+		r = realloc(r, (*len + 1) * sizeof *r);
+		r[*len] = malloc(strlen(subject) - j + 1);
+		strcpy(r[*len], subject + j);
+		(*len)++;
+	}
+
+	return r;
 }
 
 int **ktre_getvec(const struct ktre *re)

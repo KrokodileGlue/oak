@@ -452,8 +452,10 @@ parse_regex(struct lexer *ls, char *a)
 		 * of the program, so it's okay to look behind.
 		 */
 		while (*b && *b != '\n') {
-			if (*b == delim && b[-1] != '\\' ? b[-2] != '\\' : false)
-				break;
+			if (*b == delim) {
+				if (!(b[-1] == '\\' && b[-2] == '\\'))
+					break;
+			}
 			b++;
 		}
 
@@ -508,7 +510,6 @@ parse_group(struct lexer *ls, char *a)
 	}
 
 	ls->tok->integer = i;
-
 	return b;
 }
 
@@ -571,7 +572,8 @@ tokenize(struct module *m)
 		} else if (ls->tok
 		    && (!strcmp(ls->tok->value, "(")
 		    || !strcmp(ls->tok->value, ",")
-		    || !strcmp(ls->tok->value, "=~"))
+		    || !strcmp(ls->tok->value, "=~")
+		    || !strcmp(ls->tok->value, "split"))
 		    && !is_identifier_start(*a)
 		    && !is_hex_digit(*a)
 		    && *a != '('
@@ -583,7 +585,8 @@ tokenize(struct module *m)
 		    && *a != '"'
 		    && *a != '.'
 		    && *a != '$'
-		    && ls->tok->type != TOK_IDENTIFIER
+		    && (ls->tok->type != TOK_IDENTIFIER
+		        || !strcmp(ls->tok->value, "split"))
 		    && ls->tok->type != TOK_INTEGER
 		    && (match_operator(a)
 		        ? (match_operator(a)->type != OPTYPE_PREFIX) : true)) {

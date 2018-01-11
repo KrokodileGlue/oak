@@ -128,6 +128,21 @@ parse_expr(struct parser *ps, size_t prec)
 		return left;
 	}
 
+	if (!strcmp(ps->tok->value, "split")) {
+		left->type = EXPR_SPLIT;
+		NEXT;
+
+		bool paren = !strcmp(ps->tok->value, "(");
+		if (paren) expect_symbol(ps, "(");
+
+		left->a = parse_expr(ps, 1);
+		expect_symbol(ps, ",");
+		left->b = parse_expr(ps, 1);
+
+		if (paren) expect_symbol(ps, ")");
+		return left;
+	}
+
 	if (!strcmp(ps->tok->value, "fn")) {
 		left->type = EXPR_FN_DEF;
 		left->s = parse_fn_def(ps);

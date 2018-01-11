@@ -292,6 +292,11 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	case EXPR_GROUP:
 		break;
 
+	case EXPR_SPLIT:
+		resolve_expr(si, e->a);
+		resolve_expr(si, e->b);
+		break;
+
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
 		assert(false);

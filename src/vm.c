@@ -411,6 +411,31 @@ execute_instr(struct vm *vm, struct instruction c)
 		REG(c.d.bc.b) = v;
 	} break;
 
+	case INSTR_SPLIT: {
+		int len = 0;
+		ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
+		char *subject = vm->gc->str[REG(c.d.efg.f).idx];
+		char **split = ktre_split(re, subject, &len);
+
+		REG(c.d.efg.e).type = VAL_ARRAY;
+		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
+		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+
+		for (int i = 0; i < len; i++) {
+			struct value v;
+			v.type = VAL_STR;
+			v.idx = gc_alloc(vm->gc, VAL_STR);
+			vm->gc->str[v.idx] = oak_malloc(strlen(split[i]) + 1);
+			strcpy(vm->gc->str[v.idx], split[i]);
+			pushback(vm->gc, REG(c.d.efg.e), v);
+
+			free(split[i]);
+		}
+
+		free(split);
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);

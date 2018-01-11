@@ -182,6 +182,7 @@ var string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur
 
 for string =~ /\w+/g: pl _
 pl join(':', string =~ /\w+/g)
+pl join(':', split /\s+/, string)
 
 if string =~ /^(.*?), (.*)$/:
 	pl 'group 1: "' + $1 + '", group 2: "' + $2 + '"'
