@@ -441,16 +441,49 @@ parse_regex(struct lexer *ls, char *a)
 	char delim = 0;
 	char *b = a;
 
+	enum {
+		REGEX_SUBSTITUTION,
+		REGEX_MATCH
+	} type = REGEX_MATCH;
+
 	/* TODO: qw// n stuff */
 	if (*a == 's') {
-	} else {
-		delim = *b;
-		b++;
+		type = REGEX_SUBSTITUTION;
+		b++; a = b;
+	}
 
-		/*
-		 * A regular expression cannot appear at the beginning
-		 * of the program, so it's okay to look behind.
-		 */
+	delim = *b;
+	b++;
+
+	/*
+	 * A regular expression cannot appear at the beginning
+	 * of the program, so it's okay to look behind.
+	 */
+	while (*b && *b != '\n') {
+		if (*b == delim) {
+			if (!(b[-1] == '\\' && b[-2] != '\\'))
+				break;
+		}
+		b++;
+	}
+
+	if (*b == '\n') {
+		ls->loc.len = b - a + 2;
+		lexer_push_error(ls, ERR_FATAL, "unterminated regular expression");
+		return b;
+	}
+
+	b--;
+	ls->loc.len = b - a + 2;
+	lexer_push_token(ls, TOK_REGEX, a, b + 2);
+	ls->tok->substitution = NULL;
+	ls->tok->regex = oak_malloc(b - a + 1);
+	strncpy(ls->tok->regex, a + 1, b - a);
+	ls->tok->regex[b - a] = 0;
+	b += 2;
+	a = b;
+
+	if (type == REGEX_SUBSTITUTION) {
 		while (*b && *b != '\n') {
 			if (*b == delim) {
 				if (!(b[-1] == '\\' && b[-2] != '\\'))
@@ -459,27 +492,18 @@ parse_regex(struct lexer *ls, char *a)
 			b++;
 		}
 
-		if (*b == '\n') {
-			lexer_push_error(ls, ERR_FATAL, "unterminated regular expression");
-			return b;
-		}
-
-		b--;
-		ls->loc.len = b - a + 2;
-		lexer_push_token(ls, TOK_REGEX, a, b + 2);
-		ls->tok->substitution = NULL;
-		ls->tok->regex = oak_malloc(b - a + 1);
-		strncpy(ls->tok->regex, a + 1, b - a);
-		ls->tok->regex[b - a] = 0;
-		b += 2;
+		ls->tok->substitution = oak_malloc(b - a + 1);
+		strncpy(ls->tok->substitution, a, b - a);
+		ls->tok->substitution[b - a] = 0;
+		b++;
 		a = b;
-
-		while (*b && isalpha(*b)) b++;
-
-		ls->tok->flags = oak_malloc(b - a + 1);
-		strncpy(ls->tok->flags, a, b - a);
-		ls->tok->flags[b - a] = 0;
 	}
+
+	while (*b && isalpha(*b)) b++;
+
+	ls->tok->flags = oak_malloc(b - a + 1);
+	strncpy(ls->tok->flags, a, b - a);
+	ls->tok->flags[b - a] = 0;
 
 	return b;
 }
@@ -574,7 +598,7 @@ tokenize(struct module *m)
 		    || !strcmp(ls->tok->value, ",")
 		    || !strcmp(ls->tok->value, "=~")
 		    || !strcmp(ls->tok->value, "split"))
-		    && !is_identifier_start(*a)
+		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1])))
 		    && !is_hex_digit(*a)
 		    && *a != '('
 		    && *a != ')'
@@ -586,7 +610,8 @@ tokenize(struct module *m)
 		    && *a != '.'
 		    && *a != '$'
 		    && (ls->tok->type != TOK_IDENTIFIER
-		        || !strcmp(ls->tok->value, "split"))
+		        || !strcmp(ls->tok->value, "split")
+		        || (*a == 's' && !isalpha(a[1])))
 		    && ls->tok->type != TOK_INTEGER
 		    && (match_operator(a)
 		        ? (match_operator(a)->type != OPTYPE_PREFIX) : true)) {

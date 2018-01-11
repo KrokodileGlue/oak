@@ -380,7 +380,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 		if (e->tok->substitution) {
 			indent(ap); fprintf(ap->f, "<substitution>"); ap->depth++;
-			fprintf(ap->f, "'%s'", e->tok->substitution); ap->depth--;
+			indent(ap); fprintf(ap->f, "'%s'", e->tok->substitution); ap->depth--;
 		}
 
 		join(ap);

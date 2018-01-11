@@ -171,7 +171,7 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		break;
 
 	default:
-		DOUT("unimplemented token-to-value converter");
+		DOUT("unimplemented token-to-value converter for token of type %d", tok->type);
 		assert(false);
 	}
 
@@ -334,10 +334,23 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int var = compile_lvalue(c, e->a, sym);
 			reg = alloc_reg(c);
 
-			if (reg >= 256)
-				emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
-			else
-				emit_efg(c, INSTR_MATCH, reg, var - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
+			if (e->b->type == EXPR_REGEX && e->b->val->substitution) {
+				reg = compile_lvalue(c, e->a, sym);
+				int string = alloc_reg(c);
+
+				struct value v;
+				v.type = VAL_STR;
+				v.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[v.idx] = strclone(e->b->val->substitution);
+				emit_bc(c, INSTR_MOVC, string, constant_table_add(c->ct, v), &e->tok->loc);
+
+				emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
+			} else {
+				if (reg >= 256)
+					emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				else
+					emit_efg(c, INSTR_MATCH, reg, var - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
+			}
 		} break;
 
 		default:

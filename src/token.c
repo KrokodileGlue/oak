@@ -51,6 +51,7 @@ void token_clear(struct token *tok)
 			if (tok->type == TOK_REGEX) {
 				free(tok->flags);
 				free(tok->regex);
+				if (tok->substitution) free(tok->substitution);
 			}
 
 			tok = tok->next;
@@ -62,6 +63,7 @@ void token_clear(struct token *tok)
 			if (tok->type == TOK_REGEX) {
 				free(tok->flags);
 				free(tok->regex);
+				if (tok->substitution) free(tok->substitution);
 			}
 
 			free(tok);

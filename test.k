@@ -187,5 +187,8 @@ pl join(':', split //, string)
 if string =~ /^(.*?), (.*)$/:
 	pl 'group 1: "' + $1 + '", group 2: "' + $2 + '"'
 
+pl string =~ s/[aeiouy]+/i/g
+pl string
+
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

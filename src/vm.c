@@ -383,6 +383,18 @@ execute_instr(struct vm *vm, struct instruction c)
 		/* free(vec); */
 	} break;
 
+	case INSTR_SUBST: {
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+
+		struct ktre *re = vm->gc->regex[REG(c.d.efg.f).idx];
+
+		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[REG(c.d.efg.e).idx], vm->gc->str[REG(c.d.efg.g).idx], "$");
+		if (vm->gc->str[v.idx])
+			REG(c.d.efg.e) = v;
+	} break;
+
 	case INSTR_GROUP: {
 		if (REG(c.d.bc.c).type != VAL_INT)
 			assert(false);

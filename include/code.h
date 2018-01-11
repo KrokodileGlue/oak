@@ -34,6 +34,7 @@ enum instruction_type {
 	INSTR_SUBSCR,
 
 	INSTR_MATCH,
+	INSTR_SUBST,
 	INSTR_SPLIT,
 	INSTR_GROUP,
 

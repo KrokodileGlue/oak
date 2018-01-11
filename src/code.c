@@ -28,6 +28,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
 
 	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
+	{ INSTR_SUBST,    REG_EFG,  "SUBST     " },
 	{ INSTR_SPLIT,    REG_EFG,  "SPLIT     " },
 	{ INSTR_GROUP,    REG_BC,   "GROUP     " },
 
