@@ -176,7 +176,7 @@ fn range(x y) {
 	pl join(', ', map { 2 ** _ } range(0, 63))
 }
 
-# pl join(':', split(/ /, "this is something"))
+pl join('-', split / /, "this is something")
 
 var string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
 
