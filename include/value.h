@@ -27,13 +27,16 @@ struct value {
 	} type;
 
 	union {
-		int64_t integer;
 		double real;
 		bool boolean;
 		int64_t idx;
+		struct {
+			uint8_t num_args;
+			uint16_t module;
+			int64_t integer;
+		};
 	};
 
-	uint16_t module;
 	char *name;
 };
 
@@ -73,4 +76,5 @@ struct value value_translate(struct gc *l, struct gc *r, struct value v);
 bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);
 
+void print_debug(struct gc *gc, struct value l);
 #endif

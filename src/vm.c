@@ -61,6 +61,12 @@ pop_frame(struct vm *vm)
 static void
 push(struct vm *vm, struct value v)
 {
+	if (vm->debug) {
+		fprintf(stderr, "pushing value ");
+		print_debug(vm->gc, v);
+		fprintf(stderr, " in module `%s'\n", vm->m->name);
+	}
+
 	vm->sp++;
 
 	if (vm->sp <= vm->maxsp) {
@@ -109,6 +115,7 @@ call(struct vm *vm, struct value v)
 		for (size_t i = 1; i <= vm->sp; i++)
 			push(_vm, value_translate(_vm->gc, vm->gc, vm->stack[i]));
 		execute(_vm, v.integer);
+		vm->sp -= v.num_args;
 		push(vm, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
 		return;
 	}
@@ -508,7 +515,8 @@ execute(struct vm *vm, int64_t ip)
 	if (vm->code[vm->ip].type == INSTR_END) {
 		k->stack[k->sp++] = REG(vm->code[vm->ip].d.a);
 	} else {
-		k->stack[k->sp++] = vm->stack[vm->sp];
+		if (vm->sp >= 1) k->stack[k->sp++] = vm->stack[vm->sp];
+		else k->stack[k->sp++] = (struct value){ VAL_NIL, {0}, 0 };
 	}
 
 	if (vm->r->pending) {

@@ -502,6 +502,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			if (var->type == SYM_FN) {
 				struct value v;
 				v.type = VAL_FN;
+				v.num_args = var->num_arguments;
 				v.integer = var->address;
 				v.module = var->module->id;
 				v.name = var->name;
@@ -553,6 +554,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_FN_DEF: {
 		struct value v;
 		v.type = VAL_FN;
+		v.num_args = e->s->fn_def.num;
 		v.module = sym->module->id;
 		v.integer = compile_statement(c, e->s);
 		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
