@@ -503,6 +503,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				struct value v;
 				v.type = VAL_FN;
 				v.integer = var->address;
+				v.module = var->module->id;
 				v.name = var->name;
 				emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
@@ -541,9 +542,8 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			}
 		}
 
-		for (int i = e->num - 1; i >= 0; i--) {
+		for (int i = e->num - 1; i >= 0; i--)
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
-		}
 
 		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false), &e->tok->loc);
 		reg = alloc_reg(c);
@@ -553,6 +553,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_FN_DEF: {
 		struct value v;
 		v.type = VAL_FN;
+		v.module = sym->module->id;
 		v.integer = compile_statement(c, e->s);
 		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 	} break;

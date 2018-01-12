@@ -7,7 +7,7 @@
 
 struct oak {
 	struct module **modules;
-	size_t num;
+	uint16_t num;
 
 	bool debug;
 
@@ -27,7 +27,7 @@ struct oak {
 
 struct oak *new_oak();
 void free_oak(struct oak *k);
-struct module *load_module(struct oak *k, char *text, char *path, char *name);
+struct module *load_module(struct oak *k, struct symbol *parent, char *text, char *path, char *name);
 char *process_arguments(struct oak *k, int argc, char **argv);
 
 #endif

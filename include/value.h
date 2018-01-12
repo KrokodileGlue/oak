@@ -33,6 +33,7 @@ struct value {
 		int64_t idx;
 	};
 
+	uint16_t module;
 	char *name;
 };
 

@@ -2,6 +2,7 @@
 #define MODULE_H
 
 #include <stdlib.h>
+
 #include "tree.h"
 #include "code.h"
 #include "constant.h"
@@ -20,6 +21,11 @@ struct module {
 
 	struct constant_table *ct;
 	struct gc *gc;
+
+	struct vm *vm;
+	struct oak *k;
+
+	uint16_t id;
 
 	enum {
 		MODULE_STAGE_EMPTY,

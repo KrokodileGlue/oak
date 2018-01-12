@@ -359,7 +359,7 @@ or_values(struct gc *gc, struct value l, struct value r)
 	ret.type = VAL_BOOL;
 
 	if (l.type != VAL_BOOL || r.type != VAL_BOOL)
-		return (struct value){ VAL_ERR, { 0 }, 0 };
+		return (struct value){ VAL_ERR, { 0 }, 0, 0 };
 
 	ret.boolean = l.boolean || r.boolean;
 	return ret;
@@ -389,7 +389,7 @@ inc_value(struct value l)
 	switch (l.type) {
 	case VAL_INT:   l.integer++;      break;
 	case VAL_FLOAT: l.real++;         break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	default: return (struct value){ VAL_ERR, { 0 }, 0, 0 };
 	}
 
 	return l;
@@ -401,7 +401,7 @@ dec_value(struct value l)
 	switch (l.type) {
 	case VAL_INT:   l.integer--; break;
 	case VAL_FLOAT: l.real--;    break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	default: return (struct value){ VAL_ERR, { 0 }, 0, 0 };
 	}
 
 	return l;
@@ -410,6 +410,8 @@ dec_value(struct value l)
 struct value
 value_len(struct gc *gc, struct value l)
 {
+	_log(gc, "addition", l, (struct value){ VAL_NIL, {0}, 0, 0 });
+
 	struct value ans;
 	ans.type = VAL_INT;
 
@@ -445,13 +447,13 @@ copy_value(struct gc *gc, struct value l)
 struct value
 flip_value(struct value l)
 {
-	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0};
+	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0, 0 };
 
 	switch (l.type) {
 	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
 	case VAL_FLOAT: ans.boolean = l.real    ? false : true; break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	default: return (struct value){ VAL_ERR, { 0 }, 0, 0 };
 	}
 
 	return ans;
@@ -460,13 +462,13 @@ flip_value(struct value l)
 struct value
 neg_value(struct value l)
 {
-	struct value ans = (struct value){ l.type, { 0 }, 0};
+	struct value ans = (struct value){ l.type, { 0 }, 0, 0 };
 
 	switch (l.type) {
 	case VAL_INT:   ans.integer = -l.integer; break;
 	case VAL_FLOAT: ans.real = -l.real;       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean; break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	default: return (struct value){ VAL_ERR, { 0 }, 0, 0 };
 	}
 
 	return ans;
@@ -515,6 +517,8 @@ value_translate(struct gc *l, struct gc *r, struct value v)
 			break;
 
 		case VAL_ARRAY:
+			l->array[ret.idx] = NULL;
+			l->arrlen[ret.idx] = 0;
 			for (size_t i = 0; i < r->arrlen[v.idx]; i++)
 				pushback(l, ret, value_translate(l, r, r->array[v.idx][i]));
 			break;

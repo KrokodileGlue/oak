@@ -43,6 +43,7 @@ struct symbolizer {
 	 */
 	int              scope;
 	int             *scope_stack;
+
 	/* The index of the top of the scope stack. */
 	int              scope_pointer;
 };
@@ -50,7 +51,7 @@ struct symbolizer {
 struct symbolizer *new_symbolizer(struct oak *k);
 void symbolizer_free(struct symbolizer *si);
 void free_symbol(struct symbol *sym);
-bool symbolize_module(struct module *m, struct oak *k);
+bool symbolize_module(struct module *m, struct oak *k, struct symbol *parent);
 void print_symbol(FILE *f, size_t depth, struct symbol *s);
 struct symbol *resolve(struct symbol *sym, char *name);
 struct symbol *find_from_scope(struct symbol *sym, int scope);

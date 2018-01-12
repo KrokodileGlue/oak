@@ -4,13 +4,31 @@
 #include "util.h"
 #include "vm.h"
 
-static struct vm *
-new_vm()
+static void
+push_frame(struct vm *vm)
+{
+	vm->fp++;
+	if (vm->fp <= vm->maxfp) return;
+	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
+	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
+	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
+}
+
+struct vm *
+new_vm(struct module *m, struct oak *k, bool debug)
 {
 	struct vm *vm = oak_malloc(sizeof *vm);
 
 	memset(vm, 0, sizeof *vm);
 	vm->r = new_reporter();
+
+	vm->code = m->code;
+	vm->debug = debug;
+	vm->ct = m->ct;
+	vm->gc = m->gc;
+	vm->f = stderr;
+	vm->k = k;
+	vm->m = m;
 
 	return vm;
 }
@@ -32,16 +50,6 @@ free_vm(struct vm *vm)
 	if (vm->subject) free(vm->subject);
 
 	free(vm);
-}
-
-static void
-push_frame(struct vm *vm)
-{
-	vm->fp++;
-	if (vm->fp <= vm->maxfp) return;
-	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
-	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
-	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
 
 static void
@@ -89,9 +97,21 @@ call(struct vm *vm, struct value v)
 	}
 
 	if (vm->debug)
-		fprintf(stderr, "<function call : `%s' : %p : %zu argument%s>\n",
-		        v.name ? v.name : "nameless function", (void *)&vm->code[vm->ip], vm->sp,
+		fprintf(stderr, "<function call : %s@%s : %p : %zu argument%s>\n",
+		        v.name ? v.name : "nameless function",
+		        vm->k->modules[v.module]->name,
+		        (void *)&vm->code[vm->ip], vm->sp,
 		        vm->sp == 1 ? "" : "s");
+
+	if (v.module != vm->m->id) {
+		struct module *m = vm->k->modules[v.module];
+		struct vm *_vm = new_vm(m, m->k, m->vm->debug);
+		for (size_t i = 1; i <= vm->sp; i++)
+			push(_vm, value_translate(_vm->gc, vm->gc, vm->stack[i]));
+		execute(_vm, v.integer);
+		push(vm, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
+		return;
+	}
 
 	push_frame(vm);
 	vm->csp++;
@@ -108,8 +128,8 @@ call(struct vm *vm, struct value v)
 static void
 ret(struct vm *vm)
 {
-	assert(vm->csp != 0);
 	pop_frame(vm);
+	if (vm->csp == 0) return;
 	vm->ip = vm->callstack[vm->csp--];
 }
 
@@ -145,7 +165,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	if (vm->debug) {
 		fprintf(vm->f, "%s> %3zu: ", vm->m->name, vm->ip);
 		print_instruction(vm->f, c);
-		fprintf(vm->f, " | %3zu | %3zu | %3zu\n", vm->sp, vm->csp, vm->k->sp);
+		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu\n", vm->sp, vm->csp, vm->k->sp, vm->fp);
 	}
 
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
@@ -449,7 +469,11 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_EVAL: {
-		struct module *m = load_module(vm->k, strclone(vm->gc->str[REG(c.d.bc.c).idx]), "*eval.k*", "*eval*");
+		struct module *m = load_module(vm->k,
+		                               vm->m->sym,
+		                               strclone(vm->gc->str[REG(c.d.bc.c).idx]),
+		                               "*eval.k*",
+		                               "*eval*");
 
 		if (!m) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval failed");
@@ -467,27 +491,25 @@ execute_instr(struct vm *vm, struct instruction c)
 }
 
 void
-execute(struct module *m, struct oak *k, bool debug)
+execute(struct vm *vm, int64_t ip)
 {
-	struct vm *vm = new_vm();
-	struct instruction *c = m->code;
-	vm->code = m->code;
-	vm->debug = debug;
-	vm->ct = m->ct;
-	vm->gc = m->gc;
-	vm->f = stderr;
-	vm->k = k;
-	vm->m = m;
 	push_frame(vm);
+	vm->ip = ip;
 
-	while (vm->code[vm->ip].type != INSTR_END) {
-		execute_instr(vm, c[vm->ip]);
+	while (vm->code[vm->ip].type != INSTR_END && vm->fp >= 1) {
+		execute_instr(vm, vm->code[vm->ip]);
 		if (vm->r->pending) break;
 		vm->ip++;
 	}
 
+	struct oak *k = vm->k;
 	k->stack = oak_realloc(k->stack, (k->sp + 1) * sizeof *k->stack);
-	k->stack[k->sp++] = REG(c[vm->ip].d.a);
+
+	if (vm->code[vm->ip].type == INSTR_END) {
+		k->stack[k->sp++] = REG(vm->code[vm->ip].d.a);
+	} else {
+		k->stack[k->sp++] = vm->stack[vm->sp];
+	}
 
 	if (vm->r->pending) {
 		error_write(vm->r, stderr);

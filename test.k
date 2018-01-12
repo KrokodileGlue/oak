@@ -190,7 +190,7 @@ if string =~ /^(.*?), (.*)$/:
 pl string =~ s/[aeiouy]+/i/g
 pl string
 
-pl eval "fn range(x y) { var ret; for var i = 0; i < y - x; i++: ret[i] = i + x; return ret } fn join (x y) { var r; for var i = 0; i < length y - 1; i++: r += y[i] + x; return r + y[length y - 1] } join(', ', map { 2 ** _ } range(0, 63))"
+pl eval "join(', ', map { 2 ** _ } range(0, 10))"
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

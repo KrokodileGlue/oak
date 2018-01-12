@@ -12,7 +12,7 @@
 
 static void add(struct symbolizer *si, struct symbol *sym);
 static void symbolize(struct symbolizer *si, struct statement *stmt);
-static struct symbol *new_symbol(struct token *tok);
+static struct symbol *new_symbol(struct token *tok, struct symbol *_sym);
 
 struct symbolizer *
 new_symbolizer(struct oak *k)
@@ -30,10 +30,8 @@ void
 free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
-		/*
-		 * Module symbols are free'd by themselves.
-		 */
-		if (sym->children[i]->type != SYM_MODULE)
+		if (sym->children[i]->type != SYM_MODULE
+		    && sym->children[i]->module == sym->module)
 			free_symbol(sym->children[i]);
 	}
 
@@ -60,7 +58,7 @@ static char *sym_str[] = {
 };
 
 static struct symbol *
-new_symbol(struct token *tok)
+new_symbol(struct token *tok, struct symbol *_sym)
 {
 	struct symbol *sym = oak_malloc(sizeof *sym);
 
@@ -68,6 +66,7 @@ new_symbol(struct token *tok)
 	sym->type = SYM_INVALID;
 	sym->tok = tok;
 	sym->scope = -1;
+	if (_sym) sym->module = _sym->module;
 
 	return sym;
 }
@@ -111,12 +110,10 @@ find_from_scope(struct symbol *sym, int scope)
 static void
 add(struct symbolizer *si, struct symbol *sym)
 {
-	if (!sym)
-		return;
+	if (!sym) return;
 
-	if (sym->type == SYM_VAR || sym->type == SYM_ARGUMENT) {
+	if (sym->type == SYM_VAR || sym->type == SYM_ARGUMENT)
 		inc_variable_count(si->symbol);
-	}
 
 	struct symbol *symbol = si->symbol;
 	symbol->children = oak_realloc(symbol->children,
@@ -180,7 +177,7 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	if (!stmt)
 		return;
 
-	struct symbol *sym = new_symbol(stmt->tok);
+	struct symbol *sym = new_symbol(stmt->tok, si->symbol);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
@@ -198,7 +195,7 @@ block(struct symbolizer *si, struct statement *stmt)
 	if (!stmt)
 		return;
 
-	struct symbol *sym = new_symbol(stmt->tok);
+	struct symbol *sym = new_symbol(stmt->tok, si->symbol);
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
@@ -275,7 +272,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	case EXPR_MAP: {
 		push_block(si, e->s);
 
-		struct symbol *s = new_symbol(e->tok);
+		struct symbol *s = new_symbol(e->tok, si->symbol);
 		s->type = SYM_VAR;
 		s->name = "_";
 		s->id = hash(s->name, strlen(s->name));
@@ -307,7 +304,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
-	struct symbol *sym = new_symbol(stmt->tok);
+	struct symbol *sym = new_symbol(stmt->tok, si->symbol);
 	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	sym->parent = si->symbol;
@@ -344,7 +341,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			/* 	error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here"); */
 			/* } */
 
-			struct symbol *s = new_symbol(sym->tok);
+			struct symbol *s = new_symbol(sym->tok, si->symbol);
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
 			s->id = hash(s->name, strlen(s->name));
@@ -372,7 +369,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");       \
 			}                                                                                             \
 			                                                                                              \
-			struct symbol *s = new_symbol(sym->tok);                                                      \
+			struct symbol *s = new_symbol(sym->tok, si->symbol);                                          \
 			s->type = SYM_VAR;                                                                            \
 			s->name = STATEMENT->var_decl.names[i]->value;                                                \
 			s->id = hash(s->name, strlen(s->name));                                                       \
@@ -429,16 +426,20 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 
 	case STMT_IMPORT: {
-		struct module *m = load_module(si->k, load_file(stmt->import.name->string), stmt->import.name->string, stmt->import.as->value);
+		struct module *m = load_module(si->k,
+		                               NULL,
+		                               load_file(stmt->import.name->string),
+		                               stmt->import.name->string,
+		                               stmt->import.as->value);
 
 		if (!m) {
-			error_push(si->r, stmt->tok->loc, ERR_FATAL, "could not load module");
+			error_push(si->r, stmt->tok->loc, ERR_FATAL,
+			           "could not load module");
 			free(sym);
 			return;
 		}
 
 		add(si, m->sym);
-
 		free(sym);
 		return;
 	} break;
@@ -470,7 +471,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {
 			/* wtf is this shit */
-			struct symbol *s = new_symbol(sym->tok);
+			struct symbol *s = new_symbol(sym->tok, si->symbol);
 			s->type = SYM_VAR;
 			s->name = "_";
 			s->id = hash(s->name, strlen(s->name));
@@ -527,7 +528,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 }
 
 bool
-symbolize_module(struct module *m, struct oak *k)
+symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 {
 	struct symbolizer *si = new_symbolizer(k);
 
@@ -536,7 +537,7 @@ symbolize_module(struct module *m, struct oak *k)
 		return false;
 	}
 
-	struct symbol *sym = new_symbol(m->tree[0]->tok);
+	struct symbol *sym = new_symbol(m->tree[0]->tok, NULL);
 	sym->type = SYM_MODULE;
 	sym->name = m->name;
 	sym->parent = si->symbol;
@@ -548,10 +549,17 @@ symbolize_module(struct module *m, struct oak *k)
 	si->scope = sym->scope;
 	si->symbol = sym;
 
-	size_t i = 0;
-	while (m->tree[i]) {
-		symbolize(si, m->tree[i++]);
-	}
+	/*
+	 * This is mostly for evals. In an eval we don't really want
+	 * to have to use the namespace resolution operator, so we
+	 * copy the module element-by-element.
+	 */
+	if (parent)
+		for (size_t i = 0; i < parent->num_children; i++)
+			add(si, parent->children[i]);
+
+	for (size_t i = 0; m->tree[i]; i++)
+		symbolize(si, m->tree[i]);
 
 	m->sym = si->symbol;
 
@@ -594,6 +602,7 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 	INDENT; fprintf(f, "  address=%zu", s->address);
 	INDENT; fprintf(f, "  scope=%d", s->scope);
 	INDENT; fprintf(f, "  global=%s", s->global ? "true" : "false");
+	INDENT; fprintf(f, "  module=%s", s->module->name);
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);
