@@ -55,8 +55,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
+	{ INSTR_EVAL,     REG_BC,   "EVAL      " },
 	{ INSTR_KILL,     REG_A,    "KILL      " },
-	{ INSTR_END,      REG_NONE, "END       " }
+	{ INSTR_END,      REG_A,    "END       " }
 };
 
 void
@@ -64,16 +65,16 @@ print_instruction(FILE *f, struct instruction c)
 {
 	fprintf(f, "%s", instruction_data[c.type].name);
 	switch (instruction_data[c.type].regtype) {
-	case REG_A: fprintf(f, " %d", c.d.a); break;
+	case REG_A: fprintf(f, " %3d          ", c.d.a); break;
 	case REG_BC:
-		fprintf(f, " %d, %d", c.d.bc.b, c.d.bc.c);
+		fprintf(f, " %3d, %3d     ", c.d.bc.b, c.d.bc.c);
 		break;
-	case REG_D: fprintf(f, " %d", c.d.d); break;
+	case REG_D: fprintf(f, " %3d          ", c.d.d); break;
 	case REG_EFG:
-		fprintf(f, " %d, %d, %d", c.d.efg.e,
+		fprintf(f, " %3d, %3d, %3d", c.d.efg.e,
 		        c.d.efg.f, c.d.efg.g);
 		break;
-	case REG_NONE: break;
+	case REG_NONE: fprintf(f, "              "); break;
 	}
 
 }

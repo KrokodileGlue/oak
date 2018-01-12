@@ -125,6 +125,7 @@ struct expression {
 		EXPR_SPLIT,
 		EXPR_REGEX,
 		EXPR_GROUP,
+		EXPR_EVAL,
 		EXPR_INVALID
 	} type;
 

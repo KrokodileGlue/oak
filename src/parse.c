@@ -124,7 +124,7 @@ parse_expr(struct parser *ps, size_t prec)
 		expect_symbol(ps, "{");
 		left->a = parse_expr(ps, 0);
 		expect_symbol(ps, "}");
-		left->b = parse_expr(ps, 0);
+		left->b = parse_expr(ps, 1);
 		return left;
 	}
 
@@ -138,6 +138,19 @@ parse_expr(struct parser *ps, size_t prec)
 		left->a = parse_expr(ps, 1);
 		expect_symbol(ps, ",");
 		left->b = parse_expr(ps, 1);
+
+		if (paren) expect_symbol(ps, ")");
+		return left;
+	}
+
+	if (!strcmp(ps->tok->value, "eval")) {
+		left->type = EXPR_EVAL;
+		NEXT;
+
+		bool paren = !strcmp(ps->tok->value, "(");
+		if (paren) expect_symbol(ps, "(");
+
+		left->a = parse_expr(ps, 1);
 
 		if (paren) expect_symbol(ps, ")");
 		return left;

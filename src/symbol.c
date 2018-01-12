@@ -288,6 +288,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		resolve_expr(si, e->b);
 	} break;
 
+	case EXPR_EVAL:
 	case EXPR_REGEX:
 	case EXPR_GROUP:
 		break;
@@ -428,7 +429,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 
 	case STMT_IMPORT: {
-		struct module *m = load_module(si->k, stmt->import.name->string, stmt->import.as->value);
+		struct module *m = load_module(si->k, load_file(stmt->import.name->string), stmt->import.name->string, stmt->import.as->value);
 
 		if (!m) {
 			error_push(si->r, stmt->tok->loc, ERR_FATAL, "could not load module");

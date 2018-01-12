@@ -4,7 +4,7 @@
 #include "symbol.h"
 
 struct module *
-new_module(char *path)
+new_module(char *text, char *path)
 {
 	struct module *m = oak_malloc(sizeof *m);
 
@@ -12,6 +12,7 @@ new_module(char *path)
 	m->path = strclone(path);
 	m->stage = MODULE_STAGE_EMPTY;
 	m->gc = new_gc();
+	m->text = text;
 
 	return m;
 }

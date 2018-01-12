@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "constant.h"
 #include "gc.h"
+#include "oak.h"
 
 /* This is kinda retarded. */
 #define MAX_CALL_DEPTH 1024
@@ -40,6 +41,9 @@ struct vm {
 
 	bool debug;
 	FILE *f;
+
+	struct oak *k;
+	struct module *m;
 };
 
 #endif

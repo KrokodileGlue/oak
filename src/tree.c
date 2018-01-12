@@ -401,6 +401,11 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		join(ap);
 		print_expression(ap, e->a);
 		ap->depth--;
+	} else if (e->type == EXPR_EVAL) {
+		fprintf(ap->f, "(eval)");
+		ap->depth++;
+		print_expression(ap, e->a);
+		ap->depth--;
 	} else {
 		fputc('\n', stderr);
 		DOUT("impossible expression type %d\n", e->type);

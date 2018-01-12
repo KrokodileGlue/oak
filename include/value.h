@@ -67,6 +67,7 @@ struct value cmp_values(struct gc *gc, struct value l, struct value r);
 struct value value_less(struct gc *gc, struct value l, struct value r);
 struct value value_more(struct gc *gc, struct value l, struct value r);
 struct value value_len(struct gc *gc, struct value l);
+struct value value_translate(struct gc *l, struct gc *r, struct value v);
 
 bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);

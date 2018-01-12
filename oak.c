@@ -26,6 +26,7 @@ void free_oak(struct oak *k)
 		free_module(k->modules[i]);
 	}
 
+	if (k->stack) free(k->stack);
 	free(k->modules);
 	free(k);
 }
@@ -111,16 +112,13 @@ void print_modules(struct oak *k)
 }
 
 struct module *
-load_module(struct oak *k, char *path, char *name)
+load_module(struct oak *k, char *text, char *path, char *name)
 {
 	for (size_t i = 0; i < k->num; i++)
 		if (!strcmp(k->modules[i]->path, path))
 			return k->modules[i];
 
-	char *text = load_file(path);
-	if (!text) return NULL;
-
-	struct module *m = new_module(path);
+	struct module *m = new_module(text, path);
 	m->name = strclone(name);
 	m->text = text;
 	if (k->print_gc) m->gc->debug = true;
@@ -131,7 +129,7 @@ load_module(struct oak *k, char *path, char *name)
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k)) return NULL;
 	if (!compile(m, k->print_code)) return NULL;
-	if (!k->debug) execute(m, k->print_code);
+	if (!k->debug) execute(m, k, k->print_code);
 
 	return m;
 }
@@ -142,7 +140,7 @@ main(int argc, char **argv)
 	struct oak *k = new_oak();
 
 	char *path = process_arguments(k, argc, argv);
-	load_module(k, path, "*main*");
+	load_module(k, load_file(path), path, "*main*");
 	print_modules(k);
 	free_oak(k);
 

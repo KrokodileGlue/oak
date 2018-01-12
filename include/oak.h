@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "module.h"
+#include "value.h"
 
 struct oak {
 	struct module **modules;
@@ -19,11 +20,14 @@ struct oak {
 
 	bool print_everything;
 	bool print_anything;
+
+	struct value *stack;
+	size_t sp;
 };
 
 struct oak *new_oak();
 void free_oak(struct oak *k);
-struct module *load_module(struct oak *k, char *path, char *name);
+struct module *load_module(struct oak *k, char *text, char *path, char *name);
 char *process_arguments(struct oak *k, int argc, char **argv);
 
 #endif

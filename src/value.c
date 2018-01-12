@@ -501,6 +501,36 @@ grow_array(struct gc *gc, struct value l, int r)
 	return l;
 }
 
+struct value
+value_translate(struct gc *l, struct gc *r, struct value v)
+{
+	if (v.type <= NUM_ALLOCATABLE_VALUES) {
+		struct value ret;
+		ret.type = v.type;
+		ret.idx = gc_alloc(l, v.type);
+
+		switch (v.type) {
+		case VAL_STR:
+			l->str[ret.idx] = strclone(r->str[v.idx]);
+			break;
+
+		case VAL_ARRAY:
+			for (size_t i = 0; i < r->arrlen[v.idx]; i++)
+				pushback(l, ret, value_translate(l, r, r->array[v.idx][i]));
+			break;
+
+		case VAL_REGEX:
+			l->regex[ret.idx] = ktre_copy(r->regex[v.idx]);
+			break;
+
+		default: assert(false);
+		}
+
+		return ret;
+	}
+
+	return v;
+}
 void
 print_value(FILE *f, struct gc *gc, struct value val)
 {

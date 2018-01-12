@@ -30,7 +30,7 @@ struct module {
 	} stage;
 };
 
-struct module *new_module(char *path);
+struct module *new_module(char *text, char *path);
 void free_module(struct module *m);
 
 #endif

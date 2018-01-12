@@ -637,6 +637,13 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 
+	case EXPR_EVAL:
+		emit_bc(c, INSTR_EVAL,
+		        reg = alloc_reg(c),
+		        compile_expression(c, e->a, sym, false),
+		        &e->tok->loc);
+		break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
 		     e->type);
@@ -951,11 +958,21 @@ compile(struct module *m, bool debug)
 	push_frame(c);
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
+		if (i == c->num_nodes - 1 && m->tree[i]->type == STMT_EXPR) {
+			emit_a(c, INSTR_END,
+			       compile_expr(c, m->tree[i]->expr,
+			                    find_from_scope(c->sym,
+			                                    m->tree[i]->scope),
+			                    true),
+			       &c->stmt->tok->loc);
+			break;
+		}
+
 		c->stmt = m->tree[i];
 		compile_statement(c, m->tree[i]);
 	}
 
-	emit_(c, INSTR_END, &c->stmt->tok->loc);
+	emit_a(c, INSTR_END, nil(c), &c->stmt->tok->loc);
 
 	if (c->r->fatal) {
 		error_write(c->r, stderr);

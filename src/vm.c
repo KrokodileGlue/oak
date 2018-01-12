@@ -143,9 +143,9 @@ void
 execute_instr(struct vm *vm, struct instruction c)
 {
 	if (vm->debug) {
-		fprintf(vm->f, "> %3zu: ", vm->ip);
+		fprintf(vm->f, "%s> %3zu: ", vm->m->name, vm->ip);
 		print_instruction(vm->f, c);
-		fputc('\n', vm->f);
+		fprintf(vm->f, " | %3zu | %3zu | %3zu\n", vm->sp, vm->csp, vm->k->sp);
 	}
 
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
@@ -448,6 +448,17 @@ execute_instr(struct vm *vm, struct instruction c)
 		free(split);
 	} break;
 
+	case INSTR_EVAL: {
+		struct module *m = load_module(vm->k, strclone(vm->gc->str[REG(c.d.bc.c).idx]), "*eval.k*", "*eval*");
+
+		if (!m) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "eval failed");
+			return;
+		}
+
+		REG(c.d.bc.b) = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
+	} break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);
@@ -456,7 +467,7 @@ execute_instr(struct vm *vm, struct instruction c)
 }
 
 void
-execute(struct module *m, bool debug)
+execute(struct module *m, struct oak *k, bool debug)
 {
 	struct vm *vm = new_vm();
 	struct instruction *c = m->code;
@@ -465,6 +476,8 @@ execute(struct module *m, bool debug)
 	vm->ct = m->ct;
 	vm->gc = m->gc;
 	vm->f = stderr;
+	vm->k = k;
+	vm->m = m;
 	push_frame(vm);
 
 	while (vm->code[vm->ip].type != INSTR_END) {
@@ -472,6 +485,9 @@ execute(struct module *m, bool debug)
 		if (vm->r->pending) break;
 		vm->ip++;
 	}
+
+	k->stack = oak_realloc(k->stack, (k->sp + 1) * sizeof *k->stack);
+	k->stack[k->sp++] = REG(c[vm->ip].d.a);
 
 	if (vm->r->pending) {
 		error_write(vm->r, stderr);
