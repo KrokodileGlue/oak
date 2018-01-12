@@ -187,10 +187,12 @@ pl join(':', split //, string)
 if string =~ /^(.*?), (.*)$/:
 	pl 'group 1: "' + $1 + '", group 2: "' + $2 + '"'
 
-pl string =~ s/[aeiouy]+/i/g
-pl string
+pl string =~ s/([aeiouy]+)/\U$1/gi
+pl string =~ s/[aeiouy]+//gi
 
-pl eval "join(', ', map { 2 ** _ } range(0, 10))"
+pl eval "join(', ', map { 2 ** _ } range(thing(0), 10))"
+
+fn thing (x) = x
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']
