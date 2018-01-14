@@ -97,12 +97,20 @@ void print_modules(struct oak *k)
 
 			if (m->stage >= MODULE_STAGE_SYMBOLIZED
 			    && (k->print_symbol_table || k->print_everything)) {
-				print_symbol(stderr, 0, m->sym);
+				if (m->child)
+					fprintf(stderr,
+					        "\nnot printing symbol table - module is a child of `%s'.",
+					        m->parent->name);
+				else print_symbol(stderr, 0, m->sym);
 			}
 
 			if (m->stage >= MODULE_STAGE_COMPILED
 			    && (k->print_code || k->print_everything)) {
-				print_constant_table(stderr, m->gc, m->ct);
+				if (m->child)
+					fprintf(stderr,
+					        "\nnot printing constant table - module is a child of `%s'.",
+					        m->parent->name);
+				else print_constant_table(stderr, m->gc, m->ct);
 				print_code(stderr, m->code, m->num_instr);
 			}
 		}
@@ -123,6 +131,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 
 	if (vm) {
 		m->child = true;
+		m->parent = vm->m;
 		free_gc(m->gc);
 		m->gc = vm->gc;
 	}

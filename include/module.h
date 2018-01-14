@@ -27,6 +27,7 @@ struct module {
 
 	uint16_t id;
 	bool child;
+	struct module *parent;
 
 	enum {
 		MODULE_STAGE_EMPTY,

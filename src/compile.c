@@ -116,8 +116,12 @@ push_next(struct compiler *c, size_t a)
 static int
 alloc_reg(struct compiler *c)
 {
-	/* TODO: make sure we have enough registers n stuff. */
-	/* TODO: put a cap on the recursion */
+	if (c->stack_top[c->sp] >= 256) {
+		error_push(c->r, c->stmt->tok->loc, ERR_FATAL,
+		           "insufficient registers to compile module or function");
+		return -1;
+	}
+
 	return c->stack_top[c->sp]++;
 }
 
