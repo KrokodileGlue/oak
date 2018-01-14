@@ -26,6 +26,7 @@ struct module {
 	struct oak *k;
 
 	uint16_t id;
+	bool child;
 
 	enum {
 		MODULE_STAGE_EMPTY,

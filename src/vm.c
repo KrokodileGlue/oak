@@ -4,13 +4,18 @@
 #include "util.h"
 #include "vm.h"
 
-static void
+void
 push_frame(struct vm *vm)
 {
 	vm->fp++;
 	if (vm->fp <= vm->maxfp) return;
+
 	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
 	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
+
+	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
+	vm->module[vm->fp] = false;
+
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
 
@@ -22,18 +27,18 @@ new_vm(struct module *m, struct oak *k, bool debug)
 	memset(vm, 0, sizeof *vm);
 	vm->r = new_reporter();
 
-	vm->code = m->code;
+	vm->code  = m->code;
 	vm->debug = debug;
-	vm->ct = m->ct;
-	vm->gc = m->gc;
-	vm->f = stderr;
-	vm->k = k;
-	vm->m = m;
+	vm->ct    = m->ct;
+	vm->gc    = m->gc;
+	vm->f     = stderr;
+	vm->k     = k;
+	vm->m     = m;
 
 	return vm;
 }
 
-static void
+void
 free_vm(struct vm *vm)
 {
 	if (!vm) return;
@@ -43,11 +48,12 @@ free_vm(struct vm *vm)
 
 	error_clear(vm->r);
 
-	if (vm->frame) free(vm->frame);
-	if (vm->stack) free(vm->stack);
+	if (vm->frame)     free(vm->frame);
+	if (vm->stack)     free(vm->stack);
 	if (vm->callstack) free(vm->callstack);
-	if (vm->imp) free(vm->imp);
-	if (vm->subject) free(vm->subject);
+	if (vm->imp)       free(vm->imp);
+	if (vm->subject)   free(vm->subject);
+	if (vm->module)    free(vm->module);
 
 	free(vm);
 }
@@ -111,12 +117,40 @@ call(struct vm *vm, struct value v)
 
 	if (v.module != vm->m->id) {
 		struct module *m = vm->k->modules[v.module];
-		struct vm *_vm = new_vm(m, m->k, m->vm->debug);
-		for (size_t i = 1; i <= vm->sp; i++)
-			push(_vm, value_translate(_vm->gc, vm->gc, vm->stack[i]));
-		execute(_vm, v.integer);
-		vm->sp -= v.num_args;
-		push(vm, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
+
+		struct instruction *c = vm->code;
+		struct module *m2 = vm->m;
+		int ip = vm->ip;
+		struct constant_table *ct = vm->ct;
+
+		vm->ct = m->ct;
+		vm->code = m->code;
+		vm->m = m;
+		m->vm = vm;
+
+		push_frame(m->vm);
+		m->vm->module[m->vm->fp] = true;
+		execute(m->vm, v.integer);
+		vm->running = true;
+
+		vm->code = c;
+		vm->m = m2;
+		vm->ip = ip;
+		vm->ct = ct;
+		return;
+
+		/* struct module *m = vm->k->modules[v.module]; */
+		/* struct vm *vm2 = m->vm; */
+
+		/* size_t sp = vm->sp; */
+
+		/* /\* TODO: only push the arguments the function needs *\/ */
+		/* for (size_t i = 1; i <= sp; i++) */
+		/* 	push(vm2, value_translate(vm2->gc, vm->gc, vm->stack[i])); */
+
+		/* execute(vm2, v.integer); */
+		/* vm->sp -= v.num_args; */
+		/* push(vm, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp])); */
 		return;
 	}
 
@@ -135,6 +169,11 @@ call(struct vm *vm, struct value v)
 static void
 ret(struct vm *vm)
 {
+	if (vm->module[vm->fp]) {
+		vm->running = false;
+		pop_frame(vm);
+		return;
+	}
 	pop_frame(vm);
 	if (vm->csp == 0) return;
 	vm->ip = vm->callstack[vm->csp--];
@@ -476,19 +515,29 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_EVAL: {
+		if (REG(c.d.efg.f).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
+			return;
+		}
+
+		if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", vm->gc->str[REG(c.d.efg.f).idx]);
 		struct module *m = load_module(vm->k,
-		                               vm->m->sym,
-		                               strclone(vm->gc->str[REG(c.d.bc.c).idx]),
+		                               find_from_scope(vm->m->sym, REG(c.d.efg.g).integer),
+		                               strclone(vm->gc->str[REG(c.d.efg.f).idx]),
 		                               "*eval.k*",
-		                               "*eval*");
+		                               "*eval*",
+		                               vm);
 
 		if (!m) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval failed");
 			return;
 		}
 
-		REG(c.d.bc.b) = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
+		REG(c.d.efg.e) = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
 	} break;
+
+	case INSTR_NOP:
+		break;
 
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
@@ -500,14 +549,18 @@ execute_instr(struct vm *vm, struct instruction c)
 void
 execute(struct vm *vm, int64_t ip)
 {
-	push_frame(vm);
 	vm->ip = ip;
+	vm->running = true;
 
-	while (vm->code[vm->ip].type != INSTR_END && vm->fp >= 1) {
+	while (vm->code[vm->ip].type != INSTR_END && vm->fp >= 1 && vm->running) {
 		execute_instr(vm, vm->code[vm->ip]);
 		if (vm->r->pending) break;
 		vm->ip++;
 	}
+
+	if (vm->debug)
+		DOUT("Terminating execution of module `%s' with %p: %s",
+		     vm->m->name, (void *)vm, vm->fp >= 1 ? "finished" : "returned");
 
 	struct oak *k = vm->k;
 	k->stack = oak_realloc(k->stack, (k->sp + 1) * sizeof *k->stack);
@@ -523,8 +576,6 @@ execute(struct vm *vm, int64_t ip)
 		error_write(vm->r, stderr);
 		if (vm->csp) stacktrace(vm);
 	}
-
-	free_vm(vm);
 }
 
 void

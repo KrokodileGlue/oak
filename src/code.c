@@ -2,6 +2,7 @@
 #include "util.h"
 
 struct instruction_data instruction_data[] = {
+	{ INSTR_NOP,      REG_NONE, "NOP       " },
 	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
 	{ INSTR_MOV,      REG_BC,   "MOV       " },
 	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
@@ -55,7 +56,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
-	{ INSTR_EVAL,     REG_BC,   "EVAL      " },
+	{ INSTR_EVAL,     REG_EFG,  "EVAL      " },
 	{ INSTR_KILL,     REG_A,    "KILL      " },
 	{ INSTR_END,      REG_A,    "END       " }
 };

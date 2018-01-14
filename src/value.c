@@ -506,6 +506,14 @@ grow_array(struct gc *gc, struct value l, int r)
 struct value
 value_translate(struct gc *l, struct gc *r, struct value v)
 {
+	if (l->debug || r->debug) {
+		fprintf(stderr, "translating value ");
+		print_debug(r, v);
+		fprintf(stderr, " from GC %p to %p\n", (void *)r, (void *)l);
+	}
+
+	if (l == r) return v;
+
 	if (v.type < NUM_ALLOCATABLE_VALUES) {
 		struct value ret;
 		ret.type = v.type;

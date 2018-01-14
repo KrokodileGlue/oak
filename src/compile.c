@@ -640,12 +640,19 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 
-	case EXPR_EVAL:
-		emit_bc(c, INSTR_EVAL,
+	case EXPR_EVAL: {
+		struct value v;
+		v.type = VAL_INT;
+		v.integer = sym->scope;
+		int a = alloc_reg(c);
+		emit_bc(c, INSTR_MOVC, a, constant_table_add(c->ct, v), &e->tok->loc);
+
+		emit_efg(c, INSTR_EVAL,
 		        reg = alloc_reg(c),
 		        compile_expression(c, e->a, sym, false),
+		        a,
 		        &e->tok->loc);
-		break;
+	} break;
 
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
@@ -948,13 +955,14 @@ compile_statement(struct compiler *c, struct statement *s)
 }
 
 bool
-compile(struct module *m, bool debug)
+compile(struct module *m, bool debug, struct constant_table *ct)
 {
 	struct compiler *c = new_compiler();
 	c->sym = m->sym;
 	c->num_nodes = m->num_nodes;
 	c->stmt = m->tree[0];
-	c->ct = new_constant_table();
+	if (ct) c->ct = ct;
+	else c->ct = new_constant_table();
 	c->gc = m->gc;
 	c->debug = debug;
 	c->sp = -1;

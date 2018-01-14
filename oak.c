@@ -112,13 +112,21 @@ void print_modules(struct oak *k)
 }
 
 struct module *
-load_module(struct oak *k, struct symbol *parent, char *text, char *path, char *name)
+load_module(struct oak *k, struct symbol *parent, char *text,
+            char *path, char *name, struct vm *vm)
 {
 	for (size_t i = 0; i < k->num; i++)
-		if (!strcmp(k->modules[i]->path, path))
+		if (!strcmp(k->modules[i]->path, path) && strncmp(path, "*eval", 5))
 			return k->modules[i];
 
 	struct module *m = new_module(text, path);
+
+	if (vm) {
+		m->child = true;
+		free_gc(m->gc);
+		m->gc = vm->gc;
+	}
+
 	m->name = strclone(name);
 	m->text = text;
 	m->k = k;
@@ -129,9 +137,31 @@ load_module(struct oak *k, struct symbol *parent, char *text, char *path, char *
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k, parent)) return NULL;
-	if (!compile(m, k->print_code)) return NULL;
-	m->vm = new_vm(m, k, k->print_code);
-	if (!k->debug) execute(m->vm, 0);
+	if (!compile(m, k->print_code, vm ? vm->m->ct : NULL)) return NULL;
+
+	if (vm) {
+		struct constant_table *ct = vm->ct;
+		struct instruction *c = vm->code;
+		struct module *m2 = vm->m;
+		int ip = vm->ip;
+
+		vm->ct = m->ct;
+		vm->code = m->code;
+		vm->m = m;
+		m->vm = vm;
+
+		if (!k->debug) execute(m->vm, 0);
+		m->vm = NULL;
+
+		vm->code = c;
+		vm->m = m2;
+		vm->ip = ip;
+		vm->ct = ct;
+	} else {
+		m->vm = new_vm(m, k, k->print_code);
+		push_frame(m->vm);
+		if (!k->debug) execute(m->vm, 0);
+	}
 
 	return m;
 }
@@ -142,7 +172,7 @@ main(int argc, char **argv)
 	struct oak *k = new_oak();
 
 	char *path = process_arguments(k, argc, argv);
-	load_module(k, NULL, load_file(path), path, "*main*");
+	load_module(k, NULL, load_file(path), path, "*main*", NULL);
 	print_modules(k);
 	free_oak(k);
 

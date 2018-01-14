@@ -8,6 +8,8 @@
 #include "location.h"
 
 enum instruction_type {
+	INSTR_NOP,
+
 	INSTR_MOVC,
 	INSTR_MOV,
 	INSTR_GMOV,

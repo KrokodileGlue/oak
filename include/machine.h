@@ -29,6 +29,7 @@ struct vm {
 	size_t maxsp;
 
 	struct value **frame;
+	bool *module;
 	size_t fp;
 	size_t maxfp;
 
@@ -41,6 +42,7 @@ struct vm {
 
 	bool debug;
 	FILE *f;
+	bool running;
 
 	struct oak *k;
 	struct module *m;

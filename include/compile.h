@@ -36,6 +36,6 @@ struct compiler {
 	bool debug;
 };
 
-bool compile(struct module *m, bool debug);
+bool compile(struct module *m, bool debug, struct constant_table *ct);
 
 #endif
