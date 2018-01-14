@@ -196,7 +196,7 @@ eval "pl 'test'"
 
 for var i = 0; i < 10; i++ {
 	pl i
-	eval 'if i == 5: i = 10'
+	eval 'if i == 5: last'
 }
 
 # var foo = { a => 2, b => 'stuff' }
