@@ -24,6 +24,7 @@ struct compiler {
 	struct constant_table *ct;
 	struct symbol *sym;
 
+	struct module *m;
 	struct statement *stmt;
 	struct reporter *r;
 	struct gc *gc;
@@ -33,9 +34,10 @@ struct compiler {
 	int *var;
 	int sp;
 
+	bool eval;
 	bool debug;
 };
 
-bool compile(struct module *m, bool debug, struct constant_table *ct);
+bool compile(struct module *m, struct constant_table *ct, struct symbol *parent, bool debug, bool eval);
 
 #endif

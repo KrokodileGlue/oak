@@ -690,20 +690,22 @@ compile_statement(struct compiler *c, struct statement *s)
 	if (!s) return -1;
 	int ret = c->ip;
 
-	struct symbol *sym = find_from_scope(c->sym, s->scope);
+	struct symbol *sym = find_from_scope(c->m->sym, s->scope);
 	if (c->debug) {
 		fprintf(stderr, "compiling %d (%s) in `%s'\n", s->type,
 		        statement_data[s->type].body, sym->name);
 	}
 
 	if (s->type == STMT_VAR_DECL && s->condition) {
-		error_push(c->r, s->condition->tok->prev->loc, ERR_FATAL, "thou shalt not fuck with variable declarations");
+		error_push(c->r, s->condition->tok->prev->loc, ERR_FATAL,
+		           "thou shalt not fuck with variable declarations");
 		return -1;
 	}
 
 	size_t start = -1;
 	if (s->condition) {
-		emit_a(c, INSTR_COND, compile_expr(c, s->condition, sym, false), &s->tok->loc);
+		emit_a(c, INSTR_COND,
+		       compile_expr(c, s->condition, sym, false), &s->tok->loc);
 		start = c->ip;
 		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 	}
@@ -766,9 +768,9 @@ compile_statement(struct compiler *c, struct statement *s)
 	} break;
 
 	case STMT_RET:
-		if (c->sp == 0) {
+		if (c->sp == 0 && !c->eval) {
 			error_push(c->r, s->tok->loc, ERR_FATAL,
-			           "return statement occurs outside of function body");
+			           "'return' keyword must occur inside of a function body");
 		}
 
 		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym, true), &s->tok->loc);
@@ -955,10 +957,13 @@ compile_statement(struct compiler *c, struct statement *s)
 }
 
 bool
-compile(struct module *m, bool debug, struct constant_table *ct)
+compile(struct module *m, struct constant_table *ct, struct symbol *sym, bool debug, bool eval)
 {
 	struct compiler *c = new_compiler();
-	c->sym = m->sym;
+
+	c->m = m;
+	c->eval = eval;
+	c->sym = sym;
 	c->num_nodes = m->num_nodes;
 	c->stmt = m->tree[0];
 	if (ct) c->ct = ct;
@@ -972,7 +977,7 @@ compile(struct module *m, bool debug, struct constant_table *ct)
 		if (i == c->num_nodes - 1 && m->tree[i]->type == STMT_EXPR) {
 			emit_a(c, INSTR_END,
 			       compile_expr(c, m->tree[i]->expr,
-			                    find_from_scope(c->sym,
+			                    find_from_scope(c->m->sym,
 			                                    m->tree[i]->scope),
 			                    true),
 			       &c->stmt->tok->loc);
@@ -981,6 +986,20 @@ compile(struct module *m, bool debug, struct constant_table *ct)
 
 		c->stmt = m->tree[i];
 		compile_statement(c, m->tree[i]);
+	}
+
+	if (c->np) {
+		for (int i = 0; i < c->np; i++) {
+			error_push(c->r, *c->code[c->next[i]].loc, ERR_FATAL,
+			           "'next' keyword must occur inside of a loop body");
+		}
+	}
+
+	if (c->lp) {
+		for (int i = 0; i < c->lp; i++) {
+			error_push(c->r, *c->code[c->last[i]].loc, ERR_FATAL,
+			           "'last' keyword must occur inside of a loop body");
+		}
 	}
 
 	emit_a(c, INSTR_END, nil(c), &c->stmt->tok->loc);

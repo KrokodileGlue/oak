@@ -174,6 +174,7 @@ ret(struct vm *vm)
 		pop_frame(vm);
 		return;
 	}
+
 	pop_frame(vm);
 	if (vm->csp == 0) return;
 	vm->ip = vm->callstack[vm->csp--];
@@ -191,7 +192,7 @@ stacktrace(struct vm *vm)
 		fprintf(stderr, "\t%2zu: <`%10s' : %p : %d argument%s>",
 		        i, vm->calls[i].name, (void *)&vm->code[vm->callstack[i]],
 		        vm->args[i], vm->args[i] == 1 ? "" : "s");
-		fprintf(stderr, "@%"PRIu64" ", vm->calls[i].integer);
+		fprintf(stderr, " @%"PRIu64" ", vm->calls[i].integer);
 		fprintf(stderr, "%s:%zu:%zu\n",
 		        c.loc->file, line_number(*c.loc), column_number(*c.loc));
 	}
@@ -534,6 +535,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 		REG(c.d.efg.e) = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
+		if (!vm->running) vm->ip = vm->callstack[vm->csp--];
+		vm->running = true;
 	} break;
 
 	case INSTR_NOP:

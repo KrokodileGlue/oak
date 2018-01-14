@@ -11,7 +11,7 @@
 struct module {
 	char *name, *text, *path;
 	struct symbol *sym;
-	struct token *tok; /* keep the token stream for later free()ing */
+	struct token *tok;
 
 	struct statement **tree;
 	size_t num_nodes;

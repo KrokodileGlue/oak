@@ -551,7 +551,7 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 		sym->scope = 0;
 	}
 
-	push_scope(si, 0);
+	push_scope(si, sym->scope);
 
 	si->scope = sym->scope;
 	si->symbol = sym;
@@ -559,7 +559,7 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 	for (size_t i = 0; m->tree[i]; i++)
 		symbolize(si, m->tree[i]);
 
-	m->sym = si->symbol;
+	m->sym = sym;
 
 	if (si->r->fatal) {
 		error_write(si->r, stderr);

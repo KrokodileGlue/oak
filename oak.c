@@ -137,7 +137,8 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 	if (!tokenize(m)) return NULL;
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k, parent)) return NULL;
-	if (!compile(m, k->print_code, vm ? vm->m->ct : NULL)) return NULL;
+	while (m->sym->parent) m->sym = m->sym->parent;
+	if (!compile(m, vm ? vm->m->ct : NULL, parent ? parent : m->sym, k->print_code, !!vm)) return NULL;
 
 	if (vm) {
 		struct constant_table *ct = vm->ct;
