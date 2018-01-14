@@ -471,7 +471,6 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		}
 
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {
-			/* wtf is this shit */
 			struct symbol *s = new_symbol(sym->tok, si->symbol);
 			s->type = SYM_VAR;
 			s->name = "_";
@@ -538,26 +537,24 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 		return false;
 	}
 
-	struct symbol *sym = new_symbol(m->tree[0]->tok, NULL);
-	sym->type = SYM_MODULE;
-	sym->name = m->name;
-	sym->parent = si->symbol;
-	sym->id = hash(m->name, strlen(m->name));
-	sym->module = m;
-	sym->scope = 0;
+	struct symbol *sym;
+
+	if (parent) {
+		sym = parent;
+	} else {
+		sym = new_symbol(m->tree[0]->tok, NULL);
+		sym->type = SYM_MODULE;
+		sym->name = m->name;
+		sym->parent = si->symbol;
+		sym->id = hash(m->name, strlen(m->name));
+		sym->module = m;
+		sym->scope = 0;
+	}
+
 	push_scope(si, 0);
 
 	si->scope = sym->scope;
 	si->symbol = sym;
-
-	/*
-	 * This is mostly for evals. In an eval we don't really want
-	 * to have to use the namespace resolution operator, so we
-	 * copy the module element-by-element.
-	 */
-	if (parent)
-		for (size_t i = 0; i < parent->num_children; i++)
-			add(si, parent->children[i]);
 
 	for (size_t i = 0; m->tree[i]; i++)
 		symbolize(si, m->tree[i]);

@@ -188,17 +188,15 @@ if string =~ /^(.*?), (.*)$/:
 	pl 'group 1: "' + $1 + '", group 2: "' + $2 + '"'
 
 pl string =~ s/[aeiouy]+/\U$0/gi
-pl string =~ s/[aeiouy]+//gi
+pl eval "string =~ s/[aeiouy]+//gi"
 
 pl join(', ', map { 2 ** _ } range(0, 10))
 pl eval "join(', ', map { 2 ** _ } range(0, 10))"
 eval "pl 'test'"
 
-for var i = 0; i < 5; i++ {
-	var asdf = 5
-	pl asdf
-	eval 'asdf = 2'
-	pl asdf, '\n======='
+for var i = 0; i < 10; i++ {
+	pl i
+	eval 'if i == 5: i = 10'
 }
 
 # var foo = { a => 2, b => 'stuff' }
