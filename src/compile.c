@@ -897,6 +897,12 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_LAST:
 		if (c->eval) {
+			if (sym->last < 0) {
+				error_push(c->r, s->tok->loc, ERR_FATAL,
+				           "'next' keyword must occur inside of a loop body");
+				return -1;
+			}
+
 			emit_d(c, INSTR_ESCAPE, sym->last, &s->tok->loc);
 		} else {
 			push_last(c, c->ip);
@@ -906,6 +912,12 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_NEXT:
 		if (c->eval) {
+			if (sym->next < 0) {
+				error_push(c->r, s->tok->loc, ERR_FATAL,
+				           "'next' keyword must occur inside of a loop body");
+				return -1;
+			}
+
 			emit_d(c, INSTR_ESCAPE, sym->next, &s->tok->loc);
 		} else {
 			push_next(c, c->ip);
@@ -957,7 +969,7 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 			                       find_from_scope(c->m->sym,
 			                                       m->tree[i]->scope),
 			                       true);
-			emit_a(c, INSTR_END, reg >= 256 ? reg - 256 : reg,
+			emit_a(c, INSTR_END, reg,
 			       &c->stmt->tok->loc);
 			break;
 		}
@@ -965,6 +977,13 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 		c->stmt = m->tree[i];
 		compile_statement(c, m->tree[i]);
 	}
+
+	emit_a(c, INSTR_END, nil(c), &c->stmt->tok->loc);
+
+	m->code = c->code;
+	m->num_instr = c->ip;
+	m->ct = c->ct;
+	m->stage = MODULE_STAGE_COMPILED;
 
 	if (c->np) {
 		for (int i = 0; i < c->np; i++) {
@@ -980,8 +999,6 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 		}
 	}
 
-	emit_a(c, INSTR_END, nil(c), &c->stmt->tok->loc);
-
 	if (c->r->fatal) {
 		error_write(c->r, stderr);
 		free_compiler(c);
@@ -990,12 +1007,6 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 		error_write(c->r, stderr);
 	}
 
-	m->code = c->code;
-	m->num_instr = c->ip;
-	m->stage = MODULE_STAGE_COMPILED;
-	m->ct = c->ct;
-
 	free_compiler(c);
-
 	return true;
 }

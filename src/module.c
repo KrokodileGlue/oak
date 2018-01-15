@@ -21,6 +21,8 @@ new_module(char *text, char *path)
 void
 free_module(struct module *m)
 {
+	if (m->k->print_gc) DOUT("freeing module %s", m->name);
+
 	if (m->stage >= MODULE_STAGE_LEXED)      token_clear(m->tok);
 	if (m->stage >= MODULE_STAGE_PARSED)     free_ast(m->tree);
 	if (m->stage >= MODULE_STAGE_SYMBOLIZED) if (!m->child) free_symbol(m->sym);
