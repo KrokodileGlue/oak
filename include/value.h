@@ -29,7 +29,17 @@ struct value {
 	union {
 		double real;
 		bool boolean;
-		int64_t idx;
+
+		struct {
+			int64_t idx;
+			/*
+			 * The number of times to execute the
+			 * substitution in a regular expression
+			 * substitution with /e
+			 */
+			unsigned char e;
+		};
+
 		struct {
 			uint8_t num_args;
 			uint16_t module;

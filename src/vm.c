@@ -138,20 +138,6 @@ call(struct vm *vm, struct value v)
 		vm->ip = ip;
 		vm->ct = ct;
 		return;
-
-		/* struct module *m = vm->k->modules[v.module]; */
-		/* struct vm *vm2 = m->vm; */
-
-		/* size_t sp = vm->sp; */
-
-		/* /\* TODO: only push the arguments the function needs *\/ */
-		/* for (size_t i = 1; i <= sp; i++) */
-		/* 	push(vm2, value_translate(vm2->gc, vm->gc, vm->stack[i])); */
-
-		/* execute(vm2, v.integer); */
-		/* vm->sp -= v.num_args; */
-		/* push(vm, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp])); */
-		return;
 	}
 
 	push_frame(vm);
@@ -208,6 +194,27 @@ stacktrace(struct vm *vm)
 
 #define CONST(X) (vm->ct->val[X])
 #define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
+
+static void
+eval(struct vm *vm, int reg, char *s, int scope, struct location loc)
+{
+	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
+	struct module *m = load_module(vm->k,
+	                               find_from_scope(vm->m->sym, scope),
+	                               strclone(s),
+	                               "*eval.k*",
+	                               "*eval*",
+	                               vm);
+
+	if (!m) {
+		error_push(vm->r, loc, ERR_FATAL, "eval failed");
+		return;
+	}
+
+	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
+	if (!vm->running) vm->ip = vm->callstack[vm->csp--];
+	vm->running = true;
+}
 
 void
 execute_instr(struct vm *vm, struct instruction c)
@@ -422,20 +429,39 @@ execute_instr(struct vm *vm, struct instruction c)
 		assert(GETREG(c.d.efg.e).type == VAL_STR);
 		assert(GETREG(c.d.efg.f).type == VAL_REGEX);
 		assert(GETREG(c.d.efg.g).type == VAL_STR);
+		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.f).idx];
 
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
 		vm->gc->str[v.idx] = NULL;
+		char *subst = vm->gc->str[GETREG(c.d.efg.g).idx];
 
-		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.f).idx];
-		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GETREG(c.d.efg.e).idx],
-		                                 vm->gc->str[GETREG(c.d.efg.g).idx], "$");
+		if (GETREG(c.d.efg.f).e == 0) {
+			vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GETREG(c.d.efg.e).idx],
+			                                 subst, "$");
+		} else {
+			for (int i = 0; i < re->num_matches; i++) {
+				for (int j = 0; j < GETREG(c.d.efg.f).e; j++) {
+					ktre_exec(re, vm->gc->str[GETREG(c.d.efg.e).idx], NULL);
+					vm->re = re;
+					eval(vm, c.d.efg.g, subst, c.d.efg.h, *c.loc);
+					subst = vm->gc->str[GETREG(c.d.efg.g).idx];
+				}
+			}
+		}
+
+		vm->re = re;
 		SETREG(c.d.efg.e, v);
 	} break;
 
 	case INSTR_GROUP: {
 		assert(GETREG(c.d.bc.c).type == VAL_INT);
+
+		if (!vm->re) {
+			SETR(c.d.bc.b, type, VAL_NIL);
+			return;
+		}
 
 		if (GETREG(c.d.bc.c).integer >= vm->re->num_groups) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "group does not exist");
@@ -486,29 +512,14 @@ execute_instr(struct vm *vm, struct instruction c)
 		free(split);
 	} break;
 
-	case INSTR_EVAL: {
+	case INSTR_EVAL:
 		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
 			return;
 		}
 
-		if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", vm->gc->str[GETREG(c.d.efg.f).idx]);
-		struct module *m = load_module(vm->k,
-		                               find_from_scope(vm->m->sym, GETREG(c.d.efg.g).integer),
-		                               strclone(vm->gc->str[GETREG(c.d.efg.f).idx]),
-		                               "*eval.k*",
-		                               "*eval*",
-		                               vm);
-
-		if (!m) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "eval failed");
-			return;
-		}
-
-		SETREG(c.d.efg.e, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
-		if (!vm->running) vm->ip = vm->callstack[vm->csp--];
-		vm->running = true;
-	} break;
+		eval(vm, c.d.efg.e, vm->gc->str[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g).integer, *c.loc);
+		break;
 
 	case INSTR_NOP:
 		break;

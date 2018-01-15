@@ -82,6 +82,7 @@ struct instruction {
 			uint16_t e;
 			uint16_t f;
 			uint16_t g;
+			uint16_t h;
 		} efg;
 	} d;
 };

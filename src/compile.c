@@ -157,17 +157,20 @@ make_value_from_token(struct compiler *c, struct token *tok)
 
 	case TOK_REGEX: {
 		int opt = 0;
+		int e = 0;
 
 		for (size_t i = 0; i < strlen(tok->flags); i++) {
 			switch (tok->flags[i]) {
 			case 'i': opt |= KTRE_INSENSITIVE; break;
 			case 'g': opt |= KTRE_GLOBAL; break;
+			case 'e': e++; break;
 			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
 			}
 		}
 
 		v.type = VAL_REGEX;
 		v.idx = gc_alloc(c->gc, VAL_REGEX);
+		v.e = e;
 		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
 	} break;
 
@@ -332,6 +335,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[v.idx] = strclone(e->b->val->substitution);
 				emit_bc(c, INSTR_MOVC, string, constant_table_add(c->ct, v), &e->tok->loc);
 				emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
+				c->code[c->ip].d.efg.h = sym->scope;
 			} else {
 				emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
 			}
