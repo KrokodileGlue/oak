@@ -325,6 +325,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.efg.e, value_less(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
+	case INSTR_LEQ:
+		SETREG(c.d.efg.e, value_leq(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		break;
+
 	case INSTR_MORE:
 		SETREG(c.d.efg.e, value_more(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;

@@ -289,6 +289,29 @@ value_less(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
+value_leq(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "leq", l, r);
+
+	struct value ret;
+	ret.type = VAL_NIL;
+
+	BINARY_MATH_OPERATION(<=) else {
+		assert(false);
+	}
+
+	if (ret.integer == 0) {
+		ret.type = VAL_BOOL;
+		ret.boolean = false;
+	} else {
+		ret.type = VAL_BOOL;
+		ret.boolean = true;
+	}
+
+	return ret;
+}
+
+struct value
 value_more(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "morethan", l, r);
@@ -544,6 +567,7 @@ value_translate(struct gc *l, struct gc *r, struct value v)
 
 	return v;
 }
+
 void
 print_value(FILE *f, struct gc *gc, struct value val)
 {

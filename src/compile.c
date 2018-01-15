@@ -272,6 +272,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
+		case OP_LEQ:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_LEQ, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			break;
+
 		case OP_MORE:
 			reg = alloc_reg(c);
 			emit_efg(c, INSTR_MORE, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);

@@ -69,6 +69,7 @@ struct value pushback(struct gc *gc, struct value l, struct value r);
 
 struct value cmp_values(struct gc *gc, struct value l, struct value r);
 struct value value_less(struct gc *gc, struct value l, struct value r);
+struct value value_leq(struct gc *gc, struct value l, struct value r);
 struct value value_more(struct gc *gc, struct value l, struct value r);
 struct value value_len(struct gc *gc, struct value l);
 struct value value_translate(struct gc *l, struct gc *r, struct value v);

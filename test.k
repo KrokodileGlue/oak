@@ -107,6 +107,7 @@ for var i = 0; i < length array; i++:
 	pl i + ': ' + array[i]
 
 fn join (x y) {
+	return y when type y != 'array'
 	var r
 	for var i = 0; i < length y - 1; i++:
 		r += y[i] + x
@@ -154,26 +155,26 @@ scope()
 
 fn range(x y) {
 	var ret
-	for var i = 0; i < y - x; i++:
+	for var i = 0; i <= y - x; i++:
 		ret[i] = i + x
 	return ret
 }
 
 {
-	for var i; range(5, 10): pl i
+	for var i; range(5, 9): pl i
 
 	pl '========'
 
 	var i
-	for i; range(5, 10): pl i
+	for i; range(5, 9): pl i
 
 	pl '========'
 
-	for range(5, 10): pl _
+	for range(5, 9): pl _
 
 	pl '========'
 
-	pl join(', ', map { 2 ** _ } range(0, 63))
+	pl join(', ', map { 2 ** _ } range(0, 62))
 }
 
 pl join('-', split / /, 'this is something')
@@ -190,8 +191,8 @@ if string =~ /^(.*?), (.*)$/:
 pl string =~ s/[aeiouy]+/\U$0/gi
 pl eval "string =~ s/[aeiouy]+//gi"
 
-pl join(', ', map { 2 ** _ } range(0, 10))
-pl eval "join(', ', map { 2 ** _ } range(0, 10))"
+pl join(', ', map { 2 ** _ } range(0, 12))
+pl eval "join(', ', map { 2 ** _ } range(0, 12))"
 eval "pl 'test'"
 
 fn test-eval {
