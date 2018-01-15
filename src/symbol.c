@@ -76,21 +76,23 @@ new_symbol(struct token *tok, struct symbol *_sym)
 void
 set_next(struct symbol *sym, int next)
 {
+	if (sym->scope == 0) return;
+	if (sym->next < next && sym->next != -1) return;
 	sym->next = next;
 
-	for (size_t i = 0; i < sym->num_children; i++) {
+	for (size_t i = 0; i < sym->num_children; i++)
 		set_next(sym->children[i], next);
-	}
 }
 
 void
 set_last(struct symbol *sym, int last)
 {
+	if (sym->scope == 0) return;
+	if (sym->last < last && sym->last != -1) return;
 	sym->last = last;
 
-	for (size_t i = 0; i < sym->num_children; i++) {
+	for (size_t i = 0; i < sym->num_children; i++)
 		set_last(sym->children[i], last);
-	}
 }
 
 static void

@@ -600,6 +600,8 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	} break;
 
 	case EXPR_EVAL: {
+		if (c->debug)
+			fprintf(stderr, "compiling eval with %d\n", sym->scope);
 		struct value v;
 		v.type = VAL_INT;
 		v.integer = sym->scope;
@@ -769,6 +771,8 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit_d(c, INSTR_JMP, a, &s->tok->loc);
 		c->code[b].d.d = c->ip;
 
+		set_next(sym, a);
+		set_last(sym, c->ip);
 		LOOP_START(a);
 		LOOP_END;
 	} break;
@@ -784,6 +788,9 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (int i = lp; i < c->lp; i++)
 			c->code[i].d.d = c->ip;
 		c->lp = lp;
+
+		set_next(sym, a);
+		set_last(sym, c->ip);
 	} break;
 
 	case STMT_FOR_LOOP:

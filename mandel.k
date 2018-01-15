@@ -1,5 +1,3 @@
-fn abs (x) = x < 0 ? -x : x
-
 fn iter (depth a b) {
 	var res
 
@@ -10,10 +8,8 @@ fn iter (depth a b) {
 		res = n
 		var aa = a * a / 256
 		var bb = b * b / 256
-		var temp = aa + bb
 
-		temp = abs(temp)
-		last when temp > 2048
+		last when aa + bb > 2048
 
 		b = a * b * 2 / 256 + ob
 		a = aa - bb + oa
