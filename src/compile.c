@@ -342,7 +342,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			reg = alloc_reg(c);
 
 			if (e->b->type == EXPR_REGEX && e->b->val->substitution) {
-				reg = compile_lvalue(c, e->a, sym);
+				reg = var;
 				int string = alloc_reg(c);
 
 				struct value v;
@@ -351,12 +351,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[v.idx] = strclone(e->b->val->substitution);
 				emit_bc(c, INSTR_MOVC, string, constant_table_add(c->ct, v), &e->tok->loc);
 
-				emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
-			} else {
 				if (reg >= 256)
-					emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
+					emit_efg(c, INSTR_GSUBST, reg - 256, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
 				else
-					emit_efg(c, INSTR_MATCH, reg, var - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
+					emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
+			} else {
+				if (var >= 256) emit_efg(c, INSTR_GMATCH, reg, var - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				else emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
 			}
 		} break;
 
@@ -727,18 +728,28 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	switch (s->type) {
 	case STMT_PRINTLN:
-		for (size_t i = 0; i < s->print.num; i++)
-			emit_a(c, INSTR_PRINT,
-			       compile_expr(c, s->print.args[i], sym, false),
-			       &s->tok->loc);
-
+		for (size_t i = 0; i < s->print.num; i++) {
+			int reg = compile_expr(c, s->print.args[i], sym, false);
+			if (reg >= 256)
+				emit_a(c, INSTR_GPRINT,
+				       reg - 256, &s->tok->loc);
+			else
+				emit_a(c, INSTR_PRINT,
+				       reg, &s->tok->loc);
+		}
 		emit_(c, INSTR_LINE, &s->tok->loc);
 		break;
 
 	case STMT_PRINT:
-		for (size_t i = 0; i < s->print.num; i++)
-			emit_a(c, INSTR_PRINT,
-			       compile_expr(c, s->print.args[i], sym, false), &s->tok->loc);
+		for (size_t i = 0; i < s->print.num; i++) {
+			int reg = compile_expr(c, s->print.args[i], sym, false);
+			if (reg >= 256)
+				emit_a(c, INSTR_GPRINT,
+				       reg - 256, &s->tok->loc);
+			else
+				emit_a(c, INSTR_PRINT,
+				       reg, &s->tok->loc);
+		}
 		break;
 
 	case STMT_VAR_DECL:
@@ -987,11 +998,11 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym, bool de
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		if (i == c->num_nodes - 1 && m->tree[i]->type == STMT_EXPR) {
-			emit_a(c, INSTR_END,
-			       compile_expr(c, m->tree[i]->expr,
-			                    find_from_scope(c->m->sym,
-			                                    m->tree[i]->scope),
-			                    true),
+			int reg = compile_expr(c, m->tree[i]->expr,
+			                       find_from_scope(c->m->sym,
+			                                       m->tree[i]->scope),
+			                       true);
+			emit_a(c, INSTR_END, reg >= 256 ? reg - 256 : reg,
 			       &c->stmt->tok->loc);
 			break;
 		}

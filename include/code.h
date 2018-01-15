@@ -37,7 +37,9 @@ enum instruction_type {
 	INSTR_GSUBSCR,
 
 	INSTR_MATCH,
+	INSTR_GMATCH,
 	INSTR_SUBST,
+	INSTR_GSUBST,
 	INSTR_SPLIT,
 	INSTR_GROUP,
 
@@ -62,6 +64,7 @@ enum instruction_type {
 	INSTR_FLIP,
 
 	INSTR_PRINT,
+	INSTR_GPRINT,
 	INSTR_LINE,
 
 	INSTR_EVAL,

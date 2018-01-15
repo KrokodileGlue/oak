@@ -31,7 +31,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_GSUBSCR,  REG_EFG,  "GSUBSCR   " },
 
 	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
+	{ INSTR_GMATCH,   REG_EFG,  "GMATCH    " },
 	{ INSTR_SUBST,    REG_EFG,  "SUBST     " },
+	{ INSTR_GSUBST,   REG_EFG,  "GSUBST    " },
 	{ INSTR_SPLIT,    REG_EFG,  "SPLIT     " },
 	{ INSTR_GROUP,    REG_BC,   "GROUP     " },
 
@@ -56,6 +58,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_FLIP,     REG_BC,   "FLIP      " },
 
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
+	{ INSTR_GPRINT,   REG_A,    "GPRINT    " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
 	{ INSTR_EVAL,     REG_EFG,  "EVAL      " },

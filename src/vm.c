@@ -334,7 +334,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_GDEREF:
 		grow_array(vm->gc, GLOBAL(c.d.efg.f), REG(c.d.efg.g).integer + 1);
 
-		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
+		if (vm->gc->array[GLOBAL(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
 			REG(c.d.efg.e) = vm->gc->array[GLOBAL(c.d.efg.f).idx]
 				                      [REG(c.d.efg.g).integer];
 		} else {
@@ -349,8 +349,13 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_PRINT:
-		print_value(vm->f, vm->gc, vm->frame[vm->fp][c.d.a]);
-		if (vm->debug) fputc('\n', vm->f);
+		print_value(vm->f, vm->gc, REG(c.d.a));
+		if (vm->debug) fputc('\n', stderr);
+		break;
+
+	case INSTR_GPRINT:
+		print_value(vm->f, vm->gc, GLOBAL(c.d.a));
+		if (vm->debug) fputc('\n', stderr);
 		break;
 
 	case INSTR_COND:
@@ -456,23 +461,88 @@ execute_instr(struct vm *vm, struct instruction c)
 			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
 			fprintf(stderr, "^");
 		}
+	} break;
 
-		/* for (int i = 0; i < re->num_matches; i++) */
-		/* 	free(vec[i]); */
+	case INSTR_GMATCH: {
+		if (REG(c.d.efg.g).type != VAL_REGEX) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply match to non regular expression value");
+			return;
+		}
 
-		/* free(vec); */
+		if (GLOBAL(c.d.efg.f).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply regular expression to non-string value");
+			return;
+		}
+
+		if (vm->subject) free(vm->subject);
+
+		int **vec = NULL;
+		struct ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
+		char *subject = vm->gc->str[GLOBAL(c.d.efg.f).idx];
+		bool ret = ktre_exec(re, subject, &vec);
+
+		vm->subject = oak_malloc(strlen(subject) + 1);
+		strcpy(vm->subject, subject);
+		vm->re = re;
+
+		REG(c.d.efg.e).type = VAL_ARRAY;
+		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
+		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+
+		if (ret) {
+			for (int i = 0; i < re->num_matches; i++) {
+				struct value v;
+				v.type = VAL_STR;
+				v.idx = gc_alloc(vm->gc, VAL_STR);
+				vm->gc->str[v.idx] = oak_malloc(vec[i][1] + 1);
+				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
+				vm->gc->str[v.idx][vec[i][1]] = 0;
+				pushback(vm->gc, REG(c.d.efg.e), v);
+
+				for (int j = 1; j < re->num_groups; j++) {
+					/* TODO: $1, $2 n stuff */
+					/* DOUT("\ngroup %d: `%.*s`", j, vec[i][j * 2 + 1], subject + vec[i][j * 2]); */
+				}
+			}
+		} else if (re->err) {
+			/* TODO: Make the runtime fail n stuff. */
+			fprintf(stderr, "\nfailed at runtime with error code %d: %s\n",
+			        re->err, re->err_str ? re->err_str : "no error message");
+			fprintf(stderr, "\t%s\n\t", re->pat);
+			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
+			fprintf(stderr, "^");
+		}
 	} break;
 
 	case INSTR_SUBST: {
+		assert(REG(c.d.efg.e).type == VAL_STR);
+		assert(REG(c.d.efg.f).type == VAL_REGEX);
+		assert(REG(c.d.efg.g).type == VAL_STR);
+
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = NULL;
 
 		struct ktre *re = vm->gc->regex[REG(c.d.efg.f).idx];
-
 		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[REG(c.d.efg.e).idx], vm->gc->str[REG(c.d.efg.g).idx], "$");
-		if (vm->gc->str[v.idx])
-			REG(c.d.efg.e) = v;
+		REG(c.d.efg.e) = v;
+	} break;
+
+	case INSTR_GSUBST: {
+		assert(REG(c.d.efg.e).type == VAL_STR);
+		assert(REG(c.d.efg.f).type == VAL_REGEX);
+		assert(REG(c.d.efg.g).type == VAL_STR);
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = NULL;
+
+		struct ktre *re = vm->gc->regex[REG(c.d.efg.f).idx];
+		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GLOBAL(c.d.efg.e).idx], vm->gc->str[REG(c.d.efg.g).idx], "$");
+		GLOBAL(c.d.efg.e) = v;
 	} break;
 
 	case INSTR_GROUP: {
