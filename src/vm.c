@@ -251,6 +251,19 @@ execute_instr(struct vm *vm, struct instruction c)
 		                            [REG(c.d.efg.g).integer]);
 		break;
 
+	case INSTR_GSUBSCR:
+		if (REG(c.d.efg.g).integer >= vm->gc->arrlen[GLOBAL(c.d.efg.f).idx]
+		    || REG(c.d.efg.g).integer < 0) {
+			struct value v;
+			v.type = VAL_NIL;
+			REG(c.d.efg.e) = v;
+			break;
+		}
+
+		REG(c.d.efg.e) = copy_value(vm->gc, vm->gc->array[GLOBAL(c.d.efg.f).idx]
+		                            [REG(c.d.efg.g).integer]);
+		break;
+
 	case INSTR_FLIP:  REG(c.d.bc.b) = flip_value(REG(c.d.bc.c)); break;
 	case INSTR_NEG:   REG(c.d.bc.b) = neg_value(REG(c.d.bc.c)); break;
 	case INSTR_COPY:  REG(c.d.bc.b) = copy_value(vm->gc, REG(c.d.bc.c)); break;

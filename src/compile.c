@@ -58,26 +58,28 @@ emit_(struct compiler *c, enum instruction_type type, struct location *loc)
 }
 
 static void
-emit_a(struct compiler *c, enum instruction_type type, uint8_t a, struct location *loc)
+emit_a(struct compiler *c, enum instruction_type type, int a, struct location *loc)
 {
 	emit(c, (struct instruction){type, .d = { a }}, loc);
 }
 
 static void
-emit_d(struct compiler *c, enum instruction_type type, uint16_t a, struct location *loc)
+emit_d(struct compiler *c, enum instruction_type type, int a, struct location *loc)
 {
 	emit(c, (struct instruction){type, .d = { .d = a }}, loc);
 }
 
 static void
-emit_bc(struct compiler *c, enum instruction_type type, uint8_t B, uint8_t C, struct location *loc)
+emit_bc(struct compiler *c, enum instruction_type type, int B, int C, struct location *loc)
 {
 	emit(c, (struct instruction){type, .d = { .bc = {B, C} }}, loc);
 }
 
 static void
-emit_efg(struct compiler *c, enum instruction_type type, uint8_t E, uint8_t F, uint8_t G, struct location *loc)
+emit_efg(struct compiler *c, enum instruction_type type, int E, int F, int G, struct location *loc)
 {
+	if (type == INSTR_CMP)
+		assert(E >= 0);
 	emit(c, (struct instruction){type, .d = { .efg = {E, F, G} }}, loc);
 }
 
@@ -315,6 +317,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			break;
 
 		case OP_MODMOD: {
+			reg = alloc_reg(c);
 			int temp = alloc_reg(c);
 			emit_efg(c, INSTR_MOD, temp,
 			         compile_expression(c, e->a, sym, false),
@@ -475,8 +478,9 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 			         compile_expression(c, e->b, sym, false),
 			         &e->tok->loc);
 		}
+
 		return reg;
-	} break;
+	}
 
 	default:
 		error_push(c->r, e->tok->loc, ERR_FATAL, "expected an lvalue");
@@ -581,7 +585,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_SUBSCRIPT: {
 		int addr = compile_lvalue(c, e->a, sym);
 		reg = alloc_reg(c);
-		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
+		if (addr >= 256) {
+			emit_efg(c, INSTR_GSUBSCR, reg, addr - 256, compile_expression(c, e->b, sym, false), &e->tok->loc);
+		} else {
+			emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
+		}
 	} break;
 
 	case EXPR_MAP: {

@@ -3,6 +3,7 @@
 
 struct instruction_data instruction_data[] = {
 	{ INSTR_NOP,      REG_NONE, "NOP       " },
+
 	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
 	{ INSTR_MOV,      REG_BC,   "MOV       " },
 	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
@@ -27,6 +28,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
 	{ INSTR_GDEREF,   REG_EFG,  "GDEREF    " },
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
+	{ INSTR_GSUBSCR,  REG_EFG,  "GSUBSCR   " },
 
 	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
 	{ INSTR_SUBST,    REG_EFG,  "SUBST     " },

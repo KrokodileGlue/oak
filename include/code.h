@@ -34,6 +34,7 @@ enum instruction_type {
 	INSTR_DEREF,
 	INSTR_GDEREF,
 	INSTR_SUBSCR,
+	INSTR_GSUBSCR,
 
 	INSTR_MATCH,
 	INSTR_SUBST,
@@ -73,19 +74,19 @@ struct instruction {
 	struct location *loc;
 
 	union {
-		uint8_t a;
+		uint16_t a;
 
 		struct {
-			uint8_t b;
-			uint8_t c;
+			uint16_t b;
+			uint16_t c;
 		} bc;
 
 		uint16_t d;
 
 		struct {
-			uint8_t e;
-			uint8_t f;
-			uint8_t g;
+			uint16_t e;
+			uint16_t f;
+			uint16_t g;
 		} efg;
 	} d;
 };

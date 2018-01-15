@@ -1,110 +1,110 @@
-# fn f (x) = x * 2
+fn f (x) = x * 2
 
-# var a = 'foo' + 'bar' + ((2 + 4) * 3 / 9 - 1 + 4)
-# pl a
+var a = 'foo' + 'bar' + ((2 + 4) * 3 / 9 - 1 + 4)
+pl a
 
-# var b = 2 * 2
-# pl (b + 6) + a
-# b = 2000
+var b = 2 * 2
+pl (b + 6) + a
+b = 2000
 
-# pl '2 * 2 = ', f(2)
+pl '2 * 2 = ', f(2)
 
-# fn g = 'stuff'
-# pl g()
+fn g = 'stuff'
+pl g()
 
-# var c = [1, 2, 3, 4]
-# pl c
-# c[0][5] = 0
-# c[0][4] = 1
-# c[50][0] = 2
-# pl c
+var c = [1, 2, 3, 4]
+pl c
+c[0][5] = 0
+c[0][4] = 1
+c[50][0] = 2
+pl c
 
-# var d = 0
-# fn h = d++
+var d = 0
+fn h = d++
 
-# for var i = 0; i < 30; i++:
-# 	pl h()
+for var i = 0; i < 30; i++:
+	pl h()
 
-# p 'checking if g() == "stuff"... '
+p 'checking if g() == "stuff"... '
 
-# if g() == 'stuff':
-# 	pl '[TRUE]'
-# else
-# 	pl '[FALSE]'
+if g() == 'stuff':
+	pl '[TRUE]'
+else
+	pl '[FALSE]'
 
-# fn fib (x) {
-# 	if x < 2: return x
-# 	return fib(x - 1) + fib(x - 2)
-# }
+fn fib (x) {
+	if x < 2: return x
+	return fib(x - 1) + fib(x - 2)
+}
 
-# for var i = 0; i < 20; i++:
-# 	pl i, ': ', fib(i)
+for var i = 0; i < 20; i++:
+	pl i, ': ', fib(i)
 
-# pl type a
-# pl type b
-# pl type c
-# pl type d
+pl type a
+pl type b
+pl type c
+pl type d
 
-# var dim = 50
+var dim = 50
 
-# fn square (dim) {
-# 	var field = []
+fn square (dim) {
+	var field = []
 
-# 	for var y = 0; y < dim; y++:
-# 		for var x = 0; x < dim; x++ {
-# 			field[x][y] = ' '
-# 			if y == x or y == dim - x:
-# 				 field[x][y] = '#'
-# 		}
+	for var y = 0; y < dim; y++:
+		for var x = 0; x < dim; x++ {
+			field[x][y] = ' '
+			if y == x or y == dim - x:
+				 field[x][y] = '#'
+		}
 
-# 	for var y = 0; y < dim; y++ {
-# 		for var x = 0; x < dim; x++:
-# 			p field[x][y]
-# 		p '\n'
-# 	}
-# }
+	for var y = 0; y < dim; y++ {
+		for var x = 0; x < dim; x++:
+			p field[x][y]
+		p '\n'
+	}
+}
 
-# fn ppm-square (dim) {
-# 	pl 'P3'
-# 	pl dim, ' ', dim
-# 	pl dim
+fn ppm-square (dim) {
+	pl 'P3'
+	pl dim, ' ', dim
+	pl dim
 
-# 	for var y = 0; y < dim; y++:
-# 		for var x = 0; x < dim; x++:
-# 	 		p x + ' ' + y + ' 0 '
+	for var y = 0; y < dim; y++:
+		for var x = 0; x < dim; x++:
+	 		p x + ' ' + y + ' 0 '
 
-# 	p '\n'
-# }
+	p '\n'
+}
 
-# square(dim)
-# # ppm-square(dim)
+square(dim)
+# ppm-square(dim)
 
-# fn t (x) pl type x
+fn t (x) pl type x
 
-# t('this'), t('that'), t(2), t(true), t([1, 2, 'stuff']), t(1.2)
+t('this'), t('that'), t(2), t(true), t([1, 2, 'stuff']), t(1.2)
 
-# var n = 0
-# while n < 10: pl n++
-# n = 0
-# do pl n++; while n < 10
+var n = 0
+while n < 10: pl n++
+n = 0
+do pl n++; while n < 10
 
-# pl 'stuff: ', 3 * 3.1415926535897932
+pl 'stuff: ', 3 * 3.1415926535897932
 
-# var array = [1, 2, 3, 4]
+var array = [1, 2, 3, 4]
 
-# fn function (x) {
-# 	x[0] = 'asdf'
-# 	pl x
-# }
+fn function (x) {
+	x[0] = 'asdf'
+	pl x
+}
 
-# pl array
-# function(array)
-# pl array
-# pl length array
-# array[0] = ['abc', 'def', [0, 1, 2]]
+pl array
+function(array)
+pl array
+pl length array
+array[0] = ['abc', 'def', [0, 1, 2]]
 
-# for var i = 0; i < length array; i++:
-# 	pl i + ': ' + array[i]
+for var i = 0; i < length array; i++:
+	pl i + ': ' + array[i]
 
 fn join (x y) {
 	var r
@@ -125,12 +125,12 @@ fn djoin (x y) {
 	return r + djoin(x, y[length y - 1])
 }
 
-# pl join(', ', array)
-# pl djoin(', ', array)
+pl join(', ', array)
+pl djoin(', ', array)
 
-# var it = [fn { pl type array }, 2, 3, 4]
-# it[0]()
-# pl it[1] + it[-500]
+var it = [fn { pl type array }, 2, 3, 4]
+it[0]()
+pl it[1] + it[-500]
 
 for var i = 0; i < 40; i++ {
 	next when i %% 2
