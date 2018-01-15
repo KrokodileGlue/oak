@@ -67,8 +67,30 @@ new_symbol(struct token *tok, struct symbol *_sym)
 	sym->tok = tok;
 	sym->scope = -1;
 	if (_sym) sym->module = _sym->module;
+	sym->next = -1;
+	sym->last = -1;
 
 	return sym;
+}
+
+void
+set_next(struct symbol *sym, int next)
+{
+	sym->next = next;
+
+	for (size_t i = 0; i < sym->num_children; i++) {
+		set_next(sym->children[i], next);
+	}
+}
+
+void
+set_last(struct symbol *sym, int last)
+{
+	sym->last = last;
+
+	for (size_t i = 0; i < sym->num_children; i++) {
+		set_last(sym->children[i], last);
+	}
 }
 
 static void
@@ -601,6 +623,8 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 	INDENT; fprintf(f, "  scope=%d", s->scope);
 	INDENT; fprintf(f, "  global=%s", s->global ? "true" : "false");
 	INDENT; fprintf(f, "  module=%s", s->module->name);
+	INDENT; fprintf(f, "  next=%d", s->next);
+	INDENT; fprintf(f, "  last=%d", s->last);
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);

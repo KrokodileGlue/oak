@@ -11,7 +11,8 @@
 /* debug out */
 #define DOUT(...)                                     \
 	do {                                          \
-		fprintf(stderr, "oak: " __VA_ARGS__); \
+		fprintf(stderr, "oak: "__FILE__":%d: ", __LINE__); \
+		fprintf(stderr, __VA_ARGS__); \
 		fputc('\n', stderr);                  \
 	} while (0)
 

@@ -201,9 +201,10 @@ fn test-eval {
 pl test-eval(), ' ', test-eval()
 
 for var i = 0; i < 10; i++ {
+	# eval "if i %% 2: next"
+	if i %% 2: next;
 	pl i
 	eval "if i == 7: i = 10"
-	# eval "if i == 5: last"
 }
 
 # var foo = { a => 2, b => 'stuff' }

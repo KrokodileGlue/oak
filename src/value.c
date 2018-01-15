@@ -15,7 +15,8 @@ struct value_data value_data[] = {
 	{ VAL_INT,   "integer" },
 	{ VAL_FLOAT, "float" },
 	{ VAL_BOOL,  "boolean" },
-	{ VAL_FN,    "function" }
+	{ VAL_FN,    "function" },
+	{ VAL_ERR,   "error" }
 };
 
 #define BINARY_MATH_OPERATION(x)                                                    \
@@ -507,9 +508,9 @@ struct value
 value_translate(struct gc *l, struct gc *r, struct value v)
 {
 	if (l->debug || r->debug) {
-		fprintf(stderr, "translating value ");
+		fprintf(stderr, "translating ");
 		print_debug(r, v);
-		fprintf(stderr, " from GC %p to %p\n", (void *)r, (void *)l);
+		fprintf(stderr, " from %p to %p\n", (void *)r, (void *)l);
 	}
 
 	if (l == r) return v;

@@ -110,7 +110,7 @@ call(struct vm *vm, struct value v)
 
 	if (vm->debug)
 		fprintf(stderr, "<function call : %s@%s : %p : %zu argument%s>\n",
-		        v.name ? v.name : "nameless function",
+		        v.name ? v.name : "*function*",
 		        vm->k->modules[v.module]->name,
 		        (void *)&vm->code[vm->ip], vm->sp,
 		        vm->sp == 1 ? "" : "s");
@@ -201,10 +201,13 @@ stacktrace(struct vm *vm)
 		fprintf(stderr, "\t--- Truncated ---\n");
 }
 
-#define REG(X) vm->frame[vm->fp][X]
-#define GLOBAL(X) vm->frame[1][X]
-#define CONST(X) vm->ct->val[X]
-#define BIN(X) REG(c.d.efg.e) = X##_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g))
+#define GETREG(X) ((X) >= 256 ? vm->frame[1][(X) - 256] : vm->frame[vm->fp][X])
+#define SETREG(X,Y) ((X) >= 256 ? (vm->frame[1][(X) - 256] = (Y)) : (vm->frame[vm->fp][X] = (Y)))
+
+#define SETR(X,Y,Z) ((X) >= 256 ? (vm->frame[1][(X) - 256].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
+
+#define CONST(X) (vm->ct->val[X])
+#define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
 
 void
 execute_instr(struct vm *vm, struct instruction c)
@@ -218,13 +221,13 @@ execute_instr(struct vm *vm, struct instruction c)
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
 
 	switch (c.type) {
-	case INSTR_MOVC: REG(c.d.bc.b) = CONST(c.d.bc.c);       break;
+	case INSTR_MOVC: SETREG(c.d.bc.b, CONST(c.d.bc.c));     break;
 	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
-	case INSTR_MOV:  REG(c.d.bc.b) = REG(c.d.bc.c);         break;
+	case INSTR_MOV:  SETREG(c.d.bc.b, GETREG(c.d.bc.c));    break;
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
-	case INSTR_PUSH: push(vm, REG(c.d.a));                  break;
-	case INSTR_POP:  REG(c.d.a) = pop(vm);                  break;
-	case INSTR_CALL: call(vm, REG(c.d.a));                  break;
+	case INSTR_PUSH: push(vm, GETREG(c.d.a));               break;
+	case INSTR_POP:  SETREG(c.d.a, pop(vm));                break;
+	case INSTR_CALL: call(vm, GETREG(c.d.a));               break;
 	case INSTR_RET:  ret(vm);                               break;
 	case INSTR_ADD:  BIN(add);                              break;
 	case INSTR_SUB:  BIN(sub);                              break;
@@ -233,47 +236,29 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_MOD:  BIN(mod);                              break;
 	case INSTR_OR:   BIN(or);                               break;
-	case INSTR_GMOV: GLOBAL(c.d.bc.b) = REG(c.d.bc.c);      break;
-	case INSTR_MOVG: REG(c.d.bc.b) = GLOBAL(c.d.bc.c);      break;
-	case INSTR_INC:  REG(c.d.a) = inc_value(REG(c.d.a));    break;
-	case INSTR_GINC:
-		GLOBAL(c.d.a) = inc_value(GLOBAL(c.d.a));       break;
+	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_SUBSCR:
-		if (REG(c.d.efg.g).integer >= vm->gc->arrlen[REG(c.d.efg.f).idx]
-		    || REG(c.d.efg.g).integer < 0) {
+		if (GETREG(c.d.efg.g).integer >= vm->gc->arrlen[GETREG(c.d.efg.f).idx]
+		    || GETREG(c.d.efg.g).integer < 0) {
 			struct value v;
 			v.type = VAL_NIL;
-			REG(c.d.efg.e) = v;
+			SETREG(c.d.efg.e, v);
 			break;
 		}
 
-		REG(c.d.efg.e) = copy_value(vm->gc, vm->gc->array[REG(c.d.efg.f).idx]
-		                            [REG(c.d.efg.g).integer]);
+		SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
+		                             [GETREG(c.d.efg.g).integer]));
 		break;
 
-	case INSTR_GSUBSCR:
-		if (REG(c.d.efg.g).integer >= vm->gc->arrlen[GLOBAL(c.d.efg.f).idx]
-		    || REG(c.d.efg.g).integer < 0) {
-			struct value v;
-			v.type = VAL_NIL;
-			REG(c.d.efg.e) = v;
-			break;
-		}
-
-		REG(c.d.efg.e) = copy_value(vm->gc, vm->gc->array[GLOBAL(c.d.efg.f).idx]
-		                            [REG(c.d.efg.g).integer]);
-		break;
-
-	case INSTR_FLIP:  REG(c.d.bc.b) = flip_value(REG(c.d.bc.c)); break;
-	case INSTR_NEG:   REG(c.d.bc.b) = neg_value(REG(c.d.bc.c)); break;
-	case INSTR_COPY:  REG(c.d.bc.b) = copy_value(vm->gc, REG(c.d.bc.c)); break;
-	case INSTR_COPYC: REG(c.d.bc.b) = copy_value(vm->gc, CONST(c.d.bc.c)); break;
-	case INSTR_COPYG: REG(c.d.bc.b) = copy_value(vm->gc, GLOBAL(c.d.bc.c)); break;
+	case INSTR_FLIP:  SETREG(c.d.bc.b, flip_value(GETREG(c.d.bc.c))); break;
+	case INSTR_NEG:   SETREG(c.d.bc.b, neg_value(GETREG(c.d.bc.c))); break;
+	case INSTR_COPY:  SETREG(c.d.bc.b, copy_value(vm->gc, GETREG(c.d.bc.c))); break;
+	case INSTR_COPYC: SETREG(c.d.bc.b, copy_value(vm->gc, CONST(c.d.bc.c))); break;
 
 	case INSTR_PUSHBACK:
-		REG(c.d.bc.b) = pushback(vm->gc,
-		                         REG(c.d.bc.b),
-		                         REG(c.d.bc.c));
+		SETREG(c.d.bc.b, pushback(vm->gc,
+		                         GETREG(c.d.bc.b),
+		                         GETREG(c.d.bc.c)));
 		break;
 
 	case INSTR_ASET:
@@ -282,125 +267,91 @@ execute_instr(struct vm *vm, struct instruction c)
 		 * is actually an integer.
 		 */
 
-		if (REG(c.d.efg.e).type != VAL_ARRAY) {
-			REG(c.d.efg.e).type = VAL_ARRAY;
-			REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
-			vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
-			vm->gc->array[REG(c.d.efg.e).idx] = NULL;
+		if (GETREG(c.d.efg.e).type != VAL_ARRAY) {
+			SETR(c.d.efg.e, type, VAL_ARRAY);
+			SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
+			vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
+			vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
 		}
 
-		assert(REG(c.d.efg.f).type == VAL_INT);
-		grow_array(vm->gc, REG(c.d.efg.e), REG(c.d.efg.f).integer + 1);
+		assert(GETREG(c.d.efg.f).type == VAL_INT);
+		grow_array(vm->gc, GETREG(c.d.efg.e), GETREG(c.d.efg.f).integer + 1);
 
-		if (vm->gc->arrlen[REG(c.d.efg.e).idx] <= REG(c.d.efg.f).integer) {
-			vm->gc->arrlen[REG(c.d.efg.e).idx] = REG(c.d.efg.f).integer + 1;
+		if (vm->gc->arrlen[GETREG(c.d.efg.e).idx] <= GETREG(c.d.efg.f).integer) {
+			vm->gc->arrlen[GETREG(c.d.efg.e).idx] = GETREG(c.d.efg.f).integer + 1;
 		}
 
-		vm->gc->array[REG(c.d.efg.e).idx][REG(c.d.efg.f).integer]
-			= REG(c.d.efg.g);
-		break;
-
-	case INSTR_GASET:
-		assert(GLOBAL(c.d.efg.e).type == VAL_ARRAY);
-		assert(REG(c.d.efg.f).type == VAL_INT);
-		grow_array(vm->gc, GLOBAL(c.d.efg.e), REG(c.d.efg.f).integer + 1);
-
-		if (vm->gc->arrlen[GLOBAL(c.d.efg.e).idx] <= REG(c.d.efg.f).integer) {
-			vm->gc->arrlen[GLOBAL(c.d.efg.e).idx] =
-				REG(c.d.efg.f).integer + 1;
-		}
-
-		vm->gc->array[GLOBAL(c.d.efg.e).idx][REG(c.d.efg.f).integer]
-			= REG(c.d.efg.g);
+		vm->gc->array[GETREG(c.d.efg.e).idx][GETREG(c.d.efg.f).integer]
+			= GETREG(c.d.efg.g);
 		break;
 
 	case INSTR_DEREF:
-		grow_array(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g).integer + 1);
+		grow_array(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g).integer + 1);
 
-		if (vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
-			REG(c.d.efg.e) = vm->gc->array[REG(c.d.efg.f).idx]
-				                      [REG(c.d.efg.g).integer];
+		if (vm->gc->array[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer].type == VAL_ARRAY) {
+			SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]
+			       [GETREG(c.d.efg.g).integer]);
 		} else {
 			struct value v;
 			v.type = VAL_ARRAY;
 			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
 			vm->gc->arrlen[v.idx] = 0;
 			vm->gc->array[v.idx] = NULL;
-			vm->gc->array[REG(c.d.efg.f).idx][REG(c.d.efg.g).integer] = v;
-			REG(c.d.efg.e) = v;
-		}
-		break;
-
-	case INSTR_GDEREF:
-		grow_array(vm->gc, GLOBAL(c.d.efg.f), REG(c.d.efg.g).integer + 1);
-
-		if (vm->gc->array[GLOBAL(c.d.efg.f).idx][REG(c.d.efg.g).integer].type == VAL_ARRAY) {
-			REG(c.d.efg.e) = vm->gc->array[GLOBAL(c.d.efg.f).idx]
-				                      [REG(c.d.efg.g).integer];
-		} else {
-			struct value v;
-			v.type = VAL_ARRAY;
-			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-			vm->gc->arrlen[v.idx] = 0;
-			vm->gc->array[v.idx] = NULL;
-			vm->gc->array[GLOBAL(c.d.efg.f).idx][REG(c.d.efg.g).integer] = v;
-			REG(c.d.efg.e) = v;
+			vm->gc->array[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer] = v;
+			SETREG(c.d.efg.e, v);
 		}
 		break;
 
 	case INSTR_PRINT:
-		print_value(vm->f, vm->gc, REG(c.d.a));
-		if (vm->debug) fputc('\n', stderr);
-		break;
-
-	case INSTR_GPRINT:
-		print_value(vm->f, vm->gc, GLOBAL(c.d.a));
+		print_value(vm->f, vm->gc, GETREG(c.d.a));
 		if (vm->debug) fputc('\n', stderr);
 		break;
 
 	case INSTR_COND:
-		if (is_truthy(vm->gc, REG(c.d.a)))
+		if (is_truthy(vm->gc, GETREG(c.d.a)))
 			vm->ip++;
 		break;
 
 	case INSTR_NCOND:
-		if (!is_truthy(vm->gc, REG(c.d.a)))
+		if (!is_truthy(vm->gc, GETREG(c.d.a)))
 			vm->ip++;
 		break;
 
 	case INSTR_CMP:
-		REG(c.d.efg.e) = cmp_values(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		SETREG(c.d.efg.e, cmp_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_LESS:
-		REG(c.d.efg.e) = value_less(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		SETREG(c.d.efg.e, value_less(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_MORE:
-		REG(c.d.efg.e) = value_more(vm->gc, REG(c.d.efg.f), REG(c.d.efg.g));
+		SETREG(c.d.efg.e, value_more(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_TYPE: {
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
-		vm->gc->str[v.idx] = oak_malloc(strlen(value_data[REG(c.d.bc.c).type].body) + 1);
-		strcpy(vm->gc->str[v.idx], value_data[REG(c.d.bc.c).type].body);
-		REG(c.d.bc.b) = v;
+
+		vm->gc->str[v.idx] = oak_malloc(strlen(value_data[GETREG(c.d.bc.c).type].body) + 1);
+		strcpy(vm->gc->str[v.idx], value_data[GETREG(c.d.bc.c).type].body);
+
+		SETREG(c.d.bc.b, v);
 	} break;
 
 	case INSTR_LEN:
-		REG(c.d.bc.b) = value_len(vm->gc, REG(c.d.bc.c));
+		SETREG(c.d.bc.b, value_len(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
 	case INSTR_KILL:
-		assert(REG(c.d.a).type == VAL_STR);
-		error_push(vm->r, *c.loc, ERR_KILLED, vm->gc->str[REG(c.d.a).idx]);
+		assert(GETREG(c.d.a).type == VAL_STR);
+		error_push(vm->r, *c.loc, ERR_KILLED, vm->gc->str[GETREG(c.d.a).idx]);
 		break;
 
 	case INSTR_PUSHIMP:
 		vm->imp = oak_realloc(vm->imp, (vm->impp + 1) * sizeof *vm->imp);
-		vm->imp[vm->impp++] = REG(c.d.a);
+		vm->imp[vm->impp++] = GETREG(c.d.a);
 		break;
 
 	case INSTR_POPIMP:
@@ -408,16 +359,16 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_GETIMP:
-		REG(c.d.a) = vm->imp[vm->impp - 1];
+		SETREG(c.d.a, vm->imp[vm->impp - 1]);
 		break;
 
 	case INSTR_MATCH: {
-		if (REG(c.d.efg.g).type != VAL_REGEX) {
+		if (GETREG(c.d.efg.g).type != VAL_REGEX) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply match to non regular expression value");
 			return;
 		}
 
-		if (REG(c.d.efg.f).type != VAL_STR) {
+		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply regular expression to non-string value");
 			return;
 		}
@@ -425,18 +376,18 @@ execute_instr(struct vm *vm, struct instruction c)
 		if (vm->subject) free(vm->subject);
 
 		int **vec = NULL;
-		struct ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
-		char *subject = vm->gc->str[REG(c.d.efg.f).idx];
+		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.g).idx];
+		char *subject = vm->gc->str[GETREG(c.d.efg.f).idx];
 		bool ret = ktre_exec(re, subject, &vec);
 
 		vm->subject = oak_malloc(strlen(subject) + 1);
 		strcpy(vm->subject, subject);
 		vm->re = re;
 
-		REG(c.d.efg.e).type = VAL_ARRAY;
-		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
-		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+		SETR(c.d.efg.e, type, VAL_ARRAY);
+		SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
+		vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
+		vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
 
 		if (ret) {
 			for (int i = 0; i < re->num_matches; i++) {
@@ -446,59 +397,7 @@ execute_instr(struct vm *vm, struct instruction c)
 				vm->gc->str[v.idx] = oak_malloc(vec[i][1] + 1);
 				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
 				vm->gc->str[v.idx][vec[i][1]] = 0;
-				pushback(vm->gc, REG(c.d.efg.e), v);
-
-				for (int j = 1; j < re->num_groups; j++) {
-					/* TODO: $1, $2 n stuff */
-					/* DOUT("\ngroup %d: `%.*s`", j, vec[i][j * 2 + 1], subject + vec[i][j * 2]); */
-				}
-			}
-		} else if (re->err) {
-			/* TODO: Make the runtime fail n stuff. */
-			fprintf(stderr, "\nfailed at runtime with error code %d: %s\n",
-			        re->err, re->err_str ? re->err_str : "no error message");
-			fprintf(stderr, "\t%s\n\t", re->pat);
-			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
-			fprintf(stderr, "^");
-		}
-	} break;
-
-	case INSTR_GMATCH: {
-		if (REG(c.d.efg.g).type != VAL_REGEX) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply match to non regular expression value");
-			return;
-		}
-
-		if (GLOBAL(c.d.efg.f).type != VAL_STR) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply regular expression to non-string value");
-			return;
-		}
-
-		if (vm->subject) free(vm->subject);
-
-		int **vec = NULL;
-		struct ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
-		char *subject = vm->gc->str[GLOBAL(c.d.efg.f).idx];
-		bool ret = ktre_exec(re, subject, &vec);
-
-		vm->subject = oak_malloc(strlen(subject) + 1);
-		strcpy(vm->subject, subject);
-		vm->re = re;
-
-		REG(c.d.efg.e).type = VAL_ARRAY;
-		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
-		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
-
-		if (ret) {
-			for (int i = 0; i < re->num_matches; i++) {
-				struct value v;
-				v.type = VAL_STR;
-				v.idx = gc_alloc(vm->gc, VAL_STR);
-				vm->gc->str[v.idx] = oak_malloc(vec[i][1] + 1);
-				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
-				vm->gc->str[v.idx][vec[i][1]] = 0;
-				pushback(vm->gc, REG(c.d.efg.e), v);
+				pushback(vm->gc, GETREG(c.d.efg.e), v);
 
 				for (int j = 1; j < re->num_groups; j++) {
 					/* TODO: $1, $2 n stuff */
@@ -516,45 +415,30 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_SUBST: {
-		assert(REG(c.d.efg.e).type == VAL_STR);
-		assert(REG(c.d.efg.f).type == VAL_REGEX);
-		assert(REG(c.d.efg.g).type == VAL_STR);
+		assert(GETREG(c.d.efg.e).type == VAL_STR);
+		assert(GETREG(c.d.efg.f).type == VAL_REGEX);
+		assert(GETREG(c.d.efg.g).type == VAL_STR);
 
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
 		vm->gc->str[v.idx] = NULL;
 
-		struct ktre *re = vm->gc->regex[REG(c.d.efg.f).idx];
-		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[REG(c.d.efg.e).idx], vm->gc->str[REG(c.d.efg.g).idx], "$");
-		REG(c.d.efg.e) = v;
-	} break;
-
-	case INSTR_GSUBST: {
-		assert(REG(c.d.efg.e).type == VAL_STR);
-		assert(REG(c.d.efg.f).type == VAL_REGEX);
-		assert(REG(c.d.efg.g).type == VAL_STR);
-
-		struct value v;
-		v.type = VAL_STR;
-		v.idx = gc_alloc(vm->gc, VAL_STR);
-		vm->gc->str[v.idx] = NULL;
-
-		struct ktre *re = vm->gc->regex[REG(c.d.efg.f).idx];
-		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GLOBAL(c.d.efg.e).idx], vm->gc->str[REG(c.d.efg.g).idx], "$");
-		GLOBAL(c.d.efg.e) = v;
+		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.f).idx];
+		vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GETREG(c.d.efg.e).idx],
+		                                 vm->gc->str[GETREG(c.d.efg.g).idx], "$");
+		SETREG(c.d.efg.e, v);
 	} break;
 
 	case INSTR_GROUP: {
-		if (REG(c.d.bc.c).type != VAL_INT)
-			assert(false);
+		assert(GETREG(c.d.bc.c).type == VAL_INT);
 
-		if (REG(c.d.bc.c).integer >= vm->re->num_groups) {
+		if (GETREG(c.d.bc.c).integer >= vm->re->num_groups) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "group does not exist");
 			return;
 		}
 
-		REG(c.d.bc.b).type = VAL_STR;
+		SETR(c.d.bc.b, type, VAL_STR);
 		int i = vm->re->num_matches - 1;
 		int **vec = ktre_getvec(vm->re);
 
@@ -562,27 +446,27 @@ execute_instr(struct vm *vm, struct instruction c)
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
 
-		vm->gc->str[v.idx] = oak_malloc(vec[i][REG(c.d.bc.c).integer * 2 + 1] + 1);
-		strncpy(vm->gc->str[v.idx], vm->subject + vec[i][REG(c.d.bc.c).integer * 2], vec[i][REG(c.d.bc.c).integer * 2 + 1]);
-		vm->gc->str[v.idx][vec[i][REG(c.d.bc.c).integer * 2 + 1]] = 0;
+		vm->gc->str[v.idx] = oak_malloc(vec[i][GETREG(c.d.bc.c).integer * 2 + 1] + 1);
+		strncpy(vm->gc->str[v.idx], vm->subject + vec[i][GETREG(c.d.bc.c).integer * 2], vec[i][GETREG(c.d.bc.c).integer * 2 + 1]);
+		vm->gc->str[v.idx][vec[i][GETREG(c.d.bc.c).integer * 2 + 1]] = 0;
 
 		for (int i = 0; i < vm->re->num_matches; i++)
 			free(vec[i]);
 
 		free(vec);
-		REG(c.d.bc.b) = v;
+		SETREG(c.d.bc.b, v);
 	} break;
 
 	case INSTR_SPLIT: {
 		int len = 0;
-		ktre *re = vm->gc->regex[REG(c.d.efg.g).idx];
-		char *subject = vm->gc->str[REG(c.d.efg.f).idx];
+		ktre *re = vm->gc->regex[GETREG(c.d.efg.g).idx];
+		char *subject = vm->gc->str[GETREG(c.d.efg.f).idx];
 		char **split = ktre_split(re, subject, &len);
 
-		REG(c.d.efg.e).type = VAL_ARRAY;
-		REG(c.d.efg.e).idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[REG(c.d.efg.e).idx] = NULL;
-		vm->gc->arrlen[REG(c.d.efg.e).idx] = 0;
+		SETR(c.d.efg.e, type, VAL_ARRAY);
+		SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
+		vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
+		vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
 
 		for (int i = 0; i < len; i++) {
 			struct value v;
@@ -590,7 +474,7 @@ execute_instr(struct vm *vm, struct instruction c)
 			v.idx = gc_alloc(vm->gc, VAL_STR);
 			vm->gc->str[v.idx] = oak_malloc(strlen(split[i]) + 1);
 			strcpy(vm->gc->str[v.idx], split[i]);
-			pushback(vm->gc, REG(c.d.efg.e), v);
+			pushback(vm->gc, GETREG(c.d.efg.e), v);
 
 			free(split[i]);
 		}
@@ -599,15 +483,15 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_EVAL: {
-		if (REG(c.d.efg.f).type != VAL_STR) {
+		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
 			return;
 		}
 
-		if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", vm->gc->str[REG(c.d.efg.f).idx]);
+		if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", vm->gc->str[GETREG(c.d.efg.f).idx]);
 		struct module *m = load_module(vm->k,
-		                               find_from_scope(vm->m->sym, REG(c.d.efg.g).integer),
-		                               strclone(vm->gc->str[REG(c.d.efg.f).idx]),
+		                               find_from_scope(vm->m->sym, GETREG(c.d.efg.g).integer),
+		                               strclone(vm->gc->str[GETREG(c.d.efg.f).idx]),
 		                               "*eval.k*",
 		                               "*eval*",
 		                               vm);
@@ -617,12 +501,20 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		REG(c.d.efg.e) = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
+		SETREG(c.d.efg.e, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
 		if (!vm->running) vm->ip = vm->callstack[vm->csp--];
 		vm->running = true;
 	} break;
 
 	case INSTR_NOP:
+		break;
+
+	case INSTR_ESCAPE:
+		/* Fake a function call return */
+		vm->running = false;
+		vm->callstack = oak_realloc(vm->callstack,
+		                            (vm->csp + 2) * sizeof *vm->callstack);
+		vm->callstack[++vm->csp] = c.d.a - 1;
 		break;
 
 	default:
@@ -652,7 +544,7 @@ execute(struct vm *vm, int64_t ip)
 	k->stack = oak_realloc(k->stack, (k->sp + 1) * sizeof *k->stack);
 
 	if (vm->code[vm->ip].type == INSTR_END) {
-		k->stack[k->sp++] = REG(vm->code[vm->ip].d.a);
+		k->stack[k->sp++] = GETREG(vm->code[vm->ip].d.a);
 	} else {
 		if (vm->sp >= 1) k->stack[k->sp++] = vm->stack[vm->sp];
 		else k->stack[k->sp++] = (struct value){ VAL_NIL, {0}, 0 };

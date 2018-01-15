@@ -6,14 +6,12 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
 	{ INSTR_MOV,      REG_BC,   "MOV       " },
-	{ INSTR_GMOV,     REG_BC,   "GMOV      " },
-	{ INSTR_MOVG,     REG_BC,   "MOVG      " },
 
 	{ INSTR_COPY,     REG_BC,   "COPY      " },
-	{ INSTR_COPYG,    REG_BC,   "COPYG     " },
 	{ INSTR_COPYC,    REG_BC,   "COPYC     " },
 
 	{ INSTR_JMP,      REG_D,    "JMP       " },
+	{ INSTR_ESCAPE,   REG_D,    "ESCAPE    " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
 	{ INSTR_CALL,     REG_A,    "CALL      " },
@@ -24,16 +22,11 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
 	{ INSTR_ASET,     REG_EFG,  "ASET      " },
-	{ INSTR_GASET,    REG_EFG,  "GASET     " },
 	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
-	{ INSTR_GDEREF,   REG_EFG,  "GDEREF    " },
 	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
-	{ INSTR_GSUBSCR,  REG_EFG,  "GSUBSCR   " },
 
 	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
-	{ INSTR_GMATCH,   REG_EFG,  "GMATCH    " },
 	{ INSTR_SUBST,    REG_EFG,  "SUBST     " },
-	{ INSTR_GSUBST,   REG_EFG,  "GSUBST    " },
 	{ INSTR_SPLIT,    REG_EFG,  "SPLIT     " },
 	{ INSTR_GROUP,    REG_BC,   "GROUP     " },
 
@@ -43,7 +36,6 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_LESS,     REG_EFG,  "LESS      " },
 	{ INSTR_MORE,     REG_EFG,  "MORE      " },
 	{ INSTR_INC,      REG_A,    "INC       " },
-	{ INSTR_GINC,     REG_A,    "GINC      " },
 	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
 	{ INSTR_LEN,      REG_BC,   "LEN       " },
 
@@ -58,7 +50,6 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_FLIP,     REG_BC,   "FLIP      " },
 
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
-	{ INSTR_GPRINT,   REG_A,    "GPRINT    " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
 	{ INSTR_EVAL,     REG_EFG,  "EVAL      " },

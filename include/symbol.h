@@ -21,6 +21,8 @@ struct symbol {
 	int             scope;
 	bool            global;
 
+	int next, last;
+
 	enum SymbolType {
 		SYM_FN,
 		SYM_VAR,
@@ -55,5 +57,7 @@ bool symbolize_module(struct module *m, struct oak *k, struct symbol *parent);
 void print_symbol(FILE *f, size_t depth, struct symbol *s);
 struct symbol *resolve(struct symbol *sym, char *name);
 struct symbol *find_from_scope(struct symbol *sym, int scope);
+void set_next(struct symbol *sym, int next);
+void set_last(struct symbol *sym, int last);
 
 #endif
