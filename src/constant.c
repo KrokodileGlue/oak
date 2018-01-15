@@ -18,7 +18,7 @@ new_constant_table()
 void
 free_constant_table(struct constant_table *t)
 {
-	free(t->val);
+	if (t) free(t->val);
 	free(t);
 }
 

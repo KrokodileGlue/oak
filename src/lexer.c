@@ -667,7 +667,7 @@ tokenize(struct module *m)
 		fputc('\n', stderr);
 		error_write(ls->r, stderr);
 		token_clear(ls->tok);
-
+		free_lexer(ls);
 		return false;
 	} else if (ls->r->pending) {
 		error_write(ls->r, stderr);
