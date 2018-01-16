@@ -1,19 +1,26 @@
-src = $(wildcard src/*.c)
-src += $(wildcard *.c)
-obj = $(src:.c=.o)
+CPPFLAGS := -MMD -MP
+CFLAGS += -O2 -Iinclude -std=c11 -Wall -Wextra -pedantic
+CFLAGS += -Wunused -Wno-implicit-fallthrough
+LDFLAGS += -Wl,--as-needed,-O2,-z,relro,-z,now
+LDLIBS += -lm
 
-CFLAGS = -std=c11 -Wall -Wextra -pedantic -Wunused -I include/
-LDFLAGS += -lm
+TARGET := oak
+SRC := $(wildcard src/*.c)
+OBJ = $(SRC:.c=.o) $(TARGET).o
+DEP = $(OBJ:.o=.d)
 
-debug: CFLAGS += -g
-release: CFLAGS += -O2
-
-all: $(obj)
-	$(CC) -o oak $^ $(LDFLAGS)
+all: $(TARGET)
 
 debug: all
-release: all
+debug: CFLAGS += -g -Og
+debug: LDFLAGS += -g -Og
 
-.PHONY: clean
-clean:
-	rm -f $(obj) oak
+$(TARGET): $(OBJ)
+	$(LINK.o) $^ $(LDLIBS) -o $@
+
+clean: $(TARGET)
+	$(RM) $(OBJ) $(DEP) $(TARGET)
+
+-include $(DEP)
+
+.PHONY: all debug clean
