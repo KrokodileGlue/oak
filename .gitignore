@@ -40,3 +40,4 @@ GTAGS
 GRTAGS
 .vscode
 oak
+*.d
