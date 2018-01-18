@@ -1,3 +1,7 @@
+# Profiling
+*.gcda
+*.gcno
+
 # Object files
 *.o
 *.ko
@@ -31,9 +35,16 @@
 # Debug files
 *.dSYM/
 *.su
+vgcore*
 
 build/
 .dir-locals.el
+.*.sw?
+cscope.out
+cscope.in.out
+cscope.po.out
+tags
+TAGS
 GPATH
 GSYMS
 GTAGS
@@ -41,3 +52,4 @@ GRTAGS
 .vscode
 oak
 *.d
+*.tar.gz
