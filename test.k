@@ -216,7 +216,7 @@ for var i = 0; i < 10; i++ {
 fn abs (x) = x < 0 ? -x : x
 
 string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
-pl string =~ s/[aeiouy]+/$0/egi
+pl string =~ s/[aeiouy]+/$0 + $0/egi
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

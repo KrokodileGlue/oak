@@ -23,6 +23,7 @@ struct value {
 		VAL_FLOAT,
 		VAL_BOOL,
 		VAL_FN,
+		VAL_UNDEF,
 		VAL_ERR
 	} type;
 
@@ -86,6 +87,6 @@ struct value value_translate(struct gc *l, struct gc *r, struct value v);
 
 bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);
-
+char *show_value(struct gc *gc, struct value val);
 void print_debug(struct gc *gc, struct value l);
 #endif

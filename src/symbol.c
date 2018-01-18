@@ -455,7 +455,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		                               load_file(stmt->import.name->string),
 		                               stmt->import.name->string,
 		                               stmt->import.as->value,
-		                               NULL);
+		                               NULL, 0);
 
 		if (!m) {
 			error_push(si->r, stmt->tok->loc, ERR_FATAL,

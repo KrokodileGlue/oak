@@ -27,9 +27,8 @@ struct oak {
 
 struct oak *new_oak();
 void free_oak(struct oak *k);
-struct module *load_module(struct oak *k, struct symbol *parent,
-                           char *text, char *path, char *name,
-                           struct vm *vm);
+struct module *load_module(struct oak *k, struct symbol *parent, char *text,
+            char *path, char *name, struct vm *vm, int stack_base);
 char *process_arguments(struct oak *k, int argc, char **argv);
 
 #endif

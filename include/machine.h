@@ -38,6 +38,7 @@ struct vm {
 	struct gc *gc;
 
 	struct ktre *re;
+	int match;
 	char *subject;
 
 	bool debug;

@@ -16,6 +16,7 @@ struct value_data value_data[] = {
 	{ VAL_FLOAT, "float" },
 	{ VAL_BOOL,  "boolean" },
 	{ VAL_FN,    "function" },
+	{ VAL_UNDEF, "undef" },
 	{ VAL_ERR,   "error" }
 };
 
@@ -32,7 +33,7 @@ struct value_data value_data[] = {
 		}                                                                   \
 	}
 
-static char *
+char *
 show_value(struct gc *gc, struct value val)
 {
 	// TODO: remove the artificial cap.
@@ -58,7 +59,7 @@ show_value(struct gc *gc, struct value val)
 		break;
 
 	case VAL_NIL:
-		snprintf(str, cap, "nil");
+		*str = 0;
 		break;
 
 	case VAL_ARRAY:
@@ -402,6 +403,7 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_NIL:   return false;
 	case VAL_FN:    return true;
 	case VAL_ERR:   assert(false);
+	case VAL_UNDEF: assert(false);
 	}
 
 	return false;

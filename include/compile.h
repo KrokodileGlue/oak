@@ -29,7 +29,7 @@ struct compiler {
 	struct reporter *r;
 	struct gc *gc;
 
-	int **stack_base;
+	int *stack_base;
 	int *stack_top;
 	int *var;
 	int sp;
@@ -38,6 +38,7 @@ struct compiler {
 	bool debug;
 };
 
-bool compile(struct module *m, struct constant_table *ct, struct symbol *parent, bool debug, bool eval);
+bool compile(struct module *m, struct constant_table *ct, struct symbol *sym,
+        bool debug, bool eval, int stack_base);
 
 #endif

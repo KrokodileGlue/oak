@@ -121,10 +121,10 @@ void print_modules(struct oak *k)
 
 struct module *
 load_module(struct oak *k, struct symbol *parent, char *text,
-            char *path, char *name, struct vm *vm)
+            char *path, char *name, struct vm *vm, int stack_base)
 {
 	for (size_t i = 0; i < k->num; i++)
-		if (!strcmp(k->modules[i]->path, path) && strncmp(path, "*eval", 5))
+		if (!strcmp(k->modules[i]->path, path) && strncmp(name, "*eval", 5))
 			return k->modules[i];
 
 	struct module *m = new_module(text, path);
@@ -147,7 +147,8 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 	if (!parse(m)) return NULL;
 	if (!symbolize_module(m, k, parent)) return NULL;
 	while (m->sym->parent) m->sym = m->sym->parent;
-	if (!compile(m, vm ? vm->m->ct : NULL, parent ? parent : m->sym, k->print_code, !!vm)) return NULL;
+	if (!compile(m, vm ? vm->m->ct : NULL, parent ? parent : m->sym,
+	             k->print_code, !!vm, vm ? stack_base : -1)) return NULL;
 
 	if (vm) {
 		struct constant_table *ct = vm->ct;
@@ -182,7 +183,7 @@ main(int argc, char **argv)
 	struct oak *k = new_oak();
 
 	char *path = process_arguments(k, argc, argv);
-	load_module(k, NULL, load_file(path), path, "*main*", NULL);
+	load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
 	print_modules(k);
 	free_oak(k);
 

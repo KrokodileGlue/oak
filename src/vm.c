@@ -8,10 +8,18 @@ void
 push_frame(struct vm *vm)
 {
 	vm->fp++;
-	if (vm->fp <= vm->maxfp) return;
+
+	if (vm->fp <= vm->maxfp) {
+		for (int i = 0; i < 256; i++)
+			vm->frame[vm->fp][i].type = VAL_UNDEF;
+		return;
+	}
 
 	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
 	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
+
+	for (int i = 0; i < 256; i++)
+		vm->frame[vm->fp][i].type = VAL_UNDEF;
 
 	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
 	vm->module[vm->fp] = false;
@@ -195,8 +203,18 @@ stacktrace(struct vm *vm)
 #define CONST(X) (vm->ct->val[X])
 #define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
 
+static int
+find_undef(struct vm *vm)
+{
+	int i = 256;
+	while (i && GETREG(i - 1).type == VAL_UNDEF) i--;
+
+	/* TODO: error */
+	return i;
+}
+
 static void
-eval(struct vm *vm, int reg, char *s, int scope, struct location loc)
+eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_base)
 {
 	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
 	struct module *m = load_module(vm->k,
@@ -204,7 +222,7 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc)
 	                               strclone(s),
 	                               "*eval.k*",
 	                               "*eval*",
-	                               vm);
+	                               vm, stack_base);
 
 	if (!m) {
 		error_push(vm->r, loc, ERR_FATAL, "eval failed");
@@ -214,6 +232,9 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc)
 	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
 	if (!vm->running) vm->ip = vm->callstack[vm->csp--];
 	vm->running = true;
+
+	for (int i = stack_base; i < 256; i++)
+		if (i != reg) SETR(i, type, VAL_UNDEF);
 }
 
 void
@@ -384,15 +405,15 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		if (vm->subject) free(vm->subject);
+		free(vm->subject);
+		vm->subject = NULL;
 
 		int **vec = NULL;
 		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.g).idx];
 		char *subject = vm->gc->str[GETREG(c.d.efg.f).idx];
 		bool ret = ktre_exec(re, subject, &vec);
 
-		vm->subject = oak_malloc(strlen(subject) + 1);
-		strcpy(vm->subject, subject);
+		vm->subject = strclone(subject);
 		vm->re = re;
 
 		SETR(c.d.efg.e, type, VAL_ARRAY);
@@ -423,34 +444,85 @@ execute_instr(struct vm *vm, struct instruction c)
 			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
 			fprintf(stderr, "^");
 		}
+
+		vm->match = re->num_matches - 1;
 	} break;
 
 	case INSTR_SUBST: {
 		assert(GETREG(c.d.efg.e).type == VAL_STR);
 		assert(GETREG(c.d.efg.f).type == VAL_REGEX);
 		assert(GETREG(c.d.efg.g).type == VAL_STR);
+
+		free(vm->subject);
+		vm->subject = NULL;
+
 		struct ktre *re = vm->gc->regex[GETREG(c.d.efg.f).idx];
+		char *subject = strclone(vm->gc->str[GETREG(c.d.efg.e).idx]);
+		char *subst = vm->gc->str[GETREG(c.d.efg.g).idx];
 
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
 		vm->gc->str[v.idx] = NULL;
-		char *subst = vm->gc->str[GETREG(c.d.efg.g).idx];
 
 		if (GETREG(c.d.efg.f).e == 0) {
-			vm->gc->str[v.idx] = ktre_filter(re, vm->gc->str[GETREG(c.d.efg.e).idx],
+			vm->gc->str[v.idx] = ktre_filter(re, subject,
 			                                 subst, "$");
 		} else {
+			int **vec = NULL;
+			ktre_exec(re, subject, &vec);
+			char *a = oak_malloc(128);
+			strncpy(a, subject, vec[0][0]);
+			a[vec[0][0]] = 0;
+
 			for (int i = 0; i < re->num_matches; i++) {
+				char *s = strclone(subst);
+				vm->match = i;
+
 				for (int j = 0; j < GETREG(c.d.efg.f).e; j++) {
-					ktre_exec(re, vm->gc->str[GETREG(c.d.efg.e).idx], NULL);
+					free(vm->subject);
 					vm->re = re;
-					eval(vm, c.d.efg.g, subst, c.d.efg.h, *c.loc);
-					subst = vm->gc->str[GETREG(c.d.efg.g).idx];
+					vm->subject = strclone(subject);
+
+					eval(vm, c.d.efg.g, s, c.d.efg.h,
+					     *c.loc, find_undef(vm));
+
+					if (vm->r->pending) {
+						free(vm->subject);
+						vm->subject = NULL;
+						free(subject);
+						free(a);
+						return;
+					}
+
+					vm->re = re;
+					free(vm->subject);
+					vm->subject = strclone(subject);
+
+					free(s);
+					s = show_value(vm->gc, GETREG(c.d.efg.g));
 				}
+
+				a = oak_realloc(a, strlen(a) + strlen(s) + 1);
+				strcat(a, s);
+
+				if (i != re->num_matches - 1) {
+					a = oak_realloc(a, strlen(a) + (vec[i + 1][0] - (vec[i][0] + vec[i][1])) + 1);
+					strncat(a, subject + vec[i][0] + vec[i][1],
+					        vec[i + 1][0] - (vec[i][0] + vec[i][1]));
+				}
+
+				free(s);
 			}
+
+			a = oak_realloc(a, strlen(a) + (strlen(subject) - (vec[re->num_matches - 1][0] + vec[re->num_matches - 1][1])) + 1);
+			strcat(a, subject + vec[re->num_matches - 1][0]
+			       + vec[re->num_matches - 1][1]);
+
+			vm->gc->str[v.idx] = a;
 		}
 
+		free(subject);
 		vm->re = re;
 		SETREG(c.d.efg.e, v);
 	} break;
@@ -469,16 +541,16 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 		SETR(c.d.bc.b, type, VAL_STR);
-		int i = vm->re->num_matches - 1;
+		int m = vm->match;
 		int **vec = ktre_getvec(vm->re);
 
 		struct value v;
 		v.type = VAL_STR;
 		v.idx = gc_alloc(vm->gc, VAL_STR);
 
-		vm->gc->str[v.idx] = oak_malloc(vec[i][GETREG(c.d.bc.c).integer * 2 + 1] + 1);
-		strncpy(vm->gc->str[v.idx], vm->subject + vec[i][GETREG(c.d.bc.c).integer * 2], vec[i][GETREG(c.d.bc.c).integer * 2 + 1]);
-		vm->gc->str[v.idx][vec[i][GETREG(c.d.bc.c).integer * 2 + 1]] = 0;
+		vm->gc->str[v.idx] = oak_malloc(vec[m][GETREG(c.d.bc.c).integer * 2 + 1] + 1);
+		strncpy(vm->gc->str[v.idx], vm->subject + vec[m][GETREG(c.d.bc.c).integer * 2], vec[m][GETREG(c.d.bc.c).integer * 2 + 1]);
+		vm->gc->str[v.idx][vec[m][GETREG(c.d.bc.c).integer * 2 + 1]] = 0;
 
 		for (int i = 0; i < vm->re->num_matches; i++)
 			free(vec[i]);
@@ -518,7 +590,8 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		eval(vm, c.d.efg.e, vm->gc->str[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g).integer, *c.loc);
+		eval(vm, c.d.efg.e, vm->gc->str[GETREG(c.d.efg.f).idx],
+		     GETREG(c.d.efg.g).integer, *c.loc, find_undef(vm));
 		break;
 
 	case INSTR_NOP:

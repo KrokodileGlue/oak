@@ -27,6 +27,7 @@ static void
 free_compiler(struct compiler *c)
 {
 	free(c->stack_top);
+	free(c->stack_base);
 	free(c->var);
 	free(c->next);
 	free(c->last);
@@ -86,13 +87,14 @@ emit_efg(struct compiler *c, enum instruction_type type, int E, int F, int G, st
 static void
 push_frame(struct compiler *c)
 {
-	c->stack_top = oak_realloc(c->stack_top, (c->sp + 2)
-	                           * sizeof *c->stack_top);
-	c->var = oak_realloc(c->var, (c->sp + 2)
-	                           * sizeof *c->var);
+	c->stack_top = oak_realloc(c->stack_top, (c->sp + 2) * sizeof *c->stack_top);
+	c->stack_base = oak_realloc(c->stack_base, (c->sp + 2) * sizeof *c->stack_base);
+	c->var = oak_realloc(c->var, (c->sp + 2) * sizeof *c->var);
+
 	c->sp++;
 	c->var[c->sp] = 0;
 	c->stack_top[c->sp] = c->sym->num_variables;
+	c->stack_base[c->sp] = c->sym->num_variables;
 }
 
 static void
@@ -636,7 +638,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
-	c->stack_top[c->sp] = c->sym->num_variables + 1;
+	c->stack_top[c->sp] = c->stack_base[c->sp];
 	return compile_expression(c, e, sym, copy);
 }
 
@@ -963,7 +965,7 @@ compile_statement(struct compiler *c, struct statement *s)
 
 bool
 compile(struct module *m, struct constant_table *ct, struct symbol *sym,
-        bool debug, bool eval)
+        bool debug, bool eval, int stack_base)
 {
 	struct compiler *c = new_compiler();
 
@@ -978,6 +980,7 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 	c->debug = debug;
 	c->sp = -1;
 	push_frame(c);
+	if (stack_base >= 0) c->stack_base[c->sp] = stack_base;
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		if (i == c->num_nodes - 1 && m->tree[i]->type == STMT_EXPR) {
