@@ -33,6 +33,7 @@ struct value {
 
 		struct {
 			int64_t idx;
+
 			/*
 			 * The number of times to execute the
 			 * substitution in a regular expression

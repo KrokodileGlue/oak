@@ -208,7 +208,7 @@ for var i = 0; i < 10; i++ {
 		pl 'j: ', j
 		eval "if j == 5: last"
 	}
-	eval "if i == 7: last"
+	eval "if i == 7: {last}"
 }
 
 # eval "next"
@@ -220,6 +220,11 @@ pl string =~ s/[aeiouy]+/"'o'"/eegi
 
 string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
 pl string =~ s/(\w)(\w+)/$1 + join('-', split ||, $2)/egi
+
+eval 'var __ = "this is an eval-scoped variable."; pl __'
+
+# error: undeclared identifier
+# eval 'pl __'
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

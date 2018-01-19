@@ -143,6 +143,9 @@ add(struct symbolizer *si, struct symbol *sym)
 	symbol->children = oak_realloc(symbol->children,
 	    sizeof symbol->children[0] * (symbol->num_children + 1));
 
+	if (sym->next < 0) sym->next = symbol->next;
+	if (sym->last < 0) sym->last = symbol->last;
+
 	symbol->children[symbol->num_children++] = sym;
 }
 
@@ -342,7 +345,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");
 		}
 
-		push_scope(si, ++si->scope);
+		push_scope(si, ++si->k->scope);
 		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
 		sym->name = stmt->fn_def.name;
@@ -373,7 +376,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			add(si, s);
 		}
 
-		push_scope(si, ++si->scope);
+		push_scope(si, ++si->k->scope);
 		block(si, stmt->fn_def.body);
 		pop_scope(si);
 
@@ -408,12 +411,12 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	} break;
 
 	case STMT_BLOCK: {
-		push_scope(si, ++si->scope);
+		push_scope(si, ++si->k->scope);
 
-		stmt->scope = si->scope;
+		stmt->scope = si->k->scope;
 		sym->name = "*block*";
 		sym->type = SYM_BLOCK;
-		sym->scope = si->scope;
+		sym->scope = si->k->scope;
 
 		push(si, sym);
 
@@ -428,8 +431,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		push_scope(si, si->scope_stack[si->scope_pointer - 1]);
 
 		resolve_expr(si, stmt->if_stmt.cond);
-		si->scope++; block(si, stmt->if_stmt.then);
-		si->scope++; block(si, stmt->if_stmt.otherwise);
+		si->k->scope++; block(si, stmt->if_stmt.then);
+		si->k->scope++; block(si, stmt->if_stmt.otherwise);
 		pop_scope(si);
 
 		free(sym);
@@ -470,10 +473,10 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	} break;
 
 	case STMT_WHILE: {
-		push_scope(si, si->scope);
+		push_scope(si, si->k->scope);
 
 		resolve_expr(si, stmt->while_loop.cond);
-		si->scope++;
+		si->k->scope++;
 		block(si, stmt->while_loop.body);
 		pop_scope(si);
 
@@ -482,7 +485,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	}
 
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
-		push_scope(si, ++si->scope);
+		push_scope(si, ++si->k->scope);
 		push_block(si, stmt);
 		stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
@@ -576,9 +579,14 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 	}
 
 	push_scope(si, sym->scope);
-
-	si->scope = sym->scope;
 	si->symbol = sym;
+
+	if (parent) {
+		push_scope(si, ++k->scope);
+		push_block(si, m->tree[0]);
+		si->symbol->next = si->symbol->parent->next;
+		si->symbol->last = si->symbol->parent->last;
+	}
 
 	for (size_t i = 0; m->tree[i]; i++)
 		symbolize(si, m->tree[i]);

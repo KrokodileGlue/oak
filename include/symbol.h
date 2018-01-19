@@ -39,11 +39,6 @@ struct symbolizer {
 	struct reporter *r;
 	struct oak      *k;
 
-	/*
-	 * This is never decremented, it only serves to produce unique
-	 * id numbers for blocks.
-	 */
-	int              scope;
 	int             *scope_stack;
 
 	/* The index of the top of the scope stack. */

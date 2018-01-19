@@ -974,13 +974,19 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 	c->sym = sym;
 	c->num_nodes = m->num_nodes;
 	c->stmt = m->tree[0];
-	if (ct) c->ct = ct;
-	else c->ct = new_constant_table();
 	c->gc = m->gc;
 	c->debug = debug;
 	c->sp = -1;
+
+	if (ct) c->ct = ct;
+	else c->ct = new_constant_table();
+
 	push_frame(c);
-	if (stack_base >= 0) c->stack_base[c->sp] = stack_base;
+	if (stack_base >= 0) {
+		c->var[c->sp] = stack_base;
+		struct symbol *s = find_from_scope(sym, m->tree[0]->scope);
+		c->stack_base[c->sp] = stack_base + s->num_variables;
+	}
 
 	for (size_t i = 0; i < c->num_nodes; i++) {
 		if (i == c->num_nodes - 1 && m->tree[i]->type == STMT_EXPR) {

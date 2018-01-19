@@ -21,6 +21,13 @@ struct oak {
 	bool print_everything;
 	bool print_anything;
 
+	/*
+	 * This is never decremented, it only serves to produce unique
+	 * id numbers for blocks. It's placed here instead of in the
+	 * symbolizer because
+	 */
+	int scope;
+
 	struct value *stack;
 	size_t sp;
 };
