@@ -68,18 +68,18 @@ struct instruction_data instruction_data[] = {
 void
 print_instruction(FILE *f, struct instruction c)
 {
-	fprintf(f, "%s", instruction_data[c.type].name);
+	fprintf(f, "%s ", instruction_data[c.type].name);
 	switch (instruction_data[c.type].regtype) {
-	case REG_A: fprintf(f, " %3d          ", c.d.a); break;
+	case REG_A: fprintf(f, "%4d             ", c.d.a); break;
 	case REG_BC:
-		fprintf(f, " %3d, %3d     ", c.d.bc.b, c.d.bc.c);
+		fprintf(f,     "%4d, %4d       ", c.d.bc.b, c.d.bc.c);
 		break;
-	case REG_D: fprintf(f, " %3d          ", c.d.d); break;
+	case REG_D: fprintf(f, "%4d             ", c.d.d); break;
 	case REG_EFG:
-		fprintf(f, " %3d, %3d, %3d", c.d.efg.e,
+		fprintf(f,     "%4d, %4d, %4d ", c.d.efg.e,
 		        c.d.efg.f, c.d.efg.g);
 		break;
-	case REG_NONE: fprintf(f, "              "); break;
+	case REG_NONE: fprintf(f, "                      "); break;
 	}
 
 }
@@ -88,7 +88,7 @@ void
 print_code(FILE *f, struct instruction *code, size_t num_instr)
 {
 	for (size_t i = 0; i < num_instr; i++) {
-		fprintf(f, "\n%3zu: ", i);
+		fprintf(f, "\n%4zu: ", i);
 		print_instruction(f, code[i]);
 	}
 }

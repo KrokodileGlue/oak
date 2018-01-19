@@ -10,6 +10,8 @@ push_frame(struct vm *vm)
 	vm->fp++;
 
 	if (vm->fp <= vm->maxfp) {
+		vm->module[vm->fp] = false;
+
 		for (int i = 0; i < 256; i++)
 			vm->frame[vm->fp][i].type = VAL_UNDEF;
 		return;
@@ -164,6 +166,9 @@ static void
 ret(struct vm *vm)
 {
 	if (vm->module[vm->fp]) {
+		if (vm->debug)
+			DOUT("returning from call as a module");
+
 		vm->running = false;
 		pop_frame(vm);
 		return;
@@ -217,6 +222,8 @@ static void
 eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_base)
 {
 	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
+
+	vm->module[vm->fp] = true;
 	struct module *m = load_module(vm->k,
 	                               find_from_scope(vm->m->sym, scope),
 	                               strclone(s),
@@ -232,6 +239,7 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
 	if (!vm->running) vm->ip = vm->callstack[vm->csp--];
 	vm->running = true;
+	vm->module[vm->fp] = vm->m->child;
 
 	for (int i = stack_base; i < 256; i++)
 		if (i != reg) SETR(i, type, VAL_UNDEF);
@@ -241,9 +249,9 @@ void
 execute_instr(struct vm *vm, struct instruction c)
 {
 	if (vm->debug) {
-		fprintf(vm->f, "%s> %3zu: ", vm->m->name, vm->ip);
+		fprintf(vm->f, "%s> %4zu: ", vm->m->name, vm->ip);
 		print_instruction(vm->f, c);
-		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu\n", vm->sp, vm->csp, vm->k->sp, vm->fp);
+		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %s\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->module[vm->fp] ? "t" : "f");
 	}
 
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */

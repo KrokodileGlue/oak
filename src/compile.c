@@ -226,13 +226,19 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	switch (e->bi->name) {
 	case BUILTIN_SPLIT: {
-		CHECKARGS(e->num != 2);
+		int subject = -1;
+
+		if (e->num == 1) {
+			emit_a(c, INSTR_GETIMP, subject = alloc_reg(c), &e->tok->loc);
+		} else {
+			CHECKARGS(e->num != 2);
+			subject = compile_expression(c, e->args[1], sym, false);
+		}
 
 		if (e->args[0]->type == EXPR_REGEX)
 			e->args[0]->val->flags = smart_cat(e->args[0]->val->flags, "g");
 
 		int regex = compile_expression(c, e->args[0], sym, false);
-		int subject = compile_expression(c, e->args[1], sym, false);
 		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 

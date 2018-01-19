@@ -37,8 +37,8 @@ fn fib (x) {
 	return fib(x - 1) + fib(x - 2)
 }
 
-for var i = 0; i < 20; i++:
-	pl i, ': ', fib(i)
+# for var i = 0; i < 20; i++:
+# 	pl i, ': ', fib(i)
 
 pl type a
 pl type b
@@ -231,7 +231,8 @@ pl join(' ', map { ucfirst reverse } 'this is test' =~ /\w+/g)
 pl join(' ', map { lc reverse } 'tHiS iS tEst' =~ /\w+/g)
 pl reverse 'this is test'
 
-pl reverse [1, 2, 3, 4]
+pl join ', ', reverse range(0, 30)
+pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']
