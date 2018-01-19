@@ -48,7 +48,7 @@
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-      '(("\\b\\(type\\|map\\|eval\\|split\\|length\\|sayln\\|say\\)\\b"			 .	font-lock-function-name-face)
+      '(("\\b\\(type\\|map\\|uc\\|lc\\|reverse\\|eval\\|join\\|ucfirst\\|lcfirst\\|split\\|length\\|sayln\\|say\\)\\b"			 .	font-lock-function-name-face)
 	("\\b\\(pi\\|0x[[:xdigit:]]+\\|[[:digit:]]+\\.[:digit:]]*\\|[\\.[:digit:]]+\\|_\\|true\\|false\\)\\b" .	font-lock-constant-face)
 	("\\b\\(pl\\|p\\|println\\|last\\|next\\|die\\|when\\|print\\|for\\|do\\|while\\|if\\|return\\|else\\)\\b"    .	font-lock-keyword-face)
 	("\\b\\(var\\|class\\|fn\\)\\b"			 .	font-lock-type-face)))
