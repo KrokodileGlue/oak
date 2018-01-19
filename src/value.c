@@ -561,6 +561,44 @@ lc_value(struct gc *gc, struct value l)
 }
 
 struct value
+ucfirst_value(struct gc *gc, struct value l)
+{
+	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };
+
+	if (l.type == VAL_STR) {
+		ans.type = VAL_STR;
+		ans.idx = gc_alloc(gc, VAL_STR);
+
+		size_t len = strlen(gc->str[l.idx]);
+
+		gc->str[ans.idx] = oak_malloc(len + 1);
+		strcpy(gc->str[ans.idx], gc->str[l.idx]);
+		gc->str[ans.idx][0] = uc(gc->str[ans.idx][0]);
+	}
+
+	return ans;
+}
+
+struct value
+lcfirst_value(struct gc *gc, struct value l)
+{
+	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };
+
+	if (l.type == VAL_STR) {
+		ans.type = VAL_STR;
+		ans.idx = gc_alloc(gc, VAL_STR);
+
+		size_t len = strlen(gc->str[l.idx]);
+
+		gc->str[ans.idx] = oak_malloc(len + 1);
+		strcpy(gc->str[ans.idx], gc->str[l.idx]);
+		gc->str[ans.idx][0] = lc(gc->str[ans.idx][0]);
+	}
+
+	return ans;
+}
+
+struct value
 neg_value(struct value l)
 {
 	struct value ans = (struct value){ l.type, { 0 }, 0 };

@@ -649,6 +649,16 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.bc.b, lc_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
+	case INSTR_UCFIRST:
+		assert(GETREG(c.d.bc.c).type == VAL_STR);
+		SETREG(c.d.bc.b, ucfirst_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_LCFIRST:
+		assert(GETREG(c.d.bc.c).type == VAL_STR);
+		SETREG(c.d.bc.b, lcfirst_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
 	default:
 		DOUT("unimplemented instruction %d (%s)", c.type,
 		     instruction_data[c.type].name);

@@ -75,6 +75,8 @@ struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
 struct value uc_value(struct gc *gc, struct value l);
 struct value lc_value(struct gc *gc, struct value l);
+struct value ucfirst_value(struct gc *gc, struct value l);
+struct value lcfirst_value(struct gc *gc, struct value l);
 struct value inc_value(struct value l);
 struct value neg_value(struct value l);
 struct value flip_value(struct value l);

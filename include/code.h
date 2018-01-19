@@ -40,6 +40,8 @@ enum instruction_type {
 	INSTR_REV,
 	INSTR_UC,
 	INSTR_LC,
+	INSTR_UCFIRST,
+	INSTR_LCFIRST,
 
 	INSTR_COND,
 	INSTR_NCOND,

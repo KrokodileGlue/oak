@@ -260,6 +260,8 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	UNARY(REVERSE, REV);
 	UNARY(UC, UC);
 	UNARY(LC, LC);
+	UNARY(UCFIRST, UCFIRST);
+	UNARY(LCFIRST, LCFIRST);
 
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",

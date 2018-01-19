@@ -34,6 +34,8 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_REV,      REG_BC,   "REV       " },
 	{ INSTR_UC,       REG_BC,   "UC        " },
 	{ INSTR_LC,       REG_BC,   "LC        " },
+	{ INSTR_UCFIRST,  REG_BC,   "UCFIRST   " },
+	{ INSTR_LCFIRST,  REG_BC,   "LCFIRST   " },
 
 	{ INSTR_COND,     REG_A,    "COND      " },
 	{ INSTR_NCOND,    REG_A,    "NCOND     " },

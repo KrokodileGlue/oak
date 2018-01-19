@@ -227,7 +227,7 @@ eval 'var __ = "this is an eval-scoped variable."; pl __'
 # eval 'pl __'
 
 pl join(' ', map { reverse } split / /, 'this is test')
-pl join(' ', map { uc reverse } 'this is test' =~ /\w+/g)
+pl join(' ', map { ucfirst reverse } 'this is test' =~ /\w+/g)
 pl join(' ', map { lc reverse } 'tHiS iS tEst' =~ /\w+/g)
 pl reverse 'this is test'
 
