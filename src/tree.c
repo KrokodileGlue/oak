@@ -65,7 +65,7 @@ free_expr(struct expression *e)
 		}
 		if (e->b) free_expr(e->b);
 		free(e->args);
-	} else if (e->type == EXPR_LIST) {
+	} else if (e->type == EXPR_LIST || e->type == EXPR_BUILTIN) {
 		if (e->args) {
 			for (size_t i = 0; i < e->num; i++) {
 				free_expr(e->args[i]);
@@ -237,6 +237,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			print_expression(ap, e->a);
 			ap->depth--;
 			break;
+
 		case OPTYPE_BINARY:
 			fprintf(ap->f,"(binary %s)", op->body);
 
@@ -249,6 +250,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 			ap->depth--;
 			break;
+
 		case OPTYPE_TERNARY:
 			fprintf(ap->f,"(ternary %s)", op->body);
 
@@ -262,12 +264,14 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 			ap->depth--;
 			break;
+
 		case OPTYPE_POSTFIX:
 			fprintf(ap->f,"(postfix %s)", op->body);
 			ap->depth++;
 			print_expression(ap, e->a);
 			ap->depth--;
 			break;
+
 		case OPTYPE_FN_CALL:
 			fprintf(ap->f,"(fn call)");
 			ap->depth++; split(ap);
@@ -282,21 +286,25 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 				if (i == e->num - 1) join(ap);
 				print_expression(ap, e->args[i]);
 			}
+
 			join(ap);
 			ap->depth -= 2;
 			break;
+
 		case OPTYPE_SUBCRIPT:
 			fprintf(ap->f,"(subscript)");
-			ap->depth++;
-			split(ap);
+			ap->depth++; split(ap);
+
 			print_expression(ap, e->b);
-			join(ap);
-			indent(ap);
+			join(ap); indent(ap);
+
 			fprintf(ap->f, "(of)");
+
 			ap->depth++;
 			print_expression(ap, e->a);
 			ap->depth -= 2;
 			break;
+
 		case OPTYPE_INVALID:
 			fprintf(stderr, "\noak: internal error; an invalid operator node was encountered.\n");
 			assert(false);
@@ -307,20 +315,25 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		case TOK_IDENTIFIER:
 			fprintf(ap->f, "(identifier %s)", e->val->value);
 			break;
+
 		case TOK_INTEGER:
 			fprintf(ap->f, "(integer %zu)", e->val->integer);
 			break;
+
 		case TOK_STRING:
 			fprintf(ap->f, "(string '");
 			print_escaped_string(ap->f, e->val->string, strlen(e->val->string));
 			fprintf(ap->f, "')");
 			break;
+
 		case TOK_FLOAT:
 			fprintf(ap->f, "(float %f)", e->val->floating);
 			break;
+
 		case TOK_BOOL:
 			fprintf(ap->f, "(bool %s)", e->val->boolean ? "true" : "false");
 			break;
+
 		default:
 			fprintf(stderr, "impossible value token %d\n", e->type);
 			assert(false);
@@ -394,12 +407,16 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth--;
 	} else if (e->type == EXPR_GROUP) {
 		fprintf(ap->f, "(group %"PRId64")", e->val->integer);
-	} else if (e->type == EXPR_SPLIT) {
-		fprintf(ap->f, "(split)");
+	} else if (e->type == EXPR_BUILTIN) {
+		fprintf(ap->f, "(builtin %s)", e->bi->body);
+
 		ap->depth++; split(ap);
-		print_expression(ap, e->b);
-		join(ap);
-		print_expression(ap, e->a);
+
+		for (size_t i = 0; i < e->num; i++) {
+			if (i == e->num - 1) join(ap);
+			print_expression(ap, e->args[i]);
+		}
+
 		ap->depth--;
 	} else if (e->type == EXPR_EVAL) {
 		fprintf(ap->f, "(eval)");

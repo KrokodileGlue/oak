@@ -486,6 +486,81 @@ flip_value(struct value l)
 }
 
 struct value
+rev_value(struct gc *gc, struct value l)
+{
+	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };
+
+	switch (l.type) {
+	case VAL_STR: {
+		ans.type = VAL_STR;
+		ans.idx = gc_alloc(gc, VAL_STR);
+
+		size_t len = strlen(gc->str[l.idx]);
+		gc->str[ans.idx] = oak_malloc(len + 1);
+
+		for (size_t i = 1; i <= len; i++)
+			gc->str[ans.idx][i - 1] = gc->str[l.idx][len - i];
+
+		gc->str[ans.idx][len] = 0;
+	} break;
+
+	case VAL_ARRAY: {
+		ans.type = VAL_ARRAY;
+		ans.idx = gc_alloc(gc, VAL_ARRAY);
+
+		gc->array[ans.idx] = NULL;
+		gc->arrlen[ans.idx] = 0;
+		size_t len = gc->arrlen[l.idx];
+
+		for (size_t i = 1; i <= len; i++) {
+			struct value r = gc->array[l.idx][len - i];
+			pushback(gc, ans, copy_value(gc, r));
+		}
+	} break;
+
+	default: assert(false);
+	}
+
+	return ans;
+}
+
+struct value
+uc_value(struct gc *gc, struct value l)
+{
+	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };
+
+	if (l.type == VAL_STR) {
+		ans.type = VAL_STR;
+		ans.idx = gc_alloc(gc, VAL_STR);
+		size_t len = strlen(gc->str[l.idx]);
+		gc->str[ans.idx] = oak_malloc(len + 1);
+
+		for (size_t i = 0; i <= len; i++)
+			gc->str[ans.idx][i] = uc(gc->str[l.idx][i]);
+	}
+
+	return ans;
+}
+
+struct value
+lc_value(struct gc *gc, struct value l)
+{
+	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };
+
+	if (l.type == VAL_STR) {
+		ans.type = VAL_STR;
+		ans.idx = gc_alloc(gc, VAL_STR);
+		size_t len = strlen(gc->str[l.idx]);
+		gc->str[ans.idx] = oak_malloc(len + 1);
+
+		for (size_t i = 0; i <= len; i++)
+			gc->str[ans.idx][i] = lc(gc->str[l.idx][i]);
+	}
+
+	return ans;
+}
+
+struct value
 neg_value(struct value l)
 {
 	struct value ans = (struct value){ l.type, { 0 }, 0 };
@@ -516,6 +591,8 @@ pushback(struct gc *gc, struct value l, struct value r)
 struct value
 grow_array(struct gc *gc, struct value l, int r)
 {
+	assert(l.type == VAL_ARRAY);
+
 	/* TODO: Unretard this. */
 	if ((int)gc->arrlen[l.idx] <= r) {
 		gc->array[l.idx] = oak_realloc(gc->array[l.idx],

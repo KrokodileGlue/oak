@@ -4,6 +4,7 @@
 #include "operator.h"
 #include "color.h"
 #include "module.h"
+#include "builtin.h"
 
 #include <stdbool.h>
 #include <assert.h>
@@ -112,49 +113,13 @@ get_prec(struct parser *ps, size_t prec)
 	return prec;
 }
 
+static struct expression * parse_expression(struct parser *ps, int prec);
+
 static struct expression *
 parse_expr(struct parser *ps, size_t prec)
 {
 	struct expression *left = new_expression(ps->tok);
 	struct operator *op = get_prefix_op(ps);
-
-	if (!strcmp(ps->tok->value, "map")) {
-		left->type = EXPR_MAP;
-		NEXT;
-		expect_symbol(ps, "{");
-		left->a = parse_expr(ps, 0);
-		expect_symbol(ps, "}");
-		left->b = parse_expr(ps, 1);
-		return left;
-	}
-
-	if (!strcmp(ps->tok->value, "split")) {
-		left->type = EXPR_SPLIT;
-		NEXT;
-
-		bool paren = !strcmp(ps->tok->value, "(");
-		if (paren) expect_symbol(ps, "(");
-
-		left->a = parse_expr(ps, 1);
-		expect_symbol(ps, ",");
-		left->b = parse_expr(ps, 1);
-
-		if (paren) expect_symbol(ps, ")");
-		return left;
-	}
-
-	if (!strcmp(ps->tok->value, "eval")) {
-		left->type = EXPR_EVAL;
-		NEXT;
-
-		bool paren = !strcmp(ps->tok->value, "(");
-		if (paren) expect_symbol(ps, "(");
-
-		left->a = parse_expr(ps, 1);
-
-		if (paren) expect_symbol(ps, ")");
-		return left;
-	}
 
 	if (!strcmp(ps->tok->value, "fn")) {
 		left->type = EXPR_FN_DEF;
@@ -213,6 +178,53 @@ parse_expr(struct parser *ps, size_t prec)
 
 			expect_symbol(ps, "]");
 		}
+	} else if (!strcmp(ps->tok->value, "map")) {
+		left->type = EXPR_MAP;
+		NEXT;
+		expect_symbol(ps, "{");
+		left->a = parse_expr(ps, 0);
+		expect_symbol(ps, "}");
+		left->b = parse_expr(ps, 1);
+	} else if (!strcmp(ps->tok->value, "eval")) {
+		left->type = EXPR_EVAL;
+		NEXT;
+
+		bool paren = !strcmp(ps->tok->value, "(");
+		if (paren) expect_symbol(ps, "(");
+
+		left->a = parse_expr(ps, 1);
+
+		if (paren) expect_symbol(ps, ")");
+		return left;
+	} else if (get_builtin(ps->tok->value)) {
+		struct builtin *bi = get_builtin(ps->tok->value);
+
+		left->type = EXPR_BUILTIN;
+		left->bi = bi;
+		NEXT;
+
+		bool paren = !strcmp(ps->tok->value, "(");
+		if (paren) expect_symbol(ps, "(");
+
+		while (true) {
+			struct expression *e = parse_expr(ps, 1);
+
+			if (e) {
+				left->args = oak_realloc(left->args,
+				                         (left->num + 1) * sizeof *left->args);
+				left->args[left->num++] = e;
+			}
+
+			if (strcmp(ps->tok->value, ",")) break;
+			else expect_symbol(ps, ",");
+		}
+
+		ps->tok = ps->tok->prev;
+		if (!strcmp(ps->tok->value, ","))
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "stray comma");
+		NEXT;
+
+		if (paren) expect_symbol(ps, ")");
 	} else { /* if it's not a prefix operator it must be a value. */
 		if (ps->tok->type == TOK_INTEGER
 			|| ps->tok->type == TOK_STRING
@@ -231,8 +243,8 @@ parse_expr(struct parser *ps, size_t prec)
 			left->val = ps->tok;
 			NEXT;
 		} else {
-			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value, or prefix operator");
-			NEXT;
+			free(left);
+			return NULL;
 		}
 	}
 
@@ -298,6 +310,17 @@ parse_expr(struct parser *ps, size_t prec)
 	return e;
 }
 
+static struct expression *
+parse_expression(struct parser *ps, int prec)
+{
+	struct expression *e = parse_expr(ps, prec);
+
+	if (!e)
+		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value, or prefix operator");
+
+	return e;
+}
+
 static struct statement *
 parse_if_stmt(struct parser *ps)
 {
@@ -306,7 +329,7 @@ parse_if_stmt(struct parser *ps)
 	s->if_stmt.otherwise = NULL;
 
 	NEXT;
-	s->if_stmt.cond = parse_expr(ps, 0);
+	s->if_stmt.cond = parse_expression(ps, 0);
 	if (!strcmp(ps->tok->value, "{")) {
 		s->if_stmt.then = parse_stmt(ps);
 	} else {
@@ -330,8 +353,12 @@ parse_fn_def(struct parser *ps)
 	s->type = STMT_FN_DEF;
 
 	if (ps->tok->type == TOK_IDENTIFIER) {
-		/* error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an identifier"); */
 		s->fn_def.name = ps->tok->value;
+
+		if (get_builtin(ps->tok->value))
+			error_push(ps->r, ps->tok->loc, ERR_FATAL,
+			           "redeclaration of builtin function `%s'",
+			           ps->tok->value);
 		NEXT;
 	} else {
 		s->fn_def.name = "";
@@ -353,7 +380,7 @@ parse_fn_def(struct parser *ps)
 		expect_symbol(ps, "=");
 		struct statement *body = new_statement(ps->tok);
 		body->type = STMT_RET;
-		body->ret.expr = parse_expr(ps, 0);
+		body->ret.expr = parse_expression(ps, 0);
 		s->fn_def.body = body;
 	} else {
 		s->fn_def.body = parse_stmt(ps);
@@ -380,7 +407,7 @@ parse_print(struct parser *ps)
 		s->print.args = oak_realloc(s->print.args,
 					    sizeof *(s->print.args) * (s->print.num + 2));
 
-		s->print.args[s->print.num] = parse_expr(ps, 1);
+		s->print.args[s->print.num] = parse_expression(ps, 1);
 		s->print.num++;
 	} while (!strcmp(ps->tok->value, ","));
 
@@ -420,7 +447,7 @@ parse_vardecl(struct parser *ps)
 			NEXT;
 
 			s->var_decl.init = oak_realloc(s->var_decl.init, sizeof *s->var_decl.init * (i + 1));
-			s->var_decl.init[i] = parse_expr(ps, 1);
+			s->var_decl.init[i] = parse_expression(ps, 1);
 
 			i++;
 		} while (!strcmp(ps->tok->value, ","));
@@ -447,18 +474,18 @@ parse_for_loop(struct parser *ps)
 	} else {
 		struct statement *e = new_statement(ps->tok);
 		e->type = STMT_EXPR;
-		e->expr = parse_expr(ps, 0);
+		e->expr = parse_expression(ps, 0);
 
 		s->for_loop.a = e;
 	}
 
 	if (!strcmp(ps->tok->value, ";")) {
 		NEXT;
-		s->for_loop.b = parse_expr(ps, 0);
+		s->for_loop.b = parse_expression(ps, 0);
 
 		if (!strcmp(ps->tok->value, ";")) {
 			NEXT;
-			s->for_loop.c = parse_expr(ps, 0);
+			s->for_loop.c = parse_expression(ps, 0);
 		}
 
 		if (!strcmp(ps->tok->value, "{")) {
@@ -506,7 +533,7 @@ parse_ret(struct parser *ps)
 	s->type = STMT_RET;
 
 	NEXT;
-	s->expr = parse_expr(ps, 0);
+	s->expr = parse_expression(ps, 0);
 	expect_terminator(ps);
 
 	return s;
@@ -519,7 +546,7 @@ parse_while(struct parser *ps)
 	s->type = STMT_WHILE;
 	NEXT;
 
-	s->while_loop.cond = parse_expr(ps, 0);
+	s->while_loop.cond = parse_expression(ps, 0);
 	if (!strcmp(ps->tok->value, ":")) NEXT;
 
 	s->while_loop.body = parse_stmt(ps);
@@ -536,7 +563,7 @@ parse_do(struct parser *ps)
 
 	s->do_while_loop.body = parse_stmt(ps);
 	expect_symbol(ps, "while");
-	s->do_while_loop.cond = parse_expr(ps, 0);
+	s->do_while_loop.cond = parse_expression(ps, 0);
 	expect_terminator(ps);
 
 	return s;
@@ -552,7 +579,7 @@ parse_import(struct parser *ps)
 
 	if (ps->tok->type != TOK_STRING) {
 		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected a string");
-		parse_expr(ps, 0); /* stop errors from cascading */
+		parse_expression(ps, 0); /* stop errors from cascading */
 	}
 
 	NEXT;
@@ -563,7 +590,7 @@ parse_import(struct parser *ps)
 
 		if (ps->tok->type != TOK_IDENTIFIER) {
 			error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected a string");
-			parse_expr(ps, 0); /* stop errors from cascading */
+			parse_expression(ps, 0); /* stop errors from cascading */
 		}
 
 		NEXT;
@@ -619,7 +646,7 @@ parse_stmt(struct parser *ps)
 			NEXT;
 			s = new_statement(ps->tok);
 			s->type = STMT_DIE;
-			s->expr = parse_expr(ps, 0);
+			s->expr = parse_expression(ps, 0);
 			break;
 
 		case KEYWORD_WHEN:
@@ -635,13 +662,13 @@ parse_stmt(struct parser *ps)
 	} else {
 		s = new_statement(ps->tok);
 		s->type = STMT_EXPR;
-		s->expr = parse_expr(ps, 0);
+		s->expr = parse_expression(ps, 0);
 		expect_terminator(ps);
 	}
 
 	if (!strcmp(ps->tok->value, "when") && s) {
 		NEXT;
-		s->condition = parse_expr(ps, 0);
+		s->condition = parse_expression(ps, 0);
 	}
 
 	return s;
@@ -654,7 +681,7 @@ parse_isolated_expr(struct token *tok)
 	ps->tok = tok;
 
 
-	struct expression *expr = parse_expr(ps, 0);
+	struct expression *expr = parse_expression(ps, 0);
 	if (ps->r->fatal) {
 		error_write(ps->r, stderr);
 		free_parser(ps);

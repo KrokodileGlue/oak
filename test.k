@@ -106,13 +106,13 @@ array[0] = ['abc', 'def', [0, 1, 2]]
 for var i = 0; i < length array; i++:
 	pl i + ': ' + array[i]
 
-fn join (x y) {
-	return y when type y != 'array'
-	var r
-	for var i = 0; i < length y - 1; i++:
-		r += y[i] + x
-	return r + y[length y - 1]
-}
+# fn join (x y) {
+# 	return y when type y != 'array'
+# 	var r
+# 	for var i = 0; i < length y - 1; i++:
+# 		r += y[i] + x
+# 	return r + y[length y - 1]
+# }
 
 fn djoin (x y) {
 	return y when type y != 'array'
@@ -225,6 +225,13 @@ eval 'var __ = "this is an eval-scoped variable."; pl __'
 
 # error: undeclared identifier
 # eval 'pl __'
+
+pl join(' ', map { reverse } split / /, 'this is test')
+pl join(' ', map { uc reverse } 'this is test' =~ /\w+/g)
+pl join(' ', map { lc reverse } 'tHiS iS tEst' =~ /\w+/g)
+pl reverse 'this is test'
+
+pl reverse [1, 2, 3, 4]
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

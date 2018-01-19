@@ -3,6 +3,7 @@
 
 #include "location.h"
 #include "operator.h"
+#include "builtin.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -122,7 +123,7 @@ struct expression {
 		EXPR_LIST_COMPREHENSION,
 		EXPR_SUBSCRIPT,
 		EXPR_MAP,
-		EXPR_SPLIT,
+		EXPR_BUILTIN,
 		EXPR_REGEX,
 		EXPR_GROUP,
 		EXPR_EVAL,
@@ -130,11 +131,17 @@ struct expression {
 	} type;
 
 	struct operator *operator;
+	struct builtin *bi;
 
 	union {
 		struct {
 			struct expression *a, *b, *c;
-			struct expression **args; /* used for function arguments and lists */
+
+			/*
+			 * Used for function arguments, list, and lots
+			 * of other stuff.
+			 */
+			struct expression **args;
 			struct statement *s;
 			size_t num;
 		};

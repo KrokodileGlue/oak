@@ -57,6 +57,18 @@ is_dec_digit(char c)
 	return (c >= '0' && c <= '9');
 }
 
+static inline int
+uc(int c)
+{
+	return (c >= 'a' && c <= 'z') ? c + ('A' - 'a') : c;
+}
+
+static inline int
+lc(int c)
+{
+	return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
+}
+
 size_t line_number    (struct location loc);
 size_t column_number  (struct location loc);
 size_t line_len       (struct location loc);

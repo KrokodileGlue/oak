@@ -210,6 +210,66 @@ static int compile_expression(struct compiler *c, struct expression *e, struct s
 static int compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym);
 static int compile_statement(struct compiler *c, struct statement *s);
 
+#define CHECKARGS(X)	  \
+	do { \
+		if (X) { \
+			error_push(c->r, e->tok->loc, ERR_FATAL, \
+			           "invalid number of arguments to builtin function `%s'", e->tok->value); \
+			return reg; \
+		} \
+	} while (0)
+
+static int
+compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
+{
+	int reg = -1;
+
+	switch (e->bi->name) {
+	case BUILTIN_SPLIT: {
+		CHECKARGS(e->num != 2);
+
+		if (e->args[0]->type == EXPR_REGEX)
+			e->args[0]->val->flags = smart_cat(e->args[0]->val->flags, "g");
+
+		int regex = compile_expression(c, e->args[0], sym, false);
+		int subject = compile_expression(c, e->args[1], sym, false);
+		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
+	} break;
+
+	case BUILTIN_JOIN: {
+		CHECKARGS(e->num != 2);
+
+		int array = compile_expression(c, e->args[0], sym, false);
+		int delim = compile_expression(c, e->args[1], sym, false);
+		emit_efg(c, INSTR_JOIN, reg = alloc_reg(c), array, delim, &e->tok->loc);
+	} break;
+
+#define UNARY(X,Y)	  \
+	case BUILTIN_##X: { \
+		int arg = -1; \
+		if (e->num == 0) { \
+			arg = alloc_reg(c); \
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc); \
+		} else { \
+			CHECKARGS(e->num != 1); \
+			arg = compile_expression(c, e->args[0], sym, false); \
+		} \
+		emit_bc(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
+	} break
+
+	UNARY(REVERSE, REV);
+	UNARY(UC, UC);
+	UNARY(LC, LC);
+
+	default:
+		DOUT("unimplemented compiler for builtin `%s'",
+		     e->bi->body);
+		assert(false);
+	}
+
+	return reg;
+}
+
 static int
 compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 {
@@ -324,10 +384,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		} break;
 
 		case OP_SQUIGGLEEQ: {
-			int var = compile_lvalue(c, e->a, sym);
+			int var = -1;
 			reg = alloc_reg(c);
 
 			if (e->b->type == EXPR_REGEX && e->b->val->substitution) {
+				var = compile_lvalue(c, e->a, sym);
 				reg = var;
 				int string = alloc_reg(c);
 
@@ -339,6 +400,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false), string, &e->tok->loc);
 				c->code[c->ip].d.efg.h = sym->scope;
 			} else {
+				var = compile_expression(c, e->a, sym, false);
 				emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
 			}
 		} break;
@@ -465,6 +527,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	int reg = -1;
 
 	switch (e->type) {
+	case EXPR_BUILTIN:  reg = compile_builtin(c, e, sym);  break;
+	case EXPR_OPERATOR: reg = compile_operator(c, e, sym); break;
+
 	case EXPR_VALUE:
 		switch (e->val->type) {
 		case TOK_IDENTIFIER:
@@ -496,10 +561,6 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			emit_bc(c, INSTR_COPYC, reg, add_constant(c, e->val), &e->tok->loc);
 			break;
 		}
-		break;
-
-	case EXPR_OPERATOR:
-		reg = compile_operator(c, e, sym);
 		break;
 
 	case EXPR_FN_CALL:
@@ -599,15 +660,6 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		int temp = alloc_reg(c);
 		emit_bc(c, INSTR_MOVC, temp, add_constant(c, e->tok), &e->tok->loc);
 		emit_bc(c, INSTR_GROUP, reg, temp, &e->tok->loc);
-	} break;
-
-	case EXPR_SPLIT: {
-		if (e->a->type == EXPR_REGEX)
-			e->a->val->flags = smart_cat(e->a->val->flags, "g");
-
-		int regex = compile_expression(c, e->a, sym, false);
-		int subject = compile_expression(c, e->b, sym, false);
-		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 
 	case EXPR_EVAL: {

@@ -317,9 +317,9 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 	case EXPR_GROUP:
 		break;
 
-	case EXPR_SPLIT:
-		resolve_expr(si, e->a);
-		resolve_expr(si, e->b);
+	case EXPR_BUILTIN:
+		for (size_t i = 0; i < e->num; i++)
+			resolve_expr(si, e->args[i]);
 		break;
 
 	default:

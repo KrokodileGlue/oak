@@ -584,6 +584,40 @@ execute_instr(struct vm *vm, struct instruction c)
 		free(split);
 	} break;
 
+	case INSTR_JOIN: {
+		assert(GETREG(c.d.efg.f).type == VAL_STR);
+		assert(GETREG(c.d.efg.g).type == VAL_ARRAY);
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = NULL;
+
+		char *a = strclone("");
+		size_t arrlen = vm->gc->arrlen[GETREG(c.d.efg.g).idx];
+
+		for (size_t i = 0; i < arrlen - 1; i++) {
+			char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx][i]);
+			a = oak_realloc(a, strlen(a) + strlen(b)
+			                + strlen(vm->gc->str[GETREG(c.d.efg.f).idx]) + 1);
+			strcat(a, b);
+			strcat(a, vm->gc->str[GETREG(c.d.efg.f).idx]);
+			free(b);
+		}
+
+		char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx][arrlen - 1]);
+		a = oak_realloc(a, strlen(a) + strlen(b) + 1);
+		strcat(a, b);
+		free(b);
+
+		vm->gc->str[v.idx] = a;
+		SETREG(c.d.efg.e, v);
+	} break;
+
+	case INSTR_REV:
+		SETREG(c.d.bc.b, rev_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
 	case INSTR_EVAL:
 		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
@@ -603,6 +637,16 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->callstack = oak_realloc(vm->callstack,
 		                            (vm->csp + 2) * sizeof *vm->callstack);
 		vm->callstack[++vm->csp] = c.d.a - 1;
+		break;
+
+	case INSTR_UC:
+		assert(GETREG(c.d.bc.c).type == VAL_STR);
+		SETREG(c.d.bc.b, uc_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_LC:
+		assert(GETREG(c.d.bc.c).type == VAL_STR);
+		SETREG(c.d.bc.b, lc_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
 	default:
