@@ -255,3 +255,10 @@ table.b(666)
 var foo = { a => 2, b => 'stuff' }
 pl foo['a']
 pl foo['b']
+
+# pl 0 for range(0, 10)
+# pl 2 * _ for range(0, 10)
+# pl i for var i in range(0, 10)
+
+# var j
+# pl j for j in range(0, 10)
