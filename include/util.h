@@ -5,8 +5,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "location.h"
+
+#define EPSILON 0.001
+#define fcmp(a,b) (fabs(a - b) <= EPSILON * fabs(a))
 
 /* debug out */
 #define DOUT(...)                                     \

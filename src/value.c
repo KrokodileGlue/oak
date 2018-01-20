@@ -354,7 +354,7 @@ cmp_values(struct gc *gc, struct value l, struct value r)
 	switch (l.type) {
 	case VAL_BOOL:  ret.boolean = (l.boolean == r.boolean);                break;
 	case VAL_INT:   ret.boolean = (l.integer == r.integer);                break;
-	case VAL_FLOAT: ret.boolean = (l.real == r.real);                      break;
+	case VAL_FLOAT: ret.boolean = fcmp(l.real, r.real);                    break;
 	case VAL_STR:   ret.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
 	case VAL_NIL:   ret.boolean = true;                                    break;
 	default:        assert(false);                                         break;
@@ -403,7 +403,7 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_INT:   return l.integer != 0;
 	case VAL_STR:   return !!strlen(gc->str[l.idx]);
 	case VAL_ARRAY: return !!gc->arrlen[l.idx];
-	case VAL_FLOAT: return !!l.real;
+	case VAL_FLOAT: return fcmp(l.real, 0.0);
 	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
 	case VAL_FN:    return true;
@@ -488,7 +488,7 @@ flip_value(struct value l)
 
 	switch (l.type) {
 	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
-	case VAL_FLOAT: ans.boolean = l.real    ? false : true; break;
+	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
 	default: return (struct value){ VAL_ERR, { 0 }, 0 };
 	}
