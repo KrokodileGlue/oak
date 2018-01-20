@@ -28,7 +28,7 @@ enum statement_type {
 	STMT_NEXT,
 	STMT_DIE,
 	STMT_INVALID
-} type;
+};
 
 struct statement_data {
 	enum statement_type  type;
