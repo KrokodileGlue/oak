@@ -771,7 +771,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_bc(c, INSTR_MOVC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 	} break;
 
-	case EXPR_LIST:
+	case EXPR_LIST: {
 		reg = alloc_reg(c);
 		struct value v;
 		v.type = VAL_ARRAY;
@@ -783,7 +783,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		for (size_t i = 0; i < e->num; i++)
 			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
-		break;
+	} break;
 
 	case EXPR_SUBSCRIPT: {
 		int addr = compile_expression(c, e->a, sym, false);
@@ -993,7 +993,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		compile_expression(c, s->expr, sym, false);
 		break;
 
-	case STMT_IF_STMT:
+	case STMT_IF_STMT: {
 		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym, false), &s->tok->loc);
 		size_t a = c->ip;
 		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
@@ -1003,7 +1003,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->code[a].d.d = c->ip;
 		compile_statement(c, s->if_stmt.otherwise);
 		c->code[b].d.d = c->ip;
-		break;
+	} break;
 
 	case STMT_WHILE: {
 		size_t a = c->ip;
@@ -1049,7 +1049,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			size_t b = c->ip;
 			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 			compile_statement(c, s->for_loop.body);
-			size_t start = c->ip;
+			start = c->ip;
 			compile_expression(c, s->for_loop.c, sym, false);
 
 			emit_d(c, INSTR_JMP, a, &s->tok->loc);
@@ -1083,7 +1083,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			int expr = c->var[c->sp]++;
 			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
 			emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &s->tok->loc);
-			size_t start = c->ip;
+			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
 			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
@@ -1119,7 +1119,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			int expr = c->var[c->sp]++;
 			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
 			emit_bc(c, INSTR_MOVC, iter, constant_table_add(c->ct, v), &s->tok->loc);
-			size_t start = c->ip;
+			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
 			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
