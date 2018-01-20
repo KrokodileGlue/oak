@@ -21,9 +21,8 @@ all:
 	@$(MAKE) $(TARGET) CFLAGS="$(CFLAGS)"
 
 debug: CFLAGS += -g -Og
-debug: CFLAGS += -Wfloat-equal -Wrestrict -Wshadow
-# exposes a couple multiple definition errors
-# debug: CFLAGS += -fno-builtin -fno-common -fno-inline
+debug: CFLAGS += -Wfloat-equal -Wshadow
+debug: CFLAGS += -fno-builtin -fno-common -fno-inline
 debug:
 	@$(MAKE) $(TARGET) CFLAGS="$(CFLAGS)"
 
