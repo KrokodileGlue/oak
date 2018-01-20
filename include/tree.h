@@ -127,6 +127,7 @@ struct expression {
 		EXPR_REGEX,
 		EXPR_GROUP,
 		EXPR_EVAL,
+		EXPR_TABLE,
 		EXPR_INVALID
 	} type;
 
@@ -142,6 +143,7 @@ struct expression {
 			 * of other stuff.
 			 */
 			struct expression **args;
+			struct token **keys;
 			struct statement *s;
 			size_t num;
 		};

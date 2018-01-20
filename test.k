@@ -239,11 +239,11 @@ pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
 
 pl join(':', map { sayln } range(0, 5))
 
-var table;
-table['a'] = 'some shit'
-
-table['b'] = fn (x) {
-	pl 'thing: ', x
+var table = {
+	a => 'some shit',
+	b => fn (x) {
+		pl 'thing: ', x
+	}
 }
 
 pl table['a']

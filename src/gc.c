@@ -73,10 +73,11 @@ free_gc(struct gc *gc)
 	for (int i = 0; i < NUM_ALLOCATABLE_VALUES; i++)
 		if (gc->bmp[i]) free(gc->bmp[i]);
 
-	if (gc->array)  free(gc->array);
-	if (gc->str)    free(gc->str);
-	if (gc->arrlen) free(gc->arrlen);
-	if (gc->regex)  free(gc->regex);
+	free(gc->array);
+	free(gc->str);
+	free(gc->arrlen);
+	free(gc->regex);
+	free(gc->table);
 
 	free(gc);
 }

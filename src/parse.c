@@ -77,6 +77,37 @@ expect_terminator(struct parser *ps)
 static struct statement *parse_stmt(struct parser *ps);
 static struct statement *parse_vardecl(struct parser *ps);
 static struct statement *parse_fn_def(struct parser *ps);
+static struct expression *parse_expression(struct parser *ps, int prec);
+
+static struct expression *
+parse_table(struct parser *ps)
+{
+	struct expression *e = new_expression(ps->tok);
+	e->type = EXPR_TABLE;
+	expect_symbol(ps, "{");
+
+	while (ps->tok->type == TOK_STRING
+	       || ps->tok->type == TOK_IDENTIFIER) {
+		e->keys = oak_realloc(e->keys, (e->num + 1) * sizeof *e->keys);
+		e->args = oak_realloc(e->args, (e->num + 1) * sizeof *e->args);
+
+		e->keys[e->num] = ps->tok;
+		NEXT;
+		expect_symbol(ps, "=>");
+		e->args[e->num] = parse_expression(ps, 1);
+
+		e->num++;
+
+		if (!strcmp(ps->tok->value, "}")) {
+			break;
+		} else {
+			expect_symbol(ps, ",");
+		}
+	}
+
+	expect_symbol(ps, "}");
+	return e;
+}
 
 static struct operator *
 get_infix_op(struct parser *ps)
@@ -112,8 +143,6 @@ get_prec(struct parser *ps, size_t prec)
 
 	return prec;
 }
-
-static struct expression * parse_expression(struct parser *ps, int prec);
 
 static struct expression *
 parse_expr(struct parser *ps, size_t prec)
@@ -225,6 +254,9 @@ parse_expr(struct parser *ps, size_t prec)
 		NEXT;
 
 		if (paren) expect_symbol(ps, ")");
+	} else if (!strcmp(ps->tok->value, "{")) {
+		free(left);
+		left = parse_table(ps);
 	} else { /* if it's not a prefix operator it must be a value. */
 		if (ps->tok->type == TOK_INTEGER
 			|| ps->tok->type == TOK_STRING

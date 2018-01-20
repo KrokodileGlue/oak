@@ -65,13 +65,17 @@ free_expr(struct expression *e)
 		}
 		if (e->b) free_expr(e->b);
 		free(e->args);
-	} else if (e->type == EXPR_LIST || e->type == EXPR_BUILTIN) {
+	} else if (e->type == EXPR_LIST
+	           || e->type == EXPR_BUILTIN
+	           || e->type == EXPR_TABLE) {
 		if (e->args) {
 			for (size_t i = 0; i < e->num; i++) {
 				free_expr(e->args[i]);
 			}
 			free(e->args);
 		}
+
+		if (e->type == EXPR_TABLE) free(e->keys);
 	} else if (e->type == EXPR_FN_DEF) {
 		free_stmt(e->s);
 	} else if (e->type == EXPR_REGEX || e->type == EXPR_GROUP) {
@@ -372,7 +376,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth--;
 	} else if (e->type == EXPR_FN_DEF) {
 		fprintf(ap->f, "(function)");
-		ap->depth++; split(ap);
+		ap->depth++; join(ap);
 		print_statement(ap, e->s);
 		ap->depth--;
 	} else if (e->type == EXPR_MAP) {
@@ -422,6 +426,19 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		fprintf(ap->f, "(eval)");
 		ap->depth++;
 		print_expression(ap, e->a);
+		ap->depth--;
+	} else if (e->type == EXPR_TABLE) {
+		fprintf(ap->f, "<table>");
+		ap->depth++; split(ap);
+
+		for (size_t i = 0; i < e->num; i++) {
+			if (i == e->num - 1) join(ap);
+			indent(ap); fprintf(stderr, "<key %s>", e->keys[i]->value);
+			ap->depth++; join(ap);
+			print_expression(ap, e->args[i]);
+			ap->depth--;
+		}
+
 		ap->depth--;
 	} else {
 		fputc('\n', stderr);

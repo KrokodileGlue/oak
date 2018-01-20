@@ -604,6 +604,41 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		}
 		break;
 
+	case EXPR_TABLE: {
+		reg = alloc_reg(c);
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(c->gc, VAL_ARRAY);
+		c->gc->arrlen[v.idx] = 0;
+		c->gc->array[v.idx] = NULL;
+
+		emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+		for (size_t i = 0; i < e->num; i++) {
+			struct value key;
+			key.type = VAL_STR;
+			key.idx = gc_alloc(c->gc, VAL_STR);
+
+			char *a = oak_malloc(strlen(e->keys[i]->value) + 1);
+
+			if (e->keys[i]->type == TOK_IDENTIFIER) strcpy(a, e->keys[i]->value);
+			else strcpy(a, e->keys[i]->string);
+
+			c->gc->str[key.idx] = a;
+
+			int keyreg = alloc_reg(c);
+			emit_bc(c, INSTR_MOVC, keyreg,
+			        constant_table_add(c->ct, key), &e->tok->loc);
+
+			emit_efg(c, INSTR_ASET,
+			         reg,
+			         keyreg,
+			         compile_expression(c, e->args[i], sym, true),
+			         &e->tok->loc);
+		}
+		break;
+	} break;
+
 	case EXPR_FN_CALL:
 		if (e->a->type == EXPR_VALUE && e->a->val->type == TOK_IDENTIFIER) {
 			struct symbol *fs = resolve(sym, e->a->val->value);
