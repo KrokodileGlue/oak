@@ -4,17 +4,17 @@
 #include "builtin.h"
 
 struct builtin builtin[] = {
-	{ "split",   BUILTIN_SPLIT },
-	{ "join",    BUILTIN_JOIN },
-	{ "reverse", BUILTIN_REVERSE },
-	{ "uc",      BUILTIN_UC },
-	{ "lc",      BUILTIN_LC },
-	{ "ucfirst", BUILTIN_UCFIRST },
-	{ "lcfirst", BUILTIN_LCFIRST },
-	{ "type", BUILTIN_TYPE },
-	{ "say", BUILTIN_SAY },
-	{ "sayln", BUILTIN_SAYLN },
-	{ "length", BUILTIN_LENGTH}
+	{ "split",   1,  BUILTIN_SPLIT   },
+	{ "join",    1,  BUILTIN_JOIN    },
+	{ "reverse", 14, BUILTIN_REVERSE },
+	{ "uc",      14, BUILTIN_UC      },
+	{ "lc",      14, BUILTIN_LC      },
+	{ "ucfirst", 14, BUILTIN_UCFIRST },
+	{ "lcfirst", 14, BUILTIN_LCFIRST },
+	{ "type",    14, BUILTIN_TYPE    },
+	{ "say",     14, BUILTIN_SAY     },
+	{ "sayln",   14, BUILTIN_SAYLN   },
+	{ "length",  14, BUILTIN_LENGTH  }
 };
 
 struct builtin *

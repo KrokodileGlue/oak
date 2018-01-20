@@ -221,7 +221,7 @@ string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dic
 pl string =~ s/[aeiouy]+/"'o'"/eegi
 
 string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
-pl string =~ s/(\w)(\w+)/$1 + join('-', split ||, $2)/egi
+pl string =~ s/(\w)(\w+)/uc $1 + join('-', split ||, $2)/egi
 
 eval 'var __ = "this is an eval-scoped variable."; pl __'
 

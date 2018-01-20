@@ -207,7 +207,7 @@ parse_expr(struct parser *ps, size_t prec)
 		if (paren) expect_symbol(ps, "(");
 
 		while (true) {
-			struct expression *e = parse_expr(ps, 1);
+			struct expression *e = parse_expr(ps, bi->prec);
 
 			if (e) {
 				left->args = oak_realloc(left->args,

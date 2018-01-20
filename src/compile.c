@@ -261,15 +261,15 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			arg = compile_expression(c, e->args[0], sym, false); \
 		} \
 		emit_bc(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
-	}
+	} break
 
-	UNARY(REVERSE, REV)                                     break;
-	UNARY(UC, UC)                                           break;
-	UNARY(LC, LC)                                           break;
-	UNARY(UCFIRST, UCFIRST)                                 break;
-	UNARY(LCFIRST, LCFIRST)                                 break;
-	UNARY(TYPE, TYPE)                                       break;
-	UNARY(LENGTH, LEN)                                      break;
+	UNARY(REVERSE, REV);
+	UNARY(UC, UC);
+	UNARY(LC, LC);
+	UNARY(UCFIRST, UCFIRST);
+	UNARY(LCFIRST, LCFIRST);
+	UNARY(TYPE, TYPE);
+	UNARY(LENGTH, LEN);
 
 	case BUILTIN_SAY: {
 		int arg = -1;

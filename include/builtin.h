@@ -3,6 +3,7 @@
 
 struct builtin {
 	char *body;
+	int prec;
 
 	enum {
 		BUILTIN_SPLIT,
