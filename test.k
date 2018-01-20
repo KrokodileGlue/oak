@@ -153,6 +153,7 @@ fn scope {
 
 scope()
 
+# TODO: make this a builtin function
 fn range(x y) {
 	var ret
 	for var i = 0; i <= y - x; i++:
@@ -237,6 +238,16 @@ pl join ', ', reverse range(0, 30)
 pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
 
 pl join(':', map { sayln } range(0, 5))
+
+var table;
+table['a'] = 'some shit'
+
+table['b'] = fn (x) {
+	pl 'thing: ', x
+}
+
+pl table['a']
+table['b'](666)
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

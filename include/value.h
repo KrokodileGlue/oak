@@ -8,7 +8,7 @@
 
 #include "ktre.h"
 
-#define NUM_ALLOCATABLE_VALUES 3
+#define NUM_ALLOCATABLE_VALUES 4
 
 struct value {
 	enum value_type {
@@ -16,6 +16,7 @@ struct value {
 		VAL_STR,
 		VAL_ARRAY,
 		VAL_REGEX,
+		VAL_TABLE,
 
 		/* not allocated */
 		VAL_NIL,

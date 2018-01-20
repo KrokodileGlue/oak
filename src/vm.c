@@ -274,16 +274,22 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_OR:   BIN(or);                               break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_SUBSCR:
-		if (GETREG(c.d.efg.g).integer >= vm->gc->arrlen[GETREG(c.d.efg.f).idx]
-		    || GETREG(c.d.efg.g).integer < 0) {
-			struct value v;
-			v.type = VAL_NIL;
-			SETREG(c.d.efg.e, v);
-			break;
-		}
+		if (GETREG(c.d.efg.f).type == VAL_ARRAY) {
+			if (GETREG(c.d.efg.g).integer >= vm->gc->arrlen[GETREG(c.d.efg.f).idx]
+			    || GETREG(c.d.efg.g).integer < 0) {
+				struct value v;
+				v.type = VAL_NIL;
+				SETREG(c.d.efg.e, v);
+				break;
+			}
 
-		SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
-		                             [GETREG(c.d.efg.g).integer]));
+			SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
+			                             [GETREG(c.d.efg.g).integer]));
+		} else if (GETREG(c.d.efg.f).type == VAL_TABLE) {
+			SETREG(c.d.efg.e,
+			       table_lookup(vm->gc->table[GETREG(c.d.efg.f).idx],
+			                    vm->gc->str[GETREG(c.d.efg.g).idx]));
+		}
 		break;
 
 	case INSTR_FLIP:  SETREG(c.d.bc.b, flip_value(GETREG(c.d.bc.c))); break;
@@ -298,27 +304,35 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_ASET:
-		/*
-		 * TODO: Somewhere we should make sure that the index
-		 * is actually an integer.
-		 */
-
-		if (GETREG(c.d.efg.e).type != VAL_ARRAY) {
+		if (GETREG(c.d.efg.e).type != VAL_ARRAY
+		    && GETREG(c.d.efg.f).type == VAL_INT) {
 			SETR(c.d.efg.e, type, VAL_ARRAY);
 			SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
 			vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
 			vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
 		}
 
-		assert(GETREG(c.d.efg.f).type == VAL_INT);
-		grow_array(vm->gc, GETREG(c.d.efg.e), GETREG(c.d.efg.f).integer + 1);
-
-		if (vm->gc->arrlen[GETREG(c.d.efg.e).idx] <= GETREG(c.d.efg.f).integer) {
-			vm->gc->arrlen[GETREG(c.d.efg.e).idx] = GETREG(c.d.efg.f).integer + 1;
+		if (GETREG(c.d.efg.e).type != VAL_TABLE
+		    && GETREG(c.d.efg.f).type == VAL_STR) {
+			SETR(c.d.efg.e, type, VAL_TABLE);
+			SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_TABLE));
+			vm->gc->table[GETREG(c.d.efg.e).idx] = new_table();
 		}
 
-		vm->gc->array[GETREG(c.d.efg.e).idx][GETREG(c.d.efg.f).integer]
-			= GETREG(c.d.efg.g);
+		if (GETREG(c.d.efg.f).type == VAL_INT) {
+			grow_array(vm->gc, GETREG(c.d.efg.e), GETREG(c.d.efg.f).integer + 1);
+
+			if (vm->gc->arrlen[GETREG(c.d.efg.e).idx] <= GETREG(c.d.efg.f).integer) {
+				vm->gc->arrlen[GETREG(c.d.efg.e).idx] = GETREG(c.d.efg.f).integer + 1;
+			}
+
+			vm->gc->array[GETREG(c.d.efg.e).idx][GETREG(c.d.efg.f).integer]
+				= GETREG(c.d.efg.g);
+		}
+
+		if (GETREG(c.d.efg.f).type == VAL_STR) {
+			table_add(vm->gc->table[GETREG(c.d.efg.e).idx], vm->gc->str[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g));
+		}
 		break;
 
 	case INSTR_DEREF:

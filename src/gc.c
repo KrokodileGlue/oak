@@ -57,6 +57,19 @@ free_gc(struct gc *gc)
 		bmp++;
 	}
 
+	bmp = gc->bmp[VAL_TABLE];
+	for (int64_t i = 0; i < gc->slot[VAL_TABLE] / 64; i++) {
+		for (int j = 0; j < 64; j++) {
+			if (*bmp == 0LL) break;
+			int pos = ffsll(*bmp) - 1;
+			*bmp ^= 1LL << pos;
+			if (gc->table[i * 64 + pos])
+				free_table(gc->table[i * 64 + pos]);
+		}
+
+		bmp++;
+	}
+
 	for (int i = 0; i < NUM_ALLOCATABLE_VALUES; i++)
 		if (gc->bmp[i]) free(gc->bmp[i]);
 
@@ -117,6 +130,11 @@ gc_alloc(struct gc *gc, enum value_type type)
 		case VAL_REGEX:
 			gc->regex = oak_realloc(gc->regex,
 			                        gc->slot[type] * sizeof *gc->regex);
+			break;
+
+		case VAL_TABLE:
+			gc->table = oak_realloc(gc->table,
+			                      gc->slot[type] * sizeof *gc->table);
 			break;
 
 		default:

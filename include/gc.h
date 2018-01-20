@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "value.h"
+#include "table.h"
 
 struct gc {
 	int64_t slot[NUM_ALLOCATABLE_VALUES];
@@ -15,6 +16,7 @@ struct gc {
 	struct value **array;
 	unsigned int *arrlen;
 	struct ktre **regex;
+	struct table **table;
 };
 
 struct gc *new_gc();

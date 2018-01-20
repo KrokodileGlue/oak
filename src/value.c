@@ -408,6 +408,12 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_FN:    return true;
 	case VAL_ERR:   assert(false);
 	case VAL_UNDEF: assert(false);
+	case VAL_TABLE: {
+		int len = 0;
+		for (int i = 0; i < TABLE_SIZE; i++)
+			len += gc->table[l.idx]->bucket[i].len;
+		return !!len;
+	} break;
 	}
 
 	return false;
