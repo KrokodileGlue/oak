@@ -37,8 +37,8 @@ fn fib (x) {
 	return fib(x - 1) + fib(x - 2)
 }
 
-# for var i = 0; i < 20; i++:
-# 	pl i, ': ', fib(i)
+for var i = 0; i < 20; i++:
+	pl i, ': ', fib(i)
 
 pl type a
 pl type b
@@ -204,11 +204,13 @@ pl test-eval(), ' ', test-eval()
 for var i = 0; i < 10; i++ {
 	eval "if i %% 2: next"
 	pl i
+
 	for var j = 0; j < 10; j++ {
 		pl 'j: ', j
 		eval "if j == 5: last"
 	}
-	eval "if i == 7: {last}"
+
+	eval "if i == 7 { last }"
 }
 
 # eval "next"
@@ -233,6 +235,8 @@ pl reverse 'this is test'
 
 pl join ', ', reverse range(0, 30)
 pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
+
+pl join(':', map { sayln } range(0, 5))
 
 # var foo = { a => 2, b => 'stuff' }
 # pl foo['a']

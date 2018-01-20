@@ -72,6 +72,10 @@ show_value(struct gc *gc, struct value val)
 		}
 		break;
 
+	case VAL_REGEX:
+		snprintf(str, cap, "REGEX(%p)", (void *)gc->regex[val.idx]);
+		break;
+
 	default:
 		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);
@@ -715,6 +719,10 @@ print_value(FILE *f, struct gc *gc, struct value val)
 
 	case VAL_FN:
 		fprintf(f, "%"PRId64, val.integer);
+		break;
+
+	case VAL_REGEX:
+		fprintf(f, "REGEX(%p)", (void *)gc->regex[val.idx]);
 		break;
 
 	default:

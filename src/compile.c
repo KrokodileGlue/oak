@@ -261,13 +261,46 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			arg = compile_expression(c, e->args[0], sym, false); \
 		} \
 		emit_bc(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
-	} break
+	}
 
-	UNARY(REVERSE, REV);
-	UNARY(UC, UC);
-	UNARY(LC, LC);
-	UNARY(UCFIRST, UCFIRST);
-	UNARY(LCFIRST, LCFIRST);
+	UNARY(REVERSE, REV)                                     break;
+	UNARY(UC, UC)                                           break;
+	UNARY(LC, LC)                                           break;
+	UNARY(UCFIRST, UCFIRST)                                 break;
+	UNARY(LCFIRST, LCFIRST)                                 break;
+	UNARY(TYPE, TYPE)                                       break;
+	UNARY(LENGTH, LEN)                                      break;
+
+	case BUILTIN_SAY: {
+		int arg = -1;
+
+		if (e->num == 0) {
+			arg = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+		} else {
+			CHECKARGS(e->num != 1);
+			arg = compile_expression(c, e->args[0], sym, false);
+		}
+
+		emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
+		reg = arg;
+	} break;
+
+	case BUILTIN_SAYLN: {
+		int arg = -1;
+
+		if (e->num == 0) {
+			arg = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+		} else {
+			CHECKARGS(e->num != 1);
+			arg = compile_expression(c, e->args[0], sym, false);
+		}
+
+		emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
+		emit_(c, INSTR_LINE, &e->tok->loc);
+		reg = arg;
+	} break;
 
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",

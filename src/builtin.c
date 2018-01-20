@@ -10,7 +10,11 @@ struct builtin builtin[] = {
 	{ "uc",      BUILTIN_UC },
 	{ "lc",      BUILTIN_LC },
 	{ "ucfirst", BUILTIN_UCFIRST },
-	{ "lcfirst", BUILTIN_LCFIRST }
+	{ "lcfirst", BUILTIN_LCFIRST },
+	{ "type", BUILTIN_TYPE },
+	{ "say", BUILTIN_SAY },
+	{ "sayln", BUILTIN_SAYLN },
+	{ "length", BUILTIN_LENGTH}
 };
 
 struct builtin *
