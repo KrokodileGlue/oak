@@ -725,11 +725,19 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		break;
 
 	case VAL_FN:
-		fprintf(f, "%"PRId64, val.integer);
+		fprintf(f, "FUNCTION(%"PRId64")", val.integer);
 		break;
 
 	case VAL_REGEX:
 		fprintf(f, "REGEX(%p)", (void *)gc->regex[val.idx]);
+		break;
+
+	case VAL_TABLE:
+		for (int i = 0; i < TABLE_SIZE; i++) {
+			for (size_t j = 0; j < gc->table[val.idx]->bucket[i].len; j++) {
+				print_value(f, gc, gc->table[val.idx]->bucket[i].val[j]);
+			}
+		}
 		break;
 
 	default:

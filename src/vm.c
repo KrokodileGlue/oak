@@ -331,7 +331,9 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 		if (GETREG(c.d.efg.f).type == VAL_STR) {
-			table_add(vm->gc->table[GETREG(c.d.efg.e).idx], vm->gc->str[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g));
+			table_add(vm->gc->table[GETREG(c.d.efg.e).idx],
+			          vm->gc->str[GETREG(c.d.efg.f).idx],
+			          GETREG(c.d.efg.g));
 		}
 		break;
 

@@ -93,7 +93,7 @@ parse_table(struct parser *ps)
 
 		e->keys[e->num] = ps->tok;
 		NEXT;
-		expect_symbol(ps, "=>");
+		expect_symbol(ps, ":");
 		e->args[e->num] = parse_expression(ps, 1);
 
 		e->num++;

@@ -240,21 +240,40 @@ pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
 pl join(':', map { sayln } range(0, 5))
 
 var table = {
-	a => 'some shit',
-	b => fn (x) {
-		pl 'thing: ', x
+	a: 'some text',
+	b: fn (self x) {
+		self.a = x
 	}
 }
 
 pl table['a']
-table['b'](666)
+table['b'](table, 5555)
 
 pl table.a
-table.b(666)
+table.b(1000)
+pl table.a
 
-var foo = { a => 2, b => 'stuff' }
-pl foo['a']
-pl foo['b']
+fn Ship = {
+	x: 0,
+	y: 0,
+	z: 0,
+
+	move: fn (self x y z) {
+		self.x += x
+		self.y += y
+		self.z += z
+	},
+
+	show: fn (self) {
+		pl '(' + self.x + ', ' + self.y + ', ' + self.z + ')'
+	}
+}
+
+var ship = Ship()
+ship.show()
+ship.move(0, 1, 0)
+ship.move(0, -2, 0)
+ship.show()
 
 # pl 0 for range(0, 10)
 # pl 2 * _ for range(0, 10)

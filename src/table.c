@@ -31,6 +31,13 @@ table_add(struct table *t, char *key, struct value v)
 	int idx = h % TABLE_SIZE;
 	struct bucket *b = t->bucket + idx;
 
+	for (size_t i = 0; i < b->len; i++) {
+		if (b->h[i] == h) {
+			b->val[i] = v;
+			return v;
+		}
+	}
+
 	b->h   = realloc(b->h,   sizeof b->h[0]   * (b->len + 1));
 	b->val = realloc(b->val, sizeof b->val[0] * (b->len + 1));
 	b->key = realloc(b->key, sizeof b->key[0] * (b->len + 1));

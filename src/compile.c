@@ -341,6 +341,25 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				         compile_expression(c, e->a->b, sym, false),
 				         compile_expression(c, e->b, sym, true),
 				         &e->tok->loc);
+			} else if (e->a->type == EXPR_OPERATOR
+			      && e->a->operator->type == OPTYPE_BINARY
+			      && e->a->operator->name == OP_PERIOD) {
+
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_MOVC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				reg = compile_lvalue(c, e->a->a, sym);
+				emit_efg(c, INSTR_ASET,
+				         reg,
+				         keyreg,
+				         compile_expression(c, e->b, sym, true),
+				         &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				emit_bc(c, INSTR_MOV, addr,
@@ -354,6 +373,31 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				/* TODO: OH MY GOD I HAVE TO FIX THIS */
 				assert(false);
+			} else if (e->a->type == EXPR_OPERATOR
+			           && e->a->operator->type == OPTYPE_BINARY
+			           && e->a->operator->name == OP_PERIOD) {
+
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_MOVC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false),
+				         keyreg,
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+				emit_efg(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				int n = alloc_reg(c);
@@ -570,13 +614,41 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 
 	case EXPR_SUBSCRIPT: {
-		/* TODO: Implement global array dereferencing. */
 		int reg = alloc_reg(c);
 		int l = compile_lvalue(c, e->a, sym);
 		emit_efg(c, INSTR_DEREF, reg,
 		         l,
 		         compile_expression(c, e->b, sym, false),
 		         &e->tok->loc);
+		return reg;
+	}
+
+	case EXPR_OPERATOR: {
+		if (e->operator->type != OPTYPE_BINARY && e->operator->name != OP_PERIOD) {
+			error_push(c->r, e->tok->loc, ERR_FATAL,
+			           "invalid operation in lvalue");
+			return -1;
+		}
+
+		if (e->b->type != EXPR_VALUE || e->b->val->type != TOK_IDENTIFIER) {
+			error_push(c->r, e->tok->loc, ERR_FATAL,
+			           "binary . requires identifier righthand argument");
+			return -1;
+		}
+
+		struct value key;
+		key.type = VAL_STR;
+		key.idx = gc_alloc(c->gc, VAL_STR);
+		c->gc->str[key.idx] = strclone(e->b->tok->value);
+
+		int keyreg = alloc_reg(c);
+		emit_bc(c, INSTR_MOVC, keyreg,
+		        constant_table_add(c->ct, key), &e->tok->loc);
+
+		int reg = alloc_reg(c);
+		int l = compile_lvalue(c, e->a, sym);
+		emit_efg(c, INSTR_DEREF, reg, l, keyreg, &e->tok->loc);
+
 		return reg;
 	}
 
@@ -677,6 +749,12 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		for (int i = e->num - 1; i >= 0; i--)
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
+
+		if (e->a->type == EXPR_OPERATOR
+		    && e->a->operator->type == OPTYPE_BINARY
+		    && e->a->operator->name == OP_PERIOD) {
+			emit_a(c, INSTR_PUSH, compile_expression(c, e->a->a, sym, true), &e->tok->loc);
+		}
 
 		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false), &e->tok->loc);
 		reg = alloc_reg(c);
