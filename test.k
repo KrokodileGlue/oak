@@ -252,5 +252,6 @@ table['b'](666)
 pl table.a
 table.b(666)
 
-# var foo = { a => 2, b => 'stuff' }
-# pl foo['a']
+var foo = { a => 2, b => 'stuff' }
+pl foo['a']
+pl foo['b']
