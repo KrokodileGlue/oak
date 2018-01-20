@@ -352,6 +352,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_ADDEQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
+				/* TODO: OH MY GOD I HAVE TO FIX THIS */
 				assert(false);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
@@ -402,6 +403,31 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			reg = alloc_reg(c);
 			emit_efg(c, INSTR_POW, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
+
+		case OP_PERIOD: {
+			reg = alloc_reg(c);
+
+			if (e->b->type == EXPR_VALUE && e->b->tok->type == TOK_IDENTIFIER) {
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->b->tok->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_MOVC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a, sym, false),
+				         keyreg,
+				         &e->tok->loc);
+			} else {
+				error_push(c->r, e->tok->loc, ERR_FATAL,
+				           "binary . requires identifier righthand argument");
+				return -1;
+			}
+		} break;
 
 		case OP_MODMOD: {
 			reg = alloc_reg(c);
@@ -682,7 +708,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		break;
 
 	case EXPR_SUBSCRIPT: {
-		int addr = compile_lvalue(c, e->a, sym);
+		int addr = compile_expression(c, e->a, sym, false);
 		reg = alloc_reg(c);
 		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
 	} break;

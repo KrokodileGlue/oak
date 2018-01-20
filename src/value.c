@@ -8,16 +8,17 @@
 #include "value.h"
 
 struct value_data value_data[] = {
-	{ VAL_STR,   "string" },
-	{ VAL_ARRAY, "array" },
-	{ VAL_REGEX, "regex" },
-	{ VAL_NIL,   "nil" },
-	{ VAL_INT,   "integer" },
-	{ VAL_FLOAT, "float" },
-	{ VAL_BOOL,  "boolean" },
+	{ VAL_STR,   "string"   },
+	{ VAL_ARRAY, "array"    },
+	{ VAL_REGEX, "regex"    },
+	{ VAL_TABLE, "table"    },
+	{ VAL_NIL,   "nil"      },
+	{ VAL_INT,   "integer"  },
+	{ VAL_FLOAT, "float"    },
+	{ VAL_BOOL,  "boolean"  },
 	{ VAL_FN,    "function" },
-	{ VAL_UNDEF, "undef" },
-	{ VAL_ERR,   "error" }
+	{ VAL_UNDEF, "undef"    },
+	{ VAL_ERR,   "error"    }
 };
 
 #define BINARY_MATH_OPERATION(x)                                                    \

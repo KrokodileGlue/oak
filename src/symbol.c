@@ -247,7 +247,8 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 
 		case OPTYPE_BINARY:
 			resolve_expr(si, e->a);
-			resolve_expr(si, e->b);
+			if (e->operator->name != OP_PERIOD)
+				resolve_expr(si, e->b);
 			break;
 
 		case OPTYPE_TERNARY:

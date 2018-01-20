@@ -79,7 +79,7 @@ print_instruction(FILE *f, struct instruction c)
 		fprintf(f,     "%4d, %4d, %4d ", c.d.efg.e,
 		        c.d.efg.f, c.d.efg.g);
 		break;
-	case REG_NONE: fprintf(f, "                      "); break;
+	case REG_NONE: fprintf(f, "                 "); break;
 	}
 
 }
