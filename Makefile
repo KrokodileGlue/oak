@@ -1,26 +1,38 @@
-CPPFLAGS := -MMD -MP
-CFLAGS += -O2 -Iinclude -std=c11 -Wall -Wextra -pedantic
+CC ?= gcc
+LD = $(CC)
+
+CPPFLAGS += -MMD -MP
+CFLAGS += -std=c11 -Wall -Wextra -pedantic-errors -Iinclude
+CFLAGS += -fuse-ld=gold -flto -fuse-linker-plugin
+CFLAGS += -Wno-missing-field-initializers -Wstrict-overflow
 CFLAGS += -Wunused -Wno-implicit-fallthrough
-LDFLAGS += -Wl,--as-needed,-O2,-z,relro,-z,now
-LDLIBS += -lm
+LDFLAGS += -fuse-ld=gold -flto -fuse-linker-plugin
+LDFLAGS += -Wl,-O2,-z,relro,-z,now,--sort-common,--as-needed
 
 TARGET := oak
+LIBS := -lm
 SRC := $(wildcard src/*.c)
-OBJ = $(SRC:.c=.o) $(TARGET).o
-DEP = $(OBJ:.o=.d)
+HDR := $(wildcard include/*.h)
+OBJ := $(SRC:.c=.o) $(TARGET).o
+DEP := $(OBJ:.o=.d) $(TARGET).d
 
-all: $(TARGET)
+all: CFLAGS += -O2
+all:
+	@$(MAKE) $(TARGET) CFLAGS="$(CFLAGS)"
 
-debug: all
 debug: CFLAGS += -g -Og
-debug: LDFLAGS += -g -Og
+debug: CFLAGS += -Wfloat-equal -Wrestrict -Wshadow
+# exposes a couple multiple definition errors
+# debug: CFLAGS += -fno-builtin -fno-common -fno-inline
+debug:
+	@$(MAKE) $(TARGET) CFLAGS="$(CFLAGS)"
 
 $(TARGET): $(OBJ)
-	$(LINK.o) $^ $(LDLIBS) -o $@
-
-clean: $(TARGET)
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+%.o %.d: %.c $(HDR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+clean:
 	$(RM) $(OBJ) $(DEP) $(TARGET)
 
 -include $(DEP)
-
-.PHONY: all debug clean
+.PHONY: all debug clean $(DEP) $(HDR)
