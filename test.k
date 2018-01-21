@@ -334,6 +334,9 @@ if !str[500] and !str[-1]:
 
 pl map { str[] } range(7, 16)
 
+pl str[6] = '-'
+pl type str
+
 # error: string requires integer subscript (got nil)
 # pl str[]
 

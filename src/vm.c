@@ -335,6 +335,34 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_ASET:
+		if (GETREG(c.d.efg.e).type == VAL_STR
+		    && GETREG(c.d.efg.f).type == VAL_INT
+		    && ((size_t)GETREG(c.d.efg.f).integer
+		        <= strlen(vm->gc->str[GETREG(c.d.efg.e).idx]))) {
+
+			struct value v = GETREG(c.d.efg.e);
+			char *a = show_value(vm->gc, GETREG(c.d.efg.g));
+			char *b = strclone(vm->gc->str[v.idx]);
+
+			vm->gc->str[v.idx] = oak_realloc(vm->gc->str[v.idx],
+			                                 strlen(b)
+			                                 + strlen(a) + 1);
+
+			vm->gc->str[v.idx][GETREG(c.d.efg.f).integer] = 0;
+			strcat(vm->gc->str[v.idx], a);
+			strcat(vm->gc->str[v.idx], b + GETREG(c.d.efg.f).integer + 1);
+
+			free(a);
+			free(b);
+			return;
+		} else if (GETREG(c.d.efg.e).type == VAL_STR
+		           && GETREG(c.d.efg.f).type == VAL_INT) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "invalid index into string of length %zu",
+			           strlen(vm->gc->str[GETREG(c.d.efg.e).idx]));
+			return;
+		}
+
 		if (GETREG(c.d.efg.e).type != VAL_ARRAY
 		    && GETREG(c.d.efg.f).type == VAL_INT) {
 			SETR(c.d.efg.e, type, VAL_ARRAY);
