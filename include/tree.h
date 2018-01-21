@@ -156,5 +156,6 @@ struct expression *new_expression(struct token *tok);
 struct statement *new_statement(struct token *tok);
 void free_ast(struct statement **module);
 void print_ast(FILE *f, struct statement **module);
+void free_stmt(struct statement *s);
 
 #endif

@@ -239,10 +239,11 @@ pl join('\n', map { reverse join('-', split //) } ['foo', 'bar'])
 pl join(':', map { sayln } range(0, 5))
 
 var table = {
-	a: 'some text',
-	b: fn (self x) {
+	a = 'some text',
+	b = fn (self x) {
 		self.a = x
-	}
+	},
+	uninitialized-field
 }
 
 pl table['a']
@@ -252,42 +253,45 @@ pl table.a
 table.b(1000)
 pl table.a
 
+if !table.unitialized-field:
+	pl 'table.unitialized-field is nil.'
+
 fn Boat (name attack) = {
-	name: name,
-	health: 100,
-	alive: true,
-	attack: attack,
+	name = name,
+	health = 100,
+	alive = true,
+	attack = attack,
 
-	x: 0,
-	y: 0,
-	z: 0,
+	x = 0,
+	y = 0,
+	z = 0,
 
-	move: fn (self x y z) {
+	move = fn (self x y z) {
 		self.x += x
 		self.y += y
 		self.z += z
 	},
 
-	show: fn (self) {
+	show = fn (self) {
 		pl 'The ', self.name, ' is at '
 		    + self.x + ', ' + self.y + ', ' + self.z + '.'
 	},
 
-	damage: fn (self damage) {
+	damage = fn (self damage) {
 		self.health = self.health - damage
-		pl 'The ', self.name, ' takes ', damage, ' damage!'
+		pl 'The ', self.name, ' takes ',        damage, ' damage!'
 		pl 'The ', self.name, ' now has ', self.health, ' health.'
 
 		self.alive = (self.health >= 0)
 	},
 
-	is-alive: fn (self) {
+	is-alive = fn (self) {
 		self.alive = (self.health >= 0)
 		pl self.alive ? 'The ' + self.name + ' is still kicking.'
-		 : 'The ' + self.name + ' is dead! RIP!'
+			      : 'The ' + self.name + ' is dead! RIP!'
 	},
 
-	fight: fn (self enemy) {
+	fight = fn (self enemy) {
 		pl 'The ', self.name, ' is now fighting the ', enemy.name, '!'
 
 		if enemy.alive {
@@ -332,7 +336,7 @@ var str = 'string subscripts?'
 if !str[500] and !str[-1]:
 	pl 'invalid subscripts produce nil.'
 
-pl map { str[] } range(7, 16)
+pl map { str[] } range 7, 16
 
 pl str[6] = '-'
 pl type str
@@ -345,11 +349,11 @@ pl join ', ', asdf
 # error: string requires integer subscript (got nil)
 # pl str[]
 
+# TODO: push builtin
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
-# TODO: string subscripts and assignment
 # TODO: fix ktre warnings
 # TODO: list comprehensions. see below.
 # TODO: string interpolation

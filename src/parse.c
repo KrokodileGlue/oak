@@ -93,8 +93,13 @@ parse_table(struct parser *ps)
 
 		e->keys[e->num] = ps->tok;
 		NEXT;
-		expect_symbol(ps, ":");
-		e->args[e->num] = parse_expression(ps, 1);
+
+		if (!strcmp(ps->tok->value, "=")) {
+			expect_symbol(ps, "=");
+			e->args[e->num] = parse_expression(ps, 1);
+		} else {
+			e->args[e->num] = NULL;
+		}
 
 		e->num++;
 
@@ -757,6 +762,11 @@ parse(struct module *m)
 
 	if (ps->r->fatal) {
 		error_write(ps->r, stderr);
+
+		for (size_t i = 0; i < num; i++)
+			free_stmt(tree[i]);
+
+		free(tree);
 		free_parser(ps);
 		return false;
 	} else if (ps->r->pending) {

@@ -807,6 +807,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 static int
 compile_expression(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
+	if (!e) return nil(c);
 	int reg = -1;
 
 	switch (e->type) {

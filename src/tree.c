@@ -56,6 +56,8 @@ void free_stmt(struct statement *s);
 void
 free_expr(struct expression *e)
 {
+	if (!e) return;
+
 	if (e->type == EXPR_VALUE) {
 		/* don't free the tokens here */
 	} else if (e->type == EXPR_FN_CALL) {
