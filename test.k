@@ -313,7 +313,9 @@ while boat1.alive and boat2.alive {
 	boat2.fight(boat1)
 }
 
-pl join ', ', range 0, 10, 5
+pl join ', ', range 0, 24.5, 5
+pl join ', ', range 0.1, 24.5, 5
+pl join ', ', range 0, 24.5, 5
 
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs

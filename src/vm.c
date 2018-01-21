@@ -638,13 +638,13 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_RANGE: {
-		assert(GETREG(c.d.efg.f).type == VAL_INT);
-		assert(GETREG(c.d.efg.g).type == VAL_INT);
-		assert(GETREG(c.d.efg.h).type == VAL_INT);
+		assert(GETREG(c.d.efg.f).type == VAL_INT || GETREG(c.d.efg.f).type == VAL_FLOAT);
+		assert(GETREG(c.d.efg.g).type == VAL_INT || GETREG(c.d.efg.g).type == VAL_FLOAT);
+		assert(GETREG(c.d.efg.h).type == VAL_INT || GETREG(c.d.efg.h).type == VAL_FLOAT);
 
-		int64_t start = GETREG(c.d.efg.f).integer;
-		int64_t stop = GETREG(c.d.efg.g).integer;
-		int64_t step = GETREG(c.d.efg.h).integer;
+		double start = GETREG(c.d.efg.f).type == VAL_INT ? (double)GETREG(c.d.efg.f).integer : GETREG(c.d.efg.f).real;
+		double stop = GETREG(c.d.efg.g).type == VAL_INT ? (double)GETREG(c.d.efg.g).integer : GETREG(c.d.efg.g).real;
+		double step = GETREG(c.d.efg.h).type == VAL_INT ? (double)GETREG(c.d.efg.h).integer : GETREG(c.d.efg.h).real;
 
 		struct value v;
 		v.type = VAL_ARRAY;
@@ -655,27 +655,31 @@ execute_instr(struct vm *vm, struct instruction c)
 		if (start < stop) {
 			if (step <= 0) {
 				error_push(vm->r, *c.loc, ERR_FATAL,
-				           "invalid range; range from %"PRId64" to %"
-				           PRId64" requires a positive step value"
-				           " (got %"PRId64")",
+				           "invalid range; range from %f to %f requires a positive step value (got %f)",
 				           start, stop, step);
 				return;
 			}
 
-			for (int64_t i = start; i <= stop; i += step)
-				pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+			for (double i = start; i <= stop; i += step) {
+				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
+					pushback(vm->gc, v, (struct value){ VAL_FLOAT, { .real = i }, 0 });
+				else
+					pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = (int64_t)i }, 0 });
+			}
 		} else {
 			if (step >= 0) {
 				error_push(vm->r, *c.loc, ERR_FATAL,
-				           "invalid range; range from %"PRId64" to %"
-				           PRId64" requires a negative step value"
-				           " (got %"PRId64")",
+				           "invalid range; range from %f to %f requires a negative step value (got %f)",
 				           start, stop, step);
 				return;
 			}
 
-			for (int64_t i = start; i >= stop; i += step)
-				pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+			for (double i = start; i >= stop; i += step) {
+				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
+					pushback(vm->gc, v, (struct value){ VAL_FLOAT, { .real = i }, 0 });
+				else
+					pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+			}
 		}
 
 		SETREG(c.d.efg.e, v);
