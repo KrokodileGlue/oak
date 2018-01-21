@@ -378,7 +378,8 @@ execute_instr(struct vm *vm, struct instruction c)
 			vm->gc->table[GETREG(c.d.efg.e).idx] = new_table();
 		}
 
-		if (GETREG(c.d.efg.f).type == VAL_INT) {
+		if (GETREG(c.d.efg.e).type == VAL_ARRAY
+		    && GETREG(c.d.efg.f).type == VAL_INT) {
 			grow_array(vm->gc, GETREG(c.d.efg.e), GETREG(c.d.efg.f).integer + 1);
 
 			if (vm->gc->arrlen[GETREG(c.d.efg.e).idx] <= GETREG(c.d.efg.f).integer) {
@@ -397,6 +398,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_DEREF:
+		/* TODO: tables */
+		if (GETREG(c.d.efg.e).type != VAL_ARRAY) {
+			SETREG(c.d.efg.e, ((struct value){ VAL_NIL, { 0 }, 0}));
+			return;
+		}
+
 		grow_array(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g).integer + 1);
 
 		if (vm->gc->array[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer].type == VAL_ARRAY) {
