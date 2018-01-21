@@ -352,6 +352,8 @@ value_more(struct gc *gc, struct value l, struct value r)
 struct value
 cmp_values(struct gc *gc, struct value l, struct value r)
 {
+	_log(gc, "cmp", l, r);
+
 	struct value ret;
 	ret.type = VAL_BOOL;
 
@@ -365,7 +367,7 @@ cmp_values(struct gc *gc, struct value l, struct value r)
 	case VAL_INT:   ret.boolean = (l.integer == r.integer);                break;
 	case VAL_FLOAT: ret.boolean = fcmp(l.real, r.real);                    break;
 	case VAL_STR:   ret.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
-	case VAL_NIL:   ret.boolean = true;                                    break;
+	case VAL_NIL:   ret.boolean = (r.type == VAL_NIL);                     break;
 	default:        assert(false);                                         break;
 	}
 
@@ -392,6 +394,8 @@ and_values(struct gc *gc, struct value l, struct value r)
 bool
 is_truthy(struct gc *gc, struct value l)
 {
+	_log(gc, "truthy", l, (struct value){ VAL_NIL, {0}, 0 });
+
 	switch (l.type) {
 	case VAL_BOOL:  return l.boolean;
 	case VAL_INT:   return l.integer != 0;
@@ -484,7 +488,8 @@ flip_value(struct value l)
 	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
 	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	case VAL_NIL:   ans.boolean = true;                     break;
+	default: assert(false);
 	}
 
 	return ans;

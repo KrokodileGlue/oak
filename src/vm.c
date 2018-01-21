@@ -274,6 +274,12 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_SUBSCR:
 		if (GETREG(c.d.efg.f).type == VAL_ARRAY) {
+			if (GETREG(c.d.efg.g).type != VAL_INT) {
+				error_push(vm->r, *c.loc, ERR_FATAL,
+				           "array requires integer subscript (got %s)", value_data[GETREG(c.d.efg.g).type].body);
+				return;
+			}
+
 			if (GETREG(c.d.efg.g).integer >= vm->gc->arrlen[GETREG(c.d.efg.f).idx]
 			    || GETREG(c.d.efg.g).integer < 0) {
 				struct value v;
@@ -285,9 +291,35 @@ execute_instr(struct vm *vm, struct instruction c)
 			SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
 			                             [GETREG(c.d.efg.g).integer]));
 		} else if (GETREG(c.d.efg.f).type == VAL_TABLE) {
+			if (GETREG(c.d.efg.g).type != VAL_STR) {
+				error_push(vm->r, *c.loc, ERR_FATAL,
+				           "table requires string subscript (got %s)", value_data[GETREG(c.d.efg.g).type].body);
+				return;
+			}
+
 			SETREG(c.d.efg.e,
 			       table_lookup(vm->gc->table[GETREG(c.d.efg.f).idx],
 			                    vm->gc->str[GETREG(c.d.efg.g).idx]));
+		} else if (GETREG(c.d.efg.f).type == VAL_STR) {
+			if (GETREG(c.d.efg.g).type != VAL_INT) {
+				error_push(vm->r, *c.loc, ERR_FATAL,
+				           "string requires integer subscript (got %s)", value_data[GETREG(c.d.efg.g).type].body);
+				return;
+			}
+
+			if ((size_t)GETREG(c.d.efg.g).integer <= strlen(vm->gc->str[GETREG(c.d.efg.f).idx])) {
+				struct value v;
+				v.type = VAL_STR;
+				v.idx = gc_alloc(vm->gc, VAL_STR);
+				vm->gc->str[v.idx] = strclone(" ");
+				vm->gc->str[v.idx][0] = vm->gc->str[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer];
+				SETREG(c.d.efg.e, v);
+			} else {
+				SETREG(c.d.efg.e, ((struct value){ VAL_NIL, { 0 }, 0}));
+			}
+		} else {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "invalid subscript on unsubscriptable type %s", value_data[GETREG(c.d.efg.f).type].body);
 		}
 		break;
 
@@ -419,11 +451,15 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_POPIMP:
+		assert(vm->impp);
 		vm->impp--;
 		break;
 
 	case INSTR_GETIMP:
-		SETREG(c.d.a, vm->imp[vm->impp - 1]);
+		if (vm->impp)
+			SETREG(c.d.a, vm->imp[vm->impp - 1]);
+		else
+			SETREG(c.d.a, ((struct value){ VAL_NIL, { 0 }, 0 }));
 		break;
 
 	case INSTR_MATCH: {

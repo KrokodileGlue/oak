@@ -198,11 +198,11 @@ add_constant(struct compiler *c, struct token *tok)
 static int
 nil(struct compiler *c)
 {
-	struct value v;
-	v.type = VAL_NIL;
-	int n = constant_table_add(c->ct, v);
 	int reg = alloc_reg(c);
-	emit_bc(c, INSTR_MOVC, reg, n, &c->stmt->tok->loc);
+	emit_bc(c, INSTR_MOVC, reg,
+	        constant_table_add(c->ct,
+	                           (struct value){ VAL_NIL, { 0 }, 0}),
+	        &c->stmt->tok->loc);
 	return reg;
 }
 
@@ -515,7 +515,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_EQEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_CMP, reg,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_NOTEQ: {
@@ -821,6 +823,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				return reg;
 			}
 
+			if (!strcmp(e->val->value, "nil"))
+				return nil(c);
+
 			struct symbol *var = resolve(sym, e->val->value);
 			if (var->type == SYM_FN) {
 				struct value v;
@@ -928,9 +933,16 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	} break;
 
 	case EXPR_SUBSCRIPT: {
-		int addr = compile_expression(c, e->a, sym, false);
+		int array = compile_expression(c, e->a, sym, false);
 		reg = alloc_reg(c);
-		emit_efg(c, INSTR_SUBSCR, reg, addr, compile_expression(c, e->b, sym, false), &e->tok->loc);
+
+		if (e->b) {
+			emit_efg(c, INSTR_SUBSCR, reg, array, compile_expression(c, e->b, sym, false), &e->tok->loc);
+		} else {
+			int imp = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
+			emit_efg(c, INSTR_SUBSCR, reg, array, imp, &e->tok->loc);
+		}
 	} break;
 
 	case EXPR_MAP: {

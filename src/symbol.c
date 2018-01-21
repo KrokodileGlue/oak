@@ -181,7 +181,7 @@ static void
 find(struct symbolizer *si, struct location loc, char *name)
 {
 	struct symbol *sym = resolve(si->symbol, name);
-	if (!sym)
+	if (!sym && strcmp(name, "nil"))
 		error_push(si->r, loc, ERR_FATAL, "undeclared identifier");
 }
 
@@ -238,6 +238,8 @@ block(struct symbolizer *si, struct statement *stmt)
 static void
 resolve_expr(struct symbolizer *si, struct expression *e)
 {
+	if (!e) return;
+
 	switch (e->type) {
 	case EXPR_OPERATOR:
 		switch (e->operator->type) {

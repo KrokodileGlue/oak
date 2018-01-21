@@ -327,6 +327,16 @@ boat2.is-alive()
 boat2.health -= 100
 boat2.is-alive()
 
+var str = 'string subscripts?'
+
+if !str[500] and !str[-1]:
+	pl 'invalid subscripts produce nil.'
+
+pl map { str[] } range(7, 16)
+
+# error: string requires integer subscript (got nil)
+# pl str[]
+
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing
@@ -335,8 +345,6 @@ boat2.is-alive()
 # TODO: fix ktre warnings
 # TODO: list comprehensions. see below.
 # TODO: string interpolation
-
-# pl 'string subscripts?'[0]
 
 # pl 0 for range(0, 10)
 # pl 2 * _ for range(0, 10)
