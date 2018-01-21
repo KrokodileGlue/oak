@@ -126,7 +126,7 @@ fn djoin (x y) {
 	return r + djoin(x, y[length y - 1])
 }
 
-pl join(', ', array)
+pl join ', ', array
 pl djoin(', ', array)
 
 var it = [fn { pl type array }, 2, 3, 4]
@@ -294,7 +294,9 @@ fn Boat (name attack) = {
 			self.damage(enemy.attack)
 		} else pl 'The ', enemy.name, ' cannot fight because it is dead.'
 
-		self.is-alive()
+		if self.alive and !enemy.alive {
+			pl 'The ', self.name, ' is victorious.'
+		} else self.is-alive()
 	}
 }
 
@@ -311,9 +313,8 @@ while boat1.alive and boat2.alive {
 	boat2.fight(boat1)
 }
 
-pl join ', ', range(0, 10, 5)
+pl join ', ', range 0, 10, 5
 
-# TODO: make range a builtin function
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing

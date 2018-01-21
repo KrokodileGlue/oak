@@ -1,7 +1,7 @@
 ;;; oak-mode.el --- major mode for editing oak source files.
 
-;; Version: "0.0.1"
-;; Copyright (c) 2017 "KrokodileGlue"
+;; Version: "0.0.2"
+;; Copyright (c) 2018 "KrokodileGlue"
 
 ;; Author: KrokodileGlue <KrokodileGlue@outlook.com>
 ;; Created: 30 Jul 2017
@@ -48,10 +48,14 @@
 
 (defvar oak-highlights nil "Define the font-faces for the functions, constants, and keywords of `oak-mode'.")
 (setq oak-highlights
-      '(("\\b\\(type\\|map\\|uc\\|lc\\|reverse\\|eval\\|join\\|ucfirst\\|lcfirst\\|split\\|length\\|sayln\\|say\\)\\b"			 .	font-lock-function-name-face)
-	("\\b\\(pi\\|0x[[:xdigit:]]+\\|[[:digit:]]+\\.[:digit:]]*\\|[\\.[:digit:]]+\\|_\\|true\\|false\\)\\b" .	font-lock-constant-face)
-	("\\b\\(pl\\|p\\|println\\|last\\|next\\|die\\|when\\|print\\|for\\|do\\|while\\|if\\|return\\|else\\)\\b"    .	font-lock-keyword-face)
-	("\\b\\(var\\|class\\|fn\\)\\b"			 .	font-lock-type-face)))
+      '(("\\b\\(range\\|type\\|map\\|uc\\|lc\\|reverse\\|eval\\|join\\|ucfirst\\|lcfirst\\|split\\|length\\|sayln\\|say\\)\\b"
+	 . font-lock-function-name-face)
+	("\\b\\(pi\\|0x[[:xdigit:]]+\\|[+-]?[[:digit:]]*\\.?[[:digit:]]+\\(e[[:digit:]]+\\)?\\|_\\|true\\|false\\)\\b"
+	 . font-lock-constant-face)
+	("\\b\\(pl\\|p\\|println\\|last\\|next\\|die\\|when\\|print\\|for\\|do\\|while\\|if\\|return\\|else\\)\\b"
+	 . font-lock-keyword-face)
+	("\\b\\(var\\|class\\|fn\\)\\b"
+	 . font-lock-type-face)))
 
 (defvar oak-mode-syntax-table nil "Define the syntax table for `oak-mode'.")
 (setq oak-mode-syntax-table
@@ -138,6 +142,10 @@
 (font-lock-add-keywords 'oak-mode
 			'(("\\<\\(HACK\\):" 1
 			   font-lock-warning-face t)))
+(font-lock-add-keywords 'oak-mode
+			(cons
+			 (regexp-opt '("." "+" "-" "=" ":" "[" "]" "," "!" "(" ")" "<" ">" "<=" ">=" "and" "or"))
+			 'font-lock-warning-face))
 
 (provide 'oak-mode)
 
