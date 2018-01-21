@@ -271,7 +271,6 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_POW:  BIN(pow);                              break;
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_MOD:  BIN(mod);                              break;
-	case INSTR_OR:   BIN(or);                               break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_SUBSCR:
 		if (GETREG(c.d.efg.f).type == VAL_ARRAY) {

@@ -59,7 +59,6 @@ enum instruction_type {
 	INSTR_POW,
 	INSTR_DIV,
 	INSTR_MOD,
-	INSTR_OR,
 	INSTR_NEG,
 	INSTR_FLIP,
 

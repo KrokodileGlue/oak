@@ -71,7 +71,6 @@ struct value mul_values(struct gc *gc, struct value l, struct value r);
 struct value pow_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
 struct value mod_values(struct gc *gc, struct value l, struct value r);
-struct value or_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
 struct value uc_value(struct gc *gc, struct value l);

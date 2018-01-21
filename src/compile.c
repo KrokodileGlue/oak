@@ -369,6 +369,32 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			}
 			break;
 
+		case OP_AND: {
+			reg = alloc_reg(c);
+			struct value v;
+			v.type = VAL_BOOL;
+			v.boolean = false;
+			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+			int a = compile_expression(c, e->a, sym, false);
+
+			emit_a(c, INSTR_COND, a, &e->a->tok->loc);
+			int _a = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
+
+			int b = compile_expression(c, e->b, sym, false);
+
+			emit_a(c, INSTR_COND, b, &e->b->tok->loc);
+			int _b = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->b->tok->loc);
+
+			v.boolean = true;
+			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+			c->code[_a].d.a = c->ip;
+			c->code[_b].d.a = c->ip;
+		} break;
+
 		case OP_ADDEQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				/* TODO: OH MY GOD I HAVE TO FIX THIS */
@@ -433,10 +459,36 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_efg(c, INSTR_MORE, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
-		case OP_OR:
+		case OP_OR: {
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_OR, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
-			break;
+			struct value v;
+			v.type = VAL_BOOL;
+			v.boolean = false;
+			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+			int a = compile_expression(c, e->a, sym, false);
+
+			emit_a(c, INSTR_COND, a, &e->a->tok->loc);
+			int _a = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
+			v.boolean = true;
+			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			int _c = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
+
+			int b = compile_expression(c, e->b, sym, false);
+
+			emit_a(c, INSTR_COND, b, &e->b->tok->loc);
+			int _b = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->b->tok->loc);
+
+			v.boolean = true;
+			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+			c->code[_a].d.a = c->ip;
+			c->code[_b].d.a = c->ip;
+			c->code[_c].d.a = c->ip;
+		} break;
 
 		case OP_COMMA:
 			compile_expression(c, e->a, sym, false);
@@ -538,6 +590,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_SUB:
 			reg = alloc_reg(c);
 			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
+			break;
+
+		case OP_EXCLAMATION:
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_FLIP, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			break;
 
 		default:

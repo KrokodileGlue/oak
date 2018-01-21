@@ -380,21 +380,6 @@ and_values(struct gc *gc, struct value l, struct value r)
 	return ret;
 }
 
-struct value
-or_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "or", l, r);
-
-	struct value ret;
-	ret.type = VAL_BOOL;
-
-	if (l.type != VAL_BOOL || r.type != VAL_BOOL)
-		return (struct value){ VAL_ERR, { 0 }, 0 };
-
-	ret.boolean = l.boolean || r.boolean;
-	return ret;
-}
-
 bool
 is_truthy(struct gc *gc, struct value l)
 {
