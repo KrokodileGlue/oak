@@ -101,6 +101,12 @@ parse_table(struct parser *ps)
 		if (!strcmp(ps->tok->value, "}")) {
 			break;
 		} else {
+			if (strcmp(ps->tok->value, ",")) {
+				expect_symbol(ps, ",");
+				NEXT;
+				break;
+			}
+
 			expect_symbol(ps, ",");
 		}
 	}
@@ -347,8 +353,10 @@ parse_expression(struct parser *ps, int prec)
 {
 	struct expression *e = parse_expr(ps, prec);
 
-	if (!e)
+	if (!e) {
 		error_push(ps->r, ps->tok->loc, ERR_FATAL, "expected an expression, value, or prefix operator");
+		NEXT;
+	}
 
 	return e;
 }

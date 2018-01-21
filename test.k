@@ -307,13 +307,11 @@ boat1.move(0, 1, 0)
 boat1.move(3, -30, 7)
 boat1.show()
 
-while boat1.alive ? boat2.alive : false {
+while boat1.alive and boat2.alive {
 	boat1.fight(boat2)
 	boat2.fight(boat1)
 }
 
-# TODO: fix parser bug: { thing: fn blah { } bar: 2 }
-# TODO: fix parser bug: enemy.alive ? 1, 2, 3 : 4, 5, 6
 # TODO: make range a builtin function
 # TODO: remove length, type, etc. operators
 # TODO: add int, str, etc. builtin function
