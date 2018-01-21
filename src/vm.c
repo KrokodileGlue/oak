@@ -637,6 +637,50 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.efg.e, v);
 	} break;
 
+	case INSTR_RANGE: {
+		assert(GETREG(c.d.efg.f).type == VAL_INT);
+		assert(GETREG(c.d.efg.g).type == VAL_INT);
+		assert(GETREG(c.d.efg.h).type == VAL_INT);
+
+		int64_t start = GETREG(c.d.efg.f).integer;
+		int64_t stop = GETREG(c.d.efg.g).integer;
+		int64_t step = GETREG(c.d.efg.h).integer;
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[v.idx] = NULL;
+		vm->gc->arrlen[v.idx] = 0;
+
+		if (start < stop) {
+			if (step <= 0) {
+				error_push(vm->r, *c.loc, ERR_FATAL,
+				           "invalid range; range from %"PRId64" to %"
+				           PRId64" requires a positive step value"
+				           " (got %"PRId64")",
+				           start, stop, step);
+				return;
+			}
+
+			for (int64_t i = start; i <= stop; i += step)
+				pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+		} else {
+			if (step >= 0) {
+				error_push(vm->r, *c.loc, ERR_FATAL,
+				           "invalid range; range from %"PRId64" to %"
+				           PRId64" requires a negative step value"
+				           " (got %"PRId64")",
+				           start, stop, step);
+				return;
+			}
+
+			for (int64_t i = start; i >= stop; i += step)
+				pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+		}
+
+		SETREG(c.d.efg.e, v);
+	} break;
+
 	case INSTR_REV:
 		SETREG(c.d.bc.b, rev_value(vm->gc, GETREG(c.d.bc.c)));
 		break;

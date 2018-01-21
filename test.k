@@ -153,13 +153,12 @@ fn scope {
 
 scope()
 
-# TODO: make this a builtin function
-fn range(x y) {
-	var ret
-	for var i = 0; i <= y - x; i++:
-		ret[i] = i + x
-	return ret
-}
+# fn range(x y) {
+# 	var ret
+# 	for var i = 0; i <= y - x; i++:
+# 		ret[i] = i + x
+# 	return ret
+# }
 
 {
 	for var i; range(5, 9): pl i
@@ -311,6 +310,8 @@ while boat1.alive and boat2.alive {
 	boat1.fight(boat2)
 	boat2.fight(boat1)
 }
+
+pl join ', ', range(0, 10, 5)
 
 # TODO: make range a builtin function
 # TODO: add int, str, etc. builtin function

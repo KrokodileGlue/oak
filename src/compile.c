@@ -250,6 +250,28 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		emit_efg(c, INSTR_JOIN, reg = alloc_reg(c), array, delim, &e->tok->loc);
 	} break;
 
+	case BUILTIN_RANGE: {
+		CHECKARGS(e->num != 2 && e->num != 3);
+
+		int start = compile_expression(c, e->args[0], sym, false);
+		int stop = compile_expression(c, e->args[1], sym, false);
+		int step = -1;
+
+		if (e->num == 2) {
+			step = alloc_reg(c);
+			struct value v;
+			v.type = VAL_INT;
+			v.integer = 1;
+			emit_bc(c, INSTR_MOVC, step,
+			        constant_table_add(c->ct, v), &e->tok->loc);
+		} else {
+			step = compile_expression(c, e->args[2], sym, false);
+		}
+
+		emit_efg(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, &e->tok->loc);
+		c->code[c->ip - 1].d.efg.h = step;
+	} break;
+
 #define UNARY(X,Y)	  \
 	case BUILTIN_##X: { \
 		int arg = -1; \

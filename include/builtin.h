@@ -8,6 +8,7 @@ struct builtin {
 	enum {
 		BUILTIN_SPLIT,
 		BUILTIN_JOIN,
+		BUILTIN_RANGE,
 		BUILTIN_REVERSE,
 		BUILTIN_UC,
 		BUILTIN_LC,

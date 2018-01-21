@@ -597,6 +597,8 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 
 	if (si->r->fatal) {
 		error_write(si->r, stderr);
+		if (!m->child)
+			free_symbol(si->symbol);
 		symbolizer_free(si);
 		return false;
 	} else if (si->r->pending) {

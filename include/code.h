@@ -37,6 +37,7 @@ enum instruction_type {
 
 	INSTR_SPLIT,
 	INSTR_JOIN,
+	INSTR_RANGE,
 	INSTR_REV,
 	INSTR_UC,
 	INSTR_LC,
