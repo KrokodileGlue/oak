@@ -253,7 +253,12 @@ pl table.a
 table.b(1000)
 pl table.a
 
-fn Ship = {
+fn Boat (name attack) = {
+	name: name,
+	health: 100,
+	alive: true,
+	attack: attack,
+
 	x: 0,
 	y: 0,
 	z: 0,
@@ -265,15 +270,64 @@ fn Ship = {
 	},
 
 	show: fn (self) {
-		pl '(' + self.x + ', ' + self.y + ', ' + self.z + ')'
+		pl 'The ', self.name, ' is at '
+		    + self.x + ', ' + self.y + ', ' + self.z + '.'
+	},
+
+	damage: fn (self damage) {
+		self.health = self.health - damage
+		pl 'The ', self.name, ' takes ', damage, ' damage!'
+		pl 'The ', self.name, ' now has ', self.health, ' health.'
+
+		self.alive = false when self.health <= 0
+	},
+
+	is-alive: fn (self) {
+		pl self.alive ? 'The ' + self.name + ' is still kicking.'
+		 : 'The ' + self.name + ' is dead! RIP!'
+	},
+
+	fight: fn (self enemy) {
+		pl 'The ', self.name, ' is now fighting the ', enemy.name, '!'
+
+		if enemy.alive {
+			pl 'The ', enemy.name, ' deals ', enemy.attack, ' damage!'
+			self.damage(enemy.attack)
+		} else pl 'The ', enemy.name, ' cannot fight because it is dead.'
+
+		self.is-alive()
 	}
 }
 
-var ship = Ship()
-ship.show()
-ship.move(0, 1, 0)
-ship.move(0, -2, 0)
-ship.show()
+var boat1 = Boat('U.S.S Enterprise', 25)
+var boat2 = Boat('S.S. Minnow', 30)
+
+boat1.show()
+boat1.move(0, 1, 0)
+boat1.move(3, -30, 7)
+boat1.show()
+
+while boat1.alive ? boat2.alive : false {
+	boat1.fight(boat2)
+	boat2.fight(boat1)
+}
+
+# TODO: fix parser bug: { thing: fn blah { } bar: 2 }
+# TODO: fix parser bug: enemy.alive ? 1, 2, 3 : 4, 5, 6
+# TODO: make range a builtin function
+# TODO: remove length, type, etc. operators
+# TODO: add int, str, etc. builtin function
+# TODO: default arguments and varargs
+# TODO: finish tables by robustizing
+# TODO: actually implement the tracing garbage collector
+# TODO: string subscripts and assignment
+# TODO: fix ktre warnings
+# TODO: && and >= operators, -= for tables, arrays
+# TODO: 'and' and 'or' highlighting in oak-mode
+# TODO: list comprehensions. see below.
+# TODO: string interpolation
+
+# pl 'string subscripts?'[0]
 
 # pl 0 for range(0, 10)
 # pl 2 * _ for range(0, 10)
