@@ -476,6 +476,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int _c = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
 
+			c->code[_a].d.a = c->ip;
 			int b = compile_expression(c, e->b, sym, false);
 
 			emit_a(c, INSTR_COND, b, &e->b->tok->loc);
@@ -485,7 +486,6 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			v.boolean = true;
 			emit_bc(c, INSTR_MOVC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
-			c->code[_a].d.a = c->ip;
 			c->code[_b].d.a = c->ip;
 			c->code[_c].d.a = c->ip;
 		} break;
@@ -577,16 +577,6 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	case OPTYPE_PREFIX:
 		switch (e->operator->name) {
-		case OP_TYPE:
-			reg = alloc_reg(c);
-			emit_bc(c, INSTR_TYPE, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
-			break;
-
-		case OP_LENGTH:
-			reg = alloc_reg(c);
-			emit_bc(c, INSTR_LEN, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
-			break;
-
 		case OP_SUB:
 			reg = alloc_reg(c);
 			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);

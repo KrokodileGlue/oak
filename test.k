@@ -313,7 +313,6 @@ while boat1.alive and boat2.alive {
 }
 
 # TODO: make range a builtin function
-# TODO: remove length, type, etc. operators
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing
