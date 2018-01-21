@@ -369,19 +369,28 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_CMP:
-		SETREG(c.d.efg.e, cmp_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		SETREG(c.d.efg.e, cmp_values(vm->gc,
+		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_LESS:
-		SETREG(c.d.efg.e, value_less(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		SETREG(c.d.efg.e, value_less(vm->gc,
+		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_LEQ:
-		SETREG(c.d.efg.e, value_leq(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		SETREG(c.d.efg.e, value_leq(vm->gc,
+		                            GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		break;
+
+	case INSTR_GEQ:
+		SETREG(c.d.efg.e, value_geq(vm->gc,
+		                            GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_MORE:
-		SETREG(c.d.efg.e, value_more(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
+		SETREG(c.d.efg.e, value_more(vm->gc,
+		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_TYPE: {

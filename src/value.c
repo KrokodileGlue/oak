@@ -300,20 +300,29 @@ value_leq(struct gc *gc, struct value l, struct value r)
 	_log(gc, "leq", l, r);
 
 	struct value ret;
-	ret.type = VAL_NIL;
+	ret.type = VAL_BOOL;
 
 	BINARY_MATH_OPERATION(<=) else {
 		assert(false);
 	}
 
-	if (ret.integer == 0) {
-		ret.type = VAL_BOOL;
-		ret.boolean = false;
-	} else {
-		ret.type = VAL_BOOL;
-		ret.boolean = true;
+	ret.boolean = ret.integer == 0;
+	return ret;
+}
+
+struct value
+value_geq(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "geq", l, r);
+
+	struct value ret;
+	ret.type = VAL_BOOL;
+
+	BINARY_MATH_OPERATION(>=) else {
+		assert(false);
 	}
 
+	ret.boolean = ret.integer == 0;
 	return ret;
 }
 

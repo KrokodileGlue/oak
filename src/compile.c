@@ -419,12 +419,22 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_ADDEQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
-				/* TODO: OH MY GOD I HAVE TO FIX THIS */
-				assert(false);
+				int keyreg = -1;
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false),
+				         keyreg = compile_expression(c, e->a->b, sym, false),
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+				emit_efg(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
-
 				struct value key;
 				key.type = VAL_STR;
 				key.idx = gc_alloc(c->gc, VAL_STR);
@@ -455,6 +465,54 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			}
 			break;
 
+		case OP_SUBEQ:
+			if (e->a->type == EXPR_SUBSCRIPT) {
+				int keyreg = -1;
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false),
+				         keyreg = compile_expression(c, e->a->b, sym, false),
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+				emit_efg(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else if (e->a->type == EXPR_OPERATOR
+			           && e->a->operator->type == OPTYPE_BINARY
+			           && e->a->operator->name == OP_PERIOD) {
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_MOVC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false),
+				         keyreg,
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+				emit_efg(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else {
+				int addr = compile_lvalue(c, e->a, sym);
+				int n = alloc_reg(c);
+				emit_bc(c, INSTR_MOV, n, addr, &e->tok->loc);
+				emit_efg(c, INSTR_SUB, addr, n, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				reg = addr;
+			}
+			break;
+
 		case OP_EQEQ:
 			reg = alloc_reg(c);
 			emit_efg(c, INSTR_CMP, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
@@ -462,23 +520,38 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_NOTEQ: {
 			int temp = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, temp, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_CMP, temp,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			emit_bc(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
 		} break;
 
 		case OP_LESS:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_LESS, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_LESS, reg,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_LEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_LEQ, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_LEQ, reg,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
+			break;
+
+		case OP_GEQ:
+			reg = alloc_reg(c);
+			emit_efg(c, INSTR_GEQ, reg,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_MORE:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_MORE, reg, compile_expression(c, e->a, sym, false), compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_MORE, reg,
+			         compile_expression(c, e->a, sym, false),
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			break;
 
 		case OP_OR: {

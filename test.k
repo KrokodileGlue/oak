@@ -278,10 +278,11 @@ fn Boat (name attack) = {
 		pl 'The ', self.name, ' takes ', damage, ' damage!'
 		pl 'The ', self.name, ' now has ', self.health, ' health.'
 
-		self.alive = false when self.health <= 0
+		self.alive = (self.health >= 0)
 	},
 
 	is-alive: fn (self) {
+		self.alive = (self.health >= 0)
 		pl self.alive ? 'The ' + self.name + ' is still kicking.'
 		 : 'The ' + self.name + ' is dead! RIP!'
 	},
@@ -317,14 +318,21 @@ pl join ', ', range 0, 24.5, 5
 pl join ', ', range 0.1, 24.5, 5
 pl join ', ', range 0, 24.5, 5
 
+var arr = [1, 2, 3, 4]
+arr[3] += 10
+arr[3] -= 4
+pl arr[3]
+
+boat2.is-alive()
+boat2.health -= 100
+boat2.is-alive()
+
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: string subscripts and assignment
 # TODO: fix ktre warnings
-# TODO: && and >= operators, -= for tables, arrays
-# TODO: 'and' and 'or' highlighting in oak-mode
 # TODO: list comprehensions. see below.
 # TODO: string interpolation
 

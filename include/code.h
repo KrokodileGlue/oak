@@ -49,6 +49,7 @@ enum instruction_type {
 	INSTR_CMP,
 	INSTR_LESS,
 	INSTR_LEQ,
+	INSTR_GEQ,
 	INSTR_MORE,
 	INSTR_INC,
 	INSTR_TYPE,
