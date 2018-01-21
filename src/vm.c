@@ -288,8 +288,12 @@ execute_instr(struct vm *vm, struct instruction c)
 				break;
 			}
 
-			SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
-			                             [GETREG(c.d.efg.g).integer]));
+			if (c.d.efg.h)
+				SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
+				                             [GETREG(c.d.efg.g).integer]));
+			else
+				SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]
+				       [GETREG(c.d.efg.g).integer]);
 		} else if (GETREG(c.d.efg.f).type == VAL_TABLE) {
 			if (GETREG(c.d.efg.g).type != VAL_STR) {
 				error_push(vm->r, *c.loc, ERR_FATAL,
@@ -399,7 +403,7 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_DEREF:
 		/* TODO: tables */
-		if (GETREG(c.d.efg.e).type != VAL_ARRAY) {
+		if (GETREG(c.d.efg.f).type != VAL_ARRAY) {
 			SETREG(c.d.efg.e, ((struct value){ VAL_NIL, { 0 }, 0}));
 			return;
 		}

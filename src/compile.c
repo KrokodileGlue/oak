@@ -937,7 +937,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		reg = alloc_reg(c);
 
 		if (e->b) {
-			emit_efg(c, INSTR_SUBSCR, reg, array, compile_expression(c, e->b, sym, false), &e->tok->loc);
+			emit_efg(c, INSTR_SUBSCR, reg, array,
+			         compile_expression(c, e->b, sym, false), &e->tok->loc);
+			c->code[c->ip - 1].d.efg.h = copy;
 		} else {
 			int imp = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);

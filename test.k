@@ -337,6 +337,11 @@ pl map { str[] } range(7, 16)
 pl str[6] = '-'
 pl type str
 
+var asdf = [1, 2, 3, [4, 5, 6]]
+var temp = asdf[3]
+temp[0] = 500
+pl join ', ', asdf
+
 # error: string requires integer subscript (got nil)
 # pl str[]
 

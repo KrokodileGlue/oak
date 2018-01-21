@@ -228,6 +228,7 @@ static void print_statement(struct ASTPrinter *ap, struct statement *s);
 static void
 print_expression(struct ASTPrinter *ap, struct expression *e)
 {
+	if (!e) return;
 	indent(ap);
 
 	/* Why is this not a switch? */
