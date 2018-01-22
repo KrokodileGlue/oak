@@ -826,8 +826,13 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 static int
 compile_expression(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
-	if (!e) return nil(c);
 	int reg = -1;
+
+	if (!e) {
+		reg = alloc_reg(c);
+		emit_a(c, INSTR_GETIMP, reg, &c->stmt->tok->loc);
+		return reg;
+	}
 
 	switch (e->type) {
 	case EXPR_BUILTIN:  reg = compile_builtin(c, e, sym);  break;
@@ -955,16 +960,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_SUBSCRIPT: {
 		int array = compile_expression(c, e->a, sym, false);
 		reg = alloc_reg(c);
-
-		if (e->b) {
-			emit_efg(c, INSTR_SUBSCR, reg, array,
-			         compile_expression(c, e->b, sym, false), &e->tok->loc);
-			c->code[c->ip - 1].d.efg.h = copy;
-		} else {
-			int imp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
-			emit_efg(c, INSTR_SUBSCR, reg, array, imp, &e->tok->loc);
-		}
+		emit_efg(c, INSTR_SUBSCR, reg, array,
+		         compile_expression(c, e->b, sym, false), &e->tok->loc);
+		c->code[c->ip - 1].d.efg.h = copy;
 	} break;
 
 	case EXPR_MAP: {

@@ -353,10 +353,14 @@ pl join ', ', push asdf, 7
 map { push asdf } range 8, 10
 pl join ', ', asdf
 
+pl join ', ', map { (2 *) + } range 1, 5
+
 # error: string requires integer subscript (got nil)
 # pl str[]
 
-# TODO: push builtin
+pl 5 * 'test'
+pl join ', ', 5 * ['foo', 'bar']
+
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing

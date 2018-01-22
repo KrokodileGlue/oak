@@ -200,11 +200,44 @@ mul_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "multiplication", l, r);
 
-	/* TODO: fancy operations on strings and lists. */
 	struct value ret;
 	ret.type = VAL_NIL;
 
-	BINARY_MATH_OPERATION(*) else {
+	if (l.type == VAL_STR && r.type == VAL_INT) {
+		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = oak_malloc(r.integer * strlen(gc->str[l.idx]) + 1);
+		*gc->str[ret.idx] = 0;
+
+		for (int64_t i = 0; i < r.integer; i++)
+			strcat(gc->str[ret.idx], gc->str[l.idx]);
+	} else if (l.type == VAL_INT && r.type == VAL_STR) {
+		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = oak_malloc(l.integer * strlen(gc->str[r.idx]) + 1);
+		*gc->str[ret.idx] = 0;
+
+		for (int64_t i = 0; i < l.integer; i++)
+			strcat(gc->str[ret.idx], gc->str[r.idx]);
+	} else if (l.type == VAL_ARRAY && r.type == VAL_INT) {
+		ret.type = VAL_ARRAY;
+		ret.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->array[ret.idx] = NULL;
+		gc->arrlen[ret.idx] = 0;
+
+		for (int64_t i = 0; i < r.integer; i++)
+			for (size_t j = 0; j < gc->arrlen[l.idx]; j++)
+				pushback(gc, ret, copy_value(gc, gc->array[l.idx][j]));
+	} else if (l.type == VAL_INT && r.type == VAL_ARRAY) {
+		ret.type = VAL_ARRAY;
+		ret.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->array[ret.idx] = NULL;
+		gc->arrlen[ret.idx] = 0;
+
+		for (int64_t i = 0; i < l.integer; i++)
+			for (size_t j = 0; j < gc->arrlen[r.idx]; j++)
+				pushback(gc, ret, copy_value(gc, gc->array[r.idx][j]));
+	} else BINARY_MATH_OPERATION(*) else {
 		assert(false);
 	}
 
