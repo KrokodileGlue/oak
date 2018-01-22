@@ -401,6 +401,17 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 		break;
 
+	case INSTR_APUSH: {
+		if (GETREG(c.d.bc.b).type != VAL_ARRAY) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "push builtin requires array as its lefthand argument (got %s)",
+			           value_data[GETREG(c.d.bc.b).type].body);
+			return;
+		}
+
+		pushback(vm->gc, GETREG(c.d.bc.b), GETREG(c.d.bc.c));
+	} break;
+
 	case INSTR_DEREF:
 		/* TODO: tables */
 		if (GETREG(c.d.efg.f).type != VAL_ARRAY) {

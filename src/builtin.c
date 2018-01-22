@@ -7,6 +7,7 @@ struct builtin builtin[] = {
 	{ "split",   1,  BUILTIN_SPLIT   },
 	{ "join",    1,  BUILTIN_JOIN    },
 	{ "range",   1,  BUILTIN_RANGE   },
+	{ "push",    1,  BUILTIN_PUSH    },
 	{ "reverse", 14, BUILTIN_REVERSE },
 	{ "uc",      14, BUILTIN_UC      },
 	{ "lc",      14, BUILTIN_LC      },

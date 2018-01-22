@@ -272,6 +272,25 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		c->code[c->ip - 1].d.efg.h = step;
 	} break;
 
+	case BUILTIN_PUSH: {
+		CHECKARGS(e->num != 1 && e->num != 2);
+
+		if (e->num == 2) {
+			emit_bc(c, INSTR_APUSH,
+			        reg = compile_expression(c, e->args[0], sym, false),
+			        compile_expression(c, e->args[1], sym, false),
+			        &e->tok->loc);
+		} else {
+			int imp = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
+
+			emit_bc(c, INSTR_APUSH,
+			        reg = compile_expression(c, e->args[0], sym, false),
+			        imp,
+			        &e->tok->loc);
+		}
+	} break;
+
 #define UNARY(X,Y)	  \
 	case BUILTIN_##X: { \
 		int arg = -1; \
