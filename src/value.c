@@ -474,6 +474,12 @@ copy_value(struct gc *gc, struct value l)
 		}
 
 		l = v;
+	} else if (l.type == VAL_STR) {
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(gc, VAL_STR);
+		gc->str[v.idx] = strclone(gc->str[l.idx]);
+		l = v;
 	}
 
 	return l;

@@ -338,7 +338,10 @@ if !str[500] and !str[-1]:
 
 pl map { str[] } range 7, 16
 
+var tstr = str
+pl tstr
 pl str[6] = '-'
+pl tstr
 pl type str
 
 var asdf = [1, 2, 3, [4, 5, 6]]
