@@ -365,7 +365,6 @@ pl int '-0x100' * 2
 pl float '3.1415926535897932' * 3
 pl (str 400) * 2
 
-# TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
