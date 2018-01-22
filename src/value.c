@@ -305,7 +305,7 @@ mod_values(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
-value_less(struct gc *gc, struct value l, struct value r)
+less_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "lessthan", l, r);
 
@@ -328,7 +328,7 @@ value_less(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
-value_leq(struct gc *gc, struct value l, struct value r)
+leq_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "leq", l, r);
 
@@ -344,7 +344,7 @@ value_leq(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
-value_geq(struct gc *gc, struct value l, struct value r)
+geq_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "geq", l, r);
 
@@ -360,7 +360,7 @@ value_geq(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
-value_more(struct gc *gc, struct value l, struct value r)
+more_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "morethan", l, r);
 
@@ -660,6 +660,31 @@ neg_value(struct value l)
 	}
 
 	return ans;
+}
+
+struct value
+int_value(struct gc *gc, struct value l)
+{
+	struct value ret;
+	ret.type = VAL_INT;
+	char *end = NULL;
+	ret.integer = (int64_t)strtol(gc->str[l.idx], &end, 0);
+
+	/* TODO: Maybe the gc should have a reporter. */
+	/* if (*end) { */
+	/* } */
+
+	return ret;
+}
+
+struct value
+float_value(struct gc *gc, struct value l)
+{
+	struct value ret;
+	ret.type = VAL_FLOAT;
+	char *end = NULL;
+	ret.real = strtod(gc->str[l.idx], &end);
+	return ret;
 }
 
 struct value

@@ -271,7 +271,42 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_POW:  BIN(pow);                              break;
 	case INSTR_DIV:  BIN(div);                              break;
 	case INSTR_MOD:  BIN(mod);                              break;
+	case INSTR_CMP:  BIN(cmp);                              break;
+	case INSTR_LESS: BIN(less);                             break;
+	case INSTR_LEQ:  BIN(leq);                              break;
+	case INSTR_GEQ:  BIN(geq);                              break;
+	case INSTR_MORE: BIN(more);                             break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
+	case INSTR_INT:
+		if (GETREG(c.d.bc.c).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "int builtin requires string argument (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		SETREG(c.d.bc.b, int_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_FLOAT:
+		if (GETREG(c.d.bc.c).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "float builtin requires string argument (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		SETREG(c.d.bc.b, float_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_STR: {
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = show_value(vm->gc, GETREG(c.d.bc.c));
+		SETREG(c.d.bc.b, v);
+	} break;
+
 	case INSTR_SUBSCR:
 		if (GETREG(c.d.efg.f).type == VAL_ARRAY) {
 			if (GETREG(c.d.efg.g).type != VAL_INT) {
@@ -448,31 +483,6 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_NCOND:
 		if (!is_truthy(vm->gc, GETREG(c.d.a)))
 			vm->ip++;
-		break;
-
-	case INSTR_CMP:
-		SETREG(c.d.efg.e, cmp_values(vm->gc,
-		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
-		break;
-
-	case INSTR_LESS:
-		SETREG(c.d.efg.e, value_less(vm->gc,
-		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
-		break;
-
-	case INSTR_LEQ:
-		SETREG(c.d.efg.e, value_leq(vm->gc,
-		                            GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
-		break;
-
-	case INSTR_GEQ:
-		SETREG(c.d.efg.e, value_geq(vm->gc,
-		                            GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
-		break;
-
-	case INSTR_MORE:
-		SETREG(c.d.efg.e, value_more(vm->gc,
-		                             GETREG(c.d.efg.f), GETREG(c.d.efg.g)));
 		break;
 
 	case INSTR_TYPE: {

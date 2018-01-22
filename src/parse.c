@@ -399,11 +399,6 @@ parse_fn_def(struct parser *ps)
 
 	if (ps->tok->type == TOK_IDENTIFIER) {
 		s->fn_def.name = ps->tok->value;
-
-		if (get_builtin(ps->tok->value))
-			error_push(ps->r, ps->tok->loc, ERR_FATAL,
-			           "redeclaration of builtin function `%s'",
-			           ps->tok->value);
 		NEXT;
 	} else {
 		s->fn_def.name = "";

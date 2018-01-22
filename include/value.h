@@ -85,12 +85,14 @@ struct value grow_array(struct gc *gc, struct value l, int r);
 struct value pushback(struct gc *gc, struct value l, struct value r);
 
 struct value cmp_values(struct gc *gc, struct value l, struct value r);
-struct value value_less(struct gc *gc, struct value l, struct value r);
-struct value value_leq(struct gc *gc, struct value l, struct value r);
-struct value value_geq(struct gc *gc, struct value l, struct value r);
-struct value value_more(struct gc *gc, struct value l, struct value r);
+struct value less_values(struct gc *gc, struct value l, struct value r);
+struct value leq_values(struct gc *gc, struct value l, struct value r);
+struct value geq_values(struct gc *gc, struct value l, struct value r);
+struct value more_values(struct gc *gc, struct value l, struct value r);
 struct value value_len(struct gc *gc, struct value l);
 struct value value_translate(struct gc *l, struct gc *r, struct value v);
+struct value int_value(struct gc *gc, struct value l);
+struct value float_value(struct gc *gc, struct value l);
 
 bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);

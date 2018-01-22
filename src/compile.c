@@ -343,6 +343,51 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		reg = arg;
 	} break;
 
+	case BUILTIN_INT: {
+		CHECKARGS(e->num != 1 && e->num != 0);
+		int arg = -1;
+
+		if (e->num == 0) {
+			arg = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+		} else {
+			arg = compile_expression(c, e->args[0], sym, false);
+		}
+
+		reg = alloc_reg(c);
+		emit_bc(c, INSTR_INT, reg, arg, &e->tok->loc);
+	} break;
+
+	case BUILTIN_FLOAT: {
+		CHECKARGS(e->num != 1 && e->num != 0);
+		int arg = -1;
+
+		if (e->num == 0) {
+			arg = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+		} else {
+			arg = compile_expression(c, e->args[0], sym, false);
+		}
+
+		reg = alloc_reg(c);
+		emit_bc(c, INSTR_FLOAT, reg, arg, &e->tok->loc);
+	} break;
+
+	case BUILTIN_STRING: {
+		CHECKARGS(e->num != 1 && e->num != 0);
+		int arg = -1;
+
+		if (e->num == 0) {
+			arg = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+		} else {
+			arg = compile_expression(c, e->args[0], sym, false);
+		}
+
+		reg = alloc_reg(c);
+		emit_bc(c, INSTR_STR, reg, arg, &e->tok->loc);
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",
 		     e->bi->body);

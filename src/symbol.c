@@ -136,6 +136,14 @@ add(struct symbolizer *si, struct symbol *sym)
 {
 	if (!sym) return;
 
+	if (get_builtin(sym->name)) {
+		error_push(si->r, sym->tok->loc, ERR_FATAL,
+		           "redeclaration of builtin function `%s'",
+		           sym->name);
+		free_symbol(sym);
+		return;
+	}
+
 	if (sym->type == SYM_VAR || sym->type == SYM_ARGUMENT)
 		inc_variable_count(si->symbol);
 

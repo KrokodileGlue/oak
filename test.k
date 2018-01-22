@@ -331,18 +331,18 @@ boat2.is-alive()
 boat2.health -= 100
 boat2.is-alive()
 
-var str = 'string subscripts?'
+var _str = 'string subscripts?'
 
-if !str[500] and !str[-1]:
+if !_str[500] and !_str[-1]:
 	pl 'invalid subscripts produce nil.'
 
-pl map { str[] } range 7, 16
+pl map { _str[] } range 7, 16
 
-var tstr = str
+var tstr = _str
 pl tstr
-pl str[6] = '-'
+pl _str[6] = '-'
 pl tstr
-pl type str
+pl type _str
 
 var asdf = [1, 2, 3, [4, 5, 6]]
 var temp = asdf[3]
@@ -356,10 +356,14 @@ pl join ', ', asdf
 pl join ', ', map { (2 *) + } range 1, 5
 
 # error: string requires integer subscript (got nil)
-# pl str[]
+# pl _str[]
 
 pl 5 * 'test'
 pl join ', ', 5 * ['foo', 'bar']
+
+pl int '-0x100' * 2
+pl float '3.1415926535897932' * 3
+pl (str 400) * 2
 
 # TODO: add int, str, etc. builtin function
 # TODO: default arguments and varargs
