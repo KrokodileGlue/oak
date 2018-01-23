@@ -575,7 +575,9 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 	struct symbolizer *si = new_symbolizer(k);
 
 	if (!m->tree || !m->tree[0]) {
-		error_push(si->r, (struct location){0,0,0,0}, ERR_FATAL, "empty modules are not permitted");
+		error_push(si->r, (struct location){ m->text, m->path, 0, 0 }, ERR_FATAL, "empty modules are not permitted");
+		error_write(si->r, stderr);
+		symbolizer_free(si);
 		return false;
 	}
 
