@@ -464,6 +464,8 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 static void
 print_statement(struct ASTPrinter *ap, struct statement *s)
 {
+	if (!s) return;
+
 	indent(ap);
 	fprintf(ap->f, "(stmt %s) : %d", statement_data[s->type].body, s->scope);
 
@@ -594,7 +596,7 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		indent(ap);  fprintf(ap->f, "<body> : %d", s->fn_def.body->scope);
 
 		ap->depth++;
-		print_statement(ap, s->for_loop.body);
+		print_statement(ap, s->fn_def.body);
 		ap->depth--;
 
 		ap->depth--;

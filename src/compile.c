@@ -954,9 +954,16 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		break;
 	} break;
 
-	case EXPR_FN_CALL:
+	case EXPR_FN_CALL: {
+		int arg[e->num];
+
+		for (int i = e->num - 1; i >= 0; i--) {
+			arg[i] = alloc_reg(c);
+			emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true), &e->tok->loc);
+		}
+
 		for (int i = e->num - 1; i >= 0; i--)
-			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
+			emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
 
 		if (e->a->type == EXPR_OPERATOR
 		    && e->a->operator->type == OPTYPE_BINARY
@@ -967,7 +974,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false), &e->tok->loc);
 		reg = alloc_reg(c);
 		emit_a(c, INSTR_POP, reg, &e->tok->loc);
-		break;
+	} break;
 
 	case EXPR_FN_DEF: {
 		struct value v;

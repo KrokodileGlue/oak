@@ -393,10 +393,8 @@ arg2(1, 2, 3)
 arg2(1, 2, 3, 4, 5, 6, 7)
 arg2(1)
 
-# TODO: default arguments and varargs
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings
 # TODO: string interpolation
 # TODO: regex matches shouldn't survive function calls
-# TODO: function arguments should all be evaluated before being pushed
