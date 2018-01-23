@@ -1077,6 +1077,77 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		        &e->tok->loc);
 	} break;
 
+	case EXPR_LIST_COMPREHENSION: {
+		int array = -1;
+		int index = alloc_reg(c);
+
+		if (e->b) {
+			array = compile_expression(c, e->b, sym, false);
+		} else {
+			array = compile_expression(c, e->s->expr, sym, false);
+		}
+
+		reg = alloc_reg(c);
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(c->gc, VAL_ARRAY);
+		c->gc->array[v.idx] = NULL;
+		c->gc->arrlen[v.idx] = 0;
+
+		emit_bc(c, INSTR_COPYC, reg,
+		        constant_table_add(c->ct, v),
+		        &e->tok->loc);
+
+		emit_bc(c, INSTR_MOVC, index,
+		        constant_table_add(c->ct, INT(-1)),
+		        &e->tok->loc);
+
+		int cond = alloc_reg(c);
+		size_t start = c->ip;
+
+		emit_a(c, INSTR_INC, index, &e->tok->loc);
+		int len = alloc_reg(c);
+		emit_bc(c, INSTR_LEN, len, array, &e->tok->loc);
+
+		emit_efg(c, INSTR_LESS, cond, index, len, &e->tok->loc);
+		emit_a(c, INSTR_COND, cond, &e->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+
+		if (e->s->type == STMT_EXPR && e->b) {
+			assert(e->s->expr->type == EXPR_VALUE);
+			struct symbol *var = resolve(sym, e->s->expr->val->value);
+			emit_efg(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
+		} else if (e->s->type == STMT_VAR_DECL && e->b) {
+			struct statement *s = e->s;
+
+			if (s->var_decl.num != 1) {
+				error_push(c->r, e->tok->loc, ERR_FATAL,
+				           "variable declarations in list comprehensions may declare only one variable");
+				return -1;
+			}
+
+			sym = find_from_scope(sym, s->scope);
+			struct symbol *var = resolve(sym, s->var_decl.names[0]->value);
+			var->address = c->var[c->sp]++;
+			emit_efg(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
+		} else if (e->b) {
+			assert(false);
+		}
+
+		if (!e->b) {
+			int imp = alloc_reg(c);
+			emit_efg(c, INSTR_SUBSCR, imp, array, index, &e->tok->loc);
+			emit_a(c, INSTR_PUSHIMP, imp, &e->tok->loc);
+		}
+
+		emit_bc(c, INSTR_PUSHBACK, reg,
+		        compile_expression(c, e->a, sym, false), &e->tok->loc);
+		emit_a(c, INSTR_JMP, start, &e->tok->loc);
+		c->code[a].d.a = c->ip;
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
 		     e->type);

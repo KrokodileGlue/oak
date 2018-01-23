@@ -12,8 +12,8 @@ DEP = $(OBJ:.o=.d)
 all: $(TARGET)
 
 debug: all
-debug: CFLAGS += -g -Og
-debug: LDFLAGS += -g -Og
+debug: CFLAGS += -g -O0
+debug: LDFLAGS += -g -O0
 
 $(TARGET): $(OBJ)
 	$(LINK.o) $^ $(LDLIBS) -o $@

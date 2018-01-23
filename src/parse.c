@@ -184,7 +184,7 @@ parse_expr(struct parser *ps, size_t prec)
 		} else {
 			struct expression *first = parse_expr(ps, 1);
 			if (!strcmp(ps->tok->value, "for")) {
-				/* we have a list comprehension */
+				/* List comprehension. */
 				left->type = EXPR_LIST_COMPREHENSION;
 				left->a = first;
 
@@ -198,12 +198,14 @@ parse_expr(struct parser *ps, size_t prec)
 					left->s->expr = parse_expr(ps, 0);
 				}
 
-				expect_symbol(ps, "in");
+				if (!strcmp(ps->tok->value, "in")) {
+					expect_symbol(ps, "in");
 
-				left->b = parse_expr(ps, 0);
-				if (!strcmp(ps->tok->value, "if")) {
-					expect_symbol(ps, "if");
-					left->c = parse_expr(ps, 0);
+					left->b = parse_expr(ps, 0);
+					if (!strcmp(ps->tok->value, "if")) {
+						expect_symbol(ps, "if");
+						left->c = parse_expr(ps, 0);
+					}
 				}
 			} else {
 				if (strcmp(ps->tok->value, "]")) NEXT;

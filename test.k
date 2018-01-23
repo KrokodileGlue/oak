@@ -372,7 +372,12 @@ pl (str 400) * 2
 # TODO: list comprehensions. see below.
 # TODO: string interpolation
 
-# pl 0 for range(0, 10)
+var x
+pl join ', ', [0 for range 0, 9]
+pl join ', ', [2 * x for x in range 0, 9]
+pl join ', ', [3 * y for var y in range 0, 9]
+pl join ', ', [2 * for [2 * for range 0, 9]]
+
 # pl 2 * _ for range(0, 10)
 # pl i for var i in range(0, 10)
 

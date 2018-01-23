@@ -1,6 +1,7 @@
-#include "util.h"
-
+#include <assert.h>
 #include <string.h>
+
+#include "util.h"
 
 size_t
 line_len(struct location loc)
@@ -36,14 +37,22 @@ column_number(struct location loc)
 size_t
 index_in_line(struct location loc)
 {
+	if (loc.text[loc.index] == '\n')
+		return 0;
+
 	size_t start = loc.index;
-	while (start) { /* find the beginning of the line we're in */
+
+	/* Find the beginning of the line. */
+	while (start) {
 		if (loc.text[start] == '\n') {
 			start++;
 			break;
 		}
+
 		start--;
 	}
+
+	assert(loc.index - start < 2048);
 	return loc.index - start;
 }
 
@@ -94,6 +103,9 @@ void remove_char(char *lhs, size_t c)
 char *
 get_line(struct location loc)
 {
+	if (loc.len == 0)
+		return strclone("");
+
 	size_t start = loc.index, end = loc.index;
 	while (start) { /* find the beginning of the line we're in */
 		if (loc.text[start] == '\n') {

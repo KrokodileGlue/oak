@@ -43,6 +43,7 @@ void
 error_write(struct reporter *r, FILE *fp)
 {
 	struct Error *errors = r->err;
+
 	for (size_t i = 0; i < r->num; i++) {
 		struct Error err = errors[i];
 
@@ -56,9 +57,8 @@ error_write(struct reporter *r, FILE *fp)
 			? line + index_in_line(err.loc) + err.loc.len
 			: ERROR_MSG_COLOR" [token truncated]"RESET_COLOR);
 
-		for (size_t j = 0; j < index_in_line(err.loc); j++) {
+		for (size_t j = 0; j < index_in_line(err.loc); j++)
 			fputc(line[j] == '\t' ? '\t' : ' ', fp);
-		}
 
 		fprintf(fp, "%s", ERROR_HIGHLIGHT_COLOR);
 		fputc('^', fp);
@@ -85,9 +85,9 @@ error_delete(struct Error err)
 void
 error_clear(struct reporter *r)
 {
-	for (size_t i = 0; i < r->num; i++) {
+	for (size_t i = 0; i < r->num; i++)
 		error_delete(r->err[i]);
-	}
+
 	free(r->err);
 	free(r);
 }

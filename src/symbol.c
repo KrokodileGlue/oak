@@ -220,7 +220,6 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 
 	add(si, sym);
-
 	push(si, sym);
 }
 
@@ -295,11 +294,15 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		break;
 
 	case EXPR_LIST_COMPREHENSION:
+		push_scope(si, ++si->k->scope);
 		push_block(si, e->s);
+
 		symbolize(si, e->s);
 		resolve_expr(si, e->a);
 		resolve_expr(si, e->b);
 		if (e->c) resolve_expr(si, e->c);
+
+		pop_scope(si);
 		pop(si);
 		break;
 

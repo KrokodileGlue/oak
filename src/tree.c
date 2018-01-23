@@ -81,10 +81,15 @@ free_expr(struct expression *e)
 	} else if (e->type == EXPR_FN_DEF) {
 		free_stmt(e->s);
 	} else if (e->type == EXPR_REGEX || e->type == EXPR_GROUP) {
+	} else if (e->type == EXPR_LIST_COMPREHENSION) {
+		free_stmt(e->s);
+		free_expr(e->a);
+		free_expr(e->b);
+		free_expr(e->c);
 	} else {
-		if (e->a) free_expr(e->a);
-		if (e->b) free_expr(e->b);
-		if (e->c) free_expr(e->c);
+		free_expr(e->a);
+		free_expr(e->b);
+		free_expr(e->c);
 	}
 
 	free(e);

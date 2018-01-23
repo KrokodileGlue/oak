@@ -47,7 +47,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 
 		if (argv[i][0] != '-')  {
 			if (path) {
-				DOUT("received multiple input files; '%s' and '%s'", path, argv[i]);
+				fprintf(stderr, "received multiple input files; '%s' and '%s'", path, argv[i]);
 				exit(EXIT_FAILURE);
 			} else {
 				path = argv[i];
@@ -60,7 +60,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	if (k->print_everything) k->print_gc = true;
 
 	if (!path) {
-		DOUT("did not receive an input file");
+		fprintf(stderr, "did not receive an input file");
 		exit(EXIT_FAILURE);
 	}
 

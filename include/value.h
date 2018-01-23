@@ -53,6 +53,8 @@ struct value {
 	char *name;
 };
 
+#define INT(X) ((struct value){ VAL_INT, { .integer = (X) }, NULL})
+
 #include "error.h"
 #include "gc.h"
 
