@@ -51,6 +51,7 @@ struct statement {
 		struct {
 			char *name;
 			struct token **args;
+			struct expression **init;
 			size_t num;
 			struct statement *body;
 		} fn_def;
@@ -128,6 +129,7 @@ struct expression {
 		EXPR_GROUP,
 		EXPR_EVAL,
 		EXPR_TABLE,
+		EXPR_VARARGS,
 		EXPR_INVALID
 	} type;
 

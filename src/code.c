@@ -14,6 +14,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_ESCAPE,   REG_D,    "ESCAPE    " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
+	{ INSTR_POPALL,   REG_A,    "POPALL    " },
 	{ INSTR_CALL,     REG_A,    "CALL      " },
 	{ INSTR_RET,      REG_NONE, "RET       " },
 	{ INSTR_PUSHIMP,  REG_A,    "PUSHIMP   " },

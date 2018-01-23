@@ -955,15 +955,6 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	} break;
 
 	case EXPR_FN_CALL:
-		if (e->a->type == EXPR_VALUE && e->a->val->type == TOK_IDENTIFIER) {
-			struct symbol *fs = resolve(sym, e->a->val->value);
-			if (fs->type == SYM_FN && e->num != fs->num_arguments) {
-				error_push(c->r, e->tok->loc, ERR_FATAL,
-				           "function is called with an incorrect number of parameters");
-				return -1;
-			}
-		}
-
 		for (int i = e->num - 1; i >= 0; i--)
 			emit_a(c, INSTR_PUSH, compile_expression(c, e->args[i], sym, true), &e->tok->loc);
 
@@ -1148,6 +1139,10 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		c->code[a].d.a = c->ip;
 	} break;
 
+	case EXPR_VARARGS:
+		emit_a(c, INSTR_POPALL, reg = alloc_reg(c), &e->tok->loc);
+		break;
+
 	default:
 		DOUT("unimplemented compiler for expression of type `%d'",
 		     e->type);
@@ -1246,13 +1241,23 @@ compile_statement(struct compiler *c, struct statement *s)
 		sym->address = c->ip;
 		ret = c->ip;
 
-		/*
-		 * TODO: think about what happens if you call a
-		 * function with the wrong number of arguments.
-		 */
 		for (size_t i = 0; i < s->fn_def.num; i++) {
 			struct symbol *arg_sym = resolve(sym, s->fn_def.args[i]->value);
 			arg_sym->address = c->var[c->sp]++;
+
+			if (s->fn_def.init[i]) {
+				emit_bc(c, INSTR_MOV,
+				        arg_sym->address,
+				        compile_expression(c, s->fn_def.init[i],
+				                           sym, false),
+				        &s->tok->loc);
+			} else {
+				emit_bc(c, INSTR_MOV,
+				        arg_sym->address,
+				        nil(c),
+				        &s->tok->loc);
+			}
+
 			emit_a(c, INSTR_POP, arg_sym->address, &s->tok->loc);
 		}
 

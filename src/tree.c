@@ -145,6 +145,11 @@ free_stmt(struct statement *s)
 	case STMT_FN_DEF:
 		free_stmt(s->fn_def.body);
 		free(s->fn_def.args);
+
+		for (size_t i = 0; i < s->fn_def.num; i++)
+			free_expr(s->fn_def.init[i]);
+
+		free(s->fn_def.init);
 		break;
 
 	case STMT_RET:

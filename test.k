@@ -114,7 +114,7 @@ for var i = 0; i < length array; i++:
 # 	return r + y[length y - 1]
 # }
 
-fn djoin (x y) {
+fn djoin (x, y) {
 	return y when type y != 'array'
 	var r
 
@@ -240,7 +240,7 @@ pl join(':', map { sayln } range(0, 5))
 
 var table = {
 	a = 'some text',
-	b = fn (self x) {
+	b = fn (self, x) {
 		self.a = x
 	},
 	uninitialized-field
@@ -253,10 +253,10 @@ pl table.a
 table.b(1000)
 pl table.a
 
-if !table.unitialized-field:
-	pl 'table.unitialized-field is nil.'
+if !table.uninitialized-field:
+	pl 'table.uninitialized-field is nil.'
 
-fn Boat (name attack) = {
+fn Boat (name = 'U.S.S. Nameless', attack = 20) = {
 	name = name,
 	health = 100,
 	alive = true,
@@ -266,7 +266,7 @@ fn Boat (name attack) = {
 	y = 0,
 	z = 0,
 
-	move = fn (self x y z) {
+	move = fn (self, x, y, z) {
 		self.x += x
 		self.y += y
 		self.z += z
@@ -277,7 +277,7 @@ fn Boat (name attack) = {
 		    + self.x + ', ' + self.y + ', ' + self.z + '.'
 	},
 
-	damage = fn (self damage) {
+	damage = fn (self, damage) {
 		self.health = self.health - damage
 		pl 'The ', self.name, ' takes ',        damage, ' damage!'
 		pl 'The ', self.name, ' now has ', self.health, ' health.'
@@ -291,7 +291,7 @@ fn Boat (name attack) = {
 			      : 'The ' + self.name + ' is dead! RIP!'
 	},
 
-	fight = fn (self enemy) {
+	fight = fn (self, enemy) {
 		pl 'The ', self.name, ' is now fighting the ', enemy.name, '!'
 
 		if enemy.alive {
@@ -305,8 +305,10 @@ fn Boat (name attack) = {
 	}
 }
 
-var boat1 = Boat('U.S.S Enterprise', 25)
+var boat1 = Boat('U.S.S. Enterprise', 25)
 var boat2 = Boat('S.S. Minnow', 30)
+var boat3 = Boat()
+boat2.fight(boat3)
 
 boat1.show()
 boat1.move(0, 1, 0)
@@ -365,21 +367,36 @@ pl int '-0x100' * 2
 pl float '3.1415926535897932' * 3
 pl (str 400) * 2
 
-# TODO: default arguments and varargs
-# TODO: finish tables by robustizing
-# TODO: actually implement the tracing garbage collector
-# TODO: fix ktre warnings
-# TODO: list comprehensions. see below.
-# TODO: string interpolation
-
 var x
 pl join ', ', [0 for range 0, 9]
 pl join ', ', [2 * x for x in range 0, 9]
 pl join ', ', [3 * y for var y in range 0, 9]
 pl join ', ', [2 * for [2 * for range 0, 9]]
 
-# pl 2 * _ for range(0, 10)
-# pl i for var i in range(0, 10)
+fn arg1 (a, b, c, d = 3) {
+	pl d
+}
 
-# var j
-# pl j for j in range(0, 10)
+arg1(1, 2, 3)
+arg1(1, 2, 3, 'd')
+
+fn arg2 (a, b, c, d = ...) {
+	pl '====== argtest ======'
+
+	pl a, ' (', type (a), ')'
+	pl b, ' (', type (b), ')'
+	pl c, ' (', type (c), ')'
+	pl join (', ', d), ' (', type (d), ')'
+}
+
+arg2(1, 2, 3)
+arg2(1, 2, 3, 4, 5, 6, 7)
+arg2(1)
+
+# TODO: default arguments and varargs
+# TODO: finish tables by robustizing
+# TODO: actually implement the tracing garbage collector
+# TODO: fix ktre warnings
+# TODO: string interpolation
+# TODO: regex matches shouldn't survive function calls
+# TODO: function arguments should all be evaluated before being pushed

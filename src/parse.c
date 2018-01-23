@@ -410,9 +410,31 @@ parse_fn_def(struct parser *ps)
 		expect_symbol(ps, "(");
 
 		while (ps->tok->type == TOK_IDENTIFIER) {
-			s->fn_def.args = oak_realloc(s->fn_def.args, sizeof *s->fn_def.args * (s->fn_def.num + 1));
+			s->fn_def.args = oak_realloc(s->fn_def.args, (s->fn_def.num + 1) * sizeof *s->fn_def.args);
 			s->fn_def.args[s->fn_def.num++] = ps->tok;
+
+			s->fn_def.init = oak_realloc(s->fn_def.init, (s->fn_def.num + 1) * sizeof *s->fn_def.init);
+			s->fn_def.init[s->fn_def.num - 1] = NULL;
+
 			NEXT;
+			if (!strcmp(ps->tok->value, ",")) {
+				expect_symbol(ps, ",");
+			} else if (!strcmp(ps->tok->value, "=")) {
+				NEXT;
+
+				if (!strcmp(ps->tok->value, "...")) {
+					struct expression *e = new_expression(ps->tok);
+					e->type = EXPR_VARARGS;
+					s->fn_def.init[s->fn_def.num - 1] = e;
+					NEXT;
+				} else {
+					s->fn_def.init[s->fn_def.num - 1] = parse_expr(ps, 1);
+				}
+
+				if (!strcmp(ps->tok->value, ",")) {
+					expect_symbol(ps, ",");
+				} else break;
+			} else break;
 		}
 
 		expect_symbol(ps, ")");

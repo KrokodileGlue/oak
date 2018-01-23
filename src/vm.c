@@ -95,12 +95,6 @@ push(struct vm *vm, struct value v)
 	vm->maxsp = vm->sp > vm->maxsp ? vm->sp : vm->maxsp;
 }
 
-static struct value
-pop(struct vm *vm)
-{
-	return vm->stack[vm->sp--];
-}
-
 static void
 call(struct vm *vm, struct value v)
 {
@@ -208,6 +202,13 @@ stacktrace(struct vm *vm)
 #define CONST(X) (vm->ct->val[X])
 #define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
 
+static void
+pop(struct vm *vm, int reg)
+{
+	if (vm->sp)
+		SETREG(reg, vm->stack[vm->sp--]);
+}
+
 static int
 find_undef(struct vm *vm)
 {
@@ -262,7 +263,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_MOV:  SETREG(c.d.bc.b, GETREG(c.d.bc.c));    break;
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
 	case INSTR_PUSH: push(vm, GETREG(c.d.a));               break;
-	case INSTR_POP:  SETREG(c.d.a, pop(vm));                break;
+	case INSTR_POP:  pop(vm, c.d.a);                        break;
 	case INSTR_CALL: call(vm, GETREG(c.d.a));               break;
 	case INSTR_RET:  ret(vm);                               break;
 	case INSTR_ADD:  BIN(add);                              break;
@@ -287,6 +288,20 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		SETREG(c.d.bc.b, int_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
+
+	case INSTR_POPALL: {
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[v.idx] = NULL;
+		vm->gc->arrlen[v.idx] = 0;
+
+		for (size_t i = vm->sp; i > 0; i--)
+			pushback(vm->gc, v, vm->stack[i]);
+
+		SETREG(c.d.a, v);
+		vm->sp = 0;
+	} break;
 
 	case INSTR_FLOAT:
 		if (GETREG(c.d.bc.c).type != VAL_STR) {
@@ -715,6 +730,15 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_JOIN: {
 		assert(GETREG(c.d.efg.f).type == VAL_STR);
 		assert(GETREG(c.d.efg.g).type == VAL_ARRAY);
+
+		if (vm->gc->arrlen[GETREG(c.d.efg.g).idx] == 0) {
+			struct value v;
+			v.type = VAL_STR;
+			v.idx = gc_alloc(vm->gc, VAL_STR);
+			vm->gc->str[v.idx] = strclone("");
+			SETREG(c.d.efg.e, v);
+			return;
+		}
 
 		struct value v;
 		v.type = VAL_STR;

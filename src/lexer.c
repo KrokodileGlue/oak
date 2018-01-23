@@ -593,6 +593,12 @@ tokenize(struct module *m)
 		/* TODO: qw// n stuff */
 		if (*a == '$') {
 			a = parse_group(ls, a);
+		} else if (!strncmp(a, "...", 3)) {
+			size_t len = 3;
+			char *b = a + len;
+			ls->loc.len = len;
+			lexer_push_token(ls, TOK_SYMBOL, a, b);
+			a += 3;
 		} else if (ls->tok
 		    && (!strcmp(ls->tok->value, "(")
 		    || !strcmp(ls->tok->value, ",")
