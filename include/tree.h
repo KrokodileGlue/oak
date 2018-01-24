@@ -130,6 +130,7 @@ struct expression {
 		EXPR_EVAL,
 		EXPR_TABLE,
 		EXPR_VARARGS,
+		EXPR_MATCH,
 		EXPR_INVALID
 	} type;
 
@@ -145,6 +146,7 @@ struct expression {
 			 * of other stuff.
 			 */
 			struct expression **args;
+			struct expression **match;
 			struct token **keys;
 			struct statement *s;
 			size_t num;

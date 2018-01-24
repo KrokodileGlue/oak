@@ -62,18 +62,19 @@ free_expr(struct expression *e)
 		/* don't free the tokens here */
 	} else if (e->type == EXPR_FN_CALL) {
 		free_expr(e->a);
-		for (size_t i = 0; i < e->num; i++) {
+
+		for (size_t i = 0; i < e->num; i++)
 			free_expr(e->args[i]);
-		}
+
 		if (e->b) free_expr(e->b);
 		free(e->args);
 	} else if (e->type == EXPR_LIST
 	           || e->type == EXPR_BUILTIN
 	           || e->type == EXPR_TABLE) {
 		if (e->args) {
-			for (size_t i = 0; i < e->num; i++) {
+			for (size_t i = 0; i < e->num; i++)
 				free_expr(e->args[i]);
-			}
+
 			free(e->args);
 		}
 
@@ -86,6 +87,22 @@ free_expr(struct expression *e)
 		free_expr(e->a);
 		free_expr(e->b);
 		free_expr(e->c);
+	} else if (e->type == EXPR_MATCH) {
+		free_expr(e->a);
+
+		if (e->args) {
+			for (size_t i = 0; i < e->num; i++)
+				free_expr(e->args[i]);
+
+			free(e->args);
+		}
+
+		if (e->match) {
+			for (size_t i = 0; i < e->num; i++)
+				free_expr(e->match[i]);
+
+			free(e->match);
+		}
 	} else {
 		free_expr(e->a);
 		free_expr(e->b);
@@ -437,11 +454,28 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth--;
 	} else if (e->type == EXPR_EVAL) {
 		fprintf(ap->f, "(eval)");
-		ap->depth++;
+		ap->depth++; split(ap);
 		print_expression(ap, e->a);
 		ap->depth--;
+	} else if (e->type == EXPR_MATCH) {
+		fprintf(ap->f, "(match)");
+		ap->depth++; split(ap);
+		print_expression(ap, e->a);
+
+		for (size_t i = 0; i < e->num; i++) {
+			if (i == e->num - 1) join(ap);
+			indent(ap); fprintf(stderr, "<case %zu>", i);
+			ap->depth++;
+			split(ap);
+			print_expression(ap, e->match[i]);
+			join(ap);
+			print_expression(ap, e->args[i]);
+			ap->depth--;
+		}
+
+		ap->depth--;
 	} else if (e->type == EXPR_TABLE) {
-		fprintf(ap->f, "<table>");
+		fprintf(ap->f, "(table)");
 		ap->depth++; split(ap);
 
 		for (size_t i = 0; i < e->num; i++) {

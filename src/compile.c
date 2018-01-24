@@ -725,7 +725,8 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->code[c->ip].d.efg.h = sym->scope;
 			} else {
 				var = compile_expression(c, e->a, sym, false);
-				emit_efg(c, INSTR_MATCH, reg, var, compile_expression(c, e->b, sym, false), &e->tok->loc);
+				emit_efg(c, INSTR_MATCH, reg, var,
+				         compile_expression(c, e->b, sym, false), &e->tok->loc);
 			}
 		} break;
 
@@ -954,6 +955,48 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		break;
 	} break;
 
+	case EXPR_MATCH: {
+		reg = nil(c);
+		int last = -1;
+		int end[e->num];
+
+		emit_a(c, INSTR_PUSHIMP,
+		       compile_expression(c, e->a, sym, false), &e->tok->loc);
+
+		for (size_t i = 0; i < e->num; i++) {
+			if (last >= 0)
+				c->code[last].d.a = c->ip;
+
+			int cond = -1;
+			if (e->match[i]->type == EXPR_REGEX) {
+				int temp = alloc_reg(c);
+				cond = alloc_reg(c);
+				emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
+				emit_efg(c, INSTR_MATCH, cond, temp,
+				         compile_expression(c, e->match[i], sym, false), &e->tok->loc);
+				emit_a(c, INSTR_COND, cond, &e->a->tok->loc);
+			} else {
+				cond = compile_expression(c, e->match[i], sym, false);
+				emit_a(c, INSTR_COND, cond, &e->a->tok->loc);
+			}
+
+			last = c->ip;
+			emit_a(c, INSTR_JMP, cond, &e->a->tok->loc);
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->args[i], sym, false), &e->a->tok->loc);
+			end[i] = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
+		}
+
+		for (size_t i = 0; i < e->num; i++)
+			c->code[end[i]].d.a = c->ip;
+
+		if (last >= 0)
+			c->code[last].d.a = c->ip;
+
+		emit_(c, INSTR_POPIMP, &e->tok->loc);
+		break;
+	} break;
+
 	case EXPR_FN_CALL: {
 		int arg[e->num];
 
@@ -1042,7 +1085,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		int thing = compile_expression(c, e->a, sym, false);
 		emit_bc(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
 
-		emit_a(c, INSTR_POPIMP, temp, &e->tok->loc);
+		emit_(c, INSTR_POPIMP, &e->tok->loc);
 		emit_d(c, INSTR_JMP, start, &e->tok->loc);
 		c->code[a].d.d = c->ip;
 	} break;
@@ -1435,7 +1478,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
 
 			compile_statement(c, s->for_loop.body);
-			emit_a(c, INSTR_POPIMP, temp, &s->tok->loc);
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
 			emit_d(c, INSTR_JMP, start, &s->tok->loc);
 
 			set_next(sym, start);

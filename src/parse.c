@@ -120,6 +120,47 @@ parse_table(struct parser *ps)
 	return e;
 }
 
+static struct expression *
+parse_match(struct parser *ps)
+{
+	struct expression *e = new_expression(ps->tok);
+	e->type = EXPR_MATCH;
+	expect_symbol(ps, "match");
+	e->a = parse_expression(ps, 0);
+	expect_symbol(ps, "{");
+
+	while (true) {
+		e->match = oak_realloc(e->match, (e->num + 1) * sizeof *e->match);
+		e->args = oak_realloc(e->args, (e->num + 1) * sizeof *e->args);
+
+		e->match[e->num] = parse_expression(ps, 0);
+
+		if (!strcmp(ps->tok->value, "=>")) {
+			expect_symbol(ps, "=>");
+			e->args[e->num] = parse_expression(ps, 1);
+		} else {
+			e->args[e->num] = NULL;
+		}
+
+		e->num++;
+
+		if (!strcmp(ps->tok->value, "}")) {
+			break;
+		} else {
+			if (strcmp(ps->tok->value, ",")) {
+				expect_symbol(ps, ",");
+				NEXT;
+				break;
+			}
+
+			expect_symbol(ps, ",");
+		}
+	}
+
+	expect_symbol(ps, "}");
+	return e;
+}
+
 static struct operator *
 get_infix_op(struct parser *ps)
 {
@@ -237,7 +278,9 @@ parse_expr(struct parser *ps, size_t prec)
 		left->a = parse_expr(ps, 1);
 
 		if (paren) expect_symbol(ps, ")");
-		return left;
+	} else if (!strcmp(ps->tok->value, "match")) {
+		free(left);
+		left = parse_match(ps);
 	} else if (get_builtin(ps->tok->value)) {
 		struct builtin *bi = get_builtin(ps->tok->value);
 

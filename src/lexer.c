@@ -599,10 +599,17 @@ tokenize(struct module *m)
 			ls->loc.len = len;
 			lexer_push_token(ls, TOK_SYMBOL, a, b);
 			a += 3;
+		} else if (!strncmp(a, "=>", 2)) {
+			size_t len = 2;
+			char *b = a + len;
+			ls->loc.len = len;
+			lexer_push_token(ls, TOK_SYMBOL, a, b);
+			a += 2;
 		} else if (ls->tok
 		    && (!strcmp(ls->tok->value, "(")
 		    || !strcmp(ls->tok->value, ",")
 		    || !strcmp(ls->tok->value, "=~")
+		    || !strcmp(ls->tok->value, "{")
 		    || !strcmp(ls->tok->value, "split"))
 		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1])))
 		    && !is_hex_digit(*a)

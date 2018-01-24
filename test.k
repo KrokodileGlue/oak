@@ -393,6 +393,20 @@ arg2(1, 2, 3)
 arg2(1, 2, 3, 4, 5, 6, 7)
 arg2(1)
 
+pl string
+
+string =~ s/-//g
+string = ucfirst lc string
+string =~ s/(?<=\.\s+)(\w)/\u$1/
+
+pl string
+pl match string {
+	/asdf/ => 'asdf!',
+	/amet/ => 'amet!',
+	true => 'Goodbye, world!',
+	true => 'Hello, world!'
+}
+
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings

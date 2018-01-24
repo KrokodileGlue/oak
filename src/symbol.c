@@ -337,6 +337,15 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			resolve_expr(si, e->args[i]);
 		break;
 
+	case EXPR_MATCH:
+		resolve_expr(si, e->a);
+
+		for (size_t i = 0; i < e->num; i++) {
+			resolve_expr(si, e->args[i]);
+			resolve_expr(si, e->match[i]);
+		}
+		break;
+
 	default:
 		DOUT("unimplemented symbolizer for expression of type %d", e->type);
 		assert(false);

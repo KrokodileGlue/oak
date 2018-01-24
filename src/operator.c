@@ -24,7 +24,6 @@ struct operator ops[] = {
 	{ "-",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_SUB         },
 	{ "~>",  "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_SQUIGGLE_ARROW },
 	{ "->",  "^", 12, ASS_LEFT,  OPTYPE_TERNARY , OP_ARROW       },
-	{ "=>",  "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_EQUALARROW  },
 
 	{ "<",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LESS        },
 	{ ">",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_MORE        },
