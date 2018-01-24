@@ -4,9 +4,7 @@
 struct instruction_data instruction_data[] = {
 	{ INSTR_NOP,      REG_NONE, "NOP       " },
 
-	{ INSTR_MOVC,     REG_BC,   "MOVC      " },
 	{ INSTR_MOV,      REG_BC,   "MOV       " },
-
 	{ INSTR_COPY,     REG_BC,   "COPY      " },
 	{ INSTR_COPYC,    REG_BC,   "COPYC     " },
 

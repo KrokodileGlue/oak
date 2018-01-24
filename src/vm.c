@@ -258,7 +258,6 @@ execute_instr(struct vm *vm, struct instruction c)
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
 
 	switch (c.type) {
-	case INSTR_MOVC: SETREG(c.d.bc.b, CONST(c.d.bc.c));     break;
 	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
 	case INSTR_MOV:  SETREG(c.d.bc.b, GETREG(c.d.bc.c));    break;
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
@@ -278,6 +277,23 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_GEQ:  BIN(geq);                              break;
 	case INSTR_MORE: BIN(more);                             break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
+
+	case INSTR_FLIP:
+		SETREG(c.d.bc.b, flip_value(GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_NEG:
+		SETREG(c.d.bc.b, neg_value(GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_COPY:
+		SETREG(c.d.bc.b, copy_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_COPYC:
+		SETREG(c.d.bc.b, copy_value(vm->gc, CONST(c.d.bc.c)));
+		break;
+
 	case INSTR_INT:
 		if (GETREG(c.d.bc.c).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL,
@@ -376,11 +392,6 @@ execute_instr(struct vm *vm, struct instruction c)
 			           "invalid subscript on unsubscriptable type %s", value_data[GETREG(c.d.efg.f).type].body);
 		}
 		break;
-
-	case INSTR_FLIP:  SETREG(c.d.bc.b, flip_value(GETREG(c.d.bc.c))); break;
-	case INSTR_NEG:   SETREG(c.d.bc.b, neg_value(GETREG(c.d.bc.c))); break;
-	case INSTR_COPY:  SETREG(c.d.bc.b, copy_value(vm->gc, GETREG(c.d.bc.c))); break;
-	case INSTR_COPYC: SETREG(c.d.bc.b, copy_value(vm->gc, CONST(c.d.bc.c))); break;
 
 	case INSTR_PUSHBACK:
 		SETREG(c.d.bc.b, pushback(vm->gc,
