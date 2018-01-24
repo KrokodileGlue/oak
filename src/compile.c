@@ -982,7 +982,27 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 			last = c->ip;
 			emit_a(c, INSTR_JMP, cond, &e->a->tok->loc);
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->args[i], sym, false), &e->a->tok->loc);
+
+			if (e->args[i]) {
+				emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->args[i], sym, false), &e->a->tok->loc);
+			} else {
+				if (e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->type == STMT_EXPR) {
+					for (size_t j = 0; j < e->bodies[i]->block.num - 1; j++)
+						compile_statement(c, e->bodies[i]->block.stmts[j]);
+				} else {
+					for (size_t j = 0; j < e->bodies[i]->block.num; j++)
+						compile_statement(c, e->bodies[i]->block.stmts[j]);
+				}
+
+				if (e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->type == STMT_EXPR) {
+					emit_bc(c, INSTR_MOV, reg,
+					        compile_expression(c, e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->expr, sym, false),
+					        &e->a->tok->loc);
+				} else {
+					reg = nil(c);
+				}
+			}
+
 			end[i] = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
 		}
@@ -1205,8 +1225,16 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
+	if (c->in_expr) {
+		return compile_expression(c, e, sym, copy);
+	}
+
+	c->in_expr = true;
 	c->stack_top[c->sp] = c->stack_base[c->sp];
-	return compile_expression(c, e, sym, copy);
+	int t = compile_expression(c, e, sym, copy);
+	c->in_expr = false;
+
+	return t;
 }
 
 #define LOOP_START(X)	  \

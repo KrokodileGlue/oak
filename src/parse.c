@@ -132,12 +132,20 @@ parse_match(struct parser *ps)
 	while (true) {
 		e->match = oak_realloc(e->match, (e->num + 1) * sizeof *e->match);
 		e->args = oak_realloc(e->args, (e->num + 1) * sizeof *e->args);
+		e->bodies = oak_realloc(e->bodies, (e->num + 1) * sizeof *e->bodies);
 
 		e->match[e->num] = parse_expression(ps, 0);
+		e->args[e->num] = NULL;
+		e->bodies[e->num] = NULL;
 
 		if (!strcmp(ps->tok->value, "=>")) {
 			expect_symbol(ps, "=>");
-			e->args[e->num] = parse_expression(ps, 1);
+
+			if (!strcmp(ps->tok->value, "{")) {
+				e->bodies[e->num] = parse_stmt(ps);
+			} else {
+				e->args[e->num] = parse_expression(ps, 1);
+			}
 		} else {
 			e->args[e->num] = NULL;
 		}

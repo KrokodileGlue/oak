@@ -90,19 +90,15 @@ free_expr(struct expression *e)
 	} else if (e->type == EXPR_MATCH) {
 		free_expr(e->a);
 
-		if (e->args) {
-			for (size_t i = 0; i < e->num; i++)
-				free_expr(e->args[i]);
-
-			free(e->args);
+		for (size_t i = 0; i < e->num; i++) {
+			if (e->match) free_expr(e->match[i]);
+			if (e->args) free_expr(e->args[i]);
+			if (e->bodies) free_stmt(e->bodies[i]);
 		}
 
-		if (e->match) {
-			for (size_t i = 0; i < e->num; i++)
-				free_expr(e->match[i]);
-
-			free(e->match);
-		}
+		free(e->args);
+		free(e->match);
+		free(e->bodies);
 	} else {
 		free_expr(e->a);
 		free_expr(e->b);
@@ -115,6 +111,8 @@ free_expr(struct expression *e)
 void
 free_stmt(struct statement *s)
 {
+	if (!s) return;
+
 	switch (s->type) {
 	case STMT_EXPR:
 		free_expr(s->expr);

@@ -402,7 +402,12 @@ string =~ s/(?<=\.\s+)(\w)/\u$1/
 pl string
 pl match string {
 	/asdf/ => 'asdf!',
-	/amet/ => 'amet!',
+
+	/(.*?)amet/ => {
+		pl 'Heyo!'
+		'thing: ' + $1
+	},
+
 	true => 'Goodbye, world!',
 	true => 'Hello, world!'
 }

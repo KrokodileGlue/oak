@@ -147,6 +147,8 @@ struct expression {
 			 */
 			struct expression **args;
 			struct expression **match;
+			struct statement **bodies;
+
 			struct token **keys;
 			struct statement *s;
 			size_t num;

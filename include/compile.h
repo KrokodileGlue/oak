@@ -36,6 +36,7 @@ struct compiler {
 
 	bool eval;
 	bool debug;
+	bool in_expr;
 };
 
 bool compile(struct module *m, struct constant_table *ct, struct symbol *sym,

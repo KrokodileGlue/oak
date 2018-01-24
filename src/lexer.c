@@ -330,29 +330,6 @@ parse_raw_string_literal(struct lexer *ls, char *a)
 	return b + delim_len;
 }
 
-/* recursively concatenate adjacent strings */
-static bool
-cat_strings(struct token *tok)
-{
-	bool ret = false;
-	token_rewind(&tok);
-
-	while (tok && tok->next) {
-		if (tok->type == TOK_STRING && tok->next->type == TOK_STRING) {
-			ret = true;
-			tok->is_line_end = tok->is_line_end || tok->next->is_line_end;
-			tok->string = smart_cat(tok->string, tok->next->string);
-			tok->value = smart_cat(tok->value, tok->next->value);
-			token_delete(tok->next);
-		}
-
-		tok = tok->next;
-	}
-
-	if (ret) cat_strings(tok);
-	return ret;
-}
-
 /* match the longest operator starting from `a` */
 static struct operator *
 match_operator(char *a)
@@ -673,7 +650,6 @@ tokenize(struct module *m)
 	if (ls->tok) ls->tok->is_line_end = true;
 	ls->loc.len = 0;
 	lexer_push_token(ls, TOK_END, a, a);
-	cat_strings(ls->tok);
 	token_rewind(&ls->tok);
 
 	if (ls->r->fatal) {
