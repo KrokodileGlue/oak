@@ -423,6 +423,7 @@ var input = '2991712887533295256432139256963425712124451681999756928493867723967
 p 'part 1: '
 print sum [input[] == (input * 2)[1 +] ? int input[] : 0 for 0 -> length input]
 # print(sum(map(int, [a for a, b in zip(input, input[-1:] + input[:-1]) if a == b])))
+# print(sum([int(a) for a, b in zip(input, input[-1:] + input[:-1]) if a == b]))
 
 # Part 2
 p 'part 2: '
