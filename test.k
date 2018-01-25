@@ -404,8 +404,13 @@ pl match string {
 	/asdf/ => 'asdf!',
 
 	/(.*?)amet/ => {
-		pl 'Heyo!'
+		pl 'Statement!'
 		'thing: ' + $1
+	},
+
+	true => +{
+		foo = 'this is a table!',
+		bar = 'tables can be returned from matches.'
 	},
 
 	true => 'Goodbye, world!',

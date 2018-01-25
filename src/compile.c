@@ -744,6 +744,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
 			break;
 
+		case OP_ADD:
+			return compile_expression(c, e->a, sym, false);
+
 		case OP_EXCLAMATION:
 			reg = alloc_reg(c);
 			emit_bc(c, INSTR_FLIP, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
