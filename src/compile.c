@@ -499,6 +499,19 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			c->code[c->ip - 1].d.efg.h = step;
 		} break;
 
+		case OP_IFF: {
+			reg = alloc_reg(c);
+			emit_a(c, INSTR_COND, compile_expression(c, e->b, sym, false), &e->tok->loc);
+			size_t a = c->ip;
+			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
+			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->a, sym, false), &e->tok->loc);
+			size_t b = c->ip;
+			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
+			c->code[a].d.d = c->ip;
+			emit_bc(c, INSTR_MOV, reg, nil(c), &e->tok->loc);
+			c->code[b].d.d = c->ip;
+		} break;
+
 		case OP_ADDEQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				int keyreg = -1;

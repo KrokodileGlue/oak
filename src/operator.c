@@ -30,6 +30,7 @@ struct operator ops[] = {
 	{ ">=",  "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_GEQ         },
 	{ "==",  "",  9,  ASS_LEFT,  OPTYPE_BINARY  , OP_EQEQ        },
 	{ "!=",  "",  9,  ASS_LEFT,  OPTYPE_BINARY  , OP_NOTEQ       },
+	{ "iff", "",  8,  ASS_LEFT,  OPTYPE_BINARY  , OP_IFF         },
 
 	{ "&&",  "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_AND         },
 	{ "and", "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_AND         },

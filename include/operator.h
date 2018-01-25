@@ -58,6 +58,7 @@ struct operator {
 		OP_MODMOD,
 		OP_NOR,
 		OP_POW,
+		OP_IFF,
 		OP_SQUIGGLEEQ
 	} name;
 };
