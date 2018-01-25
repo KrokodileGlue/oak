@@ -484,6 +484,21 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			c->code[_b].d.a = c->ip;
 		} break;
 
+		case OP_ARROW: {
+			int start = compile_expression(c, e->a, sym, false);
+			int stop = compile_expression(c, e->b, sym, false);
+
+			int step = alloc_reg(c);
+			struct value v;
+			v.type = VAL_INT;
+			v.integer = 1;
+			emit_bc(c, INSTR_COPYC, step,
+			        constant_table_add(c->ct, v), &e->tok->loc);
+
+			emit_efg(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, &e->tok->loc);
+			c->code[c->ip - 1].d.efg.h = step;
+		} break;
+
 		case OP_ADDEQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				int keyreg = -1;
