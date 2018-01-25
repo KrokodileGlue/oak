@@ -39,6 +39,7 @@ enum instruction_type {
 	INSTR_RANGE,
 	INSTR_APUSH,
 	INSTR_REV,
+	INSTR_SUM,
 
 	INSTR_INT,
 	INSTR_FLOAT,

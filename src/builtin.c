@@ -8,11 +8,12 @@ struct builtin builtin[] = {
 	{ "join",    1,  BUILTIN_JOIN    },
 	{ "range",   1,  BUILTIN_RANGE   },
 	{ "push",    1,  BUILTIN_PUSH    },
-	{ "reverse", 14, BUILTIN_REVERSE },
 
-	{ "int",     14, BUILTIN_INT      },
-	{ "float",   14, BUILTIN_FLOAT    },
-	{ "str",     14, BUILTIN_STRING   },
+	{ "reverse", 14, BUILTIN_REVERSE },
+	{ "int",     14, BUILTIN_INT     },
+	{ "float",   14, BUILTIN_FLOAT   },
+	{ "str",     14, BUILTIN_STRING  },
+	{ "sum",     14, BUILTIN_SUM     },
 
 	{ "uc",      14, BUILTIN_UC      },
 	{ "lc",      14, BUILTIN_LC      },

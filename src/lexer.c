@@ -588,7 +588,7 @@ tokenize(struct module *m)
 		    || !strcmp(ls->tok->value, "=~")
 		    || !strcmp(ls->tok->value, "{")
 		    || !strcmp(ls->tok->value, "split"))
-		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1])))
+		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1]) && !isspace(a[1])))
 		    && !is_hex_digit(*a)
 		    && *a != '('
 		    && *a != ')'
@@ -601,7 +601,7 @@ tokenize(struct module *m)
 		    && *a != '$'
 		    && (ls->tok->type != TOK_IDENTIFIER
 		        || !strcmp(ls->tok->value, "split")
-		        || (*a == 's' && !isalpha(a[1])))
+		        || (*a == 's' && !isalpha(a[1]) && !isspace(a[1])))
 		    && ls->tok->type != TOK_INTEGER
 		    && (match_operator(a)
 		        ? (match_operator(a)->type != OPTYPE_PREFIX) : true)) {

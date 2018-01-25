@@ -313,6 +313,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	UNARY(LCFIRST, LCFIRST);
 	UNARY(TYPE, TYPE);
 	UNARY(LENGTH, LEN);
+	UNARY(SUM, SUM);
 
 	case BUILTIN_SAY: {
 		int arg = -1;

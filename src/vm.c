@@ -831,6 +831,29 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.bc.b, rev_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
+	case INSTR_SUM: {
+		if (GETREG(c.d.bc.c).type != VAL_ARRAY) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "sum builtin requires array operand (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_FLOAT;
+		v.real = 0;
+
+		for (unsigned i = 0; i < vm->gc->arrlen[GETREG(c.d.bc.c).idx]; i++) {
+			if (vm->gc->array[GETREG(c.d.bc.c).idx][i].type == VAL_INT)
+				v.real += vm->gc->array[GETREG(c.d.bc.c).idx][i].integer;
+
+			if (vm->gc->array[GETREG(c.d.bc.c).idx][i].type == VAL_FLOAT)
+				v.real += vm->gc->array[GETREG(c.d.bc.c).idx][i].real;
+		}
+
+		SETREG(c.d.bc.b, v);
+	} break;
+
 	case INSTR_EVAL:
 		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
