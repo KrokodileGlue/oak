@@ -417,7 +417,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]);                  \
 			struct symbol *redefinition = resolve(si->symbol, STATEMENT->var_decl.names[i]->value);       \
 			                                                                                              \
-			if (redefinition) {                                                                           \
+			if (redefinition && redefinition->parent->scope == si->scope_stack[si->scope_pointer - 1]) {  \
 				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier `%s'", \
 				           STATEMENT->var_decl.names[i]->value);                                      \
 				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");       \
@@ -428,6 +428,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->name = STATEMENT->var_decl.names[i]->value;                                                \
 			s->id = hash(s->name, strlen(s->name));                                                       \
 			s->scope = -1;                                                                                \
+			s->parent = si->symbol;                                                                       \
 			s->global = si->scope_pointer == 1;                                                           \
 			add(si, s);                                                                                   \
 		}                                                                                                     \

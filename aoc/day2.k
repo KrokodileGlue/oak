@@ -1,6 +1,5 @@
 var l = I(day2.txt)
-# l =~ s/\s+$//
-pl l
+l =~ s/\s+\Z//s
 
 # KTRE bug?
 # l =~ s/\n+$//

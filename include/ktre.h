@@ -2723,7 +2723,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			break;
 
 		case INSTR_EOL:
-			if ((subject[sp] == '\n' && sp >= 0)
+			if ((sp >= 0 && subject[sp] == '\n')
 			    || sp == (int)strlen(subject))
 				THREAD[TP].ip++;
 			else
@@ -2737,10 +2737,9 @@ run(struct ktre *re, const char *subject, int ***vec)
 			break;
 
 		case INSTR_EOS:
-			if (sp == (int)strlen(subject))
+			if (sp >= 0 && sp == (int)strlen(subject))
 				THREAD[TP].ip++;
-			else
-				--TP;
+			else --TP;
 			break;
 
 		case INSTR_WB:

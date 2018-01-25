@@ -276,6 +276,10 @@ div_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
+	if ((r.type == VAL_INT && r.integer == 0) || (r.type == VAL_FLOAT && fcmp(r.real, 0))) {
+		return ERR("division by zero");
+	}
+
 	BINARY_MATH_OPERATION(/) else {
 		assert(false);
 	}

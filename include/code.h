@@ -7,6 +7,8 @@
 
 #include "location.h"
 
+#define NUM_REG (1 << 10)
+
 enum instruction_type {
 	INSTR_NOP,
 

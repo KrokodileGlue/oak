@@ -4,8 +4,6 @@
 #include "util.h"
 #include "vm.h"
 
-#define NUM_REG (1 << 15)
-
 void
 push_frame(struct vm *vm)
 {
@@ -202,7 +200,13 @@ stacktrace(struct vm *vm)
 #define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
 
 #define CONST(X) (vm->ct->val[X])
-#define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
+#define BIN(X)	  \
+	do { \
+		SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g))); \
+		if (GETREG(c.d.efg.e).type == VAL_ERR) { \
+			error_push(vm->r, *c.loc, ERR_FATAL, "%s", GETREG(c.d.efg.e).name); \
+		} \
+	} while (0)
 
 static void
 pop(struct vm *vm, int reg)
@@ -622,11 +626,29 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->gc->str[v.idx] = NULL;
 
 		if (GETREG(c.d.efg.f).e == 0) {
-			vm->gc->str[v.idx] = ktre_filter(re, subject,
-			                                 subst, "$");
+			char *ret = ktre_filter(re, subject, subst, "$");
+
+			if (re->err) {
+				error_push(vm->r, *c.loc, ERR_FATAL, "regex failed at runtime with %d: %s", re->err, re->err_str ? re->err_str : "no message");
+				return;
+				/* fprintf(stderr, "\t%s\n\t", re->pat); */
+				/* for (int i = 0; i < re->loc; i++) fprintf(stderr, " "); */
+				/* fprintf(stderr, "^"); */
+			} else if (ret) {
+				vm->gc->str[v.idx] = ret;
+			} else {
+				vm->gc->str[v.idx] = strclone(subject);
+			}
 		} else {
 			int **vec = NULL;
 			ktre_exec(re, subject, &vec);
+
+			if (!re->num_matches) {
+				v.type = VAL_NIL;
+				SETREG(c.d.efg.e, v);
+				return;
+			}
+
 			char *a = oak_malloc(128);
 			strncpy(a, subject, vec[0][0]);
 			a[vec[0][0]] = 0;

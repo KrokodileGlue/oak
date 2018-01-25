@@ -11,8 +11,6 @@
 #include "lexer.h"
 #include "parse.h"
 
-// TODO: NUM_REG
-
 static struct compiler *
 new_compiler()
 {
@@ -167,6 +165,7 @@ make_value_from_token(struct compiler *c, struct token *tok)
 			switch (tok->flags[i]) {
 			case 'i': opt |= KTRE_INSENSITIVE; break;
 			case 'g': opt |= KTRE_GLOBAL; break;
+			case 's': opt |= KTRE_MULTILINE; break;
 			case 'e': e++; break;
 			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
 			}
@@ -846,7 +845,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(sym, e->val->value);
 			if (var->global)
-				return var->address + (1 << 15);
+				return var->address + NUM_REG;
 			return var->address;
 		} break;
 
@@ -941,9 +940,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				v.name = var->name;
 				emit_bc(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
-				emit_bc(c, INSTR_COPY, reg, var->global ? var->address + (1 << 15) : var->address, &e->tok->loc);
+				emit_bc(c, INSTR_COPY, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
 			} else {
-				emit_bc(c, INSTR_MOV, reg, var->global ? var->address + (1 << 15) : var->address, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
 			}
 			break;
 

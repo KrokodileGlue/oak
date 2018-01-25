@@ -123,6 +123,8 @@ struct module *
 load_module(struct oak *k, struct symbol *parent, char *text,
             char *path, char *name, struct vm *vm, int stack_base)
 {
+	if (!text) return NULL;
+
 	for (size_t i = 0; i < k->num; i++)
 		if (!strcmp(k->modules[i]->path, path) && strncmp(name, "*eval", 5))
 			return k->modules[i];

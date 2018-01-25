@@ -54,6 +54,7 @@ struct value {
 };
 
 #define INT(X) ((struct value){ VAL_INT, { .integer = (X) }, NULL})
+#define ERR(X) ((struct value){ VAL_ERR, { .integer = 0 }, (X)})
 
 #include "error.h"
 #include "gc.h"

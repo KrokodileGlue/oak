@@ -207,7 +207,7 @@ load_file(const char *path)
 	FILE *file = fopen(path, "r");
 
 	if (!file) {
-		DOUT("could not load file %s", path);
+		fprintf(stderr, "oak: could not load file %s\n", path);
 		return NULL;
 	}
 
