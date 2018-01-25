@@ -11,6 +11,8 @@
 #include "lexer.h"
 #include "parse.h"
 
+// TODO: NUM_REG
+
 static struct compiler *
 new_compiler()
 {
@@ -120,7 +122,7 @@ push_next(struct compiler *c, size_t a)
 static int
 alloc_reg(struct compiler *c)
 {
-	if (c->stack_top[c->sp] >= 256) {
+	if (c->stack_top[c->sp] >= 1 << 15) {
 		error_push(c->r, c->stmt->tok->loc, ERR_FATAL,
 		           "insufficient registers to compile module or function");
 		return -1;
@@ -815,7 +817,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(sym, e->val->value);
 			if (var->global)
-				return var->address + 256;
+				return var->address + (1 << 15);
 			return var->address;
 		} break;
 
@@ -910,9 +912,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				v.name = var->name;
 				emit_bc(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
-				emit_bc(c, INSTR_COPY, reg, var->global ? var->address + 256 : var->address, &e->tok->loc);
+				emit_bc(c, INSTR_COPY, reg, var->global ? var->address + (1 << 15) : var->address, &e->tok->loc);
 			} else {
-				emit_bc(c, INSTR_MOV, reg, var->global ? var->address + 256 : var->address, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, reg, var->global ? var->address + (1 << 15) : var->address, &e->tok->loc);
 			}
 			break;
 

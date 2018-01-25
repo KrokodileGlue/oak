@@ -4,6 +4,8 @@
 #include "util.h"
 #include "vm.h"
 
+#define NUM_REG (1 << 15)
+
 void
 push_frame(struct vm *vm)
 {
@@ -12,15 +14,15 @@ push_frame(struct vm *vm)
 	if (vm->fp <= vm->maxfp) {
 		vm->module[vm->fp] = false;
 
-		for (int i = 0; i < 256; i++)
+		for (int i = 0; i < NUM_REG; i++)
 			vm->frame[vm->fp][i].type = VAL_UNDEF;
 		return;
 	}
 
 	vm->frame = oak_realloc(vm->frame, (vm->fp + 1) * sizeof *vm->frame);
-	vm->frame[vm->fp] = oak_malloc(256 * sizeof *vm->frame[vm->fp]);
+	vm->frame[vm->fp] = oak_malloc(NUM_REG * sizeof *vm->frame[vm->fp]);
 
-	for (int i = 0; i < 256; i++)
+	for (int i = 0; i < NUM_REG; i++)
 		vm->frame[vm->fp][i].type = VAL_UNDEF;
 
 	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
@@ -194,10 +196,10 @@ stacktrace(struct vm *vm)
 		fprintf(stderr, "\t--- Truncated ---\n");
 }
 
-#define GETREG(X) ((X) >= 256 ? vm->frame[1][(X) - 256] : vm->frame[vm->fp][X])
-#define SETREG(X,Y) ((X) >= 256 ? (vm->frame[1][(X) - 256] = (Y)) : (vm->frame[vm->fp][X] = (Y)))
+#define GETREG(X) ((X) >= NUM_REG ? vm->frame[1][(X) - NUM_REG] : vm->frame[vm->fp][X])
+#define SETREG(X,Y) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (Y)) : (vm->frame[vm->fp][X] = (Y)))
 
-#define SETR(X,Y,Z) ((X) >= 256 ? (vm->frame[1][(X) - 256].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
+#define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
 
 #define CONST(X) (vm->ct->val[X])
 #define BIN(X) SETREG(c.d.efg.e, X##_values(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g)))
@@ -212,7 +214,7 @@ pop(struct vm *vm, int reg)
 static int
 find_undef(struct vm *vm)
 {
-	int i = 256;
+	int i = NUM_REG;
 	while (i && GETREG(i - 1).type == VAL_UNDEF) i--;
 
 	/* TODO: error */
@@ -242,7 +244,7 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	vm->running = true;
 	vm->module[vm->fp] = vm->m->child;
 
-	for (int i = stack_base; i < 256; i++)
+	for (int i = stack_base; i < NUM_REG; i++)
 		if (i != reg) SETR(i, type, VAL_UNDEF);
 }
 
