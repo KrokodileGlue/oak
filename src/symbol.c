@@ -343,6 +343,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		for (size_t i = 0; i < e->num; i++) {
 			resolve_expr(si, e->args[i]);
 			resolve_expr(si, e->match[i]);
+			symbolize(si, e->bodies[i]);
 		}
 		break;
 
@@ -355,6 +356,8 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 static void
 symbolize(struct symbolizer *si, struct statement *stmt)
 {
+	if (!stmt) return;
+
 	struct symbol *sym = new_symbol(stmt->tok, si->symbol);
 	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
