@@ -522,8 +522,9 @@ copy_value(struct gc *gc, struct value l)
 }
 
 struct value
-flip_value(struct value l)
+flip_value(struct gc *gc, struct value l)
 {
+	_log(gc, "flip", l, (struct value){ VAL_NIL, {0}, 0 });
 	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0 };
 
 	switch (l.type) {
@@ -531,6 +532,8 @@ flip_value(struct value l)
 	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
 	case VAL_NIL:   ans.boolean = true;                     break;
+	case VAL_ARRAY: ans.boolean = !!gc->arrlen[l.idx];      break;
+	case VAL_STR:   ans.boolean = !!strlen(gc->str[l.idx]); break;
 	default: assert(false);
 	}
 

@@ -577,6 +577,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	}
 
+	resolve_expr(si, stmt->condition);
 	sym->id = hash(sym->name, strlen(sym->name));
 	add(si, sym);
 }

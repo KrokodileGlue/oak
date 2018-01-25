@@ -281,7 +281,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 
 	case INSTR_FLIP:
-		SETREG(c.d.bc.b, flip_value(GETREG(c.d.bc.c)));
+		SETREG(c.d.bc.b, flip_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
 	case INSTR_NEG:
