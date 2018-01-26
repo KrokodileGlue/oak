@@ -61,6 +61,7 @@ enum instruction_type {
 	INSTR_GEQ,
 	INSTR_MORE,
 	INSTR_INC,
+	INSTR_DEC,
 	INSTR_TYPE,
 	INSTR_LEN,
 

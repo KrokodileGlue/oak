@@ -188,6 +188,8 @@ sub_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return ret;
+
 	BINARY_MATH_OPERATION(-) else {
 		assert(false);
 	}
@@ -317,6 +319,8 @@ less_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return ret;
+
 	BINARY_MATH_OPERATION(<) else {
 		return ERR("invalid operation");
 	}
@@ -358,6 +362,8 @@ geq_values(struct gc *gc, struct value l, struct value r)
 
 	struct value ret;
 	ret.type = VAL_BOOL;
+
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
 
 	BINARY_MATH_OPERATION(>=) else {
 		return ERR("invalid operation");

@@ -53,6 +53,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_GEQ,      REG_EFG,  "GEQ       " },
 	{ INSTR_MORE,     REG_EFG,  "MORE      " },
 	{ INSTR_INC,      REG_A,    "INC       " },
+	{ INSTR_DEC,      REG_A,    "DEC       " },
 	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
 	{ INSTR_LEN,      REG_BC,   "LEN       " },
 

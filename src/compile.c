@@ -799,6 +799,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_a(c, INSTR_INC, a, &e->tok->loc);
 		} break;
 
+		case OP_SUBSUB: {
+			int a = compile_lvalue(c, e->a, sym);
+			reg = alloc_reg(c);
+			emit_bc(c, INSTR_MOV, reg, a, &e->tok->loc);
+			emit_a(c, INSTR_DEC, a, &e->tok->loc);
+		} break;
+
 		default:
 			DOUT("unimplemented compiler for postfix operator `%s'",
 			     e->operator->body);
