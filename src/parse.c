@@ -511,6 +511,7 @@ parse_print(struct parser *ps)
 	s->type = STMT_PRINT;
 
 	if (ps->tok->next->type == TOK_END) {
+		free_stmt(s);
 		error_push(ps->r, ps->tok->loc, ERR_FATAL,
 			   "unexpected end-of-file; expected an expression");
 		NEXT;
@@ -537,7 +538,7 @@ static struct statement *
 parse_println(struct parser *ps)
 {
 	struct statement *s = parse_print(ps);
-	s->type = STMT_PRINTLN;
+	if (s) s->type = STMT_PRINTLN;
 	return s;
 }
 

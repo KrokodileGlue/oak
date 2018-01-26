@@ -1,9 +1,6 @@
 var l = I(day2.txt)
 l =~ s/\s+\Z//s
 
-# KTRE bug?
-# l =~ s/\n+$//
-
 var s = 0
 for split /\n/, l {
 	var min = -1
@@ -27,9 +24,8 @@ for split /\n/, l {
 
 	for var i; split /\s+/ {
 		for var j; split /\s+/ {
-			# Shitty operator precedence issue with = and ,.
 			if int i %% int j and i != j:
-				(a = int i), (b = int j)
+				a = int(i), b = int(j)
 
 			last when a
 		}
