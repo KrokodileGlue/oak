@@ -818,6 +818,7 @@ execute_instr(struct vm *vm, struct instruction c)
 				return;
 			}
 
+			grow_array(vm->gc->array[v.idx], (stop - start) / step + 1);
 			for (double i = start; i <= stop; i += step) {
 				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
 					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
@@ -832,6 +833,7 @@ execute_instr(struct vm *vm, struct instruction c)
 				return;
 			}
 
+			grow_array(vm->gc->array[v.idx], (start - stop) / step + 1);
 			for (double i = start; i >= stop; i += step) {
 				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
 					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
