@@ -306,6 +306,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	} break
 
 	UNARY(REVERSE, REV);
+	UNARY(SORT, SORT);
 	UNARY(UC, UC);
 	UNARY(LC, LC);
 	UNARY(UCFIRST, UCFIRST);

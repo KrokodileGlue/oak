@@ -10,6 +10,7 @@ struct builtin builtin[] = {
 	{ "push",    1,  BUILTIN_PUSH    },
 
 	{ "reverse", 14, BUILTIN_REVERSE },
+	{ "sort",    14, BUILTIN_SORT    },
 	{ "int",     14, BUILTIN_INT     },
 	{ "float",   14, BUILTIN_FLOAT   },
 	{ "str",     14, BUILTIN_STRING  },

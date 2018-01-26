@@ -849,6 +849,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.bc.b, rev_value(vm->gc, GETREG(c.d.bc.c)));
 		break;
 
+	case INSTR_SORT:
+		SETREG(c.d.bc.b, sort_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
 	case INSTR_SUM: {
 		if (GETREG(c.d.bc.c).type != VAL_ARRAY) {
 			error_push(vm->r, *c.loc, ERR_FATAL,

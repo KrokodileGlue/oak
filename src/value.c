@@ -544,6 +544,29 @@ flip_value(struct gc *gc, struct value l)
 }
 
 struct value
+sort_value(struct gc *gc, struct value l)
+{
+	_log(gc, "sort", l, (struct value){ VAL_NIL, {0}, 0 });
+	struct value ret;
+
+	switch (l.type) {
+	case VAL_STR:
+		ret.type = VAL_STR;
+		ret.idx = gc_alloc(gc, VAL_STR);
+		gc->str[ret.idx] = strsort(gc->str[l.idx]);
+		break;
+
+	case VAL_NIL:
+		return l;
+		break;
+
+	default: assert(false);
+	}
+
+	return ret;
+}
+
+struct value
 rev_value(struct gc *gc, struct value l)
 {
 	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };

@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "util.h"
 
@@ -124,7 +126,7 @@ get_line(struct location loc)
 }
 
 char *
-strclone(char *str)
+strclone(const char *str)
 {
 	char *ret = oak_malloc(strlen(str) + 1);
 	strcpy(ret, str);
@@ -172,6 +174,28 @@ hash(char *d, size_t len)
 		hash = ((hash << 5) + hash) + d[i];
 
 	return hash;
+}
+
+static int
+charcmp(const void *a, const void *b)
+{
+	char x = *(char *)a, y = *(char *)b;
+
+	if (isdigit(x) && isalpha(y)) return -1;
+	if (isalpha(x) && isdigit(y)) return 1;
+	if (isalpha(x) && !isalpha(y)) return -1;
+	if (!isalpha(x) && isalpha(y)) return 1;
+
+	if (x == y) return 1;
+	return x < y ? -1 : 1;
+}
+
+char *
+strsort(const char *s)
+{
+	char *a = strclone(s);
+	qsort(a, strlen(a), 1, charcmp);
+	return a;
 }
 
 void *

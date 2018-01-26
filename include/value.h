@@ -78,6 +78,7 @@ struct value div_values(struct gc *gc, struct value l, struct value r);
 struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
+struct value sort_value(struct gc *gc, struct value l);
 struct value uc_value(struct gc *gc, struct value l);
 struct value lc_value(struct gc *gc, struct value l);
 struct value ucfirst_value(struct gc *gc, struct value l);
