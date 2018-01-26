@@ -64,8 +64,8 @@ show_value(struct gc *gc, struct value val)
 		break;
 
 	case VAL_ARRAY:
-		for (unsigned int i = 0; i < gc->arrlen[val.idx]; i++) {
-			char *asdf = show_value(gc, gc->array[val.idx][i]);
+		for (unsigned int i = 0; i < gc->array[val.idx]->len; i++) {
+			char *asdf = show_value(gc, gc->array[val.idx]->v[i]);
 			char *temp = new_cat(str, asdf);
 			free(str);
 			str = temp;
@@ -225,21 +225,19 @@ mul_values(struct gc *gc, struct value l, struct value r)
 	} else if (l.type == VAL_ARRAY && r.type == VAL_INT) {
 		ret.type = VAL_ARRAY;
 		ret.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->array[ret.idx] = NULL;
-		gc->arrlen[ret.idx] = 0;
+		gc->array[ret.idx] = new_array();
 
 		for (int64_t i = 0; i < r.integer; i++)
-			for (size_t j = 0; j < gc->arrlen[l.idx]; j++)
-				pushback(gc, ret, copy_value(gc, gc->array[l.idx][j]));
+			for (size_t j = 0; j < gc->array[l.idx]->len; j++)
+				array_push(gc->array[ret.idx], copy_value(gc, gc->array[l.idx]->v[j]));
 	} else if (l.type == VAL_INT && r.type == VAL_ARRAY) {
 		ret.type = VAL_ARRAY;
 		ret.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->array[ret.idx] = NULL;
-		gc->arrlen[ret.idx] = 0;
+		gc->array[ret.idx] = new_array();
 
 		for (int64_t i = 0; i < l.integer; i++)
-			for (size_t j = 0; j < gc->arrlen[r.idx]; j++)
-				pushback(gc, ret, copy_value(gc, gc->array[r.idx][j]));
+			for (size_t j = 0; j < gc->array[r.idx]->len; j++)
+				array_push(gc->array[ret.idx], copy_value(gc, gc->array[r.idx]->v[j]));
 	} else BINARY_MATH_OPERATION(*) else {
 		assert(false);
 	}
@@ -440,7 +438,7 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_BOOL:  return l.boolean;
 	case VAL_INT:   return l.integer != 0;
 	case VAL_STR:   return !!strlen(gc->str[l.idx]);
-	case VAL_ARRAY: return !!gc->arrlen[l.idx];
+	case VAL_ARRAY: return !!gc->array[l.idx]->len;
 	case VAL_FLOAT: return fcmp(l.real, 0.0);
 	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
@@ -492,7 +490,7 @@ value_len(struct gc *gc, struct value l)
 
 	switch (l.type) {
 	case VAL_STR:  ans.integer = strlen(gc->str[l.idx]); break;
-	case VAL_ARRAY: ans.integer = gc->arrlen[l.idx]; break;
+	case VAL_ARRAY: ans.integer = gc->array[l.idx]->len; break;
 	default: assert(false); break;
 	}
 
@@ -506,12 +504,10 @@ copy_value(struct gc *gc, struct value l)
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->arrlen[v.idx] = 0;
-		gc->array[v.idx] = NULL;
+		gc->array[v.idx] = new_array();
 
-		for (size_t i = 0; i < gc->arrlen[l.idx]; i++) {
-			pushback(gc, v, copy_value(gc, gc->array[l.idx][i]));
-		}
+		for (size_t i = 0; i < gc->array[l.idx]->len; i++)
+			array_push(gc->array[v.idx], copy_value(gc, gc->array[l.idx]->v[i]));
 
 		l = v;
 	} else if (l.type == VAL_STR) {
@@ -536,7 +532,7 @@ flip_value(struct gc *gc, struct value l)
 	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);       break;
 	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
 	case VAL_NIL:   ans.boolean = true;                     break;
-	case VAL_ARRAY: ans.boolean = !!gc->arrlen[l.idx];      break;
+	case VAL_ARRAY: ans.boolean = !!gc->array[l.idx]->len;  break;
 	case VAL_STR:   ans.boolean = !!strlen(gc->str[l.idx]); break;
 	default: assert(false);
 	}
@@ -567,13 +563,12 @@ rev_value(struct gc *gc, struct value l)
 		ans.type = VAL_ARRAY;
 		ans.idx = gc_alloc(gc, VAL_ARRAY);
 
-		gc->array[ans.idx] = NULL;
-		gc->arrlen[ans.idx] = 0;
-		size_t len = gc->arrlen[l.idx];
+		gc->array[ans.idx] = new_array();
+		size_t len = gc->array[l.idx]->len;
 
 		for (size_t i = 1; i <= len; i++) {
-			struct value r = gc->array[l.idx][len - i];
-			pushback(gc, ans, copy_value(gc, r));
+			struct value r = gc->array[l.idx]->v[len - i];
+			array_push(gc->array[ans.idx], copy_value(gc, r));
 		}
 	} break;
 
@@ -698,37 +693,6 @@ float_value(struct gc *gc, struct value l)
 }
 
 struct value
-pushback(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "pushback", l, r);
-
-	/* TODO: Make sure l is an array. */
-	assert(l.type == VAL_ARRAY);
-	gc->array[l.idx] = oak_realloc(gc->array[l.idx], (gc->arrlen[l.idx] + 1) * sizeof **gc->array);
-	gc->array[l.idx][gc->arrlen[l.idx]] = r;
-	gc->arrlen[l.idx]++;
-	return l;
-}
-
-struct value
-grow_array(struct gc *gc, struct value l, int r)
-{
-	assert(l.type == VAL_ARRAY);
-
-	/* TODO: Unretard this. */
-	if ((int)gc->arrlen[l.idx] <= r) {
-		gc->array[l.idx] = oak_realloc(gc->array[l.idx],
-		     (r + 1) * sizeof *gc->array[l.idx]);
-		for (int i = gc->arrlen[l.idx]; i < r; i++) {
-			gc->array[l.idx][i].type = VAL_NIL;
-		}
-		gc->arrlen[l.idx] = r;
-	}
-
-	return l;
-}
-
-struct value
 value_translate(struct gc *l, struct gc *r, struct value v)
 {
 	if (l->debug || r->debug) {
@@ -750,10 +714,9 @@ value_translate(struct gc *l, struct gc *r, struct value v)
 			break;
 
 		case VAL_ARRAY:
-			l->array[ret.idx] = NULL;
-			l->arrlen[ret.idx] = 0;
-			for (size_t i = 0; i < r->arrlen[v.idx]; i++)
-				pushback(l, ret, value_translate(l, r, r->array[v.idx][i]));
+			l->array[ret.idx] = new_array();
+			for (size_t i = 0; i < r->array[v.idx]->len; i++)
+				array_push(l->array[ret.idx], value_translate(l, r, r->array[v.idx]->v[i]));
 			break;
 
 		case VAL_REGEX:
@@ -793,8 +756,8 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		break;
 
 	case VAL_ARRAY:
-		for (unsigned int i = 0; i < gc->arrlen[val.idx]; i++)
-			print_value(f, gc, gc->array[val.idx][i]);
+		for (size_t i = 0; i < gc->array[val.idx]->len; i++)
+			print_value(f, gc, gc->array[val.idx]->v[i]);
 		break;
 
 	case VAL_FN:

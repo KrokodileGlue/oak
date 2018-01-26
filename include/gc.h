@@ -13,8 +13,7 @@ struct gc {
 
 	/* The actual value structures. */
 	char **str;
-	struct value **array;
-	unsigned int *arrlen;
+	struct array **array;
 	struct ktre **regex;
 	struct table **table;
 };

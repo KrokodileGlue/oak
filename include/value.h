@@ -55,9 +55,11 @@ struct value {
 
 #define INT(X) ((struct value){ VAL_INT, { .integer = (X) }, NULL})
 #define ERR(X) ((struct value){ VAL_ERR, { .integer = 0 }, (X)})
+#define NIL ((struct value){ VAL_NIL, { .integer = 0 }, NULL})
 
 #include "error.h"
 #include "gc.h"
+#include "array.h"
 
 struct gc;
 
@@ -83,9 +85,6 @@ struct value lcfirst_value(struct gc *gc, struct value l);
 struct value inc_value(struct value l);
 struct value neg_value(struct value l);
 struct value flip_value(struct gc *gc, struct value l);
-
-struct value grow_array(struct gc *gc, struct value l, int r);
-struct value pushback(struct gc *gc, struct value l, struct value r);
 
 struct value cmp_values(struct gc *gc, struct value l, struct value r);
 struct value less_values(struct gc *gc, struct value l, struct value r);

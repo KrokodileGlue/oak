@@ -315,11 +315,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[v.idx] = NULL;
-		vm->gc->arrlen[v.idx] = 0;
+		vm->gc->array[v.idx] = new_array();
 
 		for (size_t i = vm->sp; i > 0; i--)
-			pushback(vm->gc, v, vm->stack[i]);
+			array_push(vm->gc->array[v.idx], vm->stack[i]);
 
 		SETREG(c.d.a, v);
 		vm->sp = 0;
@@ -352,7 +351,7 @@ execute_instr(struct vm *vm, struct instruction c)
 				return;
 			}
 
-			if (GETREG(c.d.efg.g).integer >= vm->gc->arrlen[GETREG(c.d.efg.f).idx]
+			if (GETREG(c.d.efg.g).integer >= vm->gc->array[GETREG(c.d.efg.f).idx]->len
 			    || GETREG(c.d.efg.g).integer < 0) {
 				struct value v;
 				v.type = VAL_NIL;
@@ -360,12 +359,8 @@ execute_instr(struct vm *vm, struct instruction c)
 				break;
 			}
 
-			if (c.d.efg.h)
-				SETREG(c.d.efg.e, copy_value(vm->gc, vm->gc->array[GETREG(c.d.efg.f).idx]
-				                             [GETREG(c.d.efg.g).integer]));
-			else
-				SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]
-				       [GETREG(c.d.efg.g).integer]);
+			SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]->v
+			       [GETREG(c.d.efg.g).integer]);
 		} else if (GETREG(c.d.efg.f).type == VAL_TABLE) {
 			if (GETREG(c.d.efg.g).type != VAL_STR) {
 				error_push(vm->r, *c.loc, ERR_FATAL,
@@ -400,9 +395,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_PUSHBACK:
-		SETREG(c.d.bc.b, pushback(vm->gc,
-		                         GETREG(c.d.bc.b),
-		                         GETREG(c.d.bc.c)));
+		array_push(vm->gc->array[GETREG(c.d.bc.b).idx],
+		           GETREG(c.d.bc.c));
 		break;
 
 	case INSTR_ASET:
@@ -438,8 +432,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		    && GETREG(c.d.efg.f).type == VAL_INT) {
 			SETR(c.d.efg.e, type, VAL_ARRAY);
 			SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
-			vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
-			vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
+			vm->gc->array[GETREG(c.d.efg.e).idx] = new_array();
 		}
 
 		if (GETREG(c.d.efg.e).type != VAL_TABLE
@@ -451,13 +444,13 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		if (GETREG(c.d.efg.e).type == VAL_ARRAY
 		    && GETREG(c.d.efg.f).type == VAL_INT) {
-			grow_array(vm->gc, GETREG(c.d.efg.e), GETREG(c.d.efg.f).integer + 1);
+			grow_array(vm->gc->array[GETREG(c.d.efg.e).idx], GETREG(c.d.efg.f).integer + 1);
 
-			if (vm->gc->arrlen[GETREG(c.d.efg.e).idx] <= GETREG(c.d.efg.f).integer) {
-				vm->gc->arrlen[GETREG(c.d.efg.e).idx] = GETREG(c.d.efg.f).integer + 1;
+			if (vm->gc->array[GETREG(c.d.efg.e).idx]->len <= GETREG(c.d.efg.f).integer) {
+				vm->gc->array[GETREG(c.d.efg.e).idx]->len = GETREG(c.d.efg.f).integer + 1;
 			}
 
-			vm->gc->array[GETREG(c.d.efg.e).idx][GETREG(c.d.efg.f).integer]
+			vm->gc->array[GETREG(c.d.efg.e).idx]->v[GETREG(c.d.efg.f).integer]
 				= GETREG(c.d.efg.g);
 		}
 
@@ -476,28 +469,32 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		pushback(vm->gc, GETREG(c.d.bc.b), GETREG(c.d.bc.c));
+		array_push(vm->gc->array[GETREG(c.d.bc.b).idx], GETREG(c.d.bc.c));
 	} break;
 
 	case INSTR_DEREF:
-		/* TODO: tables */
+		/* TODO: TABLES! */
 		if (GETREG(c.d.efg.f).type != VAL_ARRAY) {
 			SETREG(c.d.efg.e, ((struct value){ VAL_NIL, { 0 }, 0}));
 			return;
 		}
 
-		grow_array(vm->gc, GETREG(c.d.efg.f), GETREG(c.d.efg.g).integer + 1);
+		grow_array(vm->gc->array[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g).integer + 1);
 
-		if (vm->gc->array[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer].type == VAL_ARRAY) {
-			SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]
+		if (GETREG(c.d.efg.g).integer < vm->gc->array[GETREG(c.d.efg.f).idx]->len &&
+		    vm->gc->array[GETREG(c.d.efg.f).idx]->v[GETREG(c.d.efg.g).integer].type == VAL_ARRAY) {
+			SETREG(c.d.efg.e, vm->gc->array[GETREG(c.d.efg.f).idx]->v
 			       [GETREG(c.d.efg.g).integer]);
 		} else {
 			struct value v;
 			v.type = VAL_ARRAY;
 			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-			vm->gc->arrlen[v.idx] = 0;
-			vm->gc->array[v.idx] = NULL;
-			vm->gc->array[GETREG(c.d.efg.f).idx][GETREG(c.d.efg.g).integer] = v;
+			vm->gc->array[v.idx] = new_array();
+
+			grow_array(vm->gc->array[GETREG(c.d.efg.f).idx], GETREG(c.d.efg.g).integer + 1);
+			vm->gc->array[GETREG(c.d.efg.f).idx]->len = GETREG(c.d.efg.g).integer + 1;
+			vm->gc->array[GETREG(c.d.efg.f).idx]->v[GETREG(c.d.efg.g).integer] = v;
+
 			SETREG(c.d.efg.e, v);
 		}
 		break;
@@ -578,8 +575,7 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		SETR(c.d.efg.e, type, VAL_ARRAY);
 		SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
-		vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
-		vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
+		vm->gc->array[GETREG(c.d.efg.e).idx] = new_array();
 
 		if (ret) {
 			for (int i = 0; i < re->num_matches; i++) {
@@ -589,7 +585,7 @@ execute_instr(struct vm *vm, struct instruction c)
 				vm->gc->str[v.idx] = oak_malloc(vec[i][1] + 1);
 				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
 				vm->gc->str[v.idx][vec[i][1]] = 0;
-				pushback(vm->gc, GETREG(c.d.efg.e), v);
+				array_push(vm->gc->array[GETREG(c.d.efg.e).idx], v);
 
 				for (int j = 1; j < re->num_groups; j++) {
 					/* TODO: $1, $2 n stuff */
@@ -745,8 +741,7 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		SETR(c.d.efg.e, type, VAL_ARRAY);
 		SETR(c.d.efg.e, idx, gc_alloc(vm->gc, VAL_ARRAY));
-		vm->gc->array[GETREG(c.d.efg.e).idx] = NULL;
-		vm->gc->arrlen[GETREG(c.d.efg.e).idx] = 0;
+		vm->gc->array[GETREG(c.d.efg.e).idx] = new_array();
 
 		for (int i = 0; i < len; i++) {
 			struct value v;
@@ -754,7 +749,7 @@ execute_instr(struct vm *vm, struct instruction c)
 			v.idx = gc_alloc(vm->gc, VAL_STR);
 			vm->gc->str[v.idx] = oak_malloc(strlen(split[i]) + 1);
 			strcpy(vm->gc->str[v.idx], split[i]);
-			pushback(vm->gc, GETREG(c.d.efg.e), v);
+			array_push(vm->gc->array[GETREG(c.d.efg.e).idx], v);
 
 			free(split[i]);
 		}
@@ -766,7 +761,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		assert(GETREG(c.d.efg.f).type == VAL_STR);
 		assert(GETREG(c.d.efg.g).type == VAL_ARRAY);
 
-		if (vm->gc->arrlen[GETREG(c.d.efg.g).idx] == 0) {
+		if (vm->gc->array[GETREG(c.d.efg.g).idx]->len == 0) {
 			struct value v;
 			v.type = VAL_STR;
 			v.idx = gc_alloc(vm->gc, VAL_STR);
@@ -781,10 +776,10 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->gc->str[v.idx] = NULL;
 
 		char *a = strclone("");
-		size_t arrlen = vm->gc->arrlen[GETREG(c.d.efg.g).idx];
+		size_t arrlen = vm->gc->array[GETREG(c.d.efg.g).idx]->len;
 
 		for (size_t i = 0; i < arrlen - 1; i++) {
-			char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx][i]);
+			char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx]->v[i]);
 			a = oak_realloc(a, strlen(a) + strlen(b)
 			                + strlen(vm->gc->str[GETREG(c.d.efg.f).idx]) + 1);
 			strcat(a, b);
@@ -792,7 +787,7 @@ execute_instr(struct vm *vm, struct instruction c)
 			free(b);
 		}
 
-		char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx][arrlen - 1]);
+		char *b = show_value(vm->gc, vm->gc->array[GETREG(c.d.efg.g).idx]->v[arrlen - 1]);
 		a = oak_realloc(a, strlen(a) + strlen(b) + 1);
 		strcat(a, b);
 		free(b);
@@ -813,8 +808,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[v.idx] = NULL;
-		vm->gc->arrlen[v.idx] = 0;
+		vm->gc->array[v.idx] = new_array();
 
 		if (start < stop) {
 			if (step <= 0) {
@@ -826,9 +820,9 @@ execute_instr(struct vm *vm, struct instruction c)
 
 			for (double i = start; i <= stop; i += step) {
 				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
-					pushback(vm->gc, v, (struct value){ VAL_FLOAT, { .real = i }, 0 });
+					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
 				else
-					pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = (int64_t)i }, 0 });
+					array_push(vm->gc->array[v.idx], (struct value){ VAL_INT, { .integer = (int64_t)i }, 0 });
 			}
 		} else {
 			if (step >= 0) {
@@ -840,9 +834,9 @@ execute_instr(struct vm *vm, struct instruction c)
 
 			for (double i = start; i >= stop; i += step) {
 				if (GETREG(c.d.efg.f).type == VAL_FLOAT || GETREG(c.d.efg.g).type == VAL_FLOAT)
-					pushback(vm->gc, v, (struct value){ VAL_FLOAT, { .real = i }, 0 });
+					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
 				else
-					pushback(vm->gc, v, (struct value){ VAL_INT, { .integer = i }, 0 });
+					array_push(vm->gc->array[v.idx], (struct value){ VAL_INT, { .integer = i }, 0 });
 			}
 		}
 
@@ -865,12 +859,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		v.type = VAL_FLOAT;
 		v.real = 0;
 
-		for (unsigned i = 0; i < vm->gc->arrlen[GETREG(c.d.bc.c).idx]; i++) {
-			if (vm->gc->array[GETREG(c.d.bc.c).idx][i].type == VAL_INT)
-				v.real += vm->gc->array[GETREG(c.d.bc.c).idx][i].integer;
+		for (size_t i = 0; i < vm->gc->array[GETREG(c.d.bc.c).idx]->len; i++) {
+			if (vm->gc->array[GETREG(c.d.bc.c).idx]->v[i].type == VAL_INT)
+				v.real += vm->gc->array[GETREG(c.d.bc.c).idx]->v[i].integer;
 
-			if (vm->gc->array[GETREG(c.d.bc.c).idx][i].type == VAL_FLOAT)
-				v.real += vm->gc->array[GETREG(c.d.bc.c).idx][i].real;
+			if (vm->gc->array[GETREG(c.d.bc.c).idx]->v[i].type == VAL_FLOAT)
+				v.real += vm->gc->array[GETREG(c.d.bc.c).idx]->v[i].real;
 		}
 
 		SETREG(c.d.bc.b, v);

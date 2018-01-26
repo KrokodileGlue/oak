@@ -958,8 +958,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->arrlen[v.idx] = 0;
-		c->gc->array[v.idx] = NULL;
+		c->gc->array[v.idx] = new_array();
 
 		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
@@ -1087,8 +1086,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->arrlen[v.idx] = 0;
-		c->gc->array[v.idx] = NULL;
+		c->gc->array[v.idx] = new_array();
 
 		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
@@ -1110,8 +1108,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->arrlen[v.idx] = 0;
-		c->gc->array[v.idx] = NULL;
+		c->gc->array[v.idx] = new_array();
 		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 		int iter = alloc_reg(c);
@@ -1186,8 +1183,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->array[v.idx] = NULL;
-		c->gc->arrlen[v.idx] = 0;
+		c->gc->array[v.idx] = new_array();
 
 		emit_bc(c, INSTR_COPYC, reg,
 		        constant_table_add(c->ct, v),
@@ -1238,6 +1234,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		emit_bc(c, INSTR_PUSHBACK, reg,
 		        compile_expression(c, e->a, sym, false), &e->tok->loc);
+
+		if (!e->b) emit_(c, INSTR_POPIMP, &e->tok->loc);
+
 		emit_a(c, INSTR_JMP, start, &e->tok->loc);
 		c->code[a].d.a = c->ip;
 	} break;

@@ -4,6 +4,7 @@
 
 #include "util.h"
 #include "gc.h"
+#include "array.h"
 
 struct gc *
 new_gc()
@@ -38,7 +39,7 @@ free_gc(struct gc *gc)
 			int pos = ffsll(*bmp) - 1;
 			*bmp ^= 1LL << pos;
 			if (gc->array[i * 64 + pos])
-				free(gc->array[i * 64 + pos]);
+				free_array(gc->array[i * 64 + pos]);
 		}
 
 		bmp++;
@@ -75,7 +76,6 @@ free_gc(struct gc *gc)
 
 	free(gc->array);
 	free(gc->str);
-	free(gc->arrlen);
 	free(gc->regex);
 	free(gc->table);
 
@@ -122,10 +122,7 @@ gc_alloc(struct gc *gc, enum value_type type)
 
 		case VAL_ARRAY:
 			gc->array = oak_realloc(gc->array,
-			                      gc->slot[type] * sizeof *gc->array);
-
-			gc->arrlen = oak_realloc(gc->arrlen,
-			                      gc->slot[type] * sizeof *gc->arrlen);
+			                        gc->slot[type] * sizeof *gc->array);
 			break;
 
 		case VAL_REGEX:
