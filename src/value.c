@@ -381,6 +381,8 @@ more_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
+
 	BINARY_MATH_OPERATION(>) else {
 		assert(false);
 	}
@@ -549,6 +551,33 @@ flip_value(struct gc *gc, struct value l)
 	return ans;
 }
 
+static void
+qsort_partition(struct gc *gc, struct value l, int begin, int end)
+{
+	if (begin < 0 || end < 0) return;
+	if (begin >= end) return;
+
+	int pivot = begin;
+	int i = begin + 1;
+	int j = begin + 1;
+
+	for (i = begin + 1; i <= end; i++) {
+		if (less_values(gc, gc->array[l.idx]->v[i], gc->array[l.idx]->v[pivot]).boolean) {
+			struct value t = gc->array[l.idx]->v[i];
+			gc->array[l.idx]->v[i] = gc->array[l.idx]->v[j];
+			gc->array[l.idx]->v[j] = t;
+			j++;
+		}
+	}
+
+	struct value t = gc->array[l.idx]->v[j - 1];
+	gc->array[l.idx]->v[j - 1] = gc->array[l.idx]->v[pivot];
+	gc->array[l.idx]->v[pivot] = t;
+
+	qsort_partition(gc, l, begin, j - 2);
+	qsort_partition(gc, l, j, end);
+}
+
 struct value
 sort_value(struct gc *gc, struct value l)
 {
@@ -562,9 +591,13 @@ sort_value(struct gc *gc, struct value l)
 		gc->str[ret.idx] = strsort(gc->str[l.idx]);
 		break;
 
+	case VAL_ARRAY:
+		ret = copy_value(gc, l);
+		qsort_partition(gc, ret, 0, (int)gc->array[l.idx]->len - 1);
+		break;
+
 	case VAL_NIL:
 		return l;
-		break;
 
 	default: assert(false);
 	}
