@@ -1,14 +1,11 @@
 var l = I(day5.txt) =~ /-?\d+/gs
 var f i s = map { int } l, 0, 0
-while i < length f { f[i] += 1; i += f[i] - 1; s++ }
+
+for i = 0; i < length f; s++: i += f[i]++
 pl s
 
-f = map { int } l
-i = 0, s = 0
+f = map { int } l, i = 0
 
-while i < length f and i >= 0 {
-	i += f[i] > 2 ? f[i] -= 1 : f[i] += 1
-	s++
-}
-
+for s = 0; i < length f and i >= 0; s++:
+	i += f[i] > 2 ? f[i]-- : f[i]++
 pl s

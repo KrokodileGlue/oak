@@ -283,6 +283,7 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_GEQ:  BIN(geq);                              break;
 	case INSTR_MORE: BIN(more);                             break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
+	case INSTR_DEC: SETREG(c.d.a, dec_value(GETREG(c.d.a)));break;
 
 	case INSTR_FLIP:
 		SETREG(c.d.bc.b, flip_value(vm->gc, GETREG(c.d.bc.c)));
