@@ -86,6 +86,7 @@ struct value lcfirst_value(struct gc *gc, struct value l);
 struct value inc_value(struct value l);
 struct value dec_value(struct value l);
 struct value neg_value(struct value l);
+struct value abs_value(struct value l);
 struct value flip_value(struct gc *gc, struct value l);
 
 struct value cmp_values(struct gc *gc, struct value l, struct value r);

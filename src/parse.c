@@ -78,6 +78,7 @@ static struct statement *parse_stmt(struct parser *ps);
 static struct statement *parse_vardecl(struct parser *ps);
 static struct statement *parse_fn_def(struct parser *ps);
 static struct expression *parse_expression(struct parser *ps, int prec);
+static struct expression *parse_expr(struct parser *ps, size_t prec);
 
 static struct expression *
 parse_table(struct parser *ps)
@@ -126,8 +127,13 @@ parse_match(struct parser *ps)
 	struct expression *e = new_expression(ps->tok);
 	e->type = EXPR_MATCH;
 	expect_symbol(ps, "match");
-	e->a = parse_expression(ps, 0);
-	expect_symbol(ps, "{");
+
+	if (!strcmp(ps->tok->value, "{")) {
+		expect_symbol(ps, "{");
+	} else {
+		e->a = parse_expr(ps, 0);
+		expect_symbol(ps, "{");
+	}
 
 	while (true) {
 		e->match = oak_realloc(e->match, (e->num + 1) * sizeof *e->match);
@@ -719,6 +725,11 @@ static struct statement *
 parse_stmt(struct parser *ps)
 {
 	struct statement *s = NULL;
+
+	/* if (ps->tok->type == TOK_IDENTIFIER && ps->tok->next && !strcmp(":", ps->tok->next->value)) { */
+	/* 	s->type = STMT_LABEL; */
+	/* 	s->label */
+	/* } else */
 
 	if (!strcmp(ps->tok->value, "{")) {
 		s = parse_block(ps);

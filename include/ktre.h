@@ -75,7 +75,7 @@ enum {
 #define KTRE_MAX_GROUPS 100
 #define KTRE_MAX_THREAD 200
 #define KTRE_MAX_CALL_DEPTH 100
-#define KTRE_MEM_CAP 1000000
+#define KTRE_MEM_CAP 100000000
 
 struct ktre_info {
 	int ba;  /* bytes allocated */
@@ -2850,6 +2850,11 @@ run(struct ktre *re, const char *subject, int ***vec)
 				}
 
 				VEC[re->num_matches] = _malloc(re->num_groups * 2 * sizeof VEC[0]);
+				if (!VEC[re->num_matches]) {
+					error(re, KTRE_ERROR_OUT_OF_MEMORY, loc, "out of memory");
+					_free(subject_lc);
+					return false;
+				}
 
 				memcpy(VEC[re->num_matches++],
 				       THREAD[TP].vec,

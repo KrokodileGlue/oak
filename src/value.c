@@ -114,6 +114,8 @@ add_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
+
 	if (l.type == VAL_STR && r.type == VAL_STR) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
@@ -188,7 +190,7 @@ sub_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return ret;
+	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
 
 	BINARY_MATH_OPERATION(-) else {
 		assert(false);
@@ -387,15 +389,11 @@ more_values(struct gc *gc, struct value l, struct value r)
 		assert(false);
 	}
 
-	if (ret.integer == 0) {
-		ret.type = VAL_BOOL;
-		ret.boolean = false;
-	} else {
-		ret.type = VAL_BOOL;
-		ret.boolean = true;
-	}
+	struct value ret2;
+	ret2.type = VAL_BOOL;
+	ret2.boolean = is_truthy(gc, ret);
 
-	return ret;
+	return ret2;
 }
 
 struct value
@@ -465,7 +463,7 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_INT:   return l.integer != 0;
 	case VAL_STR:   return !!strlen(gc->str[l.idx]);
 	case VAL_ARRAY: return !!gc->array[l.idx]->len;
-	case VAL_FLOAT: return fcmp(l.real, 0.0);
+	case VAL_FLOAT: return !fcmp(l.real, 0.0);
 	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
 	case VAL_FN:    return true;
@@ -515,8 +513,9 @@ value_len(struct gc *gc, struct value l)
 	ans.type = VAL_INT;
 
 	switch (l.type) {
-	case VAL_STR:  ans.integer = strlen(gc->str[l.idx]); break;
-	case VAL_ARRAY: ans.integer = gc->array[l.idx]->len; break;
+	case VAL_STR:   ans.integer = strlen(gc->str[l.idx]); break;
+	case VAL_ARRAY: ans.integer = gc->array[l.idx]->len;  break;
+	case VAL_NIL:   ans.integer = 0;                      break;
 	default: assert(false); break;
 	}
 
@@ -656,6 +655,30 @@ rev_value(struct gc *gc, struct value l)
 	}
 
 	return ans;
+}
+
+struct value
+abs_value(struct value l)
+{
+	struct value ret;
+	ret.type = VAL_NIL;
+
+	switch (l.type) {
+	case VAL_INT:
+		ret.type = VAL_INT;
+		ret.integer = l.integer < 0 ? -l.integer : l.integer;
+		break;
+
+	case VAL_FLOAT:
+		ret.type = VAL_FLOAT;
+		ret.real = l.real < 0 ? -l.real : l.real;
+		break;
+
+	default:
+		assert(false);
+	}
+
+	return ret;
 }
 
 struct value

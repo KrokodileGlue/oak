@@ -43,6 +43,8 @@ enum instruction_type {
 	INSTR_REV,
 	INSTR_SORT,
 	INSTR_SUM,
+	INSTR_ABS,
+	INSTR_COUNT,
 
 	INSTR_INT,
 	INSTR_FLOAT,

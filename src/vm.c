@@ -26,6 +26,9 @@ push_frame(struct vm *vm)
 	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
 	vm->module[vm->fp] = false;
 
+	vm->frameimp = oak_realloc(vm->frameimp, (vm->fp + 1) * sizeof *vm->frameimp);
+	if (vm->fp) vm->frameimp[vm->fp - 1] = vm->impp;
+
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
 
@@ -72,6 +75,7 @@ static void
 pop_frame(struct vm *vm)
 {
 	vm->fp--;
+	vm->impp = vm->frameimp[vm->fp];
 }
 
 static void
@@ -256,7 +260,7 @@ void
 execute_instr(struct vm *vm, struct instruction c)
 {
 	if (vm->debug) {
-		fprintf(vm->f, "%s> %4zu: ", vm->m->name, vm->ip);
+		fprintf(vm->f, "%s:%5zu> %4zu: ", vm->m->name, vm->step, vm->ip);
 		print_instruction(vm->f, c);
 		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %s\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->module[vm->fp] ? "t" : "f");
 	}
@@ -538,11 +542,13 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_PUSHIMP:
 		vm->imp = oak_realloc(vm->imp, (vm->impp + 1) * sizeof *vm->imp);
 		vm->imp[vm->impp++] = GETREG(c.d.a);
+		vm->frameimp[vm->fp] = vm->impp;
 		break;
 
 	case INSTR_POPIMP:
 		assert(vm->impp);
 		vm->impp--;
+		vm->frameimp[vm->fp] = vm->impp;
 		break;
 
 	case INSTR_GETIMP:
@@ -594,12 +600,15 @@ execute_instr(struct vm *vm, struct instruction c)
 				}
 			}
 		} else if (re->err) {
-			/* TODO: Make the runtime fail n stuff. */
-			fprintf(stderr, "\nfailed at runtime with error code %d: %s\n",
-			        re->err, re->err_str ? re->err_str : "no error message");
-			fprintf(stderr, "\t%s\n\t", re->pat);
-			for (int i = 0; i < re->loc; i++) fprintf(stderr, " ");
-			fprintf(stderr, "^");
+			struct location loc = *c.loc;
+			loc.len = 1;
+			loc.index += re->loc;
+
+			error_push(vm->r, loc, ERR_FATAL,
+			           "regex failed at runtime with error code %d: %s",
+			           re->err,
+			           re->err_str ? re->err_str : "no error message");
+			return;
 		}
 
 		vm->match = re->num_matches - 1;
@@ -823,6 +832,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		vm->gc->array[v.idx] = new_array();
 
 		if (fcmp(start, stop)) {
+			array_push(vm->gc->array[v.idx], GETREG(c.d.efg.f));
 			SETREG(c.d.efg.e, v);
 			return;
 		}
@@ -893,6 +903,41 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.d.bc.b, v);
 	} break;
 
+	case INSTR_COUNT: {
+		if (GETREG(c.d.efg.f).type != VAL_ARRAY) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "count builtin requires array operand (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_INT;
+		v.integer = 0;
+
+		for (size_t i = 0; i < vm->gc->array[GETREG(c.d.bc.c).idx]->len; i++) {
+			if (is_truthy(vm->gc,
+			              cmp_values(vm->gc,
+			                         vm->gc->array[GETREG(c.d.bc.c).idx]->v[i],
+			                         GETREG(c.d.efg.g))))
+				v.integer++;
+		}
+
+		SETREG(c.d.bc.b, v);
+	} break;
+
+	case INSTR_ABS: {
+		if (GETREG(c.d.bc.c).type != VAL_INT
+		    && GETREG(c.d.bc.c).type != VAL_FLOAT) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "abs builtin requires numeric operand (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		SETREG(c.d.bc.b, abs_value(GETREG(c.d.bc.c)));
+	} break;
+
 	case INSTR_EVAL:
 		if (GETREG(c.d.efg.f).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
@@ -951,6 +996,7 @@ execute(struct vm *vm, int64_t ip)
 		execute_instr(vm, vm->code[vm->ip]);
 		if (vm->r->pending) break;
 		vm->ip++;
+		vm->step++;
 	}
 
 	if (vm->debug)

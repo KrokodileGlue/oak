@@ -298,9 +298,20 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		push_block(si, e->s);
 
 		symbolize(si, e->s);
+
+		if (!e->c) {
+			struct symbol *imp = new_symbol(e->tok, si->symbol);
+			imp->type = SYM_VAR;
+			imp->name = "_";
+			imp->id = hash(imp->name, strlen(imp->name));
+			imp->scope = -1;
+
+			add(si, imp);
+		}
+
 		resolve_expr(si, e->a);
 		resolve_expr(si, e->b);
-		if (e->c) resolve_expr(si, e->c);
+		resolve_expr(si, e->c);
 
 		pop_scope(si);
 		pop(si);

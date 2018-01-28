@@ -9,9 +9,12 @@
 /* This is kinda retarded. */
 #define MAX_CALL_DEPTH 1024
 
+/* TODO: refucktor frames */
+
 struct vm {
 	struct instruction *code;
 	size_t ip;
+	size_t step;
 
 	/* Return locations. */
 	int *callstack;
@@ -30,6 +33,7 @@ struct vm {
 
 	struct value **frame;
 	bool *module;
+	int *frameimp;
 	size_t fp;
 	size_t maxfp;
 

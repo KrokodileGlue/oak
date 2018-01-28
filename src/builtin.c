@@ -15,6 +15,8 @@ struct builtin builtin[] = {
 	{ "float",   14, BUILTIN_FLOAT   },
 	{ "str",     14, BUILTIN_STRING  },
 	{ "sum",     14, BUILTIN_SUM     },
+	{ "abs",     14, BUILTIN_ABS     },
+	{ "count",   14, BUILTIN_COUNT   },
 
 	{ "uc",      14, BUILTIN_UC      },
 	{ "lc",      14, BUILTIN_LC      },
