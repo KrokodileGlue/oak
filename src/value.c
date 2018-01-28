@@ -417,7 +417,22 @@ cmp_values(struct gc *gc, struct value l, struct value r)
 	case VAL_FLOAT: ret.boolean = fcmp(l.real, r.real);                    break;
 	case VAL_STR:   ret.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
 	case VAL_NIL:   ret.boolean = (r.type == VAL_NIL);                     break;
-	default:        assert(false);                                         break;
+	case VAL_ARRAY:
+		ret.boolean = false;
+
+		if (r.type != VAL_ARRAY || gc->array[l.idx]->len != gc->array[r.idx]->len)
+			return ret;
+
+		for (size_t i = 0; i < gc->array[l.idx]->len; i++)
+			if (!cmp_values(gc, gc->array[l.idx]->v[i], gc->array[r.idx]->v[i]).boolean)
+				return ret;
+
+		ret.boolean = true;
+		break;
+
+	default:
+		assert(false);
+		break;
 	}
 
 	return ret;

@@ -470,7 +470,7 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		array_push(vm->gc->array[GETREG(c.d.bc.b).idx], GETREG(c.d.bc.c));
+		array_push(vm->gc->array[GETREG(c.d.bc.b).idx], copy_value(vm->gc, GETREG(c.d.bc.c)));
 	} break;
 
 	case INSTR_DEREF:
@@ -799,17 +799,33 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_RANGE: {
 		assert(GETREG(c.d.efg.f).type == VAL_INT || GETREG(c.d.efg.f).type == VAL_FLOAT);
-		assert(GETREG(c.d.efg.g).type == VAL_INT || GETREG(c.d.efg.g).type == VAL_FLOAT);
+		assert(GETREG(c.d.efg.g).type == VAL_INT
+		       || GETREG(c.d.efg.g).type == VAL_FLOAT
+		       || GETREG(c.d.efg.g).type == VAL_ARRAY
+		       || GETREG(c.d.efg.g).type == VAL_STR);
 		assert(GETREG(c.d.efg.h).type == VAL_INT || GETREG(c.d.efg.h).type == VAL_FLOAT);
 
 		double start = GETREG(c.d.efg.f).type == VAL_INT ? (double)GETREG(c.d.efg.f).integer : GETREG(c.d.efg.f).real;
-		double stop = GETREG(c.d.efg.g).type == VAL_INT ? (double)GETREG(c.d.efg.g).integer : GETREG(c.d.efg.g).real;
+		double stop = -1;
 		double step = GETREG(c.d.efg.h).type == VAL_INT ? (double)GETREG(c.d.efg.h).integer : GETREG(c.d.efg.h).real;
+
+		if (GETREG(c.d.efg.g).type == VAL_ARRAY) {
+			stop = (double)vm->gc->array[GETREG(c.d.efg.g).idx]->len - 1;
+		} else if (GETREG(c.d.efg.g).type == VAL_STR) {
+			stop = strlen(vm->gc->str[GETREG(c.d.efg.g).idx]);
+		} else {
+			stop = GETREG(c.d.efg.g).type == VAL_INT ? (double)GETREG(c.d.efg.g).integer : GETREG(c.d.efg.g).real;
+		}
 
 		struct value v;
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
 		vm->gc->array[v.idx] = new_array();
+
+		if (fcmp(start, stop)) {
+			SETREG(c.d.efg.e, v);
+			return;
+		}
 
 		if (start < stop) {
 			if (step <= 0) {

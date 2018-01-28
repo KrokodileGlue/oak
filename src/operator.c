@@ -22,7 +22,6 @@ struct operator ops[] = {
 	{ "%%",  "",  13, ASS_LEFT,  OPTYPE_BINARY  , OP_MODMOD      },
 	{ "+",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_ADD         },
 	{ "-",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_SUB         },
-	{ "->",  "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_ARROW       },
 
 	{ "<",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LESS        },
 	{ ">",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_MORE        },
@@ -39,6 +38,7 @@ struct operator ops[] = {
 	{ "nor", "",  4,  ASS_LEFT,  OPTYPE_BINARY  , OP_NOR         },
 	{ "?",   ":", 3,  ASS_LEFT,  OPTYPE_TERNARY , OP_QUESTION    },
 	{ "=",   "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_EQ          },
+	{ "->",  "",  2,  ASS_LEFT,  OPTYPE_BINARY  , OP_ARROW       },
 	{ "=~",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_SQUIGGLEEQ  },
 	{ "+=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_ADDEQ       },
 	{ "-=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY  , OP_SUBEQ       },
