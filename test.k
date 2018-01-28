@@ -417,9 +417,12 @@ pl match string {
 	true => 'Hello, world!'
 }
 
+pl join ', ', sort [5, 0, -21, 74, -5, 745, 4, -6, 2, 5, -13, 3, 45, -736, 1, 35, -23, 42, 3, 46]
+
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings
 # TODO: string interpolation
 # TODO: regex matches shouldn't survive function calls
 # TODO: prefix ++ and --
+# TODO: sort should care about arrays with mixed types
