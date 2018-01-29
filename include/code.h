@@ -46,6 +46,9 @@ enum instruction_type {
 	INSTR_ABS,
 	INSTR_COUNT,
 
+	INSTR_KEYS,
+	INSTR_VALUES,
+
 	INSTR_INT,
 	INSTR_FLOAT,
 	INSTR_STR,

@@ -592,6 +592,8 @@ tokenize(struct module *m)
 		    || !strcmp(ls->tok->value, "split"))
 		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1]) && !isspace(a[1])))
 		    && !is_hex_digit(*a)
+		    && *a != '{'
+		    && *a != '}'
 		    && *a != '('
 		    && *a != ')'
 		    && *a != '['

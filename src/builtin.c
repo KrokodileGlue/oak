@@ -18,6 +18,9 @@ struct builtin builtin[] = {
 	{ "abs",     14, BUILTIN_ABS     },
 	{ "count",   14, BUILTIN_COUNT   },
 
+	{ "keys",    14, BUILTIN_KEYS    },
+	{ "values",  14, BUILTIN_VALUES  },
+
 	{ "uc",      14, BUILTIN_UC      },
 	{ "lc",      14, BUILTIN_LC      },
 	{ "ucfirst", 14, BUILTIN_UCFIRST },

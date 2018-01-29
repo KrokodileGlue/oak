@@ -38,6 +38,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_ABS,      REG_BC,   "ABS       " },
 	{ INSTR_COUNT,    REG_EFG,  "COUNT     " },
 
+	{ INSTR_KEYS,     REG_BC,   "KEYS      " },
+	{ INSTR_VALUES,   REG_BC,   "VALUES    " },
+
 	{ INSTR_INT,      REG_BC,   "INT       " },
 	{ INSTR_FLOAT,    REG_BC,   "FLOAT     " },
 	{ INSTR_STR,      REG_BC,   "STR       " },

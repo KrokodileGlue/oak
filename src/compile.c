@@ -335,6 +335,9 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	UNARY(SUM, SUM);
 	UNARY(ABS, ABS);
 
+	UNARY(KEYS, KEYS);
+	UNARY(VALUES, VALUES);
+
 	case BUILTIN_SAY: {
 		int arg = -1;
 
@@ -1066,10 +1069,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 	case EXPR_TABLE: {
 		reg = alloc_reg(c);
+
 		struct value v;
-		v.type = VAL_ARRAY;
-		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->array[v.idx] = new_array();
+		v.type = VAL_TABLE;
+		v.idx = gc_alloc(c->gc, VAL_TABLE);
+		c->gc->table[v.idx] = new_table();
 
 		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
@@ -1119,7 +1123,13 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				         compile_expression(c, e->match[i], sym, false, true), &e->tok->loc);
 				emit_a(c, INSTR_COND, cond, &e->tok->loc);
 			} else {
-				cond = compile_expression(c, e->match[i], sym, false, true);
+				cond = alloc_reg(c);
+				int imp = alloc_reg(c);
+				emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
+				emit_efg(c, INSTR_CMP, cond,
+				         imp,
+				         compile_expression(c, e->match[i], sym, false, true),
+				         &e->tok->loc);
 				emit_a(c, INSTR_COND, cond, &e->tok->loc);
 			}
 

@@ -61,12 +61,13 @@ free_vm(struct vm *vm)
 
 	error_clear(vm->r);
 
-	if (vm->frame)     free(vm->frame);
-	if (vm->stack)     free(vm->stack);
-	if (vm->callstack) free(vm->callstack);
-	if (vm->imp)       free(vm->imp);
-	if (vm->subject)   free(vm->subject);
-	if (vm->module)    free(vm->module);
+	free(vm->frame);
+	free(vm->stack);
+	free(vm->callstack);
+	free(vm->imp);
+	free(vm->subject);
+	free(vm->module);
+	free(vm->frameimp);
 
 	free(vm);
 }
@@ -940,12 +941,37 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_EVAL:
 		if (GETREG(c.d.efg.f).type != VAL_STR) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "eval requires string argument");
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "eval requires string argument (got %s)",
+			           value_data[GETREG(c.d.efg.f).type].body);
 			return;
 		}
 
 		eval(vm, c.d.efg.e, vm->gc->str[GETREG(c.d.efg.f).idx],
 		     GETREG(c.d.efg.g).integer, *c.loc, find_undef(vm));
+		break;
+
+	case INSTR_VALUES:
+		if (GETREG(c.d.bc.c).type != VAL_TABLE) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "values builtin requires table argument (got %s)",
+			           value_data[GETREG(c.d.bc.c).type].body);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[v.idx] = new_array();
+
+		for (int i = 0; i < TABLE_SIZE; i++) {
+			struct bucket b = vm->gc->table[GETREG(c.d.bc.c).idx]->bucket[i];
+			for (size_t j = 0; j < b.len; j++) {
+				array_push(vm->gc->array[v.idx], b.val[j]);
+			}
+		}
+
+		SETREG(c.d.bc.b, v);
 		break;
 
 	case INSTR_NOP:

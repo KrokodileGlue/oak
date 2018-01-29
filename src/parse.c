@@ -305,8 +305,10 @@ parse_expr(struct parser *ps, size_t prec)
 		bool paren = !strcmp(ps->tok->value, "(");
 		if (paren) expect_symbol(ps, "(");
 
+		int prec = paren ? 1 : bi->prec;
+
 		while (true) {
-			struct expression *e = parse_expr(ps, bi->prec);
+			struct expression *e = parse_expr(ps, prec);
 
 			if (e) {
 				left->args = oak_realloc(left->args,
