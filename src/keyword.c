@@ -25,6 +25,7 @@ struct keyword keywords[] = {
 	{ KEYWORD_IMPORT,  "import"  },
 	{ KEYWORD_AS,      "as"      },
 	{ KEYWORD_WHEN,    "when"    },
+	{ KEYWORD_GOTO,    "goto"    },
 	{ KEYWORD_INVALID, "invalid" },
 };
 

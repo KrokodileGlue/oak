@@ -728,12 +728,15 @@ parse_stmt(struct parser *ps)
 {
 	struct statement *s = NULL;
 
-	/* if (ps->tok->type == TOK_IDENTIFIER && ps->tok->next && !strcmp(":", ps->tok->next->value)) { */
-	/* 	s->type = STMT_LABEL; */
-	/* 	s->label */
-	/* } else */
-
-	if (!strcmp(ps->tok->value, "{")) {
+	if (ps->tok->type == TOK_IDENTIFIER
+	    && ps->tok->next
+	    && !strcmp(ps->tok->next->value, ":")) {
+		s = new_statement(ps->tok);
+		s->type = STMT_LABEL;
+		s->label = ps->tok->value;
+		NEXT;
+		NEXT;
+	} else if (!strcmp(ps->tok->value, "{")) {
 		s = parse_block(ps);
 	} else if (!strcmp(ps->tok->value, ";")) {
 		s = new_statement(ps->tok);
@@ -745,10 +748,6 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_FN:     s = parse_fn_def(ps);	break;
 		case KEYWORD_PRINT:  s = parse_print(ps);	break;
 		case KEYWORD_PRINTLN:s = parse_println(ps);	break;
-		case KEYWORD_VAR:
-			s = parse_vardecl(ps);
-			expect_terminator(ps);
-			break;
 		case KEYWORD_FOR:    s = parse_for_loop(ps);	break;
 		case KEYWORD_RET:    s = parse_ret(ps);		break;
 		case KEYWORD_WHILE:  s = parse_while(ps);	break;
@@ -757,6 +756,11 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_ELSE:
 			error_push(ps->r, ps->tok->loc, ERR_FATAL, "unmatched `else' statement");
 			NEXT;
+			break;
+
+		case KEYWORD_VAR:
+			s = parse_vardecl(ps);
+			expect_terminator(ps);
 			break;
 
 		case KEYWORD_LAST:
@@ -779,7 +783,19 @@ parse_stmt(struct parser *ps)
 			break;
 
 		case KEYWORD_WHEN:
-			error_push(ps->r, ps->tok->loc, ERR_FATAL, "`when' keyword must follow statement");
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "`when' keyword must follow a statement");
+			NEXT;
+			break;
+
+		case KEYWORD_GOTO:
+			s = new_statement(ps->tok);
+			s->type = STMT_GOTO;
+			NEXT;
+
+			if (ps->tok->type != TOK_IDENTIFIER)
+				error_push(ps->r, ps->tok->loc, ERR_FATAL, "goto keyword must be followed by an identifier");
+
+			s->label = ps->tok->value;
 			NEXT;
 			break;
 

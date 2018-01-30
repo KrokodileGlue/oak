@@ -114,8 +114,6 @@ add_values(struct gc *gc, struct value l, struct value r)
 	struct value ret;
 	ret.type = VAL_NIL;
 
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
-
 	if (l.type == VAL_STR && r.type == VAL_STR) {
 		ret.type = VAL_STR;
 		ret.idx = gc_alloc(gc, VAL_STR);
@@ -175,8 +173,7 @@ add_values(struct gc *gc, struct value l, struct value r)
 	} else if (l.type == VAL_NIL && r.type == VAL_INT) {
 		ret = copy_value(gc, r);
 	} else BINARY_MATH_OPERATION(+) else {
-		/* TODO: do something here. */
-		assert(false);
+		return ERR("Invalid operation");
 	}
 
 	return ret;

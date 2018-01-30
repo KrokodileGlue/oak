@@ -35,6 +35,7 @@ free_symbol(struct symbol *sym)
 			free_symbol(sym->children[i]);
 	}
 
+	free(sym->label);
 	free(sym->children);
 	free(sym);
 }
@@ -69,6 +70,7 @@ new_symbol(struct token *tok, struct symbol *_sym)
 	if (_sym) sym->module = _sym->module;
 	sym->next = -1;
 	sym->last = -1;
+	sym->address = -1;
 
 	return sym;
 }
@@ -576,6 +578,15 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		free(sym);
 		return;
 
+	case STMT_LABEL:
+		sym->type = SYM_LABEL;
+		sym->name = stmt->label;
+		sym->scope = si->k->scope;
+		sym->parent = si->symbol;
+		sym->global = si->scope_pointer == 1;
+		break;
+
+	case STMT_GOTO:
 	case STMT_LAST:
 	case STMT_NEXT:
 	case STMT_NULL: {

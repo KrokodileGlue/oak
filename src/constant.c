@@ -39,45 +39,6 @@ print_constant_table(FILE *f, struct gc *gc, struct constant_table *ct)
 {
 	for (size_t i = 0; i < ct->num; i++) {
 		fprintf(f, "\n[%3zu : %9s] ", i, value_data[ct->val[i].type].body);
-		switch (ct->val[i].type) {
-		case VAL_STR:
-			print_escaped_string(f, gc->str[ct->val[i].idx],
-			                     strlen(gc->str[ct->val[i].idx]));
-			break;
-
-		case VAL_INT:
-			fprintf(f, "%"PRId64, ct->val[i].integer);
-			break;
-
-		case VAL_FLOAT:
-			fprintf(f, "%f", ct->val[i].real);
-			break;
-
-		case VAL_NIL:
-			fprintf(f, "nil");
-			break;
-
-		case VAL_ARRAY:
-			for (size_t j = 0; j < gc->array[ct->val[i].idx]->len; j++)
-				print_value(f, gc, gc->array[ct->val[i].idx]->v[j]);
-			break;
-
-		case VAL_BOOL:
-			fprintf(f, "%s", ct->val[i].boolean ? "true" : "false");
-			break;
-
-		case VAL_FN:
-			fprintf(f, "%"PRId64, ct->val[i].integer);
-			break;
-
-		case VAL_REGEX:
-			fprintf(f, "%p", (void *)&gc->regex[ct->val[i].idx]);
-			break;
-
-		default:
-			DOUT("unimplemented constant printer for value of type %s",
-			     value_data[ct->val[i].type].body);
-			assert(false);
-		}
+		print_value(f, gc, ct->val[i]);
 	}
 }

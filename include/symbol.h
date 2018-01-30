@@ -22,6 +22,8 @@ struct symbol {
 	bool            global;
 
 	int next, last;
+	int *label;
+	int labelp;
 
 	enum SymbolType {
 		SYM_FN,
@@ -30,6 +32,7 @@ struct symbol {
 		SYM_BLOCK,
 		SYM_ARGUMENT,
 		SYM_MODULE,
+		SYM_LABEL,
 		SYM_INVALID
 	} type;
 };

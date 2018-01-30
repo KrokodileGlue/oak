@@ -24,6 +24,8 @@ struct statement_data statement_data[] = {
 	{ STMT_LAST     , "last"                 },
 	{ STMT_NEXT     , "next"                 },
 	{ STMT_DIE      , "die"                  },
+	{ STMT_LABEL    , "label"                },
+	{ STMT_GOTO     , "goto"                 },
 	{ STMT_INVALID  , "invalid statement"    }
 };
 
@@ -185,6 +187,8 @@ free_stmt(struct statement *s)
 		free_expr(s->expr);
 		break;
 
+	case STMT_LABEL:
+	case STMT_GOTO:
 	case STMT_IMPORT:
 	case STMT_NULL:
 	case STMT_LAST:

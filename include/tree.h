@@ -27,6 +27,8 @@ enum statement_type {
 	STMT_LAST,
 	STMT_NEXT,
 	STMT_DIE,
+	STMT_LABEL,
+	STMT_GOTO,
 	STMT_INVALID
 };
 
@@ -108,6 +110,7 @@ struct statement {
 			struct token *as;
 		} import;
 
+		char *label;
 		struct expression *expr;
 	};
 };

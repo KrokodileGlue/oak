@@ -116,7 +116,7 @@ for var i = 0; i < length array; i++:
 
 fn djoin (x, y) {
 	return y when type y != 'array'
-	var r
+	var r = ''
 
 	for var i = 0; i < length y - 1; i++ {
 		if type y[i] == 'array': r += djoin(x, y[i]) + x
@@ -363,7 +363,7 @@ pl join ', ', 5 * ['foo', 'bar']
 
 pl int '-0x100' * 2
 pl float '3.1415926535897932' * 3
-pl (str 400) * 2
+pl str(400) * 2
 
 var x
 pl join ', ', [0 for range 0, 9]
@@ -416,6 +416,14 @@ pl match string {
 }
 
 pl join ', ', sort [5, 0, -21, 74, -5, 745, 4, -6, 2, 5, -13, 3, 45, -736, 1, 35, -23, 42, 3, 46]
+
+var step = 0
+test:
+pl 'Hello, world!'
+step++
+if step == 10: goto end
+goto test
+end:
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector

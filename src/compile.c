@@ -1745,6 +1745,30 @@ compile_statement(struct compiler *c, struct statement *s)
 		       &s->tok->loc);
 		break;
 
+	case STMT_LABEL: {
+		struct symbol *l = resolve(sym, s->label);
+		l->address = c->ip;
+		for (int i = 0; i < l->labelp; i++)
+			c->code[l->label[i]].d.d = l->address;
+	} break;
+
+	case STMT_GOTO: {
+		struct symbol *l = resolve(sym, s->label);
+
+		if (!l) {
+			error_push(c->r, s->tok->loc, ERR_FATAL, "undeclared identifier");
+			return -1;
+		}
+
+		if (l->address != (size_t)-1) {
+			emit_d(c, INSTR_JMP, l->address, &s->tok->loc);
+		} else {
+			l->label = oak_realloc(l->label, (l->labelp + 1) * sizeof *l->label);
+			l->label[l->labelp++] = c->ip;
+			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+		}
+	} break;
+
 	case STMT_NULL:
 		break;
 
