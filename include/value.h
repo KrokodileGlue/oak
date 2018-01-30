@@ -53,6 +53,7 @@ struct value {
 	char *name;
 };
 
+#define BOOL(X) ((struct value){ VAL_BOOL, { .boolean = (X) }, NULL})
 #define INT(X) ((struct value){ VAL_INT, { .integer = (X) }, NULL})
 #define ERR(X) ((struct value){ VAL_ERR, { .integer = 0 }, (X)})
 #define NIL ((struct value){ VAL_NIL, { .integer = 0 }, NULL})
@@ -79,6 +80,7 @@ struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
 struct value sort_value(struct gc *gc, struct value l);
+struct value max_value(struct gc *gc, struct value l);
 struct value uc_value(struct gc *gc, struct value l);
 struct value lc_value(struct gc *gc, struct value l);
 struct value ucfirst_value(struct gc *gc, struct value l);

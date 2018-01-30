@@ -386,7 +386,7 @@ more_values(struct gc *gc, struct value l, struct value r)
 	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
 
 	BINARY_MATH_OPERATION(>) else {
-		assert(false);
+		return BOOL(false);
 	}
 
 	struct value ret2;
@@ -553,12 +553,12 @@ flip_value(struct gc *gc, struct value l)
 	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0 };
 
 	switch (l.type) {
-	case VAL_INT:   ans.boolean = l.integer ? false : true; break;
-	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);       break;
-	case VAL_BOOL:  ans.boolean = !l.boolean;               break;
-	case VAL_NIL:   ans.boolean = true;                     break;
-	case VAL_ARRAY: ans.boolean = !!gc->array[l.idx]->len;  break;
-	case VAL_STR:   ans.boolean = !!strlen(gc->str[l.idx]); break;
+	case VAL_INT:   ans.boolean = !l.integer;              break;
+	case VAL_FLOAT: ans.boolean = !fcmp(l.real, 0.0);      break;
+	case VAL_BOOL:  ans.boolean = !l.boolean;              break;
+	case VAL_NIL:   ans.boolean = true;                    break;
+	case VAL_ARRAY: ans.boolean = !gc->array[l.idx]->len;  break;
+	case VAL_STR:   ans.boolean = !strlen(gc->str[l.idx]); break;
 	default: assert(false);
 	}
 
@@ -617,6 +617,38 @@ sort_value(struct gc *gc, struct value l)
 	}
 
 	return ret;
+}
+
+struct value
+max_value(struct gc *gc, struct value l)
+{
+	struct value v;
+
+	if (l.type == VAL_TABLE) {
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->array[v.idx] = new_array();
+
+		for (int i = 0; i < TABLE_SIZE; i++) {
+			struct bucket b = gc->table[l.idx]->bucket[i];
+			for (size_t j = 0; j < b.len; j++) {
+				array_push(gc->array[v.idx], b.val[j]);
+			}
+		}
+	} else {
+		if (l.type != VAL_ARRAY)
+			return ERR("max expects an array or table");
+		v = l;
+	}
+
+	if (gc->array[v.idx]->len == 0) return NIL;
+	struct value m = gc->array[v.idx]->v[0];
+
+	for (unsigned i = 0; i < gc->array[v.idx]->len; i++)
+		if (is_truthy(gc, more_values(gc, gc->array[v.idx]->v[i], m)))
+			m = gc->array[v.idx]->v[i];
+
+	return m;
 }
 
 struct value

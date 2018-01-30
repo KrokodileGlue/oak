@@ -17,6 +17,8 @@ struct builtin builtin[] = {
 	{ "sum",     14, BUILTIN_SUM     },
 	{ "abs",     14, BUILTIN_ABS     },
 	{ "count",   14, BUILTIN_COUNT   },
+	{ "min",     14, BUILTIN_MIN     },
+	{ "max",     14, BUILTIN_MAX     },
 
 	{ "keys",    14, BUILTIN_KEYS    },
 	{ "values",  14, BUILTIN_VALUES  },

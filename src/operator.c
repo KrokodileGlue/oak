@@ -11,6 +11,7 @@ struct operator ops[] = {
 	{ "++",  "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_ADDADD      },
 	{ "--",  "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_ADDADD      },
 	{ "!",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_EXCLAMATION },
+	{ "not", "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_EXCLAMATION },
 
 	{ "+",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_ADD         },
 	{ "-",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SUB         },

@@ -489,7 +489,6 @@ static char *
 parse_group(struct lexer *ls, char *a)
 {
 	char *b = a + 1;
-
 	while (*b && is_dec_digit(*b)) b++;
 
 	if (b == a + 1) {
@@ -512,6 +511,38 @@ parse_group(struct lexer *ls, char *a)
 
 	ls->tok->integer = i;
 	return b;
+}
+
+static bool
+is_regex_start(struct lexer *ls, char *a)
+{
+	static char *forbid = ",{}[]\'\"!:-+()><;*%=?";
+
+	if (!*a)                     return false;
+	if (!ls->tok)                return false;
+	if (ls->tok->type == TOK_INTEGER) return false;
+	if (ls->tok->type == TOK_FLOAT)   return false;
+	if (ls->tok->type == TOK_BOOL)    return false;
+	if (is_identifier_start(*a) && *a != 's') return false;
+
+	if (ls->tok->type == TOK_IDENTIFIER) {
+		/* Regular expressions may follow builtin functions and keywords. */
+		bool pass = false;
+
+		for (size_t i = 0; i < num_keywords(); i++)
+			if (!strcmp(ls->tok->value, keywords[i].body)) {
+				pass = true;
+				break;
+			}
+
+		if (get_builtin(ls->tok->value)) pass = true;
+		if (!pass) return false;
+	}
+
+	if (ispunct(*a) && !strchr(forbid, *a))                  return true;
+	if (*a == 's' && ispunct(a[1]) && !strchr(forbid, a[1])) return true;
+
+	return false;
 }
 
 bool
@@ -582,33 +613,7 @@ tokenize(struct module *m)
 			ls->loc.len = len;
 			lexer_push_token(ls, TOK_SYMBOL, a, b);
 			a += 2;
-		} else if (ls->tok
-		    && (!strcmp(ls->tok->value, "(")
-		    || !strcmp(ls->tok->value, ",")
-		    || !strcmp(ls->tok->value, "=~")
-		    || !strcmp(ls->tok->value, "{")
-		    || !strcmp(ls->tok->value, "if")
-		    || !strcmp(ls->tok->value, "when")
-		    || !strcmp(ls->tok->value, "split"))
-		    && (!is_identifier_start(*a) || (*a == 's' && !isalpha(a[1]) && !isspace(a[1])))
-		    && !is_hex_digit(*a)
-		    && *a != '{'
-		    && *a != '}'
-		    && *a != '('
-		    && *a != ')'
-		    && *a != '['
-		    && *a != ']'
-		    && *a != '*'
-		    && *a != '\''
-		    && *a != '"'
-		    && *a != '.'
-		    && *a != '$'
-		    && (ls->tok->type != TOK_IDENTIFIER
-		        || !strcmp(ls->tok->value, "split")
-		        || (*a == 's' && !isalpha(a[1]) && !isspace(a[1])))
-		    && ls->tok->type != TOK_INTEGER
-		    && (match_operator(a)
-		        ? (match_operator(a)->type != OPTYPE_PREFIX) : true)) {
+		} else if (is_regex_start(ls, a)) {
 			a = parse_regex(ls, a);
 		} else if (!strncmp(a, "R(", 2)) {
 			a = parse_raw_string_literal(ls, a);

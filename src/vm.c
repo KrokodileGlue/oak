@@ -200,7 +200,15 @@ stacktrace(struct vm *vm)
 }
 
 #define GETREG(X) ((X) >= NUM_REG ? vm->frame[1][(X) - NUM_REG] : vm->frame[vm->fp][X])
-#define SETREG(X,Y) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (Y)) : (vm->frame[vm->fp][X] = (Y)))
+/* #define SETREG(X,Y) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (Y)) : (vm->frame[vm->fp][X] = (Y))) */
+
+#define SETREG(X,Y)	  \
+	do { \
+		struct value _ = (Y); \
+		if (_.type == VAL_ERR) \
+			error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL, "ValueError: %s", _.name); \
+		((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (_)) : (vm->frame[vm->fp][X] = (_))); \
+	} while (0)
 
 #define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
 
@@ -257,7 +265,7 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 		if (i != reg) SETR(i, type, VAL_UNDEF);
 }
 
-void
+static inline void
 execute_instr(struct vm *vm, struct instruction c)
 {
 	if (vm->debug) {
@@ -725,9 +733,17 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		SETR(c.d.bc.b, type, VAL_STR);
 		int m = vm->match;
 		int **vec = ktre_getvec(vm->re);
+
+		if (m < 0) {
+			for (int i = 0; i < vm->re->num_matches; i++)
+				free(vec[i]);
+
+			free(vec);
+			SETR(c.d.bc.b, type, VAL_NIL);
+			return;
+		}
 
 		struct value v;
 		v.type = VAL_STR;
@@ -1003,6 +1019,29 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_LCFIRST:
 		assert(GETREG(c.d.bc.c).type == VAL_STR);
 		SETREG(c.d.bc.b, lcfirst_value(vm->gc, GETREG(c.d.bc.c)));
+		break;
+
+	case INSTR_MIN:
+		assert(false);
+		break;
+
+	case INSTR_MAX:
+		if (vm->sp == 1) {
+			SETREG(c.d.a, max_value(vm->gc, vm->stack[vm->sp--]));
+			return;
+		} else {
+			struct value v;
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->array[v.idx] = new_array();
+
+			while (vm->sp)
+				array_push(vm->gc->array[v.idx], vm->stack[vm->sp--]);
+
+			SETREG(c.d.a, max_value(vm->gc, v));
+			return;
+		}
+
 		break;
 
 	default:

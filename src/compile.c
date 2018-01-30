@@ -414,6 +414,33 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		emit_bc(c, INSTR_STR, reg, arg, &e->tok->loc);
 	} break;
 
+	case BUILTIN_MIN:
+		assert(false);
+		break;
+
+	case BUILTIN_MAX: {
+		reg = alloc_reg(c);
+
+		if (e->num == 0) {
+			int temp = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
+			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
+			emit_a(c, INSTR_MAX, reg, &e->tok->loc);
+		} else {
+			int arg[e->num];
+
+			for (int i = e->num - 1; i >= 0; i--) {
+				arg[i] = alloc_reg(c);
+				emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+			}
+
+			for (int i = e->num - 1; i >= 0; i--)
+				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
+
+			emit_a(c, INSTR_MAX, reg, &e->tok->loc);
+		}
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",
 		     e->bi->body);
@@ -1120,7 +1147,8 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				cond = alloc_reg(c);
 				emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
 				emit_efg(c, INSTR_MATCH, cond, temp,
-				         compile_expression(c, e->match[i], sym, false, true), &e->tok->loc);
+				         compile_expression(c, e->match[i], sym, false, false),
+				         &e->match[i]->tok->loc);
 				emit_a(c, INSTR_COND, cond, &e->tok->loc);
 			} else {
 				cond = alloc_reg(c);
@@ -1129,7 +1157,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				emit_efg(c, INSTR_CMP, cond,
 				         imp,
 				         compile_expression(c, e->match[i], sym, false, true),
-				         &e->tok->loc);
+				         &e->match[i]->tok->loc);
 				emit_a(c, INSTR_COND, cond, &e->tok->loc);
 			}
 

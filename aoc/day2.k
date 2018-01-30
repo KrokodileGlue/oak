@@ -3,16 +3,16 @@ l =~ s/\s+\Z//s
 
 var s = 0
 for split /\n/, l {
-	var min = -1
-	var max = 0
+	var mn = -1
+	var mx = 0
 
 	for split /\s+/ {
-		min = int when min < 0
-		max = int > max ? int : max
-		min = int < min ? int : min
+		mn = int when mn < 0
+		mx = int > mx ? int : mx
+		mn = int < mn ? int : mn
 	}
 
-	s += max - min
+	s += mx - mn
 }
 
 pl s

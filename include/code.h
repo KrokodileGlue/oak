@@ -70,6 +70,9 @@ enum instruction_type {
 	INSTR_TYPE,
 	INSTR_LEN,
 
+	INSTR_MIN,
+	INSTR_MAX,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,

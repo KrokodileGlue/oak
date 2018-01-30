@@ -1,24 +1,18 @@
-var s = 0
+var s t = 0, 0
 
 for split /\n/, I(day4.txt) {
-	next when length == 0
+	next when !length
 	var w = split /\s+/
-	var win = true
-	for var i; range 0, length w: for var j; range 0, length w:
-		win = false when w[i] == w[j] and i != j
-	s++ when win
+	var win1 win2 = true, true
+
+	for var i; 0 -> length w - 1: for var j; 0 -> length w - 1 {
+		win1 = false when w[i] == w[j] and i != j
+		win2 = false when i != j and sort w[i] == sort w[j]
+		last when !win1 and !win2
+	}
+
+	s++ when win1
+	t++ when win2
 }
 
-pl s
-s = 0
-
-for split /\n/, I(day4.txt) {
-	next when length == 0
-	var w = split /\s+/
-	var win = true
-	for var i; range 0, length w: for var j; range 0, length w:
-		win = false when i != j and sort w[i] == sort w[j]
-	s++ when win
-}
-
-pl s
+pl s, '\n', t

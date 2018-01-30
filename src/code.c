@@ -62,6 +62,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
 	{ INSTR_LEN,      REG_BC,   "LEN       " },
 
+	{ INSTR_MIN,      REG_A,    "MIN       " },
+	{ INSTR_MAX,      REG_A,    "MAX       " },
+
 	{ INSTR_ADD,      REG_EFG,  "ADD       " },
 	{ INSTR_SUB,      REG_EFG,  "SUB       " },
 	{ INSTR_MUL,      REG_EFG,  "MUL       " },

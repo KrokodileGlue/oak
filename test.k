@@ -215,8 +215,6 @@ for var i = 0; i < 10; i++ {
 
 # eval "next"
 
-fn abs (x) = x < 0 ? -x : x
-
 string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
 pl string =~ s/[aeiouy]+/"'o'"/eegi
 

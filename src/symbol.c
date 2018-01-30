@@ -138,8 +138,8 @@ add(struct symbolizer *si, struct symbol *sym)
 
 	if (get_builtin(sym->name)) {
 		error_push(si->r, sym->tok->loc, ERR_FATAL,
-		           "redeclaration of builtin function `%s'",
-		           sym->name);
+		           "redeclaration of builtin function `%s' as %s",
+		           sym->name, sym_str[sym->type]);
 		free_symbol(sym);
 		return;
 	}
@@ -373,6 +373,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	sym->parent = si->symbol;
+	resolve_expr(si, stmt->condition);
 
 	switch (stmt->type) {
 	case STMT_FN_DEF: {
@@ -589,7 +590,6 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 	}
 
-	resolve_expr(si, stmt->condition);
 	sym->id = hash(sym->name, strlen(sym->name));
 	add(si, sym);
 }
