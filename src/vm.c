@@ -252,8 +252,7 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	}
 
 	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
-	if (!vm->running) vm->ip = vm->callstack[vm->csp--];
-	vm->running = true;
+	if (!vm->running && !vm->m->child) vm->ip = vm->callstack[vm->csp--];
 	vm->module[vm->fp] = vm->m->child;
 
 	for (int i = stack_base; i < NUM_REG; i++)
@@ -1060,6 +1059,8 @@ execute(struct vm *vm, int64_t ip)
 		if (vm->r->pending) break;
 		vm->ip++;
 		vm->step++;
+
+		if (!vm->m->child) vm->running = true;
 	}
 
 	if (vm->debug)
