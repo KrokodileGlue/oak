@@ -52,6 +52,11 @@ index_in_line(struct location loc)
 		}
 
 		start--;
+
+		if (loc.text[start] == '\n') {
+			start++;
+			break;
+		}
 	}
 
 	assert(loc.index - start < 2048);
@@ -114,7 +119,13 @@ get_line(struct location loc)
 			start++;
 			break;
 		}
+
 		start--;
+
+		if (loc.text[start] == '\n') {
+			start++;
+			break;
+		}
 	}
 
 	while (loc.text[end] != '\n' && loc.text[end]) { end++; } /* find the end */

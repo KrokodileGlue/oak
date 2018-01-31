@@ -26,8 +26,6 @@ free_module(struct module *m)
 	if (m->stage >= MODULE_STAGE_LEXED)      token_clear(m->tok);
 	if (m->stage >= MODULE_STAGE_PARSED)     free_ast(m->tree);
 	if (m->stage >= MODULE_STAGE_SYMBOLIZED) if (!m->child) free_symbol(m->sym);
-	if (m->stage >= MODULE_STAGE_COMPILED) {
-	}
 
 	if (!m->child) free_gc(m->gc);
 	if (!m->child) free_constant_table(m->ct);

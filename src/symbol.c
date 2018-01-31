@@ -30,8 +30,6 @@ void
 free_symbol(struct symbol *sym)
 {
 	for (size_t i = 0; i < sym->num_children; i++) {
-		if (sym->children[i]->type != SYM_MODULE
-		    && sym->children[i]->module == sym->module)
 			free_symbol(sym->children[i]);
 	}
 
@@ -662,6 +660,7 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 	if (parent) {
 		push_scope(si, ++k->scope);
 		push_block(si, m->tree[0]);
+		si->symbol->module = m;
 		si->symbol->next = si->symbol->parent->next;
 		si->symbol->last = si->symbol->parent->last;
 	}
