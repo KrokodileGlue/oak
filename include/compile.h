@@ -26,6 +26,7 @@ struct compiler {
 
 	struct module *m;
 	struct statement *stmt;
+	struct statement *loop;
 	struct reporter *r;
 	struct gc *gc;
 

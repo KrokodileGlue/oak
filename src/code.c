@@ -16,7 +16,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_CALL,     REG_A,    "CALL      " },
 	{ INSTR_RET,      REG_NONE, "RET       " },
 	{ INSTR_PUSHIMP,  REG_A,    "PUSHIMP   " },
-	{ INSTR_POPIMP,   REG_A,    "POPIMP    " },
+	{ INSTR_POPIMP,   REG_NONE, "POPIMP    " },
 	{ INSTR_GETIMP,   REG_A,    "GETIMP    " },
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },

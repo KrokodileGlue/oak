@@ -201,8 +201,7 @@ nil(struct compiler *c)
 {
 	int reg = alloc_reg(c);
 	emit_bc(c, INSTR_COPYC, reg,
-	        constant_table_add(c->ct,
-	                           (struct value){ VAL_NIL, { 0 }, 0}),
+	        constant_table_add(c->ct, NIL),
 	        &c->stmt->tok->loc);
 	return reg;
 }
@@ -1203,7 +1202,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		for (int i = e->num - 1; i >= 0; i--) {
 			arg[i] = alloc_reg(c);
-			emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+			emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, false, true), &e->tok->loc);
 		}
 
 		for (int i = e->num - 1; i >= 0; i--)
@@ -1212,12 +1211,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		if (e->a->type == EXPR_OPERATOR
 		    && e->a->operator->type == OPTYPE_BINARY
 		    && e->a->operator->name == OP_PERIOD) {
-			emit_a(c, INSTR_PUSH, compile_expression(c, e->a->a, sym, true, true), &e->tok->loc);
+			emit_a(c, INSTR_PUSH, compile_expression(c, e->a->a, sym, false, true), &e->tok->loc);
 		}
 
 		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
-		reg = alloc_reg(c);
-		emit_a(c, INSTR_POP, reg, &e->tok->loc);
+		emit_a(c, INSTR_POP, reg = alloc_reg(c), &e->tok->loc);
 	} break;
 
 	case EXPR_FN_DEF: {
@@ -1417,8 +1415,9 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 	if (c->in_expr)
 		return compile_expression(c, e, sym, copy, true);
 
-	c->in_expr = true;
 	c->stack_top[c->sp] = c->stack_base[c->sp];
+
+	c->in_expr = true;
 	int t = compile_expression(c, e, sym, copy, true);
 	c->in_expr = false;
 
@@ -1540,18 +1539,29 @@ compile_statement(struct compiler *c, struct statement *s)
 			           "'return' keyword must occur inside of a function body");
 		}
 
+		int imp = 0;
+		struct symbol *sy = sym;
+		struct symbol *loop = find_from_scope(c->sym, c->loop->scope);
+
+		while (sy != loop->parent) {
+			if (sy->imp) imp++;
+			sy = sy->parent;
+		}
+
+		for (int i = 0; i < imp; i++)
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
 		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym, true), &s->tok->loc);
 		emit_(c, INSTR_RET, &s->tok->loc);
 		break;
 
 	case STMT_BLOCK:
-		for (size_t i = 0; i < s->block.num; i++) {
+		for (size_t i = 0; i < s->block.num; i++)
 			compile_statement(c, s->block.stmts[i]);
-		}
 		break;
 
 	case STMT_EXPR:
-		compile_expression(c, s->expr, sym, false, true);
+		compile_expr(c, s->expr, sym, false);
 		break;
 
 	case STMT_IF_STMT: {
@@ -1567,6 +1577,9 @@ compile_statement(struct compiler *c, struct statement *s)
 	} break;
 
 	case STMT_WHILE: {
+		struct statement *old_loop = c->loop;
+		c->loop = s;
+
 		size_t a = c->ip;
 		emit_a(c, INSTR_COND, compile_expr(c, s->while_loop.cond, sym, false), &s->tok->loc);
 		size_t b = c->ip;
@@ -1579,9 +1592,14 @@ compile_statement(struct compiler *c, struct statement *s)
 		set_last(sym, c->ip);
 		LOOP_START(a);
 		LOOP_END;
+
+		c->loop = old_loop;
 	} break;
 
 	case STMT_DO: {
+		struct statement *old_loop = c->loop;
+		c->loop = s;
+
 		size_t a = c->ip;
 		compile_statement(c, s->do_while_loop.body);
 		for (int i = np; i < c->np; i++)
@@ -1595,9 +1613,13 @@ compile_statement(struct compiler *c, struct statement *s)
 
 		set_next(sym, a);
 		set_last(sym, c->ip);
+		c->loop = old_loop;
 	} break;
 
-	case STMT_FOR_LOOP:
+	case STMT_FOR_LOOP: {
+		struct statement *old_loop = c->loop;
+		c->loop = s;
+
 		if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
 			if (s->for_loop.a->type == STMT_EXPR) {
 				compile_expr(c, s->for_loop.a->expr, sym, false);
@@ -1707,10 +1729,14 @@ compile_statement(struct compiler *c, struct statement *s)
 			c->code[e].d.d = c->ip;
 		}
 
+		c->loop = old_loop;
 		set_last(sym, c->ip);
-		break;
+	} break;
 
 	case STMT_LAST:
+		if (find_from_scope(c->sym, c->loop->scope)->imp)
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
 		if (c->eval) {
 			if (sym->last < 0) {
 				error_push(c->r, s->tok->loc, ERR_FATAL,
@@ -1725,7 +1751,10 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 		break;
 
-	case STMT_NEXT:
+	case STMT_NEXT: {
+		if (find_from_scope(c->sym, c->loop->scope)->imp)
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
 		if (c->eval) {
 			if (sym->next < 0) {
 				error_push(c->r, s->tok->loc, ERR_FATAL,
@@ -1738,10 +1767,10 @@ compile_statement(struct compiler *c, struct statement *s)
 			push_next(c, c->ip);
 			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
 		}
-		break;
+	} break;
 
 	case STMT_DIE:
-		emit_a(c, INSTR_KILL, compile_expression(c, s->expr, sym, false, true),
+		emit_a(c, INSTR_KILL, compile_expr(c, s->expr, sym, false),
 		       &s->tok->loc);
 		break;
 
@@ -1759,6 +1788,21 @@ compile_statement(struct compiler *c, struct statement *s)
 			error_push(c->r, s->tok->loc, ERR_FATAL, "undeclared identifier");
 			return -1;
 		}
+
+		if (sym->fp != 0 && l->global) {
+			error_push(c->r, s->tok->loc, ERR_FATAL, "goto may not jump out of a function definition");
+			return -1;
+		}
+
+		int imp = 0;
+		struct symbol *sy = sym;
+		while (sy != l->parent) {
+			if (sy->imp) imp++;
+			sy = sy->parent;
+		}
+
+		for (int i = 0; i < imp; i++)
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 		if (l->address != (size_t)-1) {
 			emit_d(c, INSTR_JMP, l->address, &s->tok->loc);
@@ -1798,6 +1842,7 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 	c->gc = m->gc;
 	c->debug = debug;
 	c->sp = -1;
+	c->loop = m->tree[0];
 
 	if (ct) c->ct = ct;
 	else c->ct = new_constant_table();

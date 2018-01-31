@@ -11,6 +11,18 @@ new_table()
 	return t;
 }
 
+struct table *
+copy_table(struct table *t)
+{
+	struct table *r = new_table();
+
+	for (size_t i = 0; i < TABLE_SIZE; i++)
+		for (size_t j = 0; j < t->bucket[i].len; j++)
+			table_add(r, t->bucket[i].key[j], table_lookup(t, t->bucket[i].key[j]));
+
+	return r;
+}
+
 void
 free_table(struct table *t)
 {

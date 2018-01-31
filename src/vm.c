@@ -26,9 +26,6 @@ push_frame(struct vm *vm)
 	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
 	vm->module[vm->fp] = false;
 
-	vm->frameimp = oak_realloc(vm->frameimp, (vm->fp + 1) * sizeof *vm->frameimp);
-	if (vm->fp) vm->frameimp[vm->fp - 1] = vm->impp;
-
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
 
@@ -67,7 +64,6 @@ free_vm(struct vm *vm)
 	free(vm->imp);
 	free(vm->subject);
 	free(vm->module);
-	free(vm->frameimp);
 
 	free(vm);
 }
@@ -76,7 +72,6 @@ static void
 pop_frame(struct vm *vm)
 {
 	vm->fp--;
-	vm->impp = vm->frameimp[vm->fp];
 }
 
 static void
@@ -268,16 +263,15 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 static inline void
 execute_instr(struct vm *vm, struct instruction c)
 {
-	if (vm->debug) {
-		fprintf(vm->f, "%s:%5zu> %4zu: ", vm->m->name, vm->step, vm->ip);
+	if (vm->k->print_code) {
+		fprintf(vm->f, "%s:%6zu> %4zu: ", vm->m->name, vm->step, vm->ip);
 		print_instruction(vm->f, c);
-		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %s\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->module[vm->fp] ? "t" : "f");
+		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %3zu | %s\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->impp, vm->module[vm->fp] ? "t" : "f");
 	}
 
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
 
 	switch (c.type) {
-	case INSTR_LINE: if (!vm->debug) fputc('\n', vm->f);    break;
 	case INSTR_MOV:  SETREG(c.d.bc.b, GETREG(c.d.bc.c));    break;
 	case INSTR_JMP:  vm->ip = c.d.d - 1;                    break;
 	case INSTR_PUSH: push(vm, GETREG(c.d.a));               break;
@@ -297,6 +291,9 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_MORE: BIN(more);                             break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_DEC: SETREG(c.d.a, dec_value(GETREG(c.d.a)));break;
+	case INSTR_LINE:
+		if (!vm->debug && vm->k->talkative) fputc('\n', vm->f);
+		break;
 
 	case INSTR_FLIP:
 		SETREG(c.d.bc.b, flip_value(vm->gc, GETREG(c.d.bc.c)));
@@ -514,8 +511,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_PRINT:
-		print_value(vm->f, vm->gc, GETREG(c.d.a));
-		if (vm->debug) fputc('\n', stderr);
+		if (vm->k->talkative) print_value(vm->f, vm->gc, GETREG(c.d.a));
+		if (vm->debug && vm->k->talkative) fputc('\n', stderr);
 		break;
 
 	case INSTR_COND:
@@ -551,13 +548,11 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_PUSHIMP:
 		vm->imp = oak_realloc(vm->imp, (vm->impp + 1) * sizeof *vm->imp);
 		vm->imp[vm->impp++] = GETREG(c.d.a);
-		vm->frameimp[vm->fp] = vm->impp;
 		break;
 
 	case INSTR_POPIMP:
 		assert(vm->impp);
 		vm->impp--;
-		vm->frameimp[vm->fp] = vm->impp;
 		break;
 
 	case INSTR_GETIMP:
@@ -1058,6 +1053,9 @@ execute(struct vm *vm, int64_t ip)
 	vm->running = true;
 
 	while (vm->code[vm->ip].type != INSTR_END && vm->fp >= 1 && vm->running) {
+		/* TODO: remove this */
+		assert(vm->impp < 100);
+
 		execute_instr(vm, vm->code[vm->ip]);
 		if (vm->r->pending) break;
 		vm->ip++;

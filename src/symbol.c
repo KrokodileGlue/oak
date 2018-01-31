@@ -218,8 +218,25 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
+	sym->fp = si->fp;
 	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
+
+	add(si, sym);
+	push(si, sym);
+}
+
+static void
+push_block_expr(struct symbolizer *si, struct expression *expr)
+{
+	assert(expr);
+
+	struct symbol *sym = new_symbol(expr->tok, si->symbol);
+	sym->name = "*block*";
+	sym->type = SYM_BLOCK;
+	sym->parent = si->symbol;
+	sym->fp = si->fp;
+	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 
 	add(si, sym);
 	push(si, sym);
@@ -235,6 +252,7 @@ block(struct symbolizer *si, struct statement *stmt)
 	sym->name = "*block*";
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
+	sym->fp = si->fp;
 	sym->scope = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	add(si, sym);
@@ -308,6 +326,7 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			imp->id = hash(imp->name, strlen(imp->name));
 			imp->scope = -1;
 
+			si->symbol->imp = true;
 			add(si, imp);
 		}
 
@@ -351,6 +370,10 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		break;
 
 	case EXPR_MATCH:
+		push_scope(si, ++si->k->scope);
+		push_block_expr(si, e);
+
+		si->symbol->imp = true;
 		resolve_expr(si, e->a);
 
 		for (size_t i = 0; i < e->num; i++) {
@@ -358,6 +381,9 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			resolve_expr(si, e->match[i]);
 			symbolize(si, e->bodies[i]);
 		}
+
+		pop(si);
+		pop_scope(si);
 		break;
 
 	default:
@@ -375,10 +401,13 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	sym->scope  = si->scope_stack[si->scope_pointer - 1];
 	stmt->scope = si->scope_stack[si->scope_pointer - 1];
 	sym->parent = si->symbol;
+	sym->fp     = si->fp;
 	resolve_expr(si, stmt->condition);
 
 	switch (stmt->type) {
 	case STMT_FN_DEF: {
+		si->fp++;
+
 		struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.name);
 		if (redefinition) {
 			error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function",
@@ -391,24 +420,16 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		sym->name = stmt->fn_def.name;
 		sym->type = SYM_FN;
+
 		/*
 		 * We have to set the id early to support recursive
 		 * function calls n stuff.
 		 */
 		sym->id = hash(sym->name, strlen(sym->name));
 		sym->scope = si->scope_stack[si->scope_pointer - 1];
-
 		push(si, sym);
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
-			/* Maybe we should allow the user to shadow global variables. */
-			/* struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.args[i]->value); */
-			/* if (redefinition) { */
-			/* 	error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function argument", */
-			/* 	           stmt->fn_def.args[i]->value); */
-			/* 	error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here"); */
-			/* } */
-
 			struct symbol *s = new_symbol(sym->tok, si->symbol);
 			s->type = SYM_ARGUMENT;
 			s->name = stmt->fn_def.args[i]->value;
@@ -423,6 +444,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 
 		pop(si);
 		pop_scope(si);
+		si->fp--;
 	} break;
 
 	case STMT_VAR_DECL: {
@@ -540,6 +562,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		}
 
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {
+			si->symbol->imp = true;
+
 			struct symbol *s = new_symbol(sym->tok, si->symbol);
 			s->type = SYM_VAR;
 			s->name = "_";
@@ -626,6 +650,7 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 		sym->type = SYM_MODULE;
 		sym->name = m->name;
 		sym->parent = si->symbol;
+		sym->fp = si->fp;
 		sym->id = hash(m->name, strlen(m->name));
 		sym->module = m;
 		sym->scope = 0;
@@ -690,6 +715,7 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 	INDENT; fprintf(f, "  module=%s", s->module->name);
 	INDENT; fprintf(f, "  next=%d", s->next);
 	INDENT; fprintf(f, "  last=%d", s->last);
+	INDENT; fprintf(f, "  imp=%d", s->imp);
 
 	INDENT; fprintf(f, "  id=%"PRIu64"", s->id);
 //	fprintf(f, "<name=%s, type=%s, num_children=%zd, id=%"PRIu64">", s->name, sym_str[s->type], s->num_children, s->id);

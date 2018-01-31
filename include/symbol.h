@@ -24,8 +24,10 @@ struct symbol {
 	int next, last;
 	int *label;
 	int labelp;
+	int fp;
+	bool imp;
 
-	enum SymbolType {
+	enum symbol_type {
 		SYM_FN,
 		SYM_VAR,
 		SYM_GLOBAL,
@@ -43,6 +45,7 @@ struct symbolizer {
 	struct oak      *k;
 
 	int             *scope_stack;
+	int              fp;
 
 	/* The index of the top of the scope stack. */
 	int              scope_pointer;

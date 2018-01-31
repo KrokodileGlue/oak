@@ -17,6 +17,8 @@ struct oak {
 	bool print_symbol_table;
 	bool print_code;
 	bool print_gc;
+	bool print_vm;
+	bool talkative;
 
 	bool print_everything;
 	bool print_anything;

@@ -304,7 +304,9 @@ fn Boat (name = 'U.S.S. Nameless', attack = 20) = {
 }
 
 var boat1 = Boat('U.S.S. Enterprise', 25)
+pl boat1.name
 var boat2 = Boat('S.S. Minnow', 30)
+pl boat2.name
 var boat3 = Boat()
 boat2.fight(boat3)
 
@@ -419,11 +421,11 @@ pl join ', ', sort [5, 0, -21, 74, -5, 745, 4, -6, 2, 5, -13, 3, 45, -736, 1, 35
 
 var step = 0
 test:
-pl 'Hello, world!'
-step++
-if step == 10: goto end
-goto test
+step++;
+[match _ { 2 => { goto test when step != 10000 } } for [1, 2, 3]]
+# if step == 10000: goto end
 end:
+pl 'Hello, world!'
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector

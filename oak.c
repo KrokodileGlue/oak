@@ -36,12 +36,14 @@ process_arguments(struct oak *k, int argc, char **argv)
 	char *path = NULL;
 
 	for (int i = 1; i < argc; i++) {
+		if (!k->talkative)          k->talkative          = !strcmp(argv[i], "-np");
 		if (!k->print_input)        k->print_input        = !strcmp(argv[i], "-pi");
 		if (!k->print_tokens)       k->print_tokens       = !strcmp(argv[i], "-pt");
 		if (!k->print_ast)          k->print_ast          = !strcmp(argv[i], "-pa");
 		if (!k->print_symbol_table) k->print_symbol_table = !strcmp(argv[i], "-ps");
 		if (!k->print_code)         k->print_code         = !strcmp(argv[i], "-pc");
 		if (!k->print_gc)           k->print_gc           = !strcmp(argv[i], "-pg");
+		if (!k->print_vm)           k->print_vm           = !strcmp(argv[i], "-pv");
 		if (!k->debug)              k->debug              = !strcmp(argv[i], "-d");
 		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
 
@@ -58,6 +60,8 @@ process_arguments(struct oak *k, int argc, char **argv)
 	k->print_anything = (k->print_input || k->print_tokens || k->print_ast || k->print_symbol_table || k->print_code || k->print_everything);
 	if (k->print_everything) k->print_code = true;
 	if (k->print_everything) k->print_gc = true;
+	if (k->print_everything) k->print_vm = true;
+	k->talkative = !k->talkative;
 
 	if (!path) {
 		fprintf(stderr, "did not receive an input file");
@@ -174,7 +178,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 		vm->ip = ip;
 		vm->ct = ct;
 	} else {
-		m->vm = new_vm(m, k, k->print_code);
+		m->vm = new_vm(m, k, k->print_vm);
 		push_frame(m->vm);
 		if (!k->debug) execute(m->vm, 0);
 	}

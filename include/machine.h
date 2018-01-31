@@ -33,7 +33,6 @@ struct vm {
 
 	struct value **frame;
 	bool *module;
-	int *frameimp;
 	size_t fp;
 	size_t maxfp;
 

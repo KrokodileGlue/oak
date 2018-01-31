@@ -538,6 +538,12 @@ copy_value(struct gc *gc, struct value l)
 		v.idx = gc_alloc(gc, VAL_STR);
 		gc->str[v.idx] = strclone(gc->str[l.idx]);
 		l = v;
+	} else if (l.type == VAL_TABLE) {
+		struct value v;
+		v.type = VAL_TABLE;
+		v.idx = gc_alloc(gc, VAL_TABLE);
+		gc->table[v.idx] = copy_table(gc->table[l.idx]);
+		l = v;
 	}
 
 	return l;
