@@ -420,12 +420,14 @@ pl match string {
 pl join ', ', sort [5, 0, -21, 74, -5, 745, 4, -6, 2, 5, -13, 3, 45, -736, 1, 35, -23, 42, 3, 46]
 
 var step = 0
-test:
-step++;
-[match _ { 2 => { goto test when step != 10000 } } for [1, 2, 3]]
-# if step == 10000: goto end
-end:
+test: step++;
+
+[match _ { 2 => { goto test when step <= 10000 } } for [1, 2, 3]]
 pl 'Hello, world!'
+if step == 10003: goto end
+else goto test
+
+end: pl 'Goodbye, world!'
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
