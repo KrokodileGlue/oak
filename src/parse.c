@@ -564,21 +564,18 @@ parse_vardecl(struct parser *ps)
 	}
 
 	if (!strcmp(ps->tok->value, "=")) {
-		s->var_decl.num_init = s->var_decl.num;
+		s->var_decl.num_init = 0;
 
-		size_t i = 0;
 		do {
 			NEXT;
 
-			s->var_decl.init = oak_realloc(s->var_decl.init, sizeof *s->var_decl.init * (i + 1));
-			s->var_decl.init[i] = parse_expression(ps, 1);
-
-			i++;
+			s->var_decl.init = oak_realloc(s->var_decl.init,
+			                               (s->var_decl.num_init + 1) * sizeof *s->var_decl.init);
+			s->var_decl.init[s->var_decl.num_init++] = parse_expression(ps, 1);
 		} while (!strcmp(ps->tok->value, ","));
 
-		if (i != s->var_decl.num) {
+		if (s->var_decl.num_init != s->var_decl.num)
 			error_push(ps->r, s->tok->loc, ERR_FATAL, "the number of initalizers does not match the number of declarations");
-		}
 	} else {
 		s->var_decl.num_init = 0;
 	}

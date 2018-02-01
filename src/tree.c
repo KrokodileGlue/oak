@@ -144,9 +144,8 @@ free_stmt(struct statement *s)
 		break;
 
 	case STMT_VAR_DECL:
-		for (size_t i = 0; i < s->var_decl.num_init; i++) {
+		for (size_t i = 0; i < s->var_decl.num_init; i++)
 			free_expr(s->var_decl.init[i]);
-		}
 
 		free(s->var_decl.init);
 		free(s->var_decl.names);
