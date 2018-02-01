@@ -206,6 +206,19 @@ nil(struct compiler *c)
 	return reg;
 }
 
+static int
+count_imp(struct symbol *top, struct symbol *base)
+{
+	int imp = 0;
+
+	while (base && top && base != top->parent) {
+		if (base->imp) imp++;
+		base = base->parent;
+	}
+
+	return imp;
+}
+
 static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym, bool copy, bool shouldmatch);
 static int compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym);
 static int compile_statement(struct compiler *c, struct statement *s);
@@ -816,6 +829,106 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	case OPTYPE_PREFIX:
 		switch (e->operator->name) {
+		case OP_ADDADD: {
+			if (e->a->type == EXPR_SUBSCRIPT) {
+				int keyreg = -1;
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false, true),
+				         keyreg = compile_expression(c, e->a->b, sym, false, true),
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+
+				emit_a(c, INSTR_INC, sum, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else if (e->a->type == EXPR_OPERATOR
+			           && e->a->operator->type == OPTYPE_BINARY
+			           && e->a->operator->name == OP_PERIOD) {
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_COPYC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false, true),
+				         keyreg,
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+
+				emit_a(c, INSTR_INC, sum, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else {
+				int addr = compile_lvalue(c, e->a, sym);
+				emit_a(c, INSTR_INC, addr, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+			}
+		} break;
+
+		case OP_SUBSUB: {
+			if (e->a->type == EXPR_SUBSCRIPT) {
+				int keyreg = -1;
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false, true),
+				         keyreg = compile_expression(c, e->a->b, sym, false, true),
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+
+				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else if (e->a->type == EXPR_OPERATOR
+			           && e->a->operator->type == OPTYPE_BINARY
+			           && e->a->operator->name == OP_PERIOD) {
+				struct value key;
+				key.type = VAL_STR;
+				key.idx = gc_alloc(c->gc, VAL_STR);
+				c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+				int keyreg = alloc_reg(c);
+				emit_bc(c, INSTR_COPYC, keyreg,
+				        constant_table_add(c->ct, key), &e->tok->loc);
+
+				reg = alloc_reg(c);
+
+				emit_efg(c, INSTR_SUBSCR,
+				         reg,
+				         compile_expression(c, e->a->a, sym, false, true),
+				         keyreg,
+				         &e->tok->loc);
+
+				int n = compile_lvalue(c, e->a->a, sym);
+				int sum = alloc_reg(c);
+
+				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+			} else {
+				int addr = compile_lvalue(c, e->a, sym);
+				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
+				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+			}
+		} break;
+
 		case OP_SUB:
 			reg = alloc_reg(c);
 			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
@@ -1539,16 +1652,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			           "'return' keyword must occur inside of a function body");
 		}
 
-		int imp = 0;
-		struct symbol *sy = sym;
-		struct symbol *loop = find_from_scope(c->sym, c->loop->scope);
-
-		while (sy != loop->parent) {
-			if (sy->imp) imp++;
-			sy = sy->parent;
-		}
-
-		for (int i = 0; i < imp; i++)
+		for (int i = 0; i < count_imp(find_from_scope(sym, c->loop->scope), sym); i++)
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 		emit_a(c, INSTR_PUSH, compile_expr(c, s->ret.expr, sym, true), &s->tok->loc);
@@ -1734,7 +1838,7 @@ compile_statement(struct compiler *c, struct statement *s)
 	} break;
 
 	case STMT_LAST:
-		if (find_from_scope(c->sym, c->loop->scope)->imp)
+		for (int i = 0; i < count_imp(find_from_scope(c->sym, c->loop->scope), sym); i++)
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 		if (c->eval) {
@@ -1752,7 +1856,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		break;
 
 	case STMT_NEXT: {
-		if (find_from_scope(c->sym, c->loop->scope)->imp)
+		for (int i = 0; i < count_imp(find_from_scope(c->sym, c->loop->scope), sym); i++)
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 		if (c->eval) {

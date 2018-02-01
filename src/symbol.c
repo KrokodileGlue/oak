@@ -368,11 +368,18 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		break;
 
 	case EXPR_MATCH:
+		resolve_expr(si, e->a);
+
 		push_scope(si, ++si->k->scope);
 		push_block_expr(si, e);
-
 		si->symbol->imp = true;
-		resolve_expr(si, e->a);
+
+		struct symbol *s = new_symbol(e->tok, si->symbol);
+		s->type = SYM_VAR;
+		s->name = "_";
+		s->id = hash(s->name, strlen(s->name));
+		s->scope = -1;
+		add(si, s);
 
 		for (size_t i = 0; i < e->num; i++) {
 			resolve_expr(si, e->args[i]);

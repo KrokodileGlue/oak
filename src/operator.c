@@ -9,7 +9,7 @@ struct operator ops[] = {
 	{ "--",  "",  15, ASS_LEFT,  OPTYPE_POSTFIX , OP_SUBSUB      },
 
 	{ "++",  "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_ADDADD      },
-	{ "--",  "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_ADDADD      },
+	{ "--",  "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_SUBSUB      },
 	{ "!",   "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_EXCLAMATION },
 	{ "not", "",  14, ASS_RIGHT, OPTYPE_PREFIX  , OP_EXCLAMATION },
 
