@@ -61,6 +61,9 @@ struct operator {
 		OP_IFF,
 		OP_LEFT,
 		OP_RIGHT,
+		OP_BAND,
+		OP_XOR,
+		OP_BOR,
 		OP_SQUIGGLEEQ
 	} name;
 };

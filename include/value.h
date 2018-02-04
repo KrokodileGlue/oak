@@ -79,6 +79,9 @@ struct value div_values(struct gc *gc, struct value l, struct value r);
 
 struct value sleft_values(struct gc *gc, struct value l, struct value r);
 struct value sright_values(struct gc *gc, struct value l, struct value r);
+struct value band_values(struct gc *gc, struct value l, struct value r);
+struct value xor_values(struct gc *gc, struct value l, struct value r);
+struct value bor_values(struct gc *gc, struct value l, struct value r);
 
 struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);

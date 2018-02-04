@@ -83,6 +83,10 @@ enum instruction_type {
 	INSTR_SLEFT,
 	INSTR_SRIGHT,
 
+	INSTR_BAND,
+	INSTR_XOR,
+	INSTR_BOR,
+
 	INSTR_MOD,
 	INSTR_NEG,
 	INSTR_FLIP,

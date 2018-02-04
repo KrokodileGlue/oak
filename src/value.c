@@ -305,6 +305,33 @@ sright_values(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
+band_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "bitwise_and", l, r);
+	if (l.type != VAL_INT && r.type != VAL_INT)
+		return ERR("binary & requires integer operands");
+	return INT(l.integer & r.integer);
+}
+
+struct value
+xor_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "bitwise_xor", l, r);
+	if (l.type != VAL_INT && r.type != VAL_INT)
+		return ERR("binary ^ requires integer operands");
+	return INT(l.integer ^ r.integer);
+}
+
+struct value
+bor_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "bitwise_or", l, r);
+	if (l.type != VAL_INT && r.type != VAL_INT)
+		return ERR("binary | requires integer operands");
+	return INT(l.integer | r.integer);
+}
+
+struct value
 mod_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "modulus", l, r);

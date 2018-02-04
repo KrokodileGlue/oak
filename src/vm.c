@@ -284,6 +284,9 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_LESS: BIN(less);                             break;
 	case INSTR_LEQ:  BIN(leq);                              break;
 	case INSTR_GEQ:  BIN(geq);                              break;
+	case INSTR_BAND: BIN(band);                             break;
+	case INSTR_XOR:  BIN(xor);                              break;
+	case INSTR_BOR:  BIN(bor);                              break;
 	case INSTR_MORE: BIN(more);                             break;
 	case INSTR_SLEFT: BIN(sleft);                           break;
 	case INSTR_SRIGHT: BIN(sright);                         break;

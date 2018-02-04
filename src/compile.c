@@ -486,6 +486,10 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			o(LEFT, SLEFT);
 			o(RIGHT, SRIGHT);
 
+			o(BAND, BAND);
+			o(XOR, XOR);
+			o(BOR, BOR);
+
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				reg = compile_lvalue(c, e->a->a, sym);

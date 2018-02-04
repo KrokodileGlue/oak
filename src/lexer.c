@@ -516,7 +516,7 @@ parse_group(struct lexer *ls, char *a)
 static bool
 is_regex_start(struct lexer *ls, char *a)
 {
-	static char *forbid = ",{}[]\'\"!:-+()><;*%=?";
+	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^|&";
 
 	if (!*a)                     return false;
 	if (!ls->tok)                return false;
