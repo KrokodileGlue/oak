@@ -843,9 +843,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
 				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_a(c, INSTR_INC, sum, &e->tok->loc);
 				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+
+				reg = sum;
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
@@ -869,9 +871,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
 				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_a(c, INSTR_INC, sum, &e->tok->loc);
 				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+
+				reg = sum;
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				emit_a(c, INSTR_INC, addr, &e->tok->loc);
@@ -893,9 +897,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
 				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
 				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+
+				reg = sum;
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
@@ -919,9 +925,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
 				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
 				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+
+				reg = sum;
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
@@ -1639,6 +1647,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit_a(c, INSTR_POP, arg_sym->address, &s->tok->loc);
 		}
 
+		emit_(c, INSTR_CHKSTCK, &s->tok->loc);
 		compile_statement(c, s->fn_def.body);
 		pop_frame(c);
 		emit_a(c, INSTR_PUSH, nil(c), &s->tok->loc);
@@ -1647,9 +1656,21 @@ compile_statement(struct compiler *c, struct statement *s)
 	} break;
 
 	case STMT_RET:
+		/*
+		 * TODO: Mark symbols as in-function or out so we can
+		 * tell statically whether it's okay to return from
+		 * inside of an eval.
+		 */
+
+		if (c->sp == 0 && c->eval) {
+			emit_a(c, INSTR_EEND, compile_expr(c, s->ret.expr, sym, true), &c->stmt->tok->loc);
+			return start;
+		}
+
 		if (c->sp == 0 && !c->eval) {
 			error_push(c->r, s->tok->loc, ERR_FATAL,
 			           "'return' keyword must occur inside of a function body");
+			return -1;
 		}
 
 		for (int i = 0; i < count_imp(find_from_scope(sym, c->loop->scope), sym); i++)

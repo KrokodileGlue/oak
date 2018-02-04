@@ -32,7 +32,7 @@ struct vm {
 	size_t maxsp;
 
 	struct value **frame;
-	bool *module;
+	int *module;
 	size_t fp;
 	size_t maxfp;
 
@@ -46,7 +46,8 @@ struct vm {
 
 	bool debug;
 	FILE *f;
-	bool running;
+	bool returning;
+	bool escaping;
 
 	struct oak *k;
 	struct module *m;

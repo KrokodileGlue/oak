@@ -26,6 +26,7 @@ enum instruction_type {
 	INSTR_PUSHIMP,
 	INSTR_POPIMP,
 	INSTR_GETIMP,
+	INSTR_CHKSTCK,
 
 	INSTR_PUSHBACK,
 	INSTR_ASET,
@@ -87,6 +88,7 @@ enum instruction_type {
 
 	INSTR_EVAL,
 	INSTR_KILL,
+	INSTR_EEND,
 	INSTR_END
 };
 

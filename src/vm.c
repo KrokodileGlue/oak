@@ -10,7 +10,7 @@ push_frame(struct vm *vm)
 	vm->fp++;
 
 	if (vm->fp <= vm->maxfp) {
-		vm->module[vm->fp] = false;
+		vm->module[vm->fp] = vm->m->id;
 
 		for (int i = 0; i < NUM_REG; i++)
 			vm->frame[vm->fp][i].type = VAL_UNDEF;
@@ -24,7 +24,7 @@ push_frame(struct vm *vm)
 		vm->frame[vm->fp][i].type = VAL_UNDEF;
 
 	vm->module = oak_realloc(vm->module, (vm->fp + 1) * sizeof *vm->module);
-	vm->module[vm->fp] = false;
+	vm->module[vm->fp] = vm->m->id;
 
 	vm->maxfp = vm->fp > vm->maxfp ? vm->fp : vm->maxfp;
 }
@@ -133,9 +133,7 @@ call(struct vm *vm, struct value v)
 		m->vm = vm;
 
 		push_frame(m->vm);
-		m->vm->module[m->vm->fp] = true;
 		execute(m->vm, v.integer);
-		vm->running = true;
 
 		vm->code = c;
 		vm->m = m2;
@@ -159,14 +157,16 @@ call(struct vm *vm, struct value v)
 static void
 ret(struct vm *vm)
 {
-	if (vm->module[vm->fp]) {
+	if (vm->fp == 1 || (vm->module[vm->fp] != vm->module[vm->fp - 1])) {
 		if (vm->debug)
 			DOUT("returning from call as a module");
 
-		vm->running = false;
+		vm->returning = true;
 		pop_frame(vm);
 		return;
 	}
+
+	assert(vm->fp > 0);
 
 	pop_frame(vm);
 	if (vm->csp == 0) return;
@@ -237,8 +237,6 @@ static void
 eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_base)
 {
 	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
-
-	vm->module[vm->fp] = true;
 	struct module *m = load_module(vm->k,
 	                               find_from_scope(vm->m->sym, scope),
 	                               strclone(s),
@@ -246,14 +244,19 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	                               "*eval*",
 	                               vm, stack_base);
 
+	if (vm->debug) DOUT("finished evaluation");
 	if (!m) {
 		error_push(vm->r, loc, ERR_FATAL, "eval failed");
 		return;
 	}
 
+	vm->module[vm->fp] = vm->m->id;
 	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
-	if (!vm->running && !vm->m->child) vm->ip = vm->callstack[vm->csp--];
-	vm->module[vm->fp] = vm->m->child;
+
+	if (vm->returning)
+		vm->ip = vm->callstack[vm->csp--];
+
+	vm->returning = false;
 
 	for (int i = stack_base; i < NUM_REG; i++)
 		if (i != reg) SETR(i, type, VAL_UNDEF);
@@ -262,12 +265,6 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 static inline void
 execute_instr(struct vm *vm, struct instruction c)
 {
-	if (vm->k->print_code) {
-		fprintf(vm->f, "%s:%6zu> %4zu: ", vm->m->name, vm->step, vm->ip);
-		print_instruction(vm->f, c);
-		fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %3zu | %s\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->impp, vm->module[vm->fp] ? "t" : "f");
-	}
-
 	/* Look at all this c.d.bc.c bullshit. Ridiculous. */
 
 	switch (c.type) {
@@ -292,6 +289,11 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_DEC: SETREG(c.d.a, dec_value(GETREG(c.d.a)));break;
 	case INSTR_LINE:
 		if (!vm->debug && vm->k->talkative) fputc('\n', vm->f);
+		break;
+
+	case INSTR_CHKSTCK:
+		/* if (vm->sp) */
+		/* 	error_push(vm->r, *c.loc, ERR_FATAL, "invalid number of arguments passed to function (received %d too many)", vm->sp); */
 		break;
 
 	case INSTR_FLIP:
@@ -989,7 +991,8 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_ESCAPE:
 		/* Fake a function call return */
-		vm->running = false;
+		vm->returning = true;
+		vm->escaping = true;
 		vm->callstack = oak_realloc(vm->callstack,
 		                            (vm->csp + 2) * sizeof *vm->callstack);
 		vm->callstack[++vm->csp] = c.d.a - 1;
@@ -1049,9 +1052,16 @@ void
 execute(struct vm *vm, int64_t ip)
 {
 	vm->ip = ip;
-	vm->running = true;
+	vm->returning = false;
+	vm->module[vm->fp] = vm->m->id;
 
-	while (vm->code[vm->ip].type != INSTR_END && vm->fp >= 1 && vm->running) {
+	while (vm->code[vm->ip].type != INSTR_END && vm->code[vm->ip].type != INSTR_EEND && vm->fp >= 1 && !vm->returning) {
+		if (vm->k->print_code) {
+			fprintf(vm->f, "%s:%6zu> %4zu: ", vm->m->name, vm->step, vm->ip);
+			print_instruction(vm->f, vm->code[vm->ip]);
+			fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %3zu | %3d\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->impp, vm->module[vm->fp]);
+		}
+
 		/* TODO: remove this */
 		assert(vm->impp < 100);
 
@@ -1059,19 +1069,22 @@ execute(struct vm *vm, int64_t ip)
 		if (vm->r->pending) break;
 		vm->ip++;
 		vm->step++;
-
-		if (!vm->m->child) vm->running = true;
 	}
 
 	if (vm->debug)
 		DOUT("Terminating execution of module `%s' with %p: %s",
-		     vm->m->name, (void *)vm, vm->fp >= 1 ? "finished" : "returned");
+		     vm->m->name, (void *)vm, !vm->returning ? "finished" : "returned");
 
 	struct oak *k = vm->k;
 	k->stack = oak_realloc(k->stack, (k->sp + 1) * sizeof *k->stack);
+	if (!vm->escaping) vm->returning = false;
+	vm->escaping = false;
 
 	if (vm->code[vm->ip].type == INSTR_END) {
 		k->stack[k->sp++] = GETREG(vm->code[vm->ip].d.a);
+	} else if (vm->code[vm->ip].type == INSTR_EEND) {
+		k->stack[k->sp++] = GETREG(vm->code[vm->ip].d.a);
+		ret(vm);
 	} else {
 		if (vm->sp >= 1) k->stack[k->sp++] = vm->stack[vm->sp];
 		else k->stack[k->sp++] = (struct value){ VAL_NIL, {0}, 0 };

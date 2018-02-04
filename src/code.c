@@ -18,6 +18,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PUSHIMP,  REG_A,    "PUSHIMP   " },
 	{ INSTR_POPIMP,   REG_NONE, "POPIMP    " },
 	{ INSTR_GETIMP,   REG_A,    "GETIMP    " },
+	{ INSTR_CHKSTCK,  REG_NONE, "CHKSTCK   " },
 
 	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
 	{ INSTR_ASET,     REG_EFG,  "ASET      " },
@@ -79,6 +80,7 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_EVAL,     REG_EFG,  "EVAL      " },
 	{ INSTR_KILL,     REG_A,    "KILL      " },
+	{ INSTR_EEND,     REG_A,    "EEND      " },
 	{ INSTR_END,      REG_A,    "END       " }
 };
 
