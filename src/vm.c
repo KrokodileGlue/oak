@@ -1083,6 +1083,7 @@ execute(struct vm *vm, int64_t ip)
 	if (vm->code[vm->ip].type == INSTR_END) {
 		k->stack[k->sp++] = GETREG(vm->code[vm->ip].d.a);
 	} else if (vm->code[vm->ip].type == INSTR_EEND) {
+		push(vm, GETREG(vm->code[vm->ip].d.a));
 		k->stack[k->sp++] = GETREG(vm->code[vm->ip].d.a);
 		ret(vm);
 	} else {
