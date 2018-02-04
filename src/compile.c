@@ -816,7 +816,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			} else {
 				var = compile_expression(c, e->a, sym, false, true);
 				emit_efg(c, INSTR_MATCH, reg, var,
-				         compile_expression(c, e->b, sym, false, false), &e->tok->loc);
+				         compile_expression(c, e->b, sym, false, false), &e->b->tok->loc);
 			}
 		} break;
 
