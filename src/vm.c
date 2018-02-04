@@ -285,6 +285,8 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_LEQ:  BIN(leq);                              break;
 	case INSTR_GEQ:  BIN(geq);                              break;
 	case INSTR_MORE: BIN(more);                             break;
+	case INSTR_SLEFT: BIN(sleft);                           break;
+	case INSTR_SRIGHT: BIN(sright);                         break;
 	case INSTR_INC: SETREG(c.d.a, inc_value(GETREG(c.d.a)));break;
 	case INSTR_DEC: SETREG(c.d.a, dec_value(GETREG(c.d.a)));break;
 	case INSTR_LINE:
@@ -557,10 +559,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_GETIMP:
-		if (vm->impp)
-			SETREG(c.d.a, vm->imp[vm->impp - 1]);
-		else
-			SETREG(c.d.a, ((struct value){ VAL_NIL, { 0 }, 0 }));
+		if (vm->impp) SETREG(c.d.a, vm->imp[vm->impp - 1]);
+		else error_push(vm->r, *c.loc, ERR_FATAL, "the implicit variable is not in scope");
 		break;
 
 	case INSTR_MATCH: {

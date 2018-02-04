@@ -71,6 +71,10 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_MUL,      REG_EFG,  "MUL       " },
 	{ INSTR_POW,      REG_EFG,  "POW       " },
 	{ INSTR_DIV,      REG_EFG,  "DIV       " },
+
+	{ INSTR_SLEFT,    REG_EFG,  "SLEFT     " },
+	{ INSTR_SRIGHT,   REG_EFG,  "SRIGHT    " },
+
 	{ INSTR_MOD,      REG_EFG,  "MOD       " },
 	{ INSTR_NEG,      REG_BC,   "NEG       " },
 	{ INSTR_FLIP,     REG_BC,   "FLIP      " },

@@ -24,6 +24,9 @@ struct operator ops[] = {
 	{ "+",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_ADD         },
 	{ "-",   "",  12, ASS_LEFT,  OPTYPE_BINARY  , OP_SUB         },
 
+	{ "<<",  "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_LEFT        },
+	{ ">>",  "",  5,  ASS_LEFT,  OPTYPE_BINARY  , OP_RIGHT       },
+
 	{ "<",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LESS        },
 	{ ">",   "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_MORE        },
 	{ "<=",  "",  10, ASS_LEFT,  OPTYPE_BINARY  , OP_LEQ         },

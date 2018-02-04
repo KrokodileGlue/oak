@@ -59,6 +59,8 @@ struct operator {
 		OP_NOR,
 		OP_POW,
 		OP_IFF,
+		OP_LEFT,
+		OP_RIGHT,
 		OP_SQUIGGLEEQ
 	} name;
 };

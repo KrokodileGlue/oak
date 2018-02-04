@@ -53,10 +53,10 @@ struct value {
 	char *name;
 };
 
-#define BOOL(X) ((struct value){ VAL_BOOL, { .boolean = (X) }, NULL})
-#define INT(X) ((struct value){ VAL_INT, { .integer = (X) }, NULL})
-#define ERR(X) ((struct value){ VAL_ERR, { .integer = 0 }, (X)})
-#define NIL ((struct value){ VAL_NIL, { .integer = 0 }, NULL})
+#define BOOL(X) ((struct value) { VAL_BOOL, { .boolean = (X) }, NULL})
+#define INT(X)  ((struct value) { VAL_INT,  { .integer = (X) }, NULL})
+#define ERR(X)  ((struct value) { VAL_ERR,  { .integer = 0   }, (X)})
+#define NIL     ((struct value) { VAL_NIL,  { .integer = 0   }, NULL})
 
 #include "error.h"
 #include "gc.h"
@@ -76,6 +76,10 @@ struct value sub_values(struct gc *gc, struct value l, struct value r);
 struct value mul_values(struct gc *gc, struct value l, struct value r);
 struct value pow_values(struct gc *gc, struct value l, struct value r);
 struct value div_values(struct gc *gc, struct value l, struct value r);
+
+struct value sleft_values(struct gc *gc, struct value l, struct value r);
+struct value sright_values(struct gc *gc, struct value l, struct value r);
+
 struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);

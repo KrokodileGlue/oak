@@ -467,9 +467,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int reg = -1;
 
-#define o(X)	  \
+#define o(X,Y)	  \
 	case OP_##X: \
-		emit_efg(c, INSTR_##X, reg = alloc_reg(c), \
+		emit_efg(c, INSTR_##Y, reg = alloc_reg(c), \
 		         compile_expression(c, e->a, sym, false, true), \
 		         compile_expression(c, e->b, sym, false, true), \
 		         &e->tok->loc); \
@@ -478,11 +478,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 	switch (e->operator->type) {
 	case OPTYPE_BINARY:
 		switch (e->operator->name) {
-			o(ADD);
-			o(MUL);
-			o(DIV);
-			o(SUB);
-			o(MOD);
+			o(ADD, ADD);
+			o(MUL, MUL);
+			o(DIV, DIV);
+			o(SUB, SUB);
+			o(MOD, MOD);
+			o(LEFT, SLEFT);
+			o(RIGHT, SRIGHT);
 
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {

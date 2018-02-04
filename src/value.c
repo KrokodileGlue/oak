@@ -287,6 +287,24 @@ div_values(struct gc *gc, struct value l, struct value r)
 }
 
 struct value
+sleft_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "shift_left", l, r);
+	if (l.type != VAL_INT && r.type != VAL_INT)
+		return ERR("binary << requires integer operands");
+	return INT(l.integer << r.integer);
+}
+
+struct value
+sright_values(struct gc *gc, struct value l, struct value r)
+{
+	_log(gc, "shift_right", l, r);
+	if (l.type != VAL_INT && r.type != VAL_INT)
+		return ERR("binary >> requires integer operands");
+	return INT(l.integer >> r.integer);
+}
+
+struct value
 mod_values(struct gc *gc, struct value l, struct value r)
 {
 	_log(gc, "modulus", l, r);
