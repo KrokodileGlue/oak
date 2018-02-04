@@ -516,10 +516,11 @@ parse_group(struct lexer *ls, char *a)
 static bool
 is_regex_start(struct lexer *ls, char *a)
 {
-	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^|&";
+	static char *forbid = ",{}[]\'\"!:-+()><;*%=?";
 
-	if (!*a)                     return false;
-	if (!ls->tok)                return false;
+	if (!*a)       return false;
+	if (!ls->tok)  return false;
+	if (!strcmp(ls->tok->value, ")")) return false;
 	if (ls->tok->type == TOK_INTEGER) return false;
 	if (ls->tok->type == TOK_FLOAT)   return false;
 	if (ls->tok->type == TOK_BOOL)    return false;
@@ -662,7 +663,6 @@ tokenize(struct module *m)
 	token_rewind(&ls->tok);
 
 	if (ls->r->fatal) {
-		fputc('\n', stderr);
 		error_write(ls->r, stderr);
 		token_clear(ls->tok);
 		free_lexer(ls);

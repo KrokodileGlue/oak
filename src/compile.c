@@ -55,33 +55,31 @@ emit(struct compiler *c, struct instruction instr, struct location *loc)
 static void
 emit_(struct compiler *c, enum instruction_type type, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { 0 }}, loc);
+	emit(c, (struct instruction) {type, .a = 0 }, loc);
 }
 
 static void
 emit_a(struct compiler *c, enum instruction_type type, int a, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { a }}, loc);
+	emit(c, (struct instruction) {type, .a = a }, loc);
 }
 
 static void
-emit_d(struct compiler *c, enum instruction_type type, int a, struct location *loc)
+emit_ab(struct compiler *c, enum instruction_type type, int a, int b, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { .d = a }}, loc);
+	emit(c, (struct instruction) {type, .a = a, .b = b }, loc);
 }
 
 static void
-emit_bc(struct compiler *c, enum instruction_type type, int B, int C, struct location *loc)
+emit_abc(struct compiler *c, enum instruction_type type, int a, int b, int C, struct location *loc)
 {
-	emit(c, (struct instruction){type, .d = { .bc = {B, C} }}, loc);
+	emit(c, (struct instruction) {type, .a = a, .b = b, .c = C }, loc);
 }
 
 static void
-emit_efg(struct compiler *c, enum instruction_type type, int E, int F, int G, struct location *loc)
+emit_abcd(struct compiler *c, enum instruction_type type, int a, int b, int C, int d, struct location *loc)
 {
-	if (type == INSTR_CMP)
-		assert(E >= 0);
-	emit(c, (struct instruction){type, .d = { .efg = {E, F, G} }}, loc);
+	emit(c, (struct instruction) {type, .a = a, .b = b, .c = C, .d = d }, loc);
 }
 
 static void
@@ -200,7 +198,7 @@ static int
 nil(struct compiler *c)
 {
 	int reg = alloc_reg(c);
-	emit_bc(c, INSTR_COPYC, reg,
+	emit_ab(c, INSTR_COPYC, reg,
 	        constant_table_add(c->ct, NIL),
 	        &c->stmt->tok->loc);
 	return reg;
@@ -252,7 +250,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			e->args[0]->val->flags = smart_cat(e->args[0]->val->flags, "g");
 
 		int regex = compile_expression(c, e->args[0], sym, false, false);
-		emit_efg(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
+		emit_abc(c, INSTR_SPLIT, reg = alloc_reg(c), subject, regex, &e->tok->loc);
 	} break;
 
 	case BUILTIN_JOIN: {
@@ -260,7 +258,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		int array = compile_expression(c, e->args[0], sym, false, true);
 		int delim = compile_expression(c, e->args[1], sym, false, false);
-		emit_efg(c, INSTR_JOIN, reg = alloc_reg(c), array, delim, &e->tok->loc);
+		emit_abc(c, INSTR_JOIN, reg = alloc_reg(c), array, delim, &e->tok->loc);
 	} break;
 
 	case BUILTIN_RANGE: {
@@ -275,21 +273,20 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			struct value v;
 			v.type = VAL_INT;
 			v.integer = 1;
-			emit_bc(c, INSTR_COPYC, step,
+			emit_ab(c, INSTR_COPYC, step,
 			        constant_table_add(c->ct, v), &e->tok->loc);
 		} else {
 			step = compile_expression(c, e->args[2], sym, false, true);
 		}
 
-		emit_efg(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, &e->tok->loc);
-		c->code[c->ip - 1].d.efg.h = step;
+		emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
 	} break;
 
 	case BUILTIN_PUSH: {
 		CHECKARGS(e->num != 1 && e->num != 2);
 
 		if (e->num == 2) {
-			emit_bc(c, INSTR_APUSH,
+			emit_ab(c, INSTR_APUSH,
 			        reg = compile_lvalue(c, e->args[0], sym),
 			        compile_expression(c, e->args[1], sym, false, true),
 			        &e->tok->loc);
@@ -297,7 +294,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			int imp = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
 
-			emit_bc(c, INSTR_APUSH,
+			emit_ab(c, INSTR_APUSH,
 			        reg = compile_lvalue(c, e->args[0], sym),
 			        imp,
 			        &e->tok->loc);
@@ -308,7 +305,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		CHECKARGS(e->num != 1 && e->num != 2);
 
 		if (e->num == 2) {
-			emit_efg(c, INSTR_COUNT, reg = alloc_reg(c),
+			emit_abc(c, INSTR_COUNT, reg = alloc_reg(c),
 			         compile_expression(c, e->args[0], sym, false, true),
 			         compile_expression(c, e->args[1], sym, false, true),
 			         &e->tok->loc);
@@ -316,7 +313,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			int imp = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
 
-			emit_efg(c, INSTR_COUNT, reg = alloc_reg(c),
+			emit_abc(c, INSTR_COUNT, reg = alloc_reg(c),
 			         imp,
 			         compile_expression(c, e->args[0], sym, false, true),
 			         &e->tok->loc);
@@ -333,7 +330,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			CHECKARGS(e->num != 1); \
 			arg = compile_expression(c, e->args[0], sym, false, true); \
 		} \
-		emit_bc(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
+		emit_ab(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
 	} break
 
 	UNARY(REVERSE, REV);
@@ -393,7 +390,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 
 		reg = alloc_reg(c);
-		emit_bc(c, INSTR_INT, reg, arg, &e->tok->loc);
+		emit_ab(c, INSTR_INT, reg, arg, &e->tok->loc);
 	} break;
 
 	case BUILTIN_FLOAT: {
@@ -408,7 +405,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 
 		reg = alloc_reg(c);
-		emit_bc(c, INSTR_FLOAT, reg, arg, &e->tok->loc);
+		emit_ab(c, INSTR_FLOAT, reg, arg, &e->tok->loc);
 	} break;
 
 	case BUILTIN_STRING: {
@@ -423,7 +420,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 
 		reg = alloc_reg(c);
-		emit_bc(c, INSTR_STR, reg, arg, &e->tok->loc);
+		emit_ab(c, INSTR_STR, reg, arg, &e->tok->loc);
 	} break;
 
 	case BUILTIN_MIN:
@@ -443,7 +440,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 
 			for (int i = e->num - 1; i >= 0; i--) {
 				arg[i] = alloc_reg(c);
-				emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
 			}
 
 			for (int i = e->num - 1; i >= 0; i--)
@@ -469,7 +466,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 #define o(X,Y)	  \
 	case OP_##X: \
-		emit_efg(c, INSTR_##Y, reg = alloc_reg(c), \
+		emit_abc(c, INSTR_##Y, reg = alloc_reg(c), \
 		         compile_expression(c, e->a, sym, false, true), \
 		         compile_expression(c, e->b, sym, false, true), \
 		         &e->tok->loc); \
@@ -493,7 +490,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				reg = compile_lvalue(c, e->a->a, sym);
-				emit_efg(c, INSTR_ASET,
+				emit_abc(c, INSTR_ASET,
 				         reg,
 				         compile_expression(c, e->a->b, sym, false, true),
 				         compile_expression(c, e->b, sym, true, true),
@@ -508,18 +505,18 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = compile_lvalue(c, e->a->a, sym);
-				emit_efg(c, INSTR_ASET,
+				emit_abc(c, INSTR_ASET,
 				         reg,
 				         keyreg,
 				         compile_expression(c, e->b, sym, true, true),
 				         &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
-				emit_bc(c, INSTR_MOV, addr,
+				emit_ab(c, INSTR_MOV, addr,
 				        compile_expression(c, e->b, sym, true, true),
 				        &e->tok->loc);
 				reg = addr;
@@ -531,7 +528,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			struct value v;
 			v.type = VAL_BOOL;
 			v.boolean = false;
-			emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 			emit_a(c, INSTR_COND, compile_expression(c, e->a, sym, false, true), &e->a->tok->loc);
 			int a = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
@@ -539,9 +536,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int b = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->b->tok->loc);
 			v.boolean = true;
-			emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
-			c->code[a].d.a = c->ip;
-			c->code[b].d.a = c->ip;
+			emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			c->code[a].a = c->ip;
+			c->code[b].a = c->ip;
 		} break;
 
 		case OP_ARROW: {
@@ -552,24 +549,23 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			struct value v;
 			v.type = VAL_INT;
 			v.integer = 1;
-			emit_bc(c, INSTR_COPYC, step,
+			emit_ab(c, INSTR_COPYC, step,
 			        constant_table_add(c->ct, v), &e->tok->loc);
 
-			emit_efg(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, &e->tok->loc);
-			c->code[c->ip - 1].d.efg.h = step;
+			emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
 		} break;
 
 		case OP_IFF: {
 			reg = alloc_reg(c);
 			emit_a(c, INSTR_COND, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			size_t a = c->ip;
-			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
 			size_t b = c->ip;
-			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
-			c->code[a].d.d = c->ip;
-			emit_bc(c, INSTR_MOV, reg, nil(c), &e->tok->loc);
-			c->code[b].d.d = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			c->code[a].a = c->ip;
+			emit_ab(c, INSTR_MOV, reg, nil(c), &e->tok->loc);
+			c->code[b].a = c->ip;
 		} break;
 
 		case OP_ADDEQ:
@@ -577,7 +573,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -585,8 +581,8 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
-				emit_efg(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = n;
 			} else if (e->a->type == EXPR_OPERATOR
@@ -598,12 +594,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -611,15 +607,15 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
-				emit_efg(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ADD, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = n;
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				int n = alloc_reg(c);
-				emit_bc(c, INSTR_MOV, n, addr, &e->tok->loc);
-				emit_efg(c, INSTR_ADD, addr, n, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_ab(c, INSTR_MOV, n, addr, &e->tok->loc);
+				emit_abc(c, INSTR_ADD, addr, n, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 
 				reg = addr;
 			}
@@ -630,7 +626,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -638,8 +634,8 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
-				emit_efg(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
@@ -649,12 +645,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -662,56 +658,56 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
-				emit_efg(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_SUB, sum, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				int n = alloc_reg(c);
-				emit_bc(c, INSTR_MOV, n, addr, &e->tok->loc);
-				emit_efg(c, INSTR_SUB, addr, n, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+				emit_ab(c, INSTR_MOV, n, addr, &e->tok->loc);
+				emit_abc(c, INSTR_SUB, addr, n, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 				reg = addr;
 			}
 			break;
 
 		case OP_EQEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, reg,
+			emit_abc(c, INSTR_CMP, reg,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_NOTEQ: {
 			int temp = alloc_reg(c);
-			emit_efg(c, INSTR_CMP, temp,
+			emit_abc(c, INSTR_CMP, temp,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-			emit_bc(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
+			emit_ab(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
 		} break;
 
 		case OP_LESS:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_LESS, reg,
+			emit_abc(c, INSTR_LESS, reg,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_LEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_LEQ, reg,
+			emit_abc(c, INSTR_LEQ, reg,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_GEQ:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_GEQ, reg,
+			emit_abc(c, INSTR_GEQ, reg,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_MORE:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_MORE, reg,
+			emit_abc(c, INSTR_MORE, reg,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
@@ -721,7 +717,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			struct value v;
 			v.type = VAL_BOOL;
 			v.boolean = false;
-			emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 			int a = compile_expression(c, e->a, sym, false, true);
 
@@ -729,11 +725,11 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int _a = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
 			v.boolean = true;
-			emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 			int _c = c->ip;
 			emit_a(c, INSTR_JMP, -1, &e->a->tok->loc);
 
-			c->code[_a].d.a = c->ip;
+			c->code[_a].a = c->ip;
 			int b = compile_expression(c, e->b, sym, false, true);
 
 			emit_a(c, INSTR_COND, b, &e->b->tok->loc);
@@ -741,10 +737,10 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			emit_a(c, INSTR_JMP, -1, &e->b->tok->loc);
 
 			v.boolean = true;
-			emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
-			c->code[_b].d.a = c->ip;
-			c->code[_c].d.a = c->ip;
+			c->code[_b].a = c->ip;
+			c->code[_c].a = c->ip;
 		} break;
 
 		case OP_COMMA:
@@ -754,7 +750,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_POW:
 			reg = alloc_reg(c);
-			emit_efg(c, INSTR_POW, reg, compile_expression(c, e->a, sym, false, true), compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+			emit_abc(c, INSTR_POW, reg, compile_expression(c, e->a, sym, false, true), compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_PERIOD: {
@@ -767,10 +763,10 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->b->tok->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a, sym, false, true),
 				         keyreg,
@@ -785,7 +781,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_MODMOD: {
 			reg = alloc_reg(c);
 			int temp = alloc_reg(c);
-			emit_efg(c, INSTR_MOD, temp,
+			emit_abc(c, INSTR_MOD, temp,
 			         compile_expression(c, e->a, sym, false, true),
 			         compile_expression(c, e->b, sym, false, true),
 			         &e->tok->loc);
@@ -795,9 +791,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			v.integer = 0;
 
 			int zero = alloc_reg(c);
-			emit_bc(c, INSTR_COPYC, zero, constant_table_add(c->ct, v), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, v), &e->tok->loc);
 
-			emit_efg(c, INSTR_CMP, reg,
+			emit_abc(c, INSTR_CMP, reg,
 			         temp,
 			         zero,
 			         &e->tok->loc);
@@ -816,12 +812,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				v.type = VAL_STR;
 				v.idx = gc_alloc(c->gc, VAL_STR);
 				c->gc->str[v.idx] = strclone(e->b->val->substitution);
-				emit_bc(c, INSTR_COPYC, string, constant_table_add(c->ct, v), &e->tok->loc);
-				emit_efg(c, INSTR_SUBST, reg, compile_expression(c, e->b, sym, false, false), string, &e->tok->loc);
-				c->code[c->ip].d.efg.h = sym->scope;
+				emit_ab(c, INSTR_COPYC, string, constant_table_add(c->ct, v), &e->tok->loc);
+				emit_abcd(c, INSTR_SUBST, reg,
+				          compile_expression(c, e->b, sym, false, false),
+				          string, sym->scope, &e->tok->loc);
 			} else {
 				var = compile_expression(c, e->a, sym, false, true);
-				emit_efg(c, INSTR_MATCH, reg, var,
+				emit_abc(c, INSTR_MATCH, reg, var,
 				         compile_expression(c, e->b, sym, false, false), &e->b->tok->loc);
 			}
 		} break;
@@ -840,7 +837,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -849,9 +846,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = sum;
 			} else if (e->a->type == EXPR_OPERATOR
@@ -863,12 +860,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -877,15 +874,15 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = sum;
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				emit_a(c, INSTR_INC, addr, &e->tok->loc);
-				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
 			}
 		} break;
 
@@ -894,7 +891,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -903,9 +900,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = sum;
 			} else if (e->a->type == EXPR_OPERATOR
@@ -917,12 +914,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -931,21 +928,21 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 
 				reg = sum;
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
 				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
-				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
 			}
 		} break;
 
 		case OP_SUB:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
+			emit_ab(c, INSTR_NEG, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
 			break;
 
 		case OP_ADD:
@@ -953,7 +950,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		case OP_EXCLAMATION:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_FLIP, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
+			emit_ab(c, INSTR_FLIP, reg, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
 			break;
 
 		default:
@@ -970,7 +967,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -979,9 +976,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
@@ -991,12 +988,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -1005,12 +1002,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
-				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
 				emit_a(c, INSTR_INC, addr, &e->tok->loc);
 			}
 		} break;
@@ -1020,7 +1017,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int keyreg = -1;
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg = compile_expression(c, e->a->b, sym, false, true),
@@ -1029,9 +1026,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else if (e->a->type == EXPR_OPERATOR
 			           && e->a->operator->type == OPTYPE_BINARY
 			           && e->a->operator->name == OP_PERIOD) {
@@ -1041,12 +1038,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				c->gc->str[key.idx] = strclone(e->a->b->val->value);
 
 				int keyreg = alloc_reg(c);
-				emit_bc(c, INSTR_COPYC, keyreg,
+				emit_ab(c, INSTR_COPYC, keyreg,
 				        constant_table_add(c->ct, key), &e->tok->loc);
 
 				reg = alloc_reg(c);
 
-				emit_efg(c, INSTR_SUBSCR,
+				emit_abc(c, INSTR_SUBSCR,
 				         reg,
 				         compile_expression(c, e->a->a, sym, false, true),
 				         keyreg,
@@ -1055,12 +1052,12 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 				int n = compile_lvalue(c, e->a->a, sym);
 				int sum = alloc_reg(c);
 
-				emit_bc(c, INSTR_MOV, sum, reg, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
 				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_efg(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
+				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
 			} else {
 				int addr = compile_lvalue(c, e->a, sym);
-				emit_bc(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
 				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
 			}
 		} break;
@@ -1078,13 +1075,13 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			reg = alloc_reg(c);
 			emit_a(c, INSTR_COND, compile_expression(c, e->a, sym, false, true), &e->tok->loc);
 			size_t a = c->ip;
-			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->b, sym, false, true), &e->tok->loc);
 			size_t b = c->ip;
-			emit_d(c, INSTR_JMP, -1, &e->tok->loc);
-			c->code[a].d.d = c->ip;
-			emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->c, sym, false, true), &e->tok->loc);
-			c->code[b].d.d = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			c->code[a].a = c->ip;
+			emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->c, sym, false, true), &e->tok->loc);
+			c->code[b].a = c->ip;
 		} break;
 
 		default:
@@ -1125,7 +1122,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 	case EXPR_SUBSCRIPT: {
 		int reg = alloc_reg(c);
 		int l = compile_lvalue(c, e->a, sym);
-		emit_efg(c, INSTR_DEREF, reg,
+		emit_abc(c, INSTR_DEREF, reg,
 		         l,
 		         compile_expression(c, e->b, sym, false, true),
 		         &e->tok->loc);
@@ -1151,12 +1148,12 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		c->gc->str[key.idx] = strclone(e->b->tok->value);
 
 		int keyreg = alloc_reg(c);
-		emit_bc(c, INSTR_COPYC, keyreg,
+		emit_ab(c, INSTR_COPYC, keyreg,
 		        constant_table_add(c->ct, key), &e->tok->loc);
 
 		int reg = alloc_reg(c);
 		int l = compile_lvalue(c, e->a, sym);
-		emit_efg(c, INSTR_DEREF, reg, l, keyreg, &e->tok->loc);
+		emit_abc(c, INSTR_DEREF, reg, l, keyreg, &e->tok->loc);
 
 		return reg;
 	}
@@ -1205,17 +1202,17 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				v.integer = var->address;
 				v.module = var->module->id;
 				v.name = var->name;
-				emit_bc(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
+				emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
-				emit_bc(c, INSTR_COPY, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
+				emit_ab(c, INSTR_COPY, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
 			} else {
-				emit_bc(c, INSTR_MOV, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
 			}
 			break;
 
 		default:
 			reg = alloc_reg(c);
-			emit_bc(c, INSTR_COPYC, reg, add_constant(c, e->val), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg, add_constant(c, e->val), &e->tok->loc);
 			break;
 		}
 		break;
@@ -1228,7 +1225,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.idx = gc_alloc(c->gc, VAL_TABLE);
 		c->gc->table[v.idx] = new_table();
 
-		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 		for (size_t i = 0; i < e->num; i++) {
 			struct value key;
@@ -1243,10 +1240,10 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			c->gc->str[key.idx] = a;
 
 			int keyreg = alloc_reg(c);
-			emit_bc(c, INSTR_COPYC, keyreg,
+			emit_ab(c, INSTR_COPYC, keyreg,
 			        constant_table_add(c->ct, key), &e->tok->loc);
 
-			emit_efg(c, INSTR_ASET,
+			emit_abc(c, INSTR_ASET,
 			         reg,
 			         keyreg,
 			         compile_expression(c, e->args[i], sym, true, true),
@@ -1265,14 +1262,14 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		for (size_t i = 0; i < e->num; i++) {
 			if (last >= 0)
-				c->code[last].d.a = c->ip;
+				c->code[last].a = c->ip;
 
 			int cond = -1;
 			if (e->match[i]->type == EXPR_REGEX) {
 				int temp = alloc_reg(c);
 				cond = alloc_reg(c);
 				emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-				emit_efg(c, INSTR_MATCH, cond, temp,
+				emit_abc(c, INSTR_MATCH, cond, temp,
 				         compile_expression(c, e->match[i], sym, false, false),
 				         &e->match[i]->tok->loc);
 				emit_a(c, INSTR_COND, cond, &e->tok->loc);
@@ -1280,7 +1277,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				cond = alloc_reg(c);
 				int imp = alloc_reg(c);
 				emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
-				emit_efg(c, INSTR_CMP, cond,
+				emit_abc(c, INSTR_CMP, cond,
 				         imp,
 				         compile_expression(c, e->match[i], sym, false, true),
 				         &e->match[i]->tok->loc);
@@ -1291,7 +1288,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			emit_a(c, INSTR_JMP, cond, &e->tok->loc);
 
 			if (e->args[i]) {
-				emit_bc(c, INSTR_MOV, reg, compile_expression(c, e->args[i], sym, false, true), &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->args[i], sym, false, true), &e->tok->loc);
 			} else {
 				if (e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->type == STMT_EXPR) {
 					for (size_t j = 0; j < e->bodies[i]->block.num - 1; j++)
@@ -1302,7 +1299,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				}
 
 				if (e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->type == STMT_EXPR) {
-					emit_bc(c, INSTR_MOV, reg,
+					emit_ab(c, INSTR_MOV, reg,
 					        compile_expression(c, e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->expr, sym, false, true),
 					        &e->tok->loc);
 				} else {
@@ -1315,10 +1312,10 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		}
 
 		for (size_t i = 0; i < e->num; i++)
-			c->code[end[i]].d.a = c->ip;
+			c->code[end[i]].a = c->ip;
 
 		if (last >= 0)
-			c->code[last].d.a = c->ip;
+			c->code[last].a = c->ip;
 
 		emit_(c, INSTR_POPIMP, &e->tok->loc);
 		break;
@@ -1329,7 +1326,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		for (int i = e->num - 1; i >= 0; i--) {
 			arg[i] = alloc_reg(c);
-			emit_bc(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, false, true), &e->tok->loc);
+			emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, false, true), &e->tok->loc);
 		}
 
 		for (int i = e->num - 1; i >= 0; i--)
@@ -1352,7 +1349,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.module = sym->module->id;
 		v.integer = compile_statement(c, e->s);
 		v.name = NULL;
-		emit_bc(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 	} break;
 
 	case EXPR_LIST: {
@@ -1362,18 +1359,18 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
 		c->gc->array[v.idx] = new_array();
 
-		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 		for (size_t i = 0; i < e->num; i++)
-			emit_bc(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+			emit_ab(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
 	} break;
 
 	case EXPR_SUBSCRIPT: {
 		int array = compile_expression(c, e->a, sym, false, true);
 		reg = alloc_reg(c);
-		emit_efg(c, INSTR_SUBSCR, reg, array,
-		         compile_expression(c, e->b, sym, false, true), &e->tok->loc);
-		c->code[c->ip - 1].d.efg.h = copy;
+		emit_abcd(c, INSTR_SUBSCR, reg, array,
+		          compile_expression(c, e->b, sym, false, true),
+		          copy, &e->tok->loc);
 	} break;
 
 	case EXPR_MAP: {
@@ -1383,7 +1380,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.type = VAL_ARRAY;
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
 		c->gc->array[v.idx] = new_array();
-		emit_bc(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
 
 		int iter = alloc_reg(c);
 
@@ -1391,37 +1388,37 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.integer = -1;
 
 		int expr = compile_expression(c, e->b, sym, false, true);
-		emit_bc(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &e->tok->loc);
 		size_t start = c->ip;
 		emit_a(c, INSTR_INC, iter, &e->tok->loc);
 		int len = alloc_reg(c);
-		emit_bc(c, INSTR_LEN, len, expr, &e->tok->loc);
+		emit_ab(c, INSTR_LEN, len, expr, &e->tok->loc);
 		int cond = alloc_reg(c);
-		emit_efg(c, INSTR_LESS, cond, iter, len, &e->tok->loc);
+		emit_abc(c, INSTR_LESS, cond, iter, len, &e->tok->loc);
 		emit_a(c, INSTR_COND, cond, &e->tok->loc);
 
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, -1, &e->tok->loc);
+		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
 		int temp = alloc_reg(c);
-		emit_efg(c, INSTR_SUBSCR, temp, expr, iter, &e->tok->loc);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &e->tok->loc);
 		emit_a(c, INSTR_PUSHIMP, temp, &e->tok->loc);
 
 		int thing = compile_expression(c, e->a, sym, false, true);
-		emit_bc(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
+		emit_ab(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
 
 		emit_(c, INSTR_POPIMP, &e->tok->loc);
-		emit_d(c, INSTR_JMP, start, &e->tok->loc);
-		c->code[a].d.d = c->ip;
+		emit_a(c, INSTR_JMP, start, &e->tok->loc);
+		c->code[a].a = c->ip;
 	} break;
 
 	case EXPR_REGEX: {
 		int t = alloc_reg(c);
-		emit_bc(c, INSTR_COPYC, t, add_constant(c, e->val), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, t, add_constant(c, e->val), &e->tok->loc);
 
 		if (shouldmatch) {
 			int temp = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-			emit_efg(c, INSTR_MATCH, reg = alloc_reg(c), temp, t, &e->tok->loc);
+			emit_abc(c, INSTR_MATCH, reg = alloc_reg(c), temp, t, &e->tok->loc);
 		} else {
 			reg = t;
 		}
@@ -1430,8 +1427,8 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	case EXPR_GROUP: {
 		reg = alloc_reg(c);
 		int temp = alloc_reg(c);
-		emit_bc(c, INSTR_COPYC, temp, add_constant(c, e->tok), &e->tok->loc);
-		emit_bc(c, INSTR_GROUP, reg, temp, &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, temp, add_constant(c, e->tok), &e->tok->loc);
+		emit_ab(c, INSTR_GROUP, reg, temp, &e->tok->loc);
 	} break;
 
 	case EXPR_EVAL: {
@@ -1441,9 +1438,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.type = VAL_INT;
 		v.integer = sym->scope;
 		int a = alloc_reg(c);
-		emit_bc(c, INSTR_COPYC, a, constant_table_add(c->ct, v), &e->tok->loc);
+		emit_ab(c, INSTR_COPYC, a, constant_table_add(c->ct, v), &e->tok->loc);
 
-		emit_efg(c, INSTR_EVAL,
+		emit_abc(c, INSTR_EVAL,
 		        reg = alloc_reg(c),
 		        compile_expression(c, e->a, sym, false, true),
 		        a,
@@ -1467,11 +1464,11 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		v.idx = gc_alloc(c->gc, VAL_ARRAY);
 		c->gc->array[v.idx] = new_array();
 
-		emit_bc(c, INSTR_COPYC, reg,
+		emit_ab(c, INSTR_COPYC, reg,
 		        constant_table_add(c->ct, v),
 		        &e->tok->loc);
 
-		emit_bc(c, INSTR_COPYC, index,
+		emit_ab(c, INSTR_COPYC, index,
 		        constant_table_add(c->ct, INT(-1)),
 		        &e->tok->loc);
 
@@ -1480,9 +1477,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 
 		emit_a(c, INSTR_INC, index, &e->tok->loc);
 		int len = alloc_reg(c);
-		emit_bc(c, INSTR_LEN, len, array, &e->tok->loc);
+		emit_ab(c, INSTR_LEN, len, array, &e->tok->loc);
 
-		emit_efg(c, INSTR_LESS, cond, index, len, &e->tok->loc);
+		emit_abc(c, INSTR_LESS, cond, index, len, &e->tok->loc);
 		emit_a(c, INSTR_COND, cond, &e->tok->loc);
 		size_t a = c->ip;
 		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
@@ -1490,7 +1487,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		if (e->s->type == STMT_EXPR && e->b) {
 			assert(e->s->expr->type == EXPR_VALUE);
 			struct symbol *var = resolve(sym, e->s->expr->val->value);
-			emit_efg(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
+			emit_abc(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
 		} else if (e->s->type == STMT_VAR_DECL && e->b) {
 			struct statement *s = e->s;
 
@@ -1503,24 +1500,24 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			sym = find_from_scope(sym, s->scope);
 			struct symbol *var = resolve(sym, s->var_decl.names[0]->value);
 			var->address = c->var[c->sp]++;
-			emit_efg(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
+			emit_abc(c, INSTR_SUBSCR, var->address, array, index, &e->tok->loc);
 		} else if (e->b) {
 			assert(false);
 		}
 
 		if (!e->b) {
 			int imp = alloc_reg(c);
-			emit_efg(c, INSTR_SUBSCR, imp, array, index, &e->tok->loc);
+			emit_abc(c, INSTR_SUBSCR, imp, array, index, &e->tok->loc);
 			emit_a(c, INSTR_PUSHIMP, imp, &e->tok->loc);
 		}
 
-		emit_bc(c, INSTR_PUSHBACK, reg,
+		emit_ab(c, INSTR_PUSHBACK, reg,
 		        compile_expression(c, e->a, sym, false, true), &e->tok->loc);
 
 		if (!e->b) emit_(c, INSTR_POPIMP, &e->tok->loc);
 
 		emit_a(c, INSTR_JMP, start, &e->tok->loc);
-		c->code[a].d.a = c->ip;
+		c->code[a].a = c->ip;
 	} break;
 
 	case EXPR_VARARGS:
@@ -1554,14 +1551,14 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 #define LOOP_START(X)	  \
 	do { \
 		for (int i = np; i < c->np; i++) \
-			c->code[c->next[i]].d.d = X; \
+			c->code[c->next[i]].a = X; \
 		c->np = np; \
 	} while (0)
 
 #define LOOP_END	  \
 	do { \
 		for (int i = lp; i < c->lp; i++) \
-			c->code[c->last[i]].d.d = c->ip; \
+			c->code[c->last[i]].a = c->ip; \
 		c->lp = lp; \
 	} while (0)
 
@@ -1588,7 +1585,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		emit_a(c, INSTR_COND,
 		       compile_expr(c, s->condition, sym, false), &s->tok->loc);
 		start = c->ip;
-		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 	}
 
 	int lp = c->lp;
@@ -1622,13 +1619,13 @@ compile_statement(struct compiler *c, struct statement *s)
 				? compile_expr(c, s->var_decl.init[i], sym, true)
 				: nil(c);
 
-			emit_bc(c, INSTR_MOV, var_sym->address, reg, &s->tok->loc);
+			emit_ab(c, INSTR_MOV, var_sym->address, reg, &s->tok->loc);
 		}
 		break;
 
 	case STMT_FN_DEF: {
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		push_frame(c);
 		sym->address = c->ip;
 		ret = c->ip;
@@ -1638,13 +1635,13 @@ compile_statement(struct compiler *c, struct statement *s)
 			arg_sym->address = c->var[c->sp]++;
 
 			if (s->fn_def.init[i]) {
-				emit_bc(c, INSTR_MOV,
+				emit_ab(c, INSTR_MOV,
 				        arg_sym->address,
 				        compile_expression(c, s->fn_def.init[i],
 				                           sym, false, true),
 				        &s->tok->loc);
 			} else {
-				emit_bc(c, INSTR_MOV,
+				emit_ab(c, INSTR_MOV,
 				        arg_sym->address,
 				        nil(c),
 				        &s->tok->loc);
@@ -1658,7 +1655,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		pop_frame(c);
 		emit_a(c, INSTR_PUSH, nil(c), &s->tok->loc);
 		emit_(c, INSTR_RET, &s->tok->loc);
-		c->code[a].d.d = c->ip;
+		c->code[a].a = c->ip;
 	} break;
 
 	case STMT_RET:
@@ -1698,13 +1695,13 @@ compile_statement(struct compiler *c, struct statement *s)
 	case STMT_IF_STMT: {
 		emit_a(c, INSTR_COND, compile_expr(c, s->if_stmt.cond, sym, false), &s->tok->loc);
 		size_t a = c->ip;
-		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		compile_statement(c, s->if_stmt.then);
 		size_t b = c->ip;
-		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
-		c->code[a].d.d = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+		c->code[a].a = c->ip;
 		compile_statement(c, s->if_stmt.otherwise);
-		c->code[b].d.d = c->ip;
+		c->code[b].a = c->ip;
 	} break;
 
 	case STMT_WHILE: {
@@ -1714,10 +1711,10 @@ compile_statement(struct compiler *c, struct statement *s)
 		size_t a = c->ip;
 		emit_a(c, INSTR_COND, compile_expr(c, s->while_loop.cond, sym, false), &s->tok->loc);
 		size_t b = c->ip;
-		emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		compile_statement(c, s->while_loop.body);
-		emit_d(c, INSTR_JMP, a, &s->tok->loc);
-		c->code[b].d.d = c->ip;
+		emit_a(c, INSTR_JMP, a, &s->tok->loc);
+		c->code[b].a = c->ip;
 
 		set_next(sym, a);
 		set_last(sym, c->ip);
@@ -1734,12 +1731,12 @@ compile_statement(struct compiler *c, struct statement *s)
 		size_t a = c->ip;
 		compile_statement(c, s->do_while_loop.body);
 		for (int i = np; i < c->np; i++)
-			c->code[c->next[i]].d.d = c->ip;
+			c->code[c->next[i]].a = c->ip;
 		c->np = np;
 		emit_a(c, INSTR_NCOND, compile_expr(c, s->do_while_loop.cond, sym, false), &s->tok->loc);
-		emit_d(c, INSTR_JMP, a, &s->tok->loc);
+		emit_a(c, INSTR_JMP, a, &s->tok->loc);
 		for (int i = lp; i < c->lp; i++)
-			c->code[i].d.d = c->ip;
+			c->code[i].a = c->ip;
 		c->lp = lp;
 
 		set_next(sym, a);
@@ -1761,13 +1758,13 @@ compile_statement(struct compiler *c, struct statement *s)
 			size_t a = c->ip;
 			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
 			size_t b = c->ip;
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 			compile_statement(c, s->for_loop.body);
 			start = c->ip;
 			compile_expression(c, s->for_loop.c, sym, false, true);
 
-			emit_d(c, INSTR_JMP, a, &s->tok->loc);
-			c->code[b].d.d = c->ip;
+			emit_a(c, INSTR_JMP, a, &s->tok->loc);
+			c->code[b].a = c->ip;
 
 			set_next(sym, start);
 			LOOP_START(start);
@@ -1795,26 +1792,26 @@ compile_statement(struct compiler *c, struct statement *s)
 			v.integer = -1;
 
 			int expr = c->var[c->sp]++;
-			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
-			emit_bc(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
+			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
+			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
 			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
-			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
+			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);
-			emit_efg(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
+			emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
 			emit_a(c, INSTR_COND, cond, &s->tok->loc);
 			size_t a = c->ip;
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
-			emit_efg(c, INSTR_SUBSCR, reg, expr, iter, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_abc(c, INSTR_SUBSCR, reg, expr, iter, &s->tok->loc);
 
 			compile_statement(c, s->for_loop.body);
-			emit_d(c, INSTR_JMP, start, &s->tok->loc);
+			emit_a(c, INSTR_JMP, start, &s->tok->loc);
 
 			set_next(sym, start);
 			LOOP_START(start);
 			LOOP_END;
-			c->code[a].d.d = c->ip;
+			c->code[a].a = c->ip;
 		}
 
 		if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
@@ -1831,33 +1828,33 @@ compile_statement(struct compiler *c, struct statement *s)
 			v.integer = -1;
 
 			int expr = c->var[c->sp]++;
-			emit_bc(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
-			emit_bc(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
+			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
+			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
 			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
 			int len = alloc_reg(c);
-			emit_bc(c, INSTR_LEN, len, expr, &s->tok->loc);
+			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);
-			emit_efg(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
+			emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
 			emit_a(c, INSTR_COND, cond, &s->tok->loc);
 			size_t a = c->ip;
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 			int temp = alloc_reg(c);
-			emit_efg(c, INSTR_SUBSCR, temp, expr, iter, &s->tok->loc);
+			emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &s->tok->loc);
 			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
 
 			compile_statement(c, s->for_loop.body);
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
-			emit_d(c, INSTR_JMP, start, &s->tok->loc);
+			emit_a(c, INSTR_JMP, start, &s->tok->loc);
 			int e = c->ip;
-			emit_d(c, INSTR_JMP, start, &s->tok->loc);
+			emit_a(c, INSTR_JMP, start, &s->tok->loc);
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 			set_next(sym, start);
 			LOOP_START(start);
 			LOOP_END;
-			c->code[a].d.d = c->ip;
-			c->code[e].d.d = c->ip;
+			c->code[a].a = c->ip;
+			c->code[e].a = c->ip;
 		}
 
 		c->loop = old_loop;
@@ -1875,10 +1872,10 @@ compile_statement(struct compiler *c, struct statement *s)
 				return -1;
 			}
 
-			emit_d(c, INSTR_ESCAPE, sym->last, &s->tok->loc);
+			emit_a(c, INSTR_ESCAPE, sym->last, &s->tok->loc);
 		} else {
 			push_last(c, c->ip);
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		}
 		break;
 
@@ -1893,10 +1890,10 @@ compile_statement(struct compiler *c, struct statement *s)
 				return -1;
 			}
 
-			emit_d(c, INSTR_ESCAPE, sym->next, &s->tok->loc);
+			emit_a(c, INSTR_ESCAPE, sym->next, &s->tok->loc);
 		} else {
 			push_next(c, c->ip);
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		}
 	} break;
 
@@ -1909,7 +1906,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		struct symbol *l = resolve(sym, s->label);
 		l->address = c->ip;
 		for (int i = 0; i < l->labelp; i++)
-			c->code[l->label[i]].d.d = l->address;
+			c->code[l->label[i]].a = l->address;
 	} break;
 
 	case STMT_GOTO: {
@@ -1936,11 +1933,11 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
 
 		if (l->address != (size_t)-1) {
-			emit_d(c, INSTR_JMP, l->address, &s->tok->loc);
+			emit_a(c, INSTR_JMP, l->address, &s->tok->loc);
 		} else {
 			l->label = oak_realloc(l->label, (l->labelp + 1) * sizeof *l->label);
 			l->label[l->labelp++] = c->ip;
-			emit_d(c, INSTR_JMP, -1, &s->tok->loc);
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 		}
 	} break;
 
@@ -1954,7 +1951,7 @@ compile_statement(struct compiler *c, struct statement *s)
 	}
 
 	if (s->condition)
-		c->code[start].d.d = c->ip;
+		c->code[start].a = c->ip;
 
 	return ret;
 }

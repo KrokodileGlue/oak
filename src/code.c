@@ -4,12 +4,12 @@
 struct instruction_data instruction_data[] = {
 	{ INSTR_NOP,      REG_NONE, "NOP       " },
 
-	{ INSTR_MOV,      REG_BC,   "MOV       " },
-	{ INSTR_COPY,     REG_BC,   "COPY      " },
-	{ INSTR_COPYC,    REG_BC,   "COPYC     " },
+	{ INSTR_MOV,      REG_AB,   "MOV       " },
+	{ INSTR_COPY,     REG_AB,   "COPY      " },
+	{ INSTR_COPYC,    REG_AB,   "COPYC     " },
 
-	{ INSTR_JMP,      REG_D,    "JMP       " },
-	{ INSTR_ESCAPE,   REG_D,    "ESCAPE    " },
+	{ INSTR_JMP,      REG_A,    "JMP       " },
+	{ INSTR_ESCAPE,   REG_A,    "ESCAPE    " },
 	{ INSTR_PUSH,     REG_A,    "PUSH      " },
 	{ INSTR_POP,      REG_A,    "POP       " },
 	{ INSTR_POPALL,   REG_A,    "POPALL    " },
@@ -20,73 +20,73 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_GETIMP,   REG_A,    "GETIMP    " },
 	{ INSTR_CHKSTCK,  REG_NONE, "CHKSTCK   " },
 
-	{ INSTR_PUSHBACK, REG_BC,   "PUSHBACK  " },
-	{ INSTR_ASET,     REG_EFG,  "ASET      " },
-	{ INSTR_DEREF,    REG_EFG,  "DEREF     " },
-	{ INSTR_SUBSCR,   REG_EFG,  "SUBSCR    " },
+	{ INSTR_PUSHBACK, REG_AB,   "PUSHBACK  " },
+	{ INSTR_ASET,     REG_ABC,  "ASET      " },
+	{ INSTR_DEREF,    REG_ABC,  "DEREF     " },
+	{ INSTR_SUBSCR,   REG_ABCD, "SUBSCR    " },
 
-	{ INSTR_MATCH,    REG_EFG,  "MATCH     " },
-	{ INSTR_SUBST,    REG_EFG,  "SUBST     " },
-	{ INSTR_GROUP,    REG_BC,   "GROUP     " },
+	{ INSTR_MATCH,    REG_ABC,  "MATCH     " },
+	{ INSTR_SUBST,    REG_ABCD, "SUBST     " },
+	{ INSTR_GROUP,    REG_AB,   "GROUP     " },
 
-	{ INSTR_SPLIT,    REG_EFG,  "SPLIT     " },
-	{ INSTR_JOIN,     REG_EFG,  "JOIN      " },
-	{ INSTR_RANGE,    REG_EFG,  "RANGE     " },
-	{ INSTR_PUSH,     REG_BC,   "APUSH     " },
-	{ INSTR_REV,      REG_BC,   "REV       " },
-	{ INSTR_SORT,     REG_BC,   "SORT      " },
-	{ INSTR_SUM,      REG_BC,   "SUM       " },
-	{ INSTR_ABS,      REG_BC,   "ABS       " },
-	{ INSTR_COUNT,    REG_EFG,  "COUNT     " },
+	{ INSTR_SPLIT,    REG_ABC,  "SPLIT     " },
+	{ INSTR_JOIN,     REG_ABC,  "JOIN      " },
+	{ INSTR_RANGE,    REG_ABCD, "RANGE     " },
+	{ INSTR_PUSH,     REG_AB,   "APUSH     " },
+	{ INSTR_REV,      REG_AB,   "REV       " },
+	{ INSTR_SORT,     REG_AB,   "SORT      " },
+	{ INSTR_SUM,      REG_AB,   "SUM       " },
+	{ INSTR_ABS,      REG_AB,   "ABS       " },
+	{ INSTR_COUNT,    REG_ABC,  "COUNT     " },
 
-	{ INSTR_KEYS,     REG_BC,   "KEYS      " },
-	{ INSTR_VALUES,   REG_BC,   "VALUES    " },
+	{ INSTR_KEYS,     REG_AB,   "KEYS      " },
+	{ INSTR_VALUES,   REG_AB,   "VALUES    " },
 
-	{ INSTR_INT,      REG_BC,   "INT       " },
-	{ INSTR_FLOAT,    REG_BC,   "FLOAT     " },
-	{ INSTR_STR,      REG_BC,   "STR       " },
+	{ INSTR_INT,      REG_AB,   "INT       " },
+	{ INSTR_FLOAT,    REG_AB,   "FLOAT     " },
+	{ INSTR_STR,      REG_AB,   "STR       " },
 
-	{ INSTR_UC,       REG_BC,   "UC        " },
-	{ INSTR_LC,       REG_BC,   "LC        " },
-	{ INSTR_UCFIRST,  REG_BC,   "UCFIRST   " },
-	{ INSTR_LCFIRST,  REG_BC,   "LCFIRST   " },
+	{ INSTR_UC,       REG_AB,   "UC        " },
+	{ INSTR_LC,       REG_AB,   "LC        " },
+	{ INSTR_UCFIRST,  REG_AB,   "UCFIRST   " },
+	{ INSTR_LCFIRST,  REG_AB,   "LCFIRST   " },
 
 	{ INSTR_COND,     REG_A,    "COND      " },
 	{ INSTR_NCOND,    REG_A,    "NCOND     " },
-	{ INSTR_CMP,      REG_EFG,  "CMP       " },
-	{ INSTR_LESS,     REG_EFG,  "LESS      " },
-	{ INSTR_LEQ,      REG_EFG,  "LEQ       " },
-	{ INSTR_GEQ,      REG_EFG,  "GEQ       " },
-	{ INSTR_MORE,     REG_EFG,  "MORE      " },
+	{ INSTR_CMP,      REG_ABC,  "CMP       " },
+	{ INSTR_LESS,     REG_ABC,  "LESS      " },
+	{ INSTR_LEQ,      REG_ABC,  "LEQ       " },
+	{ INSTR_GEQ,      REG_ABC,  "GEQ       " },
+	{ INSTR_MORE,     REG_ABC,  "MORE      " },
 	{ INSTR_INC,      REG_A,    "INC       " },
 	{ INSTR_DEC,      REG_A,    "DEC       " },
-	{ INSTR_TYPE,     REG_BC,   "TYPE      " },
-	{ INSTR_LEN,      REG_BC,   "LEN       " },
+	{ INSTR_TYPE,     REG_AB,   "TYPE      " },
+	{ INSTR_LEN,      REG_AB,   "LEN       " },
 
 	{ INSTR_MIN,      REG_A,    "MIN       " },
 	{ INSTR_MAX,      REG_A,    "MAX       " },
 
-	{ INSTR_ADD,      REG_EFG,  "ADD       " },
-	{ INSTR_SUB,      REG_EFG,  "SUB       " },
-	{ INSTR_MUL,      REG_EFG,  "MUL       " },
-	{ INSTR_POW,      REG_EFG,  "POW       " },
-	{ INSTR_DIV,      REG_EFG,  "DIV       " },
+	{ INSTR_ADD,      REG_ABC,  "ADD       " },
+	{ INSTR_SUB,      REG_ABC,  "SUB       " },
+	{ INSTR_MUL,      REG_ABC,  "MUL       " },
+	{ INSTR_POW,      REG_ABC,  "POW       " },
+	{ INSTR_DIV,      REG_ABC,  "DIV       " },
 
-	{ INSTR_SLEFT,    REG_EFG,  "SLEFT     " },
-	{ INSTR_SRIGHT,   REG_EFG,  "SRIGHT    " },
+	{ INSTR_SLEFT,    REG_ABC,  "SLEFT     " },
+	{ INSTR_SRIGHT,   REG_ABC,  "SRIGHT    " },
 
-	{ INSTR_BAND,     REG_EFG,  "BAND      " },
-	{ INSTR_XOR,      REG_EFG,  "XOR       " },
-	{ INSTR_BOR,      REG_EFG,  "BOR       " },
+	{ INSTR_BAND,     REG_ABC,  "BAND      " },
+	{ INSTR_XOR,      REG_ABC,  "XOR       " },
+	{ INSTR_BOR,      REG_ABC,  "BOR       " },
 
-	{ INSTR_MOD,      REG_EFG,  "MOD       " },
-	{ INSTR_NEG,      REG_BC,   "NEG       " },
-	{ INSTR_FLIP,     REG_BC,   "FLIP      " },
+	{ INSTR_MOD,      REG_ABC,  "MOD       " },
+	{ INSTR_NEG,      REG_AB,   "NEG       " },
+	{ INSTR_FLIP,     REG_AB,   "FLIP      " },
 
 	{ INSTR_PRINT,    REG_A,    "PRINT     " },
 	{ INSTR_LINE,     REG_NONE, "LINE      " },
 
-	{ INSTR_EVAL,     REG_EFG,  "EVAL      " },
+	{ INSTR_EVAL,     REG_ABC,  "EVAL      " },
 	{ INSTR_KILL,     REG_A,    "KILL      " },
 	{ INSTR_EEND,     REG_A,    "EEND      " },
 	{ INSTR_END,      REG_A,    "END       " }
@@ -97,16 +97,25 @@ print_instruction(FILE *f, struct instruction c)
 {
 	fprintf(f, "%s ", instruction_data[c.type].name);
 	switch (instruction_data[c.type].regtype) {
-	case REG_A: fprintf(f, "%4d             ", c.d.a); break;
-	case REG_BC:
-		fprintf(f,     "%4d, %4d       ", c.d.bc.b, c.d.bc.c);
+	case REG_A:
+		fprintf(f, "%4d             ", c.a);
 		break;
-	case REG_D: fprintf(f, "%4d             ", c.d.d); break;
-	case REG_EFG:
-		fprintf(f,     "%4d, %4d, %4d ", c.d.efg.e,
-		        c.d.efg.f, c.d.efg.g);
+
+	case REG_AB:
+		fprintf(f,     "%4d, %4d       ", c.b, c.c);
 		break;
-	case REG_NONE: fprintf(f, "                 "); break;
+
+	case REG_ABC:
+		fprintf(f,     "%4d, %4d, %4d ", c.a, c.b, c.c);
+		break;
+
+	case REG_ABCD:
+		fprintf(f,     "%4d, %4d, %4d, %4d ", c.a, c.b, c.c, c.d);
+		break;
+
+	case REG_NONE:
+		fprintf(f, "                 ");
+		break;
 	}
 
 }

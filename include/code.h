@@ -104,23 +104,10 @@ struct instruction {
 	int type;
 	struct location *loc;
 
-	union {
-		uint16_t a;
-
-		struct {
-			uint16_t b;
-			uint16_t c;
-		} bc;
-
-		uint16_t d;
-
-		struct {
-			uint16_t e;
-			uint16_t f;
-			uint16_t g;
-			uint16_t h;
-		} efg;
-	} d;
+	uint16_t a;
+	uint16_t b;
+	uint16_t c;
+	uint16_t d;
 };
 
 struct instruction_data {
@@ -128,9 +115,9 @@ struct instruction_data {
 	enum {
 		REG_NONE,
 		REG_A,
-		REG_BC,
-		REG_D,
-		REG_EFG,
+		REG_AB,
+		REG_ABC,
+		REG_ABCD,
 	} regtype;
 	char *name;
 };
