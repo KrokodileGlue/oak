@@ -134,15 +134,17 @@ struct expression {
 		EXPR_TABLE,
 		EXPR_VARARGS,
 		EXPR_MATCH,
+		EXPR_SLICE,
 		EXPR_INVALID
 	} type;
 
 	struct operator *operator;
 	struct builtin *bi;
 
+	/* TODO: clean this up */
 	union {
 		struct {
-			struct expression *a, *b, *c;
+			struct expression *a, *b, *c, *d;
 
 			/*
 			 * Used for function arguments, list, and lots

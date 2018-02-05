@@ -422,12 +422,28 @@ pl join ', ', sort [5, 0, -21, 74, -5, 745, 4, -6, 2, 5, -13, 3, 45, -736, 1, 35
 var step = 0
 test: step++;
 
-[match _ { 2 => { goto test when step <= 10000 } } for [1, 2, 3]]
+[match _ { 2 => { goto test when step <= 1000 } } for [1, 2, 3]]
 pl 'Hello, world!'
-if step == 10003: goto end
+if step == 1003: goto end
 else goto test
 
 end: pl 'Goodbye, world!'
+
+pl 1 << 2
+pl 1 << 16
+pl 2 >> 1
+pl ((1 << 16) >> 1) & (1 << 15)
+
+fn pa (x) = sayln '[', join(', ', x), ']'
+
+pa((0 -> 10)[4:10:2])
+pa((0 -> 10)[::2])
+pa((0 -> 10)[::-1])
+pa((0 -> 10)[0:5:-1])
+pa((0 -> 10)[5:0:-1])
+pa((0 -> 10)[0:5])
+pa((0 -> 10)[0:10 * 3 + 1])
+pa((0 -> 10)[5:0])
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector

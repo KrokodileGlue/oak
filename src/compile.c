@@ -83,6 +83,12 @@ emit_abcd(struct compiler *c, enum instruction_type type, int a, int b, int C, i
 }
 
 static void
+emit_abcde(struct compiler *c, enum instruction_type type, int a, int b, int C, int d, int e, struct location *loc)
+{
+	emit(c, (struct instruction) {type, .a = a, .b = b, .c = C, .d = d, .e = e }, loc);
+}
+
+static void
 push_frame(struct compiler *c)
 {
 	c->stack_top = oak_realloc(c->stack_top, (c->sp + 2) * sizeof *c->stack_top);
@@ -354,11 +360,12 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			arg = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
 		} else {
-			CHECKARGS(e->num != 1);
-			arg = compile_expression(c, e->args[0], sym, false, true);
+			for (size_t i = 0; i < e->num; i++) {
+				arg = compile_expression(c, e->args[i], sym, false, true);
+				emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
+			}
 		}
 
-		emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
 		reg = arg;
 	} break;
 
@@ -369,11 +376,12 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 			arg = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
 		} else {
-			CHECKARGS(e->num != 1);
-			arg = compile_expression(c, e->args[0], sym, false, true);
+			for (size_t i = 0; i < e->num; i++) {
+				arg = compile_expression(c, e->args[i], sym, false, true);
+				emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
+			}
 		}
 
-		emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
 		emit_(c, INSTR_LINE, &e->tok->loc);
 		reg = arg;
 	} break;
@@ -1371,6 +1379,24 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_abcd(c, INSTR_SUBSCR, reg, array,
 		          compile_expression(c, e->b, sym, false, true),
 		          copy, &e->tok->loc);
+	} break;
+
+	case EXPR_SLICE: {
+		int array = compile_expression(c, e->a, sym, false, true);
+		reg = alloc_reg(c);
+
+		int B, C, D;
+
+		if (!e->b) emit_ab(c, INSTR_COPYC, B = alloc_reg(c), constant_table_add(c->ct, NIL), &e->tok->loc);
+		else B = compile_expression(c, e->b, sym, false, true);
+
+		if (!e->c) emit_ab(c, INSTR_COPYC, C = alloc_reg(c), constant_table_add(c->ct, NIL), &e->tok->loc);
+		else C = compile_expression(c, e->c, sym, false, true);
+
+		if (!e->d) emit_ab(c, INSTR_COPYC, D = alloc_reg(c), constant_table_add(c->ct, INT(1)), &e->tok->loc);
+		else D = compile_expression(c, e->d, sym, false, true);
+
+		emit_abcde(c, INSTR_SLICE, reg, array, B, C, D, &e->tok->loc);
 	} break;
 
 	case EXPR_MAP: {

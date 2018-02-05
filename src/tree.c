@@ -105,6 +105,7 @@ free_expr(struct expression *e)
 		free_expr(e->a);
 		free_expr(e->b);
 		free_expr(e->c);
+		free_expr(e->d);
 	}
 
 	free(e);
@@ -487,6 +488,13 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			ap->depth--;
 		}
 
+		ap->depth--;
+	} else if (e->type == EXPR_SLICE) {
+		fprintf(ap->f, "(table)");
+		ap->depth++; split(ap);
+		print_expression(ap, e->a);
+		print_expression(ap, e->b); join(ap);
+		print_expression(ap, e->c);
 		ap->depth--;
 	} else {
 		fputc('\n', stderr);

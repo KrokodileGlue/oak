@@ -300,6 +300,12 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		resolve_expr(si, e->b);
 		break;
 
+	case EXPR_SLICE:
+		resolve_expr(si, e->a);
+		resolve_expr(si, e->b);
+		resolve_expr(si, e->c);
+		break;
+
 	case EXPR_FN_CALL:
 		resolve_expr(si, e->a);
 		for (size_t i = 0; i < e->num; i++)

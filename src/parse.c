@@ -398,6 +398,17 @@ parse_expr(struct parser *ps, size_t prec)
 
 			NEXT;
 			e->b = parse_expr(ps, 0);
+
+			if (!strcmp(ps->tok->value, ":")) {
+				e->type = EXPR_SLICE;
+				NEXT;
+				e->c = parse_expr(ps, 0);
+				if (!strcmp(ps->tok->value, ":")) {
+					NEXT;
+					e->d = parse_expr(ps, 0);
+				}
+			}
+
 			expect_symbol(ps, op->body2);
 			break;
 

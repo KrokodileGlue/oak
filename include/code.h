@@ -32,6 +32,7 @@ enum instruction_type {
 	INSTR_ASET,
 	INSTR_DEREF,
 	INSTR_SUBSCR,
+	INSTR_SLICE,
 
 	INSTR_MATCH,
 	INSTR_SUBST,
@@ -101,13 +102,14 @@ enum instruction_type {
 };
 
 struct instruction {
-	int type;
+	unsigned char type;
 	struct location *loc;
 
 	uint16_t a;
 	uint16_t b;
 	uint16_t c;
 	uint16_t d;
+	uint16_t e;
 };
 
 struct instruction_data {
@@ -118,6 +120,7 @@ struct instruction_data {
 		REG_AB,
 		REG_ABC,
 		REG_ABCD,
+		REG_ABCDE
 	} regtype;
 	char *name;
 };

@@ -403,6 +403,54 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 		break;
 
+#define CHECKREG(X,Y,...)	  \
+		if (Y) { \
+			error_push(vm->r, *c.loc, ERR_FATAL, __VA_ARGS__); \
+			return; \
+		}
+
+	case INSTR_SLICE: {
+		CHECKREG(c.b, GETREG(c.b).type != VAL_ARRAY,
+		         "array slice requires array operand (got %s)",
+		         value_data[GETREG(c.b).type].body);
+
+		CHECKREG(c.c, GETREG(c.c).type != VAL_INT
+		         && GETREG(c.c).type != VAL_NIL,
+		         "array slice requires integer startpoint (got %s)",
+		         value_data[GETREG(c.c).type].body);
+
+		CHECKREG(c.d, GETREG(c.d).type != VAL_INT
+		         && GETREG(c.d).type != VAL_NIL,
+		         "array slice requires integer endpoint (got %s)",
+		         value_data[GETREG(c.d).type].body);
+
+		CHECKREG(c.e, GETREG(c.e).type != VAL_INT
+		         && GETREG(c.e).type != VAL_NIL,
+		         "array slice requires integer step (got %s)",
+		         value_data[GETREG(c.e).type].body);
+
+		int64_t start = GETREG(c.c).type == VAL_INT ? GETREG(c.c).integer : 0;
+		int64_t stop = GETREG(c.d).type == VAL_INT ? GETREG(c.d).integer : vm->gc->array[GETREG(c.b).idx]->len - 1;
+		int64_t step = GETREG(c.e).type == VAL_INT ? GETREG(c.e).integer : 1;
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[v.idx] = new_array();
+
+		if (stop < start && step < 0)
+			for (int64_t i = start; i >= stop; i += step)
+				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
+		else if (start < stop && step < 0)
+			for (int64_t i = stop; i >= start; i += step)
+				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
+		else if (start < stop && step > 0)
+			for (int64_t i = start; i <= stop; i += step)
+				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
+
+		SETREG(c.a, v);
+	} break;
+
 	case INSTR_PUSHBACK:
 		array_push(vm->gc->array[GETREG(c.a).idx],
 		           GETREG(c.b));
