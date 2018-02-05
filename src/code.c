@@ -30,6 +30,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_SUBST,    REG_ABCD,  "SUBST     " },
 	{ INSTR_GROUP,    REG_AB,    "GROUP     " },
 
+	{ INSTR_MSET,     REG_A,     "MSET      " },
+	{ INSTR_MINC,     REG_NONE,  "MINC      " },
+
 	{ INSTR_SPLIT,    REG_ABC,   "SPLIT     " },
 	{ INSTR_JOIN,     REG_ABC,   "JOIN      " },
 	{ INSTR_RANGE,    REG_ABCD,  "RANGE     " },

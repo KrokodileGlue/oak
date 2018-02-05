@@ -359,6 +359,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		if (e->num == 0) {
 			arg = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+			emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
 		} else {
 			for (size_t i = 0; i < e->num; i++) {
 				arg = compile_expression(c, e->args[i], sym, false, true);
@@ -375,6 +376,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		if (e->num == 0) {
 			arg = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
+			emit_a(c, INSTR_PRINT, arg, &e->tok->loc);
 		} else {
 			for (size_t i = 0; i < e->num; i++) {
 				arg = compile_expression(c, e->args[i], sym, false, true);
@@ -1849,15 +1851,26 @@ compile_statement(struct compiler *c, struct statement *s)
 
 			int iter = c->var[c->sp]++;
 
-			struct value v;
-			v.type = VAL_INT;
-			v.integer = -1;
-
 			int expr = c->var[c->sp]++;
 			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
-			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
+			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, INT(-1)), &s->tok->loc);
+
+			/* god look at this shit */
+			if (s->for_loop.a->expr->type == EXPR_REGEX
+			    || (s->for_loop.a->expr->type == EXPR_OPERATOR
+			        && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
+			        && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ))
+				emit_a(c, INSTR_MSET, -1, &s->tok->loc);
+
 			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
+
+			if (s->for_loop.a->expr->type == EXPR_REGEX
+			    || (s->for_loop.a->expr->type == EXPR_OPERATOR
+			        && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
+			        && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ))
+				emit_(c, INSTR_MINC, &s->tok->loc);
+
 			int len = alloc_reg(c);
 			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);

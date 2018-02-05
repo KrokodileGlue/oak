@@ -284,6 +284,12 @@ execute_instr(struct vm *vm, struct instruction c)
 	case INSTR_SRIGHT: BIN(sright);                         break;
 	case INSTR_INC: SETREG(c.a, inc_value(GETREG(c.a)));    break;
 	case INSTR_DEC: SETREG(c.a, dec_value(GETREG(c.a)));    break;
+	case INSTR_MSET: vm->match = c.a;                       break;
+	case INSTR_MINC:
+		if (vm->match == 65535) vm->match = 0;
+		else vm->match++;
+		break;
+
 	case INSTR_LINE:
 		if (!vm->debug && vm->k->talkative) fputc('\n', vm->f);
 		break;

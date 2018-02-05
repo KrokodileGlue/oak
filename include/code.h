@@ -38,6 +38,9 @@ enum instruction_type {
 	INSTR_SUBST,
 	INSTR_GROUP,
 
+	INSTR_MSET,
+	INSTR_MINC,
+
 	INSTR_SPLIT,
 	INSTR_JOIN,
 	INSTR_RANGE,
