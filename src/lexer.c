@@ -481,6 +481,7 @@ parse_regex(struct lexer *ls, char *a)
 	ls->tok->flags = oak_malloc(b - a + 1);
 	strncpy(ls->tok->flags, a, b - a);
 	ls->tok->flags[b - a] = 0;
+	ls->tok->loc.len += b - a;
 
 	return b;
 }

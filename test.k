@@ -181,7 +181,8 @@ pl join('-', split / /, 'this is something')
 
 var string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
 
-for string =~ /\w+/g: pl _
+# for string =~ /\w+/: pl _
+for string =~ /\w+/: ;
 pl join(':', string =~ /\w+/g)
 pl join(':', split //, string)
 
@@ -445,8 +446,18 @@ pa((0 -> 10)[0:5])
 pa((0 -> 10)[0:10 * 3 + 1])
 pa((0 -> 10)[5:0])
 
-for 'a1 b2 c3' =~ /\w(\d)/g:
-	pl 'thing: ', $1
+for 'a1 b2 c3' =~ /\w(\d)/:
+	pl '> ', $1
+
+for 'a4 b5 c6' =~ /\w(\d)/ {
+	pl '> ', $1
+	/oesfijosfeiefsjoi/
+}
+
+for ['a1 b2 c3'] {
+	for /\w(\d)/:
+		pl '> ', $1
+}
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
@@ -457,3 +468,4 @@ for 'a1 b2 c3' =~ /\w(\d)/g:
 # TODO: sort should care about arrays with mixed types
 # TODO: lvalue array slices
 # TODO: enums/tags
+# TODO: look at how while loops handle regex

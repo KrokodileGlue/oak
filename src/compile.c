@@ -168,9 +168,10 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		for (size_t i = 0; i < strlen(tok->flags); i++) {
 			switch (tok->flags[i]) {
 			case 'i': opt |= KTRE_INSENSITIVE; break;
-			case 'g': opt |= KTRE_GLOBAL; break;
-			case 's': opt |= KTRE_MULTILINE; break;
-			case 'e': e++; break;
+			case 'g': opt |= KTRE_GLOBAL;      break;
+			case 's': opt |= KTRE_MULTILINE;   break;
+			case 'c': opt |= KTRE_CONTINUE;    break;
+			case 'e': e++;                     break;
 			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
 			}
 		}
@@ -179,6 +180,15 @@ make_value_from_token(struct compiler *c, struct token *tok)
 		v.idx = gc_alloc(c->gc, VAL_REGEX);
 		v.e = e;
 		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
+
+		if (c->gc->regex[v.idx]->err) {
+			error_push(c->r, tok->loc, ERR_FATAL,
+			           "regex failed to compile with error code %d: %s",
+			           c->gc->regex[v.idx]->err,
+			           c->gc->regex[v.idx]->err_str
+			           ? c->gc->regex[v.idx]->err_str
+			           : "no error message");
+		}
 	} break;
 
 	case TOK_GROUP:
@@ -1561,14 +1571,17 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 	return reg;
 }
 
+static void
+set_stack_top(struct compiler *c)
+{
+	if (c->in_expr) return;
+	c->stack_top[c->sp] = c->stack_base[c->sp];
+}
+
 static int
 compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool copy)
 {
-	if (c->in_expr)
-		return compile_expression(c, e, sym, copy, true);
-
-	c->stack_top[c->sp] = c->stack_base[c->sp];
-
+	set_stack_top(c);
 	c->in_expr = true;
 	int t = compile_expression(c, e, sym, copy, true);
 	c->in_expr = false;
@@ -1797,9 +1810,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			set_next(sym, start);
 			LOOP_START(start);
 			LOOP_END;
-		}
-
-		if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
+		} else if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
 			int reg = -1;
 			if (s->for_loop.a->type == STMT_VAR_DECL) {
 				if (s->for_loop.a->var_decl.num != 1) {
@@ -1840,9 +1851,71 @@ compile_statement(struct compiler *c, struct statement *s)
 			LOOP_START(start);
 			LOOP_END;
 			c->code[a].a = c->ip;
-		}
+		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
+		           && s->for_loop.a->type == STMT_EXPR
+		           && s->for_loop.a->expr->type == EXPR_OPERATOR
+		           && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
+		           && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ) {
+			int expr = c->var[c->sp]++;
+			s->for_loop.a->expr->b->val->flags = smart_cat(s->for_loop.a->expr->b->val->flags, "c");
 
-		if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
+			start = c->ip;
+			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
+			emit_a(c, INSTR_COND, expr, &s->tok->loc);
+			size_t a = c->ip;
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+			int zero = alloc_reg(c);
+			emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+			int temp = alloc_reg(c);
+			emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
+			compile_statement(c, s->for_loop.body);
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+			emit_a(c, INSTR_JMP, start, &s->tok->loc);
+			int b = c->ip;
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+			set_next(sym, start);
+			LOOP_START(start);
+			LOOP_END;
+			c->code[a].a = c->ip;
+			c->code[b].a = c->ip;
+		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
+		           && s->for_loop.a->type == STMT_EXPR
+		           && s->for_loop.a->expr->type == EXPR_REGEX) {
+			int expr = c->var[c->sp]++;
+			s->for_loop.a->expr->val->flags = smart_cat(s->for_loop.a->expr->val->flags, "c");
+
+			set_stack_top(c);
+
+			start = c->ip;
+			emit_ab(c, INSTR_MOV, expr, compile_expression(c, s->for_loop.a->expr, sym, false, true), &s->tok->loc);
+			emit_a(c, INSTR_COND, expr, &s->tok->loc);
+			size_t a = c->ip;
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+			int zero = alloc_reg(c);
+			emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+			int temp = alloc_reg(c);
+			emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
+			compile_statement(c, s->for_loop.body);
+			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+			emit_a(c, INSTR_JMP, start, &s->tok->loc);
+			int b = c->ip;
+			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+			set_next(sym, start);
+			LOOP_START(start);
+			LOOP_END;
+			c->code[a].a = c->ip;
+			c->code[b].a = c->ip;
+		}else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
 			if (s->for_loop.a->type != STMT_EXPR) {
 				error_push(c->r, s->tok->loc, ERR_FATAL,
 				           "argument to `for' must be an expression");
@@ -1850,27 +1923,13 @@ compile_statement(struct compiler *c, struct statement *s)
 			}
 
 			int iter = c->var[c->sp]++;
-
 			int expr = c->var[c->sp]++;
+
 			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
 			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, INT(-1)), &s->tok->loc);
 
-			/* god look at this shit */
-			if (s->for_loop.a->expr->type == EXPR_REGEX
-			    || (s->for_loop.a->expr->type == EXPR_OPERATOR
-			        && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
-			        && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ))
-				emit_a(c, INSTR_MSET, -1, &s->tok->loc);
-
 			start = c->ip;
 			emit_a(c, INSTR_INC, iter, &s->tok->loc);
-
-			if (s->for_loop.a->expr->type == EXPR_REGEX
-			    || (s->for_loop.a->expr->type == EXPR_OPERATOR
-			        && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
-			        && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ))
-				emit_(c, INSTR_MINC, &s->tok->loc);
-
 			int len = alloc_reg(c);
 			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
 			int cond = alloc_reg(c);
@@ -1880,10 +1939,11 @@ compile_statement(struct compiler *c, struct statement *s)
 			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
 			int temp = alloc_reg(c);
 			emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &s->tok->loc);
-			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
 
+			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
 			compile_statement(c, s->for_loop.body);
 			emit_(c, INSTR_POPIMP, &s->tok->loc);
+
 			emit_a(c, INSTR_JMP, start, &s->tok->loc);
 			int e = c->ip;
 			emit_a(c, INSTR_JMP, start, &s->tok->loc);

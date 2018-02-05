@@ -614,12 +614,16 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_MATCH: {
 		if (GETREG(c.c).type != VAL_REGEX) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply match to non regular expression value");
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "attempt to apply match to non regular expression value (got %s)",
+			           value_data[GETREG(c.c).type].body);
 			return;
 		}
 
 		if (GETREG(c.b).type != VAL_STR) {
-			error_push(vm->r, *c.loc, ERR_FATAL, "attempt to apply regular expression to non-string value");
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "attempt to apply regular expression to non-string value (got %s)",
+			           value_data[GETREG(c.b).type].body);
 			return;
 		}
 
@@ -647,11 +651,6 @@ execute_instr(struct vm *vm, struct instruction c)
 				strncpy(vm->gc->str[v.idx], subject + vec[i][0], vec[i][1]);
 				vm->gc->str[v.idx][vec[i][1]] = 0;
 				array_push(vm->gc->array[GETREG(c.a).idx], v);
-
-				for (int j = 1; j < re->num_groups; j++) {
-					/* TODO: $1, $2 n stuff */
-					/* DOUT("\ngroup %d: `%.*s`", j, vec[i][j * 2 + 1], subject + vec[i][j * 2]); */
-				}
 			}
 		} else if (re->err) {
 			struct location loc = *c.loc;
