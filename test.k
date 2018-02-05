@@ -445,6 +445,9 @@ pa((0 -> 10)[0:5])
 pa((0 -> 10)[0:10 * 3 + 1])
 pa((0 -> 10)[5:0])
 
+for 'a1 b2 c3' =~ /\w(\d)/g:
+	pl 'thing: ', $1
+
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings
@@ -452,3 +455,4 @@ pa((0 -> 10)[5:0])
 # TODO: regex matches shouldn't survive function calls
 # TODO: prefix ++ and --
 # TODO: sort should care about arrays with mixed types
+# TODO: lvalue array slices

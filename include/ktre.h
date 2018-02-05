@@ -350,6 +350,7 @@ struct instr {
 		INSTR_JMP,
 		INSTR_BRANCH,
 		INSTR_ANY,
+		INSTR_MANY,
 		INSTR_CLASS,
 		INSTR_TSTR,
 		INSTR_STR,
@@ -477,6 +478,7 @@ struct node {
 		NODE_GROUP,
 		NODE_QUESTION,
 		NODE_ANY,     /* matches anything */
+		NODE_MANY,    /* multiline any (internal instruction) */
 		NODE_CLASS,   /* character class */
 		NODE_NOT,     /* negated character class */
 		NODE_STR,
@@ -1960,6 +1962,7 @@ print_node(struct ktre *re, struct node *n)
 
 	switch (n->type) {
 	case NODE_ANY:       N0("(any)");                                     break;
+	case NODE_MANY:      N0("(m_any)");                                   break;
 	case NODE_DIGIT:     N0("(digit)");                                   break;
 	case NODE_WORD:      N0("(word)");                                    break;
 	case NODE_SPACE:     N0("(space)");                                   break;
@@ -2410,7 +2413,7 @@ ktre_compile(const char *pat, int opt)
 		 * manually emitting the instructions for `.*?`.
 		 */
 		emit_ab(re, INSTR_BRANCH, 3, 1, 0);
-		emit(re, INSTR_ANY, 0);
+		emit(re, INSTR_MANY, 0);
 		emit_ab(re, INSTR_BRANCH, 3, 1, 0);
 	}
 
@@ -2450,6 +2453,7 @@ ktre_compile(const char *pat, int opt)
 		case INSTR_TRY:       DBG("TRY");                                      break;
 		case INSTR_CATCH:     DBG("CATCH");                                    break;
 		case INSTR_ANY:       DBG("ANY");                                      break;
+		case INSTR_MANY:      DBG("MANY");                                     break;
 		case INSTR_DIGIT:     DBG("DIGIT");                                    break;
 		case INSTR_WORD:      DBG("WORD");                                     break;
 		case INSTR_SPACE:     DBG("SPACE");                                    break;
@@ -2712,8 +2716,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			if (!strchr(re->c[ip].class, subject[sp])
 			    && subject[sp] && sp >= 0)
 				THREAD[TP].sp++;
-			else
-				--TP;
+			else --TP;
 			break;
 
 		case INSTR_BOL:
@@ -2726,8 +2729,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			if ((sp >= 0 && subject[sp] == '\n')
 			    || sp == (int)strlen(subject))
 				THREAD[TP].ip++;
-			else
-				--TP;
+			else --TP;
 			break;
 
 		case INSTR_BOS:
@@ -2823,6 +2825,16 @@ run(struct ktre *re, const char *subject, int ***vec)
 				else
 					--TP;
 			}
+			break;
+
+		case INSTR_MANY:
+			THREAD[TP].ip++;
+
+			if (sp >= 0 && subject[sp])
+				if (rev) THREAD[TP].sp--;
+				else THREAD[TP].sp++;
+			else
+				--TP;
 			break;
 
 		case INSTR_BRANCH:

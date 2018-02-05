@@ -1,4 +1,4 @@
-var l = I(day5.txt) =~ /-?\d+/gs
+var l = I(day5.txt) =~ /-?\d+/g
 var f i s = map { int } l, 0, 0
 
 for i = 0; i < length f; s++: i += f[i]++
