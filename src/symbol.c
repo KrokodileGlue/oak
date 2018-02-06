@@ -570,6 +570,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		if (!stmt->for_loop.b || !stmt->for_loop.c) {
 			inc_variable_count(si->symbol);
 			inc_variable_count(si->symbol);
+			inc_variable_count(si->symbol);
 		}
 
 		if (!stmt->for_loop.b && !stmt->for_loop.c) {

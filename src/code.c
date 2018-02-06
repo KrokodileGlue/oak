@@ -2,7 +2,7 @@
 #include "util.h"
 
 struct instruction_data instruction_data[] = {
-	{ INSTR_NOP,      REG_NONE, "NOP       " },
+	{ INSTR_NOP,      REG_NONE,  "NOP       " },
 
 	{ INSTR_MOV,      REG_AB,    "MOV       " },
 	{ INSTR_COPY,     REG_AB,    "COPY      " },
@@ -27,6 +27,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_SLICE,    REG_ABCDE, "SLICE     " },
 
 	{ INSTR_MATCH,    REG_ABC,   "MATCH     " },
+	{ INSTR_RESETR,   REG_A,     "RESETR    " },
 	{ INSTR_SUBST,    REG_ABCD,  "SUBST     " },
 	{ INSTR_GROUP,    REG_AB,    "GROUP     " },
 
@@ -102,27 +103,27 @@ print_instruction(FILE *f, struct instruction c)
 	fprintf(f, "%s ", instruction_data[c.type].name);
 	switch (instruction_data[c.type].regtype) {
 	case REG_A:
-		fprintf(f, "%4d             ", c.a);
+		fprintf(f, "%4d                        ", c.a);
 		break;
 
 	case REG_AB:
-		fprintf(f,     "%4d, %4d       ", c.b, c.c);
+		fprintf(f, "%4d, %4d                  ", c.a, c.b);
 		break;
 
 	case REG_ABC:
-		fprintf(f,     "%4d, %4d, %4d ", c.a, c.b, c.c);
+		fprintf(f, "%4d, %4d, %4d            ", c.a, c.b, c.c);
 		break;
 
 	case REG_ABCD:
-		fprintf(f,     "%4d, %4d, %4d, %4d ", c.a, c.b, c.c, c.d);
+		fprintf(f, "%4d, %4d, %4d, %4d      ", c.a, c.b, c.c, c.d);
 		break;
 
 	case REG_ABCDE:
-		fprintf(f,     "%4d, %4d, %4d, %4d, %4d ", c.a, c.b, c.c, c.d, c.e);
+		fprintf(f, "%4d, %4d, %4d, %4d, %4d ", c.a, c.b, c.c, c.d, c.e);
 		break;
 
 	case REG_NONE:
-		fprintf(f, "                 ");
+		fprintf(f, "                            ");
 		break;
 	}
 

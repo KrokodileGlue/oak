@@ -2,7 +2,7 @@ var a b c d = I(day7.txt), [], 0, 0
 a =~ s/\s+\Z//
 c = split /\n/, a
 
-for c: if /\w+ \(\d+\) -> (.*)/: for $1 =~ /\w+/g: push b
+for c: if /\w+ \(\d+\) -> (.*)/: for $1 =~ /\w+/: push b
 
 for c {
 	var e = false

@@ -612,6 +612,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		else SETREG(c.a, NIL);
 		break;
 
+	case INSTR_RESETR:
+		assert(GETREG(c.a).type == VAL_REGEX);
+		vm->gc->regex[GETREG(c.a).idx]->cont = 0;
+		break;
+
 	case INSTR_MATCH: {
 		if (GETREG(c.c).type != VAL_REGEX) {
 			error_push(vm->r, *c.loc, ERR_FATAL,
@@ -780,6 +785,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		int m = vm->match;
 		int **vec = ktre_getvec(vm->re);
 
+		/* TODO: check that it's not beyond the end of the thing */
 		if (m < 0) {
 			for (int i = 0; i < vm->re->num_matches; i++)
 				free(vec[i]);

@@ -1856,11 +1856,22 @@ compile_statement(struct compiler *c, struct statement *s)
 		           && s->for_loop.a->expr->type == EXPR_OPERATOR
 		           && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
 		           && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ) {
+			/* TODO: care if e->a or e->b actually exist */
+
+			struct expression *e = s->for_loop.a->expr;
 			int expr = c->var[c->sp]++;
-			s->for_loop.a->expr->b->val->flags = smart_cat(s->for_loop.a->expr->b->val->flags, "c");
+			int operand = c->var[c->sp]++;
+			int re = c->var[c->sp]++;
+
+			e->b->val->flags = smart_cat(e->b->val->flags, "c");
+			emit_ab(c, INSTR_MOV, operand, compile_expr(c, e->a, sym, false), &s->tok->loc);
+			set_stack_top(c);
+			emit_ab(c, INSTR_MOV, re, compile_expression(c, e->b, sym, false, false), &s->tok->loc);
+			emit_a(c, INSTR_RESETR, re, &s->tok->loc);
 
 			start = c->ip;
-			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
+			emit_abc(c, INSTR_MATCH, expr, operand, re, &e->b->tok->loc);
+
 			emit_a(c, INSTR_COND, expr, &s->tok->loc);
 			size_t a = c->ip;
 			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
