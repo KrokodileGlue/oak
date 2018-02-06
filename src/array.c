@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 
 #include "util.h"
 #include "array.h"
@@ -53,4 +54,14 @@ grow_array(struct array *a, size_t size)
 
 		a->alloc *= 2;
 	}
+}
+
+void
+array_insert(struct array *a, size_t idx, struct value r)
+{
+	grow_array(a, a->len + 1);
+	if (idx >= a->alloc) grow_array(a, idx + 1);
+	memmove(a->v + idx + 1, a->v + idx, labs(a->len - idx) * sizeof *a->v);
+	a->v[idx] = r;
+	a->len++;
 }

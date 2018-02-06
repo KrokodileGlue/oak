@@ -475,3 +475,4 @@ for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12'] {
 # TODO: make the whole api thing and build as library
 # TODO: bindings and ffi
 # TODO: json parser (in an actual module, but in C)
+# TODO: add delete builtin

@@ -317,6 +317,24 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 	} break;
 
+	case BUILTIN_INSERT: {
+		CHECKARGS(e->num != 2 && e->num != 3);
+
+		if (e->num == 3) {
+			emit_abc(c, INSTR_INS,
+			        reg = compile_lvalue(c, e->args[0], sym),
+			        compile_expression(c, e->args[1], sym, false, true),
+			        compile_expression(c, e->args[2], sym, false, true),
+			        &e->tok->loc);
+		} else {
+			emit_abc(c, INSTR_INS,
+			        reg = compile_lvalue(c, e->args[0], sym),
+			        compile_expression(c, e->args[1], sym, false, true),
+			        compile_expression(c, NULL, sym, false, true),
+			        &e->tok->loc);
+		}
+	} break;
+
 	case BUILTIN_COUNT: {
 		CHECKARGS(e->num != 1 && e->num != 2);
 

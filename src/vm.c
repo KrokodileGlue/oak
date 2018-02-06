@@ -535,6 +535,24 @@ execute_instr(struct vm *vm, struct instruction c)
 		array_push(vm->gc->array[GETREG(c.a).idx], copy_value(vm->gc, GETREG(c.b)));
 	} break;
 
+	case INSTR_INS: {
+		if (GETREG(c.a).type != VAL_ARRAY) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "insert builtin requires array as its lefthand argument (got %s)",
+			           value_data[GETREG(c.a).type].body);
+			return;
+		}
+
+		if (GETREG(c.b).type != VAL_INT) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "insert builtin requires integer as its index argument (got %s)",
+			           value_data[GETREG(c.b).type].body);
+			return;
+		}
+
+		array_insert(vm->gc->array[GETREG(c.a).idx], GETREG(c.b).integer, copy_value(vm->gc, GETREG(c.c)));
+	} break;
+
 	case INSTR_DEREF:
 		/* TODO: TABLES! */
 		if (GETREG(c.b).type != VAL_ARRAY) {

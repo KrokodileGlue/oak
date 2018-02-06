@@ -8,6 +8,7 @@ struct builtin builtin[] = {
 	{ "join",    1,  BUILTIN_JOIN    },
 	{ "range",   1,  BUILTIN_RANGE   },
 	{ "push",    1,  BUILTIN_PUSH    },
+	{ "insert",  1,  BUILTIN_INSERT  },
 
 	{ "reverse", 14, BUILTIN_REVERSE },
 	{ "sort",    14, BUILTIN_SORT    },
