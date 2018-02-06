@@ -1898,12 +1898,15 @@ compile_statement(struct compiler *c, struct statement *s)
 		           && s->for_loop.a->type == STMT_EXPR
 		           && s->for_loop.a->expr->type == EXPR_REGEX) {
 			int expr = c->var[c->sp]++;
+			int re = c->var[c->sp]++;
 			s->for_loop.a->expr->val->flags = smart_cat(s->for_loop.a->expr->val->flags, "c");
 
 			set_stack_top(c);
+			emit_ab(c, INSTR_MOV, re, compile_expression(c, s->for_loop.a->expr, sym, false, false), &s->tok->loc);
+			emit_a(c, INSTR_RESETR, re, &s->tok->loc);
 
 			start = c->ip;
-			emit_ab(c, INSTR_MOV, expr, compile_expression(c, s->for_loop.a->expr, sym, false, true), &s->tok->loc);
+			emit_abc(c, INSTR_MATCH, expr, compile_expression(c, NULL, sym, false, false), re, &s->tok->loc);
 			emit_a(c, INSTR_COND, expr, &s->tok->loc);
 			size_t a = c->ip;
 			emit_a(c, INSTR_JMP, -1, &s->tok->loc);

@@ -454,7 +454,7 @@ for 'a4 b5 c6' =~ /\w(\d)/ {
 	/oesfijosfeiefsjoi/
 }
 
-for ['a1 b2 c3'] {
+for ['a1 b2 c3', 'a4 b5 c6'] {
 	for /\w(\d)/:
 		pl '> ', $1
 }
