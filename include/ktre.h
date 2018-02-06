@@ -2603,11 +2603,11 @@ run(struct ktre *re, const char *subject, int ***vec)
 	for (int i = 0; i <= (int)strlen(subject); i++)
 		subject_lc[i] = lc(subject[i]);
 
-	if (re->opt | KTRE_CONTINUE && re->cont >= (int)strlen(subject))
+	if (re->opt & KTRE_CONTINUE && re->cont >= (int)strlen(subject))
 		return false;
 
 	/* push the initial thread */
-	if (re->opt | KTRE_CONTINUE)
+	if (re->opt & KTRE_CONTINUE)
 		new_thread(re, 0, re->cont, re->opt, 0, 0, 0);
 	else
 		new_thread(re, 0, 0, re->opt, 0, 0, 0);

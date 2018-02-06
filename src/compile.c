@@ -1915,7 +1915,7 @@ compile_statement(struct compiler *c, struct statement *s)
 			LOOP_END;
 			c->code[a].a = c->ip;
 			c->code[b].a = c->ip;
-		}else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
+		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
 			if (s->for_loop.a->type != STMT_EXPR) {
 				error_push(c->r, s->tok->loc, ERR_FATAL,
 				           "argument to `for' must be an expression");
