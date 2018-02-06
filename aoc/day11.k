@@ -1,7 +1,6 @@
-var a x y mx my = I(day11.txt), 0, 0, 0, 0
-a =~ s/\s//g
+var x y mx my = 0, 0, 0, 0
 
-for a =~ /\w+/g {
+for I(day11.txt) =~ /\w+/ {
 	mx = x when x > mx
 	my = y when y > my
 

@@ -2597,12 +2597,6 @@ run(struct ktre *re, const char *subject, int ***vec)
 		memset(re->t, 0, re->info.thread_alloc * sizeof THREAD[0]);
 	}
 
-	char *subject_lc = _malloc(strlen(subject) + 1);
-	if (!subject_lc) return false;
-
-	for (int i = 0; i <= (int)strlen(subject); i++)
-		subject_lc[i] = lc(subject[i]);
-
 	if (re->opt & KTRE_CONTINUE && re->cont >= (int)strlen(subject))
 		return false;
 
@@ -2646,7 +2640,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			if (rev) {
 				if (opt & KTRE_INSENSITIVE) {
 					for (int i = 0; i < THREAD[TP].vec[re->c[ip].c * 2 + 1]; i++) {
-						if (subject_lc[sp - i]
+						if (lc(subject[sp - i])
 						    != lc(subject[THREAD[TP].vec[re->c[ip].c * 2] + sp - i])) {
 							--TP;
 							continue;
@@ -2665,7 +2659,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 			} else {
 				if (opt & KTRE_INSENSITIVE) {
 					for (int i = 0; i < THREAD[TP].vec[re->c[ip].c * 2 + 1]; i++) {
-						if (subject_lc[sp + i] != lc(subject[THREAD[TP].vec[re->c[ip].c * 2] + i])) {
+						if (lc(subject[sp + i]) != lc(subject[THREAD[TP].vec[re->c[ip].c * 2] + i])) {
 							--TP;
 							continue;
 						}
@@ -2693,7 +2687,7 @@ run(struct ktre *re, const char *subject, int ***vec)
 
 			if (strchr(re->c[ip].class, subject[sp]))
 				THREAD[TP].sp++;
-			else if (opt & KTRE_INSENSITIVE && strchr(re->c[ip].class, subject_lc[sp]))
+			else if (opt & KTRE_INSENSITIVE && strchr(re->c[ip].class, lc(subject[sp])))
 				THREAD[TP].sp++;
 			else
 				--TP;
@@ -2704,10 +2698,14 @@ run(struct ktre *re, const char *subject, int ***vec)
 
 			if (rev) {
 				if (opt & KTRE_INSENSITIVE) {
-					if (!strncmp(subject_lc + sp + 1 - strlen(re->c[ip].class), re->c[ip].class, strlen(re->c[ip].class)))
-						THREAD[TP].sp -= strlen(re->c[ip].class);
-					else
-						--TP;
+					for (int i = 0; i < (int)strlen(re->c[ip].class); i++) {
+						if (lc(subject[sp + 1 - strlen(re->c[ip].class) + i]) != re->c[ip].class[i]) {
+							--TP;
+							break;
+						}
+					}
+
+					THREAD[TP].sp -= strlen(re->c[ip].class);
 				} else {
 					if (!strncmp(subject + sp + 1 - strlen(re->c[ip].class), re->c[ip].class, strlen(re->c[ip].class)))
 						THREAD[TP].sp -= strlen(re->c[ip].class);
@@ -2716,10 +2714,14 @@ run(struct ktre *re, const char *subject, int ***vec)
 				}
 			} else {
 				if (opt & KTRE_INSENSITIVE) {
-					if (!strncmp(subject_lc + sp, re->c[ip].class, strlen(re->c[ip].class)))
-						THREAD[TP].sp += strlen(re->c[ip].class);
-					else
-						--TP;
+					for (int i = 0; i < (int)strlen(re->c[ip].class); i++) {
+						if (lc(subject[sp + i]) != re->c[ip].class[i]) {
+							--TP;
+							break;
+						}
+					}
+
+					THREAD[TP].sp -= strlen(re->c[ip].class);
 				} else {
 					if (!strncmp(subject + sp, re->c[ip].class, strlen(re->c[ip].class)))
 						THREAD[TP].sp += strlen(re->c[ip].class);
@@ -2878,14 +2880,12 @@ run(struct ktre *re, const char *subject, int ***vec)
 
 				if (!VEC) {
 					error(re, KTRE_ERROR_OUT_OF_MEMORY, loc, "out of memory");
-					_free(subject_lc);
 					return false;
 				}
 
 				VEC[re->num_matches] = _malloc(re->num_groups * 2 * sizeof VEC[0]);
 				if (!VEC[re->num_matches]) {
 					error(re, KTRE_ERROR_OUT_OF_MEMORY, loc, "out of memory");
-					_free(subject_lc);
 					return false;
 				}
 
@@ -2896,7 +2896,6 @@ run(struct ktre *re, const char *subject, int ***vec)
 				if (vec) *vec = VEC;
 
 				if (!(opt & KTRE_GLOBAL)) {
-					_free(subject_lc);
 					return true;
 				} else {
 					TP = 0;
@@ -2904,7 +2903,6 @@ run(struct ktre *re, const char *subject, int ***vec)
 					THREAD[TP].sp = sp;
 
 					if (THREAD[TP].sp > (int)strlen(subject)) {
-						_free(subject_lc);
 						return true;
 					}
 
@@ -3045,7 +3043,6 @@ run(struct ktre *re, const char *subject, int ***vec)
 
 		default:
 			DBG("\nunimplemented instruction %d\n", re->c[ip].op);
-			_free(subject_lc);
 #ifdef KTRE_DEBUG
 			assert(false);
 #endif
@@ -3054,18 +3051,15 @@ run(struct ktre *re, const char *subject, int ***vec)
 
 		if (TP >= KTRE_MAX_THREAD - 1) {
 			error(re, KTRE_ERROR_STACK_OVERFLOW, loc, "regex exceeded the maximum number of executable threads");
-			_free(subject_lc);
 			return false;
 		}
 
 		if (fp >= KTRE_MAX_CALL_DEPTH - 1) {
 			error(re, KTRE_ERROR_CALL_OVERFLOW, loc, "regex exceeded the maximum depth for subroutine calls");
-			_free(subject_lc);
 			return false;
 		}
 	}
 
-	_free(subject_lc);
 	return !!re->num_matches;
 }
 

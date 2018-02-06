@@ -1150,7 +1150,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 	}
 
 	case EXPR_OPERATOR: {
-		if (e->operator->type != OPTYPE_BINARY && e->operator->name != OP_PERIOD) {
+		if (e->operator->type != OPTYPE_BINARY || e->operator->name != OP_PERIOD) {
 			error_push(c->r, e->tok->loc, ERR_FATAL,
 			           "invalid operation in lvalue");
 			return -1;
@@ -1902,11 +1902,17 @@ compile_statement(struct compiler *c, struct statement *s)
 			s->for_loop.a->expr->val->flags = smart_cat(s->for_loop.a->expr->val->flags, "c");
 
 			set_stack_top(c);
-			emit_ab(c, INSTR_MOV, re, compile_expression(c, s->for_loop.a->expr, sym, false, false), &s->tok->loc);
+			emit_ab(c, INSTR_MOV, re,
+			        compile_expression(c, s->for_loop.a->expr, sym, false, false),
+			        &s->tok->loc);
+
 			emit_a(c, INSTR_RESETR, re, &s->tok->loc);
 
 			start = c->ip;
-			emit_abc(c, INSTR_MATCH, expr, compile_expression(c, NULL, sym, false, false), re, &s->tok->loc);
+			emit_abc(c, INSTR_MATCH, expr,
+			         compile_expression(c, NULL, sym, false, false),
+			         re, &s->tok->loc);
+
 			emit_a(c, INSTR_COND, expr, &s->tok->loc);
 			size_t a = c->ip;
 			emit_a(c, INSTR_JMP, -1, &s->tok->loc);

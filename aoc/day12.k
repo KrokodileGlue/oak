@@ -1,19 +1,15 @@
-var a b c = I(day12.txt), [], []
-a =~ s/\s+\Z//s
+var a b = [], []
 
-for split /\n/, a {
-	/(\d+) <-> (.*)/
+for split /\n/, I(day12.txt) {
+	next when !/(\d+) <-> (.*)/
 	var i = int $1
-	b[i] = []
-	for $2 =~ /\d+/g:
-		push b[i], int
+	for $2 =~ /\d+/: push a[i], int
 }
 
 fn f (x) {
-	for c: return 0 when x == _
-	push c, x
-	return sum [f(b[x][]) for range(0, length(b[x]) - 1)] + 1
+	for b: return 0 when x == _
+	push b, x
+	return sum [f(a[x][]) for 0 -> a[x]] + 1
 }
 
-pl f(0)
-pl sum [1 iff f(_) != 0 for range(0, length b - 1)] + 1
+pl f(0), '\n', sum [1 iff f(_) != 0 for 0 -> a] + 1
