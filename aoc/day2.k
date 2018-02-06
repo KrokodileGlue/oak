@@ -1,24 +1,11 @@
-var l s t = I(day2.txt), 0, 0
+var l a b = I(day2.txt), 0, 0
 
 for split /\n/, l {
 	next when !length
-	var a b = -1, 0
-	for split /\s+/ {
-		a = int when a < 0
-		b = int > b ? int : b
-		a = int < a ? int : a
-	}
-	s += b - a
-	a = 0, b = 0
-	for var i; split /\s+/ {
-		for var j; split /\s+/ {
-			if int i %% int j and i != j:
-				a = int(i), b = int(j)
-			last when a
-		}
-		last when a
-	}
- 	t += a / b
+	var c x y = map { int } _ =~ /\S+/g, 0, 0
+	for var i; c: for var j; c: if i %% j and i != j: x = i, y = j
+	a += max c - min c
+ 	b += x / y
 }
 
-pl s, '\n', t
+pl a, '\n', b

@@ -1073,7 +1073,22 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_MIN:
-		assert(false);
+		if (vm->sp == 1) {
+			SETREG(c.a, min_value(vm->gc, vm->stack[vm->sp--]));
+			return;
+		} else {
+			struct value v;
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->array[v.idx] = new_array();
+
+			while (vm->sp)
+				array_push(vm->gc->array[v.idx], vm->stack[vm->sp--]);
+
+			SETREG(c.a, min_value(vm->gc, v));
+			return;
+		}
+
 		break;
 
 	case INSTR_MAX:

@@ -700,6 +700,38 @@ max_value(struct gc *gc, struct value l)
 }
 
 struct value
+min_value(struct gc *gc, struct value l)
+{
+	struct value v;
+
+	if (l.type == VAL_TABLE) {
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->array[v.idx] = new_array();
+
+		for (int i = 0; i < TABLE_SIZE; i++) {
+			struct bucket b = gc->table[l.idx]->bucket[i];
+			for (size_t j = 0; j < b.len; j++) {
+				array_push(gc->array[v.idx], b.val[j]);
+			}
+		}
+	} else {
+		if (l.type != VAL_ARRAY)
+			return ERR("max expects an array or table");
+		v = l;
+	}
+
+	if (gc->array[v.idx]->len == 0) return NIL;
+	struct value m = gc->array[v.idx]->v[0];
+
+	for (unsigned i = 0; i < gc->array[v.idx]->len; i++)
+		if (is_truthy(gc, less_values(gc, gc->array[v.idx]->v[i], m)))
+			m = gc->array[v.idx]->v[i];
+
+	return m;
+}
+
+struct value
 rev_value(struct gc *gc, struct value l)
 {
 	struct value ans = (struct value){ VAL_ERR, { 0 }, 0 };

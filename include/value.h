@@ -88,6 +88,7 @@ struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
 struct value sort_value(struct gc *gc, struct value l);
 struct value max_value(struct gc *gc, struct value l);
+struct value min_value(struct gc *gc, struct value l);
 struct value uc_value(struct gc *gc, struct value l);
 struct value lc_value(struct gc *gc, struct value l);
 struct value ucfirst_value(struct gc *gc, struct value l);

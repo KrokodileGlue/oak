@@ -347,19 +347,22 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		break;
 
 	case EXPR_MAP: {
-		push_block(si, e->s);
+		resolve_expr(si, e->b);
+
+		push_scope(si, ++si->k->scope);
+		push_block_expr(si, e);
 
 		struct symbol *s = new_symbol(e->tok, si->symbol);
 		s->type = SYM_VAR;
 		s->name = "_";
 		s->id = hash(s->name, strlen(s->name));
 		s->scope = -1;
-
 		add(si, s);
-		resolve_expr(si, e->a);
-		pop(si);
 
-		resolve_expr(si, e->b);
+		resolve_expr(si, e->a);
+
+		pop_scope(si);
+		pop(si);
 	} break;
 
 	case EXPR_EVAL:
