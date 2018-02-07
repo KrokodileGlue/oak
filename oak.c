@@ -68,7 +68,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	if (k->print_everything) k->print_vm = true;
 	k->talkative = !k->talkative;
 
-	if (!path) {
+	if (!path && !k->eval) {
 		fprintf(stderr, "did not receive an input file\n");
 		exit(EXIT_FAILURE);
 	}
@@ -198,11 +198,20 @@ main(int argc, char **argv)
 	struct oak *k = new_oak();
 
 	char *path = process_arguments(k, argc, argv);
-	struct module *m = load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
+	struct module *m = NULL;
+	if (path) m = load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
 
-	if (k->eval) {
+	if (k->eval && m) {
 		push_frame(m->vm);
 		load_module(k, m->sym, k->eval, "*e.k*", strclone("*eval*"), m->vm, 0);
+		print_value(m->vm->f, m->gc, k->stack[k->sp - 1]);
+		fputc('\n', m->vm->f);
+	}
+
+	if (k->eval && !m) {
+		struct module *e = load_module(k, NULL, k->eval, "*e.k*", "*eval*", NULL, -1);
+		print_value(e->vm->f, e->gc, k->stack[k->sp - 1]);
+		fputc('\n', e->vm->f);
 	}
 
 	print_modules(k);
