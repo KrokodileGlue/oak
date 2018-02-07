@@ -15,4 +15,4 @@ for split /\n/, I(day4.txt) {
 	t++ when win2
 }
 
-pl s, '\n', t
+pl '$s\n$t'

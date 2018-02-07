@@ -16,4 +16,4 @@ for var i = 0; i < length a; i++ {
 	}
 }
 
-pl d, '\n', e
+pl '$d\n$e'

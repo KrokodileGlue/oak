@@ -216,8 +216,8 @@ find_undef(struct vm *vm)
 	return i;
 }
 
-static void
-eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_base)
+static struct value
+eval(struct vm *vm, char *s, int scope, struct location loc, int stack_base)
 {
 	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
 	struct module *m = load_module(vm->k,
@@ -230,11 +230,12 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	if (vm->debug) DOUT("finished evaluation");
 	if (!m) {
 		error_push(vm->r, loc, ERR_FATAL, "eval failed");
-		return;
+		return NIL;
 	}
 
+	struct value v;
 	vm->module[vm->fp] = vm->m->id;
-	SETREG(reg, value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]));
+	v = value_translate(vm->gc, m->gc, vm->k->stack[--vm->k->sp]);
 
 	if (vm->returning)
 		vm->ip = vm->callstack[vm->csp--];
@@ -242,7 +243,65 @@ eval(struct vm *vm, int reg, char *s, int scope, struct location loc, int stack_
 	vm->returning = false;
 
 	for (int i = stack_base; i < NUM_REG; i++)
-		if (i != reg) SETR(i, type, VAL_UNDEF);
+		SETR(i, type, VAL_UNDEF);
+
+	return v;
+}
+
+static char *parse_interpolation(struct vm *vm, char *input, int *len)
+{
+	char *e = strclone("");
+
+	struct location loc = *vm->code[vm->ip].loc;
+	loc.len = 1;
+	loc.index += *len + 1;
+
+	if (*input == '$' && isdigit(input[1])) {
+		int i = 1;
+
+		while (input[i] && isdigit(input[i])) i++;
+
+		e = oak_realloc(e, i + 1);
+		strncpy(e, input, i);
+		e[i] = 0;
+		(*len) += i - 1;
+		return e;
+	} else if (*input == '$') {
+		input++;
+
+		int i = 0;
+		while (input[i] && isalnum(input[i])) i++;
+		i++;
+
+		e = oak_realloc(e, i + 1);
+		strncpy(e, input, i);
+		e[i] = 0;
+		(*len) += i - 1;
+		return e;
+	}
+
+	if (*input == '{') input++;
+
+	int i;
+	for (i = 0; i < (int)strlen(input); i++) {
+		(*len)++;
+
+		if (input[i] == '}' && input[i + 1] == '}') {
+			(*len)++;
+			i++;
+			e = smart_cat(e, "}");
+		} else if (input[i] == '}') {
+			break;
+		} else {
+			e = oak_realloc(e, strlen(e) + 2);
+			append_char(e, input[i]);
+		}
+	}
+
+	if (!input[i] || !i)
+		error_push(vm->r, loc, ERR_FATAL, "invalid interpolation; no matching '}'");
+
+	return e;
 }
 
 static inline void
@@ -733,8 +792,8 @@ execute_instr(struct vm *vm, struct instruction c)
 					vm->re = re;
 					vm->subject = strclone(subject);
 
-					eval(vm, c.c, s, c.d,
-					     *c.loc, find_undef(vm));
+					SETREG(c.c, eval(vm, s, c.d,
+					                 *c.loc, find_undef(vm)));
 
 					if (vm->r->pending) {
 						free(vm->subject);
@@ -1023,6 +1082,62 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.a, abs_value(GETREG(c.b)));
 	} break;
 
+	case INSTR_INTERP: {
+		assert(GETREG(c.b).type == VAL_STR);
+
+		if (!strchr(vm->gc->str[GETREG(c.b).idx], '{')
+		    && !strchr(vm->gc->str[GETREG(c.b).idx], '$')) {
+			SETREG(c.a, GETREG(c.b));
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = NULL;
+
+		char *s = oak_malloc(strlen(vm->gc->str[GETREG(c.b).idx]) + 1);
+		*s = 0;
+
+		char *a = vm->gc->str[GETREG(c.b).idx];
+
+		for (int i = 0; i < (int)strlen(a); i++) {
+			if (a[i] == '\\') {
+				i++;
+				s = oak_realloc(s, strlen(s) + 3);
+				strncat(s, a, 2);
+				continue;
+			}
+
+			if (a[i] == '{' && a[i + 1] == '{') {
+				i++;
+				s = smart_cat(s, "{");
+			} else if (a[i] == '{' || (a[i] == '$' && isalnum(a[i + 1]))) {
+				char *e = parse_interpolation(vm, a + i, &i);
+
+				if (vm->r->pending) {
+					free(s);
+					free(e);
+					return;
+				}
+
+				char *sv = show_value(vm->gc, eval(vm, e, c.c, *c.loc, find_undef(vm)));
+				s = smart_cat(s, sv);
+				free(e);
+				free(sv);
+			} else if (a[i] == '}' && a[i + 1] == '}') {
+				i++;
+				s = smart_cat(s, "}");
+			} else {
+				s = oak_realloc(s, strlen(s) + 2);
+				append_char(s, a[i]);
+			}
+		}
+
+		vm->gc->str[v.idx] = s;
+		SETREG(c.a, v);
+	} break;
+
 	case INSTR_EVAL:
 		if (GETREG(c.b).type != VAL_STR) {
 			error_push(vm->r, *c.loc, ERR_FATAL,
@@ -1031,8 +1146,8 @@ execute_instr(struct vm *vm, struct instruction c)
 			return;
 		}
 
-		eval(vm, c.a, vm->gc->str[GETREG(c.b).idx],
-		     GETREG(c.c).integer, *c.loc, find_undef(vm));
+		SETREG(c.a, eval(vm, vm->gc->str[GETREG(c.b).idx],
+		                 GETREG(c.c).integer, *c.loc, find_undef(vm)));
 		break;
 
 	case INSTR_VALUES:

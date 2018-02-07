@@ -5,4 +5,4 @@ for var i = 0; i < length a; i++:
 n: c++
 for var i = 0; i < length a; i++:
 	goto n when a[i] != nil and (c + i) % ((a[i] - 1) * 2) == 0
-pl b, '\n', c
+pl '$b\n$c'

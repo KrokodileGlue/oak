@@ -6,4 +6,4 @@ for split /\n+/, l {
 	a += max c - min c
 }
 
-pl a, '\n', b
+pl '$a\n$b'

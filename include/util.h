@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "location.h"
 

@@ -96,6 +96,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_LINE,     REG_NONE,  "LINE      " },
 
 	{ INSTR_EVAL,     REG_ABC,   "EVAL      " },
+	{ INSTR_INTERP,   REG_ABC,   "INTERP    " },
 	{ INSTR_KILL,     REG_A,     "KILL      " },
 	{ INSTR_EEND,     REG_A,     "EEND      " },
 	{ INSTR_END,      REG_A,     "END       " }

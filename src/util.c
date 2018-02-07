@@ -78,7 +78,7 @@ smart_cat(char *lhs, char *rhs)
 {
 	size_t len = strlen(lhs) + strlen(rhs);
 
-	lhs = realloc(lhs, len + 1);
+	lhs = realloc(lhs, len + 2);
 	strcpy(lhs + strlen(lhs), rhs);
 
 	lhs[len] = 0;

@@ -455,10 +455,8 @@ for 'a4 b5 c6' =~ /\w(\d)/ {
 	/oesfijosfeiefsjoi/
 }
 
-for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12'] {
-	for /\w(\d+)/:
-		pl '> ', $1
-}
+for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12']:
+	for /\w(\d+)/: pl '> $1 and {2 * 5}'
 
 var thing = [1, 2, 3, 4]
 pl ++thing[0]
@@ -478,21 +476,18 @@ import 'foo.k' as foo
 pl foo::foo(4, 25)
 pl foo::bar(4, 25)
 
-# TODO: highlight import and as
+pl '{{}}}}{{{array}'
+
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
-# TODO: fix ktre warnings
-# TODO: string interpolation
 # TODO: regex matches shouldn't survive function calls
 # TODO: sort should care about arrays with mixed types
 # TODO: lvalue array slices
 # TODO: enums/tags
 # TODO: look at how while loops handle regex
-# TODO: actual modules and namespaces
 # TODO: fix eval and that stack trace bug
 # TODO: make the whole api thing and build as library
 # TODO: bindings and ffi
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
 # TODO: allow _ in numbers and remove all use of strtol
-# TODO: add chr() and ord() oak-mode highlighting

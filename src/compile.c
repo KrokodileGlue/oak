@@ -1323,9 +1323,18 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 			}
 			break;
 
+		case TOK_STRING: {
+			if (e->val->is_interpolatable) {
+				int temp = alloc_reg(c);
+				emit_ab(c, INSTR_COPYC, temp, add_constant(c, e->val), &e->tok->loc);
+				emit_abc(c, INSTR_INTERP, reg = alloc_reg(c), temp, sym->scope, &e->tok->loc);
+			} else {
+				emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), add_constant(c, e->val), &e->tok->loc);
+			}
+		} break;
+
 		default:
-			reg = alloc_reg(c);
-			emit_ab(c, INSTR_COPYC, reg, add_constant(c, e->val), &e->tok->loc);
+			emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), add_constant(c, e->val), &e->tok->loc);
 			break;
 		}
 		break;

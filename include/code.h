@@ -104,6 +104,7 @@ enum instruction_type {
 	INSTR_LINE,
 
 	INSTR_EVAL,
+	INSTR_INTERP,
 	INSTR_KILL,
 	INSTR_EEND,
 	INSTR_END

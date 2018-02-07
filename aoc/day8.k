@@ -8,4 +8,4 @@ for split /\n/, l {
 	m = r[$1] > m ? r[$1] : m
 }
 
-pl max(r), '\n', m
+pl '{max(r)}\n$m'

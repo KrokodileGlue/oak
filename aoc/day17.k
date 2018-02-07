@@ -5,4 +5,4 @@ d = e[b + 1], b = 0
 for var i = 1; i <= 50000000; i++:
 	if (b = ((b + a) % i) + 1) == 1: c = i
 
-pl d, '\n', c
+pl '$d\n$c'

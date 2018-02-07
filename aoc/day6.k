@@ -5,4 +5,5 @@ while true {
 	for 0 -> d: a[(c + 1 +) % length a]++
 	for 0 -> b: if a == b[]: f = e -
 }
-pl e - 1, '\n', f
+
+pl '{e - 1}\n$f'
