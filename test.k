@@ -409,7 +409,7 @@ pl match string {
 		'thing: ' + $1
 	},
 
-	true => +{
+	// => +{
 		foo = 'this is a table!',
 		bar = 'tables can be returned from matches.'
 	},

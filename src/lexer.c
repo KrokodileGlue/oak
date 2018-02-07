@@ -528,11 +528,13 @@ parse_group(struct lexer *ls, char *a)
 static bool
 is_regex_start(struct lexer *ls, char *a)
 {
+	/* TODO: comma should be allowed. */
 	static char *forbid = ",{}[]\'\"!:-+()><;*%=?";
 
 	if (!*a)       return false;
 	if (!ls->tok)  return false;
 	if (!strcmp(ls->tok->value, ")")) return false;
+	if (!strcmp(ls->tok->value, "}")) return false;
 	if (ls->tok->type == TOK_INTEGER) return false;
 	if (ls->tok->type == TOK_FLOAT)   return false;
 	if (ls->tok->type == TOK_BOOL)    return false;
@@ -605,7 +607,7 @@ tokenize(struct module *m)
 			continue;
 		}
 
-		if ((!strncmp(a, "//", 2) || !strncmp(a, "#", 1)) && (ls->tok ? strcmp(ls->tok->value, "split") : true)) {
+		if (!strncmp(a, "#", 1)) {
 			while (*a != '\n' && *a) a++;
 
 			continue;
