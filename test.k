@@ -474,6 +474,10 @@ pl join ', ', ord('Hello, world!')
 pl join ', ', ord(['Hello,', ' world!'])
 pl join ', ', ord('H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!')
 
+import 'foo.k' as foo
+pl foo::foo(4, 25)
+
+# TODO: highlight import and as
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings
@@ -490,3 +494,4 @@ pl join ', ', ord('H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
 # TODO: allow _ in numbers and remove all use of strtol
+# TODO: add chr() and ord() oak-mode highlighting

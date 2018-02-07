@@ -590,6 +590,15 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			o(XOR, XOR);
 			o(BOR, BOR);
 
+		case OP_CC:
+			emit_ab(c, INSTR_MOV,
+			        reg = alloc_reg(c),
+			        compile_expression(c, e->b,
+			                           resolve(sym, e->a->val->value)->children[0],
+			                           false, true),
+			        &e->tok->loc);
+			break;
+
 		case OP_EQ:
 			if (e->a->type == EXPR_SUBSCRIPT) {
 				reg = compile_lvalue(c, e->a->a, sym);
@@ -1272,6 +1281,7 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 static int
 compile_expression(struct compiler *c, struct expression *e, struct symbol *sym, bool copy, bool shouldmatch)
 {
+	assert(sym);
 	int reg = -1;
 
 	if (!e) {
@@ -2143,6 +2153,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		}
 	} break;
 
+	case STMT_IMPORT:
 	case STMT_NULL:
 		break;
 

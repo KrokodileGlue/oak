@@ -2,6 +2,7 @@
 
 struct operator ops[] = {
 	{ "(",   ")", 15, ASS_LEFT,  OPTYPE_FN_CALL , OP_LBRACK      },
+	{ "::",  "",  15, ASS_LEFT,  OPTYPE_BINARY  , OP_CC          },
 	{ ".",   "",  15, ASS_LEFT,  OPTYPE_BINARY  , OP_PERIOD      },
 	{ "[",   "]", 15, ASS_LEFT,  OPTYPE_SUBCRIPT, OP_LBRACK      },
 

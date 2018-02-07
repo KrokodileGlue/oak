@@ -122,23 +122,12 @@ call(struct vm *vm, struct value v)
 	if (v.module != vm->m->id) {
 		struct module *m = vm->k->modules[v.module];
 
-		struct instruction *c = vm->code;
-		struct module *m2 = vm->m;
-		int ip = vm->ip;
-		struct constant_table *ct = vm->ct;
-
-		vm->ct = m->ct;
-		vm->code = m->code;
-		vm->m = m;
-		m->vm = vm;
+		while (vm->sp)
+			push(m->vm, value_translate(m->gc, vm->gc, vm->stack[vm->sp--]));
 
 		push_frame(m->vm);
 		execute(m->vm, v.integer);
-
-		vm->code = c;
-		vm->m = m2;
-		vm->ip = ip;
-		vm->ct = ct;
+		push(vm, value_translate(vm->gc, m->gc, m->vm->stack[m->vm->sp--]));
 		return;
 	}
 

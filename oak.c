@@ -181,6 +181,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 		m->vm = new_vm(m, k, k->print_vm);
 		push_frame(m->vm);
 		if (!k->debug) execute(m->vm, 0);
+		m->vm->fp = 0;
 	}
 
 	return m;

@@ -332,7 +332,7 @@ parse_raw_string_literal(struct lexer *ls, char *a)
 
 /* match the longest operator starting from `a` */
 static struct operator *
-match_operator(char *a)
+match_operator(struct lexer *ls, char *a)
 {
 	size_t len = 0;
 	struct operator *op = NULL;
@@ -340,7 +340,12 @@ match_operator(char *a)
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strncmp(ops[i].body, a, strlen(ops[i].body))
 		    && strlen(ops[i].body) > len
-		    && !is_legal_in_identifier(a[strlen(ops[i].body)])) {
+		    && (is_legal_in_identifier(ops[i].body[strlen(ops[i].body) - 1])
+		        ? !is_legal_in_identifier(a[strlen(ops[i].body)])
+		        : true)) {
+			if (ops[i].name == OP_CC && ls->tok->type != TOK_IDENTIFIER)
+				continue;
+
 			len = strlen(ops[i].body);
 			op = ops + i;
 		}
@@ -352,7 +357,7 @@ match_operator(char *a)
 static char *
 parse_operator(struct lexer *ls, char *a)
 {
-	struct operator *op = match_operator(a);
+	struct operator *op = match_operator(ls, a);
 	size_t len = strlen(op->body);
 	char *b = a + len;
 
@@ -370,7 +375,9 @@ parse_secondary_operator(char *a)
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strncmp(ops[i].body2, a, strlen(ops[i].body2))
 		    && strlen(ops[i].body2) > len
-		    && !is_legal_in_identifier(a[strlen(ops[i].body)])) {
+		    && (is_legal_in_identifier(ops[i].body[strlen(ops[i].body) - 1])
+		        ? !is_legal_in_identifier(a[strlen(ops[i].body)])
+		        : true)) {
 			len = strlen(ops[i].body2);
 		}
 	}
@@ -623,7 +630,7 @@ tokenize(struct module *m)
 			a = parse_raw_string_literal(ls, a);
 		} else if (!strncmp(a, "I(", 2)) {
 			a = parse_include(ls, a);
-		} else if (match_operator(a)) {
+		} else if (match_operator(ls, a)) {
 			a = parse_operator(ls, a);
 		} else if (is_identifier_start(*a)) {
 			a = parse_identifier(ls, a);

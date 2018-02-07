@@ -34,6 +34,7 @@ struct symbol {
 		SYM_BLOCK,
 		SYM_ARGUMENT,
 		SYM_MODULE,
+		SYM_IMPORTED,
 		SYM_LABEL,
 		SYM_INVALID
 	} type;

@@ -29,9 +29,9 @@ new_symbolizer(struct oak *k)
 void
 free_symbol(struct symbol *sym)
 {
-	for (size_t i = 0; i < sym->num_children; i++) {
+	if (sym->type != SYM_IMPORTED)
+		for (size_t i = 0; i < sym->num_children; i++)
 			free_symbol(sym->children[i]);
-	}
 
 	free(sym->label);
 	free(sym->children);
@@ -53,6 +53,7 @@ static char *sym_str[] = {
 	"block",
 	"argument",
 	"module",
+	"imported",
 	"invalid"
 };
 
@@ -164,6 +165,34 @@ resolve(struct symbol *sym, char *name)
 	uint64_t h = hash(name, strlen(name));
 
 	while (sym) {
+		for (size_t i = 0; i < sym->num_children; i++) {
+			if (sym->children[i]->id == h
+			    && !strcmp(sym->children[i]->name, name)) {
+				return sym->children[i];
+			}
+		}
+
+		if (sym->id == h && !strcmp(sym->name, name))
+			return sym;
+
+		if (sym->type == SYM_FN) {
+			while (sym->type != SYM_MODULE) sym = sym->parent;
+			continue;
+		}
+
+		sym = sym->parent;
+	}
+
+	return NULL;
+}
+
+struct symbol *
+local_resolve(struct symbol *sym, char *name)
+{
+	if (!name || !*name) return NULL;
+	uint64_t h = hash(name, strlen(name));
+
+	while (sym && sym->type != SYM_MODULE) {
 		if (sym->id == h && !strcmp(sym->name, name))
 			return sym;
 
@@ -422,7 +451,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	case STMT_FN_DEF: {
 		si->fp++;
 
-		struct symbol *redefinition = resolve(si->symbol, stmt->fn_def.name);
+		struct symbol *redefinition = local_resolve(si->symbol, stmt->fn_def.name);
 		if (redefinition) {
 			error_push(si->r, stmt->tok->loc, ERR_FATAL, "redeclaration of identifier `%s' as function",
 			           stmt->fn_def.name);
@@ -523,9 +552,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		return;
 
 	case STMT_PRINT: case STMT_PRINTLN:
-		for (size_t i = 0; i < stmt->print.num; i++) {
+		for (size_t i = 0; i < stmt->print.num; i++)
 			resolve_expr(si, stmt->print.args[i]);
-		}
 
 		free(sym);
 		return;
@@ -545,9 +573,13 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			return;
 		}
 
+		sym->name = stmt->import.as->value;
+		sym->type = SYM_IMPORTED;
+		sym->parent = si->symbol;
+
+		push(si, sym);
 		add(si, m->sym);
-		free(sym);
-		return;
+		pop(si);
 	} break;
 
 	case STMT_WHILE: {
@@ -725,7 +757,10 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 		INDENT; fprintf(f, "  num_arguments=%zu", s->num_arguments);
 	}
 
-	INDENT; fprintf(f, "  address=%zu", s->address);
+	if (s->address != (size_t)-1) {
+		INDENT; fprintf(f, "  address=%zu", s->address);
+	}
+
 	INDENT; fprintf(f, "  scope=%d", s->scope);
 	INDENT; fprintf(f, "  global=%s", s->global ? "true" : "false");
 	INDENT; fprintf(f, "  module=%s", s->module->name);

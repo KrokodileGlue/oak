@@ -64,6 +64,7 @@ struct operator {
 		OP_BAND,
 		OP_XOR,
 		OP_BOR,
+		OP_CC,
 		OP_SQUIGGLEEQ
 	} name;
 };
