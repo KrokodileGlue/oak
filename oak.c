@@ -47,6 +47,11 @@ process_arguments(struct oak *k, int argc, char **argv)
 		if (!strcmp(argv[i], "-d"))  k->debug = true;
 		if (!strcmp(argv[i], "-p"))  k->print_everything = true;
 		if (!strcmp(argv[i], "-e")) {
+			if (k->eval) {
+				fprintf(stderr, "oak: invalid options; received multiple -e\n");
+				exit(EXIT_FAILURE);
+			}
+
 			i++;
 			k->eval = strclone(argv[i]);
 			continue;
@@ -54,7 +59,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 
 		if (argv[i][0] != '-')  {
 			if (path) {
-				fprintf(stderr, "received multiple input files; '%s' and '%s'\n", path, argv[i]);
+				fprintf(stderr, "oak: invalid options; received multiple input files; '%s' and '%s'\n", path, argv[i]);
 				exit(EXIT_FAILURE);
 			} else {
 				path = argv[i];
@@ -69,7 +74,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	k->talkative = !k->talkative;
 
 	if (!path && !k->eval) {
-		fprintf(stderr, "did not receive an input file\n");
+		fprintf(stderr, "oak: invalid options; did not receive an input file\n");
 		exit(EXIT_FAILURE);
 	}
 

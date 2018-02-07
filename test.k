@@ -495,3 +495,5 @@ pl '{{}}}}{{{array}'
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
 # TODO: allow _ in numbers and remove all use of strtol
+# TODO: implement global variables properly
+# TODO: free eval'd modules quickly
