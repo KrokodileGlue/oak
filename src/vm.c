@@ -122,12 +122,14 @@ call(struct vm *vm, struct value v)
 	if (v.module != vm->m->id) {
 		struct module *m = vm->k->modules[v.module];
 
-		while (vm->sp)
-			push(m->vm, value_translate(m->gc, vm->gc, vm->stack[vm->sp--]));
+		for (size_t i = 1; i <= vm->sp; i++)
+			push(m->vm, value_translate(m->gc, vm->gc, vm->stack[i]));
+		vm->sp = 0;
 
 		push_frame(m->vm);
 		execute(m->vm, v.integer);
-		push(vm, value_translate(vm->gc, m->gc, m->vm->stack[m->vm->sp--]));
+		if (m->vm->sp) push(vm, value_translate(vm->gc, m->gc, m->vm->stack[m->vm->sp--]));
+		else push(vm, NIL);
 		return;
 	}
 
@@ -271,12 +273,11 @@ static char *parse_interpolation(struct vm *vm, char *input, int *len)
 
 		int i = 0;
 		while (input[i] && isalnum(input[i])) i++;
-		i++;
 
 		e = oak_realloc(e, i + 1);
 		strncpy(e, input, i);
 		e[i] = 0;
-		(*len) += i - 1;
+		(*len) += i;
 		return e;
 	}
 
@@ -1102,7 +1103,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		char *a = vm->gc->str[GETREG(c.b).idx];
 
 		for (int i = 0; i < (int)strlen(a); i++) {
-			if (a[i] == '\\') {
+			if (a[i] == '\\' && a[i + 1] == '$') {
+				i++;
+				s = oak_realloc(s, strlen(s) + 2);
+				strncat(s, a + 1, 1);
+				continue;
+			} else if (a[i] == '\\') {
 				i++;
 				s = oak_realloc(s, strlen(s) + 3);
 				strncat(s, a, 2);

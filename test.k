@@ -473,10 +473,14 @@ pl join ', ', ord(['Hello,', ' world!'])
 pl join ', ', ord('H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!')
 
 import 'foo.k' as foo
+import 'mandel.k'
+
 pl foo::foo(4, 25)
 pl foo::bar(4, 25)
 
 pl '{{}}}}{{{array}'
+
+# mandel::mandel(1024, 780, 150)
 
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector

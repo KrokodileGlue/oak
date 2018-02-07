@@ -209,9 +209,8 @@ free_ast(struct statement **module)
 {
 	struct statement *s = NULL;
 
-	for (size_t i = 0; (s = module[i]); i++) {
+	for (size_t i = 0; (s = module[i]); i++)
 		free_stmt(s);
-	}
 
 	free(module);
 }

@@ -1,4 +1,4 @@
-fn iter (depth a b) {
+fn iter (depth, a, b) {
 	var res
 
 	var oa = a
@@ -18,10 +18,8 @@ fn iter (depth a b) {
 	return res
 }
 
-fn mandel (width height offset) {
-	pl 'P3'
-	pl width, ' ', height
-	pl 80
+fn mandel (width, height, offset) {
+	pl 'P3\n$width $height\n80'
 
 	for var y = 0; y < height; y++ {
 		for var x = -offset; x < width - offset; x++ {
@@ -31,4 +29,4 @@ fn mandel (width height offset) {
 	}
 }
 
-mandel(1024, 780, 150)
+# mandel(1024, 780, 150)

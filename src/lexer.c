@@ -67,7 +67,7 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 		char a = str[i];
 
-		if (a == '\\') {
+		if (a == '\\' && str[i + 1] != '$') {
 			i++;
 			a = str[i];
 			switch (a) {
@@ -104,6 +104,7 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 				a = (char)data;
 			} break;
+
 			case 'x': {
 				int data = 0;
 				size_t j = 0;
@@ -124,6 +125,7 @@ parse_escape_sequences(struct lexer *ls, char *str)
 
 				a = (char)data;
 			} break;
+
 			default: {
 				ls->loc.index += i;
 				ls->loc.len = 2;
