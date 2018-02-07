@@ -32,6 +32,8 @@ struct oak {
 
 	struct value *stack;
 	size_t sp;
+
+	char *eval;
 };
 
 struct oak *new_oak();

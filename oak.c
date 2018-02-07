@@ -36,20 +36,25 @@ process_arguments(struct oak *k, int argc, char **argv)
 	char *path = NULL;
 
 	for (int i = 1; i < argc; i++) {
-		if (!k->talkative)          k->talkative          = !strcmp(argv[i], "-np");
-		if (!k->print_input)        k->print_input        = !strcmp(argv[i], "-pi");
-		if (!k->print_tokens)       k->print_tokens       = !strcmp(argv[i], "-pt");
-		if (!k->print_ast)          k->print_ast          = !strcmp(argv[i], "-pa");
-		if (!k->print_symbol_table) k->print_symbol_table = !strcmp(argv[i], "-ps");
-		if (!k->print_code)         k->print_code         = !strcmp(argv[i], "-pc");
-		if (!k->print_gc)           k->print_gc           = !strcmp(argv[i], "-pg");
-		if (!k->print_vm)           k->print_vm           = !strcmp(argv[i], "-pv");
-		if (!k->debug)              k->debug              = !strcmp(argv[i], "-d");
-		if (!k->print_everything)   k->print_everything   = !strcmp(argv[i], "-p");
+		if (!strcmp(argv[i], "-np")) k->talkative = true;
+		if (!strcmp(argv[i], "-pi")) k->print_input = true;
+		if (!strcmp(argv[i], "-pt")) k->print_tokens = true;
+		if (!strcmp(argv[i], "-pa")) k->print_ast = true;
+		if (!strcmp(argv[i], "-ps")) k->print_symbol_table = true;
+		if (!strcmp(argv[i], "-pc")) k->print_code = true;
+		if (!strcmp(argv[i], "-pg")) k->print_gc = true;
+		if (!strcmp(argv[i], "-pv")) k->print_vm = true;
+		if (!strcmp(argv[i], "-d"))  k->debug = true;
+		if (!strcmp(argv[i], "-p"))  k->print_everything = true;
+		if (!strcmp(argv[i], "-e")) {
+			i++;
+			k->eval = strclone(argv[i]);
+			continue;
+		}
 
 		if (argv[i][0] != '-')  {
 			if (path) {
-				fprintf(stderr, "received multiple input files; '%s' and '%s'", path, argv[i]);
+				fprintf(stderr, "received multiple input files; '%s' and '%s'\n", path, argv[i]);
 				exit(EXIT_FAILURE);
 			} else {
 				path = argv[i];
@@ -64,7 +69,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	k->talkative = !k->talkative;
 
 	if (!path) {
-		fprintf(stderr, "did not receive an input file");
+		fprintf(stderr, "did not receive an input file\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -193,7 +198,13 @@ main(int argc, char **argv)
 	struct oak *k = new_oak();
 
 	char *path = process_arguments(k, argc, argv);
-	load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
+	struct module *m = load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
+
+	if (k->eval) {
+		push_frame(m->vm);
+		load_module(k, m->sym, k->eval, "*e.k*", strclone("*eval*"), m->vm, 0);
+	}
+
 	print_modules(k);
 	free_oak(k);
 

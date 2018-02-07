@@ -122,9 +122,35 @@ call(struct vm *vm, struct value v)
 	if (v.module != vm->m->id) {
 		struct module *m = vm->k->modules[v.module];
 
-		for (size_t i = 1; i <= vm->sp; i++)
-			push(m->vm, value_translate(m->gc, vm->gc, vm->stack[i]));
-		vm->sp = 0;
+		if (m->vm != vm) {
+			for (size_t i = 1; i <= vm->sp; i++)
+				push(m->vm, value_translate(m->gc, vm->gc, vm->stack[i]));
+			vm->sp = 0;
+		}
+
+		if (m->vm == vm) {
+			struct instruction *c = vm->code;
+			struct module *m2 = vm->m;
+			int ip = vm->ip;
+			struct constant_table *ct = vm->ct;
+
+			vm->ct = m->ct;
+			vm->code = m->code;
+			vm->m = m;
+			m->vm = vm;
+
+			push_frame(m->vm);
+			execute(m->vm, v.integer);
+
+			vm->code = c;
+			vm->m = m2;
+			vm->ip = ip;
+			vm->ct = ct;
+
+			if (m->vm->sp) push(vm, value_translate(vm->gc, m->gc, m->vm->stack[m->vm->sp--]));
+			else push(vm, NIL);
+			return;
+		}
 
 		push_frame(m->vm);
 		execute(m->vm, v.integer);
@@ -1352,14 +1378,15 @@ execute(struct vm *vm, int64_t ip)
 	vm->module[vm->fp] = vm->m->id;
 
 	while (vm->code[vm->ip].type != INSTR_END && vm->code[vm->ip].type != INSTR_EEND && vm->fp >= 1 && !vm->returning) {
+		/* TODO: remove this */
+		assert(vm->impp < 100);
+		assert(vm->ip <= vm->m->num_instr);
+
 		if (vm->k->print_code) {
 			fprintf(vm->f, "%s:%6zu> %4zu: ", vm->m->name, vm->step, vm->ip);
 			print_instruction(vm->f, vm->code[vm->ip]);
 			fprintf(vm->f, " | %3zu | %3zu | %3zu | %3zu | %3zu | %3d\n", vm->sp, vm->csp, vm->k->sp, vm->fp, vm->impp, vm->module[vm->fp]);
 		}
-
-		/* TODO: remove this */
-		assert(vm->impp < 100);
 
 		execute_instr(vm, vm->code[vm->ip]);
 		if (vm->r->pending) break;
