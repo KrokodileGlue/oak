@@ -24,6 +24,9 @@ struct builtin {
 		BUILTIN_MIN,
 		BUILTIN_MAX,
 
+		BUILTIN_CHR,
+		BUILTIN_ORD,
+
 		BUILTIN_KEYS,
 		BUILTIN_VALUES,
 

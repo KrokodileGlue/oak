@@ -444,6 +444,7 @@ pa((0 -> 10)[0:5:-1])
 pa((0 -> 10)[5:0:-1])
 pa((0 -> 10)[0:5])
 pa((0 -> 10)[0:10 * 3 + 1])
+pa((0 -> 10)[5:])
 pa((0 -> 10)[5:0])
 
 for 'a1 b2 c3' =~ /\w(\d)/:
@@ -459,20 +460,33 @@ for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12'] {
 		pl '> ', $1
 }
 
+var thing = [1, 2, 3, 4]
+pl ++thing[0]
+pl ++thing[0]
+pl --thing[0]
+pl --thing[0]
+
+pl chr(72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33)
+pl chr([72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33])
+pl chr(104)
+
+pl join ', ', ord('Hello, world!')
+pl join ', ', ord(['Hello,', ' world!'])
+pl join ', ', ord('H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!')
+
 # TODO: finish tables by robustizing
 # TODO: actually implement the tracing garbage collector
 # TODO: fix ktre warnings
 # TODO: string interpolation
 # TODO: regex matches shouldn't survive function calls
-# TODO: prefix ++ and --
 # TODO: sort should care about arrays with mixed types
 # TODO: lvalue array slices
 # TODO: enums/tags
 # TODO: look at how while loops handle regex
-# TODO: chr() and ord()
 # TODO: actual modules and namespaces
 # TODO: fix eval and that stack trace bug
 # TODO: make the whole api thing and build as library
 # TODO: bindings and ffi
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
+# TODO: allow _ in numbers and remove all use of strtol

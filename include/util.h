@@ -6,9 +6,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 #include "location.h"
 
+/* TODO: This is really, really dumb. I think. */
 #define EPSILON 0.001
 #define fcmp(a,b) (fabs(a - b) <= EPSILON * fabs(a))
 
@@ -30,6 +32,14 @@ static inline bool
 is_identifier_start(char c)
 {
 	return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_'));
+}
+
+static inline void
+append_char(char *s, char c)
+{
+	char *a = strchr(s, 0);
+	*a = c;
+	a[1] = 0;
 }
 
 static inline bool

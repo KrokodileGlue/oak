@@ -507,6 +507,52 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 	} break;
 
+	case BUILTIN_CHR: {
+		reg = alloc_reg(c);
+
+		if (e->num == 0) {
+			int temp = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
+			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
+			emit_a(c, INSTR_CHR, reg, &e->tok->loc);
+		} else {
+			int arg[e->num];
+
+			for (int i = e->num - 1; i >= 0; i--) {
+				arg[i] = alloc_reg(c);
+				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+			}
+
+			for (int i = e->num - 1; i >= 0; i--)
+				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
+
+			emit_a(c, INSTR_CHR, reg, &e->tok->loc);
+		}
+	} break;
+
+	case BUILTIN_ORD: {
+		reg = alloc_reg(c);
+
+		if (e->num == 0) {
+			int temp = alloc_reg(c);
+			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
+			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
+			emit_a(c, INSTR_ORD, reg, &e->tok->loc);
+		} else {
+			int arg[e->num];
+
+			for (int i = e->num - 1; i >= 0; i--) {
+				arg[i] = alloc_reg(c);
+				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym, true, true), &e->tok->loc);
+			}
+
+			for (int i = e->num - 1; i >= 0; i--)
+				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
+
+			emit_a(c, INSTR_ORD, reg, &e->tok->loc);
+		}
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",
 		     e->bi->body);

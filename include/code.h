@@ -80,6 +80,9 @@ enum instruction_type {
 	INSTR_MIN,
 	INSTR_MAX,
 
+	INSTR_CHR,
+	INSTR_ORD,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,

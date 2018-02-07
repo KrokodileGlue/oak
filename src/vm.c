@@ -853,8 +853,19 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_JOIN: {
-		assert(GETREG(c.b).type == VAL_STR);
-		assert(GETREG(c.c).type == VAL_ARRAY);
+		if (GETREG(c.b).type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "join builtin requires string lefthand argument (got %s)",
+			           value_data[GETREG(c.b).type].body);
+			return;
+		}
+
+		if (GETREG(c.c).type != VAL_ARRAY) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "join builtin requires array righthand argument (got %s)",
+			           value_data[GETREG(c.c).type].body);
+			return;
+		}
 
 		if (vm->gc->array[GETREG(c.c).idx]->len == 0) {
 			struct value v;
@@ -1090,6 +1101,95 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.a, lcfirst_value(vm->gc, GETREG(c.b)));
 		break;
 
+	case INSTR_CHR: {
+		struct array *a = NULL;
+		assert(vm->sp);
+
+		if (vm->sp == 1) {
+			struct value t = vm->stack[vm->sp--];
+			if (t.type == VAL_ARRAY)
+				a = vm->gc->array[t.idx];
+			else {
+				a = new_array();
+				vm->gc->array[gc_alloc(vm->gc, VAL_ARRAY)] = a;
+				array_push(a, t);
+			}
+		} else {
+			struct value t;
+			t.type = VAL_ARRAY;
+			t.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->array[t.idx] = new_array();
+
+			while (vm->sp)
+				array_push(vm->gc->array[t.idx], vm->stack[vm->sp--]);
+
+			a = vm->gc->array[t.idx];
+		}
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = NULL;
+		vm->gc->str[v.idx] = oak_malloc(a->len + 1);
+		*vm->gc->str[v.idx] = 0;
+
+		for (size_t i = 0; i < a->len; i++)
+			if (a->v[i].type == VAL_INT)
+				append_char(vm->gc->str[v.idx], a->v[i].integer);
+
+		SETREG(c.a, v);
+	} break;
+
+	case INSTR_ORD: {
+		assert(vm->sp);
+		struct value s;
+
+		if (vm->sp == 1) {
+			s = vm->stack[vm->sp--];
+		} else {
+			s.type = VAL_ARRAY;
+			s.idx = gc_alloc(vm->gc, VAL_ARRAY);
+			vm->gc->array[s.idx] = new_array();
+
+			while (vm->sp)
+				array_push(vm->gc->array[s.idx], vm->stack[vm->sp--]);
+		}
+
+		if (s.type != VAL_ARRAY && s.type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "ord builtin requires a string or array argument (got %s)",
+			           value_data[s.type].body);
+			return;
+		}
+
+		if (s.type == VAL_STR && strlen(vm->gc->str[s.idx]) == 1) {
+			SETREG(c.a, INT(*vm->gc->str[s.idx]));
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
+		vm->gc->array[v.idx] = new_array();
+		struct array *a = vm->gc->array[v.idx];
+
+		if (s.type == VAL_STR) {
+			char *str = vm->gc->str[s.idx];
+			for (size_t i = 0; i < strlen(str); i++)
+				array_push(a, INT(str[i]));
+		} else {
+			for (size_t i = 0; i < vm->gc->array[s.idx]->len; i++) {
+				if (vm->gc->array[s.idx]->v[i].type != VAL_STR) continue;
+
+				char *str = vm->gc->str[vm->gc->array[s.idx]->v[i].idx];
+				for (size_t j = 0; j < strlen(str); j++)
+					array_push(a, INT(str[j]));
+			}
+		}
+
+		SETREG(c.a, v);
+	} break;
+
 	case INSTR_MIN:
 		if (vm->sp == 1) {
 			SETREG(c.a, min_value(vm->gc, vm->stack[vm->sp--]));
@@ -1106,7 +1206,6 @@ execute_instr(struct vm *vm, struct instruction c)
 			SETREG(c.a, min_value(vm->gc, v));
 			return;
 		}
-
 		break;
 
 	case INSTR_MAX:
