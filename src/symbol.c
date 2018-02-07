@@ -302,7 +302,13 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			break;
 
 		case OPTYPE_BINARY:
-			resolve_expr(si, e->a);
+			if (e->operator->name == OP_CC) {
+				si->symbol = resolve(si->symbol, e->a->val->value);
+				resolve_expr(si, e->b);
+			} else {
+				resolve_expr(si, e->a);
+			}
+
 			if (e->operator->name != OP_PERIOD)
 				resolve_expr(si, e->b);
 			break;

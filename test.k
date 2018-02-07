@@ -476,6 +476,7 @@ pl join ', ', ord('H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!
 
 import 'foo.k' as foo
 pl foo::foo(4, 25)
+pl foo::bar(4, 25)
 
 # TODO: highlight import and as
 # TODO: finish tables by robustizing
