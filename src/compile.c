@@ -1691,19 +1691,308 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 	return t;
 }
 
-#define LOOP_START(X)	  \
+#define LOOP_FINISH	  \
 	do { \
 		for (int i = np; i < c->np; i++) \
-			c->code[c->next[i]].a = X; \
+			c->code[c->next[i]].a = sym->next; \
 		c->np = np; \
-	} while (0)
-
-#define LOOP_END	  \
-	do { \
 		for (int i = lp; i < c->lp; i++) \
-			c->code[c->last[i]].a = c->ip; \
+			c->code[c->last[i]].a = sym->last; \
 		c->lp = lp; \
 	} while (0)
+
+static int
+compile_for_loop(struct compiler *c, struct statement *s, struct symbol *sym,
+                 int lp, int np)
+{
+	int start = c->ip;
+	struct statement *old_loop = c->loop;
+	c->loop = s;
+
+	if (s->for_loop.a && s->for_loop.b && !s->for_loop.c
+	           && s->for_loop.b->type == EXPR_OPERATOR
+	           && s->for_loop.b->operator->type == OPTYPE_BINARY
+	           && s->for_loop.b->operator->name == OP_SQUIGGLEEQ) {
+		/* for var j; i =~ /\w(\d+)/g: pl '> $1 - $j' */
+
+		int reg;
+		if (s->for_loop.a->type == STMT_VAR_DECL) {
+			if (s->for_loop.a->var_decl.num != 1) {
+				error_push(c->r, s->tok->loc, ERR_FATAL,
+				           "variable declaration for-loop initalizers must declare only one variable");
+			}
+
+			compile_statement(c, s->for_loop.a);
+			reg = resolve(sym, s->for_loop.a->var_decl.names[0]->value)->address;
+		} else {
+			reg = compile_lvalue(c, s->for_loop.a->expr, sym);
+		}
+
+		struct expression *e = s->for_loop.b;
+		int expr = c->var[c->sp]++;
+		int operand = c->var[c->sp]++;
+		int re = c->var[c->sp]++;
+
+		e->b->val->flags = smart_cat(e->b->val->flags, "c");
+		emit_ab(c, INSTR_MOV, operand, compile_expr(c, e->a, sym, false), &s->tok->loc);
+		set_stack_top(c);
+		emit_ab(c, INSTR_MOV, re, compile_expression(c, e->b, sym, false, false), &s->tok->loc);
+		emit_a(c, INSTR_RESETR, re, &s->tok->loc);
+
+		start = c->ip;
+		emit_abc(c, INSTR_MATCH, expr, operand, re, &e->b->tok->loc);
+
+		emit_a(c, INSTR_COND, expr, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		int zero = alloc_reg(c);
+		emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+		emit_ab(c, INSTR_MOV, reg, temp, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		int b = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+		c->code[b].a = c->ip;
+	} else if (s->for_loop.a && s->for_loop.b && !s->for_loop.c
+	           && s->for_loop.b->type == EXPR_REGEX) {
+		/* for var j; i =~ /\w(\d+)/g: pl '> $1 - $j' */
+
+		int reg;
+		if (s->for_loop.a->type == STMT_VAR_DECL) {
+			if (s->for_loop.a->var_decl.num != 1) {
+				error_push(c->r, s->tok->loc, ERR_FATAL,
+				           "variable declaration for-loop initalizers must declare only one variable");
+			}
+
+			compile_statement(c, s->for_loop.a);
+			reg = resolve(sym, s->for_loop.a->var_decl.names[0]->value)->address;
+		} else {
+			reg = compile_lvalue(c, s->for_loop.a->expr, sym);
+		}
+
+		struct expression *e = s->for_loop.b;
+		int expr = c->var[c->sp]++;
+		int operand = c->var[c->sp]++;
+		int re = c->var[c->sp]++;
+
+		e->val->flags = smart_cat(e->val->flags, "c");
+		set_stack_top(c);
+		emit_ab(c, INSTR_MOV, re, compile_expression(c, e, sym, false, false), &s->tok->loc);
+		emit_a(c, INSTR_RESETR, re, &s->tok->loc);
+
+		emit_a(c, INSTR_GETIMP, operand, &e->tok->loc);
+		start = c->ip;
+		emit_abc(c, INSTR_MATCH, expr, operand, re, &e->tok->loc);
+
+		emit_a(c, INSTR_COND, expr, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		int zero = alloc_reg(c);
+		emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+		emit_ab(c, INSTR_MOV, reg, temp, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		int b = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+		c->code[b].a = c->ip;
+	} else if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
+		if (s->for_loop.a->type == STMT_EXPR) {
+			compile_expr(c, s->for_loop.a->expr, sym, false);
+		} else if (s->for_loop.a->type == STMT_VAR_DECL) {
+			compile_statement(c, s->for_loop.a);
+		}
+
+		size_t a = c->ip;
+		emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
+		size_t b = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+		start = c->ip;
+		compile_expression(c, s->for_loop.c, sym, false, true);
+
+		emit_a(c, INSTR_JMP, a, &s->tok->loc);
+		c->code[b].a = c->ip;
+
+		set_next(sym, start);
+	} else if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
+		int reg = -1;
+		if (s->for_loop.a->type == STMT_VAR_DECL) {
+			if (s->for_loop.a->var_decl.num != 1) {
+				error_push(c->r, s->tok->loc, ERR_FATAL,
+				           "variable declaration for-loop initalizers must declare only one variable");
+			}
+
+			compile_statement(c, s->for_loop.a);
+			reg = resolve(sym, s->for_loop.a->var_decl.names[0]->value)->address;
+		} else {
+			reg = compile_lvalue(c, s->for_loop.a->expr, sym);
+		}
+
+		int iter = c->var[c->sp]++;
+
+		struct value v;
+		v.type = VAL_INT;
+		v.integer = -1;
+
+		int expr = c->var[c->sp]++;
+		emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
+		emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
+		start = c->ip;
+		emit_a(c, INSTR_INC, iter, &s->tok->loc);
+		int len = alloc_reg(c);
+		emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
+		int cond = alloc_reg(c);
+		emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
+		emit_a(c, INSTR_COND, cond, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+		emit_abc(c, INSTR_SUBSCR, reg, expr, iter, &s->tok->loc);
+
+		compile_statement(c, s->for_loop.body);
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+	} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
+	           && s->for_loop.a->type == STMT_EXPR
+	           && s->for_loop.a->expr->type == EXPR_OPERATOR
+	           && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
+	           && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ) {
+		/* TODO: care if e->a or e->b actually exist */
+
+		struct expression *e = s->for_loop.a->expr;
+		int expr = c->var[c->sp]++;
+		int operand = c->var[c->sp]++;
+		int re = c->var[c->sp]++;
+
+		e->b->val->flags = smart_cat(e->b->val->flags, "c");
+		emit_ab(c, INSTR_MOV, operand, compile_expr(c, e->a, sym, false), &s->tok->loc);
+		set_stack_top(c);
+		emit_ab(c, INSTR_MOV, re, compile_expression(c, e->b, sym, false, false), &s->tok->loc);
+		emit_a(c, INSTR_RESETR, re, &s->tok->loc);
+
+		start = c->ip;
+		emit_abc(c, INSTR_MATCH, expr, operand, re, &e->b->tok->loc);
+
+		emit_a(c, INSTR_COND, expr, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		int zero = alloc_reg(c);
+		emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+		emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+		emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		int b = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+		c->code[b].a = c->ip;
+	} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
+	           && s->for_loop.a->type == STMT_EXPR
+	           && s->for_loop.a->expr->type == EXPR_REGEX) {
+		int expr = c->var[c->sp]++;
+		int re = c->var[c->sp]++;
+		s->for_loop.a->expr->val->flags = smart_cat(s->for_loop.a->expr->val->flags, "c");
+
+		set_stack_top(c);
+		emit_ab(c, INSTR_MOV, re,
+		        compile_expression(c, s->for_loop.a->expr, sym, false, false),
+		        &s->tok->loc);
+
+		emit_a(c, INSTR_RESETR, re, &s->tok->loc);
+
+		start = c->ip;
+		emit_abc(c, INSTR_MATCH, expr,
+		         compile_expression(c, NULL, sym, false, false),
+		         re, &s->tok->loc);
+
+		emit_a(c, INSTR_COND, expr, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		int zero = alloc_reg(c);
+		emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
+
+		emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+		emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		int b = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+		c->code[b].a = c->ip;
+	} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
+		if (s->for_loop.a->type != STMT_EXPR) {
+			error_push(c->r, s->tok->loc, ERR_FATAL,
+			           "argument to `for' must be an expression");
+			return start;
+		}
+
+		int iter = c->var[c->sp]++;
+		int expr = c->var[c->sp]++;
+
+		emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
+		emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, INT(-1)), &s->tok->loc);
+
+		start = c->ip;
+		emit_a(c, INSTR_INC, iter, &s->tok->loc);
+		int len = alloc_reg(c);
+		emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
+		int cond = alloc_reg(c);
+		emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
+		emit_a(c, INSTR_COND, cond, &s->tok->loc);
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &s->tok->loc);
+
+		emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
+		compile_statement(c, s->for_loop.body);
+		emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		int e = c->ip;
+		emit_a(c, INSTR_JMP, start, &s->tok->loc);
+		emit_(c, INSTR_POPIMP, &s->tok->loc);
+
+		set_next(sym, start);
+		c->code[a].a = c->ip;
+		c->code[e].a = c->ip;
+	}
+
+	c->loop = old_loop;
+	set_last(sym, c->ip);
+	LOOP_FINISH;
+	return start;
+}
 
 static int
 compile_statement(struct compiler *c, struct statement *s)
@@ -1861,8 +2150,7 @@ compile_statement(struct compiler *c, struct statement *s)
 
 		set_next(sym, a);
 		set_last(sym, c->ip);
-		LOOP_START(a);
-		LOOP_END;
+		LOOP_FINISH;
 
 		c->loop = old_loop;
 	} break;
@@ -1887,200 +2175,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		c->loop = old_loop;
 	} break;
 
-	case STMT_FOR_LOOP: {
-		struct statement *old_loop = c->loop;
-		c->loop = s;
-
-		if (s->for_loop.a && s->for_loop.b && s->for_loop.c) {
-			if (s->for_loop.a->type == STMT_EXPR) {
-				compile_expr(c, s->for_loop.a->expr, sym, false);
-			} else if (s->for_loop.a->type == STMT_VAR_DECL) {
-				compile_statement(c, s->for_loop.a);
-			}
-
-			size_t a = c->ip;
-			emit_a(c, INSTR_COND, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
-			size_t b = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-			compile_statement(c, s->for_loop.body);
-			start = c->ip;
-			compile_expression(c, s->for_loop.c, sym, false, true);
-
-			emit_a(c, INSTR_JMP, a, &s->tok->loc);
-			c->code[b].a = c->ip;
-
-			set_next(sym, start);
-			LOOP_START(start);
-			LOOP_END;
-		} else if (s->for_loop.a && s->for_loop.b && !s->for_loop.c) {
-			int reg = -1;
-			if (s->for_loop.a->type == STMT_VAR_DECL) {
-				if (s->for_loop.a->var_decl.num != 1) {
-					error_push(c->r, s->tok->loc, ERR_FATAL,
-					           "variable declaration for-loop initalizers must declare only one variable");
-				}
-
-				compile_statement(c, s->for_loop.a);
-				reg = resolve(sym, s->for_loop.a->var_decl.names[0]->value)->address;
-			} else {
-				reg = compile_lvalue(c, s->for_loop.a->expr, sym);
-			}
-
-			int iter = c->var[c->sp]++;
-
-			struct value v;
-			v.type = VAL_INT;
-			v.integer = -1;
-
-			int expr = c->var[c->sp]++;
-			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.b, sym, false), &s->tok->loc);
-			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &s->tok->loc);
-			start = c->ip;
-			emit_a(c, INSTR_INC, iter, &s->tok->loc);
-			int len = alloc_reg(c);
-			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
-			int cond = alloc_reg(c);
-			emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
-			emit_a(c, INSTR_COND, cond, &s->tok->loc);
-			size_t a = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-			emit_abc(c, INSTR_SUBSCR, reg, expr, iter, &s->tok->loc);
-
-			compile_statement(c, s->for_loop.body);
-			emit_a(c, INSTR_JMP, start, &s->tok->loc);
-
-			set_next(sym, start);
-			LOOP_START(start);
-			LOOP_END;
-			c->code[a].a = c->ip;
-		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
-		           && s->for_loop.a->type == STMT_EXPR
-		           && s->for_loop.a->expr->type == EXPR_OPERATOR
-		           && s->for_loop.a->expr->operator->type == OPTYPE_BINARY
-		           && s->for_loop.a->expr->operator->name == OP_SQUIGGLEEQ) {
-			/* TODO: care if e->a or e->b actually exist */
-
-			struct expression *e = s->for_loop.a->expr;
-			int expr = c->var[c->sp]++;
-			int operand = c->var[c->sp]++;
-			int re = c->var[c->sp]++;
-
-			e->b->val->flags = smart_cat(e->b->val->flags, "c");
-			emit_ab(c, INSTR_MOV, operand, compile_expr(c, e->a, sym, false), &s->tok->loc);
-			set_stack_top(c);
-			emit_ab(c, INSTR_MOV, re, compile_expression(c, e->b, sym, false, false), &s->tok->loc);
-			emit_a(c, INSTR_RESETR, re, &s->tok->loc);
-
-			start = c->ip;
-			emit_abc(c, INSTR_MATCH, expr, operand, re, &e->b->tok->loc);
-
-			emit_a(c, INSTR_COND, expr, &s->tok->loc);
-			size_t a = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-
-			int zero = alloc_reg(c);
-			emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
-			int temp = alloc_reg(c);
-			emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
-
-			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
-			compile_statement(c, s->for_loop.body);
-			emit_(c, INSTR_POPIMP, &s->tok->loc);
-
-			emit_a(c, INSTR_JMP, start, &s->tok->loc);
-			int b = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-
-			set_next(sym, start);
-			LOOP_START(start);
-			LOOP_END;
-			c->code[a].a = c->ip;
-			c->code[b].a = c->ip;
-		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c
-		           && s->for_loop.a->type == STMT_EXPR
-		           && s->for_loop.a->expr->type == EXPR_REGEX) {
-			int expr = c->var[c->sp]++;
-			int re = c->var[c->sp]++;
-			s->for_loop.a->expr->val->flags = smart_cat(s->for_loop.a->expr->val->flags, "c");
-
-			set_stack_top(c);
-			emit_ab(c, INSTR_MOV, re,
-			        compile_expression(c, s->for_loop.a->expr, sym, false, false),
-			        &s->tok->loc);
-
-			emit_a(c, INSTR_RESETR, re, &s->tok->loc);
-
-			start = c->ip;
-			emit_abc(c, INSTR_MATCH, expr,
-			         compile_expression(c, NULL, sym, false, false),
-			         re, &s->tok->loc);
-
-			emit_a(c, INSTR_COND, expr, &s->tok->loc);
-			size_t a = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-
-			int zero = alloc_reg(c);
-			emit_ab(c, INSTR_COPYC, zero, constant_table_add(c->ct, INT(0)), &s->tok->loc);
-			int temp = alloc_reg(c);
-			emit_abc(c, INSTR_SUBSCR, temp, expr, zero, &s->tok->loc);
-
-			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
-			compile_statement(c, s->for_loop.body);
-			emit_(c, INSTR_POPIMP, &s->tok->loc);
-
-			emit_a(c, INSTR_JMP, start, &s->tok->loc);
-			int b = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-
-			set_next(sym, start);
-			LOOP_START(start);
-			LOOP_END;
-			c->code[a].a = c->ip;
-			c->code[b].a = c->ip;
-		} else if (s->for_loop.a && !s->for_loop.b && !s->for_loop.c) {
-			if (s->for_loop.a->type != STMT_EXPR) {
-				error_push(c->r, s->tok->loc, ERR_FATAL,
-				           "argument to `for' must be an expression");
-				return start;
-			}
-
-			int iter = c->var[c->sp]++;
-			int expr = c->var[c->sp]++;
-
-			emit_ab(c, INSTR_MOV, expr, compile_expr(c, s->for_loop.a->expr, sym, false), &s->tok->loc);
-			emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, INT(-1)), &s->tok->loc);
-
-			start = c->ip;
-			emit_a(c, INSTR_INC, iter, &s->tok->loc);
-			int len = alloc_reg(c);
-			emit_ab(c, INSTR_LEN, len, expr, &s->tok->loc);
-			int cond = alloc_reg(c);
-			emit_abc(c, INSTR_LESS, cond, iter, len, &s->tok->loc);
-			emit_a(c, INSTR_COND, cond, &s->tok->loc);
-			size_t a = c->ip;
-			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
-			int temp = alloc_reg(c);
-			emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &s->tok->loc);
-
-			emit_a(c, INSTR_PUSHIMP, temp, &s->tok->loc);
-			compile_statement(c, s->for_loop.body);
-			emit_(c, INSTR_POPIMP, &s->tok->loc);
-
-			emit_a(c, INSTR_JMP, start, &s->tok->loc);
-			int e = c->ip;
-			emit_a(c, INSTR_JMP, start, &s->tok->loc);
-			emit_(c, INSTR_POPIMP, &s->tok->loc);
-
-			set_next(sym, start);
-			LOOP_START(start);
-			LOOP_END;
-			c->code[a].a = c->ip;
-			c->code[e].a = c->ip;
-		}
-
-		c->loop = old_loop;
-		set_last(sym, c->ip);
-	} break;
+	case STMT_FOR_LOOP: start = compile_for_loop(c, s, sym, lp, np); break;
 
 	case STMT_LAST:
 		for (int i = 0; i < count_imp(find_from_scope(c->sym, c->loop->scope), sym); i++)

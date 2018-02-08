@@ -208,13 +208,13 @@ main(int argc, char **argv)
 
 	if (k->eval && m) {
 		push_frame(m->vm);
-		load_module(k, m->sym, k->eval, "*e.k*", strclone("*eval*"), m->vm, 0);
+		load_module(k, m->sym, k->eval, "*e.k*", "*e*", m->vm, 0);
 		print_value(m->vm->f, m->gc, k->stack[k->sp - 1]);
 		fputc('\n', m->vm->f);
 	}
 
 	if (k->eval && !m) {
-		struct module *e = load_module(k, NULL, k->eval, "*e.k*", "*eval*", NULL, -1);
+		struct module *e = load_module(k, NULL, k->eval, "*e.k*", "*e*", NULL, -1);
 		if (e) {
 			print_value(e->vm->f, e->gc, k->stack[k->sp - 1]);
 			fputc('\n', e->vm->f);

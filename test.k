@@ -480,6 +480,9 @@ pl foo::bar(4, 25)
 
 pl '{{}}}}{{{array}'
 
+for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12']:
+	for var j; /\w(\d+)/: pl '> $1 - $j'
+
 # mandel::mandel(1024, 780, 150)
 
 # TODO: finish tables by robustizing

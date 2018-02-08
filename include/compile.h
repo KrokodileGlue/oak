@@ -14,8 +14,7 @@ struct compiler {
 	size_t ip;
 	size_t instr_alloc;
 
-	size_t *next;
-	size_t *last;
+	size_t *next, *last;
 	int np, lp;
 
 	struct statement **tree;
