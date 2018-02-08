@@ -215,8 +215,10 @@ main(int argc, char **argv)
 
 	if (k->eval && !m) {
 		struct module *e = load_module(k, NULL, k->eval, "*e.k*", "*eval*", NULL, -1);
-		print_value(e->vm->f, e->gc, k->stack[k->sp - 1]);
-		fputc('\n', e->vm->f);
+		if (e) {
+			print_value(e->vm->f, e->gc, k->stack[k->sp - 1]);
+			fputc('\n', e->vm->f);
+		}
 	}
 
 	print_modules(k);
