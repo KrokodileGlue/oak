@@ -36,8 +36,10 @@ array_push(struct array *a, struct value r)
 void
 grow_array(struct array *a, size_t size)
 {
-	if (size > a->alloc * 2) {
-		a->v = oak_realloc(a->v, size * sizeof *a->v);
+	assert(size < SIZE_MAX / 2);
+
+	if (size >= a->alloc * 2) {
+		a->v = oak_realloc(a->v, (size + 1) * sizeof *a->v);
 
 		for (size_t i = a->alloc; i < size; i++)
 			a->v[i] = NIL;

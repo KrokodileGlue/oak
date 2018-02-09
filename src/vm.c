@@ -538,6 +538,13 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_ASET:
+		if (GETREG(c.b).type == VAL_INT && GETREG(c.b).integer < 0) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "object requires positive subscript (got %"PRId64")",
+			           GETREG(c.b).integer);
+			return;
+		}
+
 		if (GETREG(c.a).type == VAL_STR
 		    && GETREG(c.b).type == VAL_INT
 		    && ((size_t)GETREG(c.b).integer
@@ -582,14 +589,14 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		if (GETREG(c.a).type == VAL_ARRAY
 		    && GETREG(c.b).type == VAL_INT) {
+			DOUT("thing: %"PRId64, GETREG(c.b).integer);
 			grow_array(vm->gc->array[GETREG(c.a).idx], GETREG(c.b).integer + 1);
+			DOUT("thing: %zu", vm->gc->array[GETREG(c.a).idx]->alloc);
 
-			if (vm->gc->array[GETREG(c.a).idx]->len <= GETREG(c.b).integer) {
+			if (vm->gc->array[GETREG(c.a).idx]->len <= GETREG(c.b).integer)
 				vm->gc->array[GETREG(c.a).idx]->len = GETREG(c.b).integer + 1;
-			}
 
-			vm->gc->array[GETREG(c.a).idx]->v[GETREG(c.b).integer]
-				= GETREG(c.c);
+			vm->gc->array[GETREG(c.a).idx]->v[GETREG(c.b).integer] = GETREG(c.c);
 		}
 
 		if (GETREG(c.b).type == VAL_STR) {

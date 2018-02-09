@@ -8,11 +8,11 @@ for var i = 0; i < length a; i++ {
 	}
 
 	match a[i] {
-		'{' => d += ++b,
-		'}' => b--,
-		'<' => c = true,
-		'>' => c = false,
-		'!' => i++
+		"{" => d += ++b,
+		"}" => b--,
+		"<" => c = true,
+		">" => c = false,
+		"!" => i++
 	}
 }
 

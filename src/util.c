@@ -250,11 +250,11 @@ load_file(const char *path)
 		if (fseek(file, 0L, SEEK_SET) != 0)
 			return NULL;
 
-		size_t newlen = fread(buf, 1, len, file);
+		len = fread(buf, 1, len, file);
 		if (ferror(file) != 0) {
-			DOUT("could not read file %s", path);
-			exit(EXIT_FAILURE);
-		} else buf[newlen++] = '\0';
+			fprintf(stderr, "could not read file %s", path);
+			return NULL;
+		} else buf[len++] = 0;
 	}
 
 	fclose(file);

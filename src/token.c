@@ -19,14 +19,16 @@ static char token_type_str[][64] = {
 	"INVALID"
 };
 
-void token_rewind(struct token **tok)
+void
+token_rewind(struct token **tok)
 {
 	if (*tok)
 		while ((*tok)->prev)
 			(*tok) = (*tok)->prev;
 }
 
-void token_delete(struct token *tok)
+void
+token_delete(struct token *tok)
 {
 	struct token *prev = tok->prev;
 	struct token *next = tok->next;
@@ -39,7 +41,8 @@ void token_delete(struct token *tok)
 	free(tok);
 }
 
-void token_clear(struct token *tok)
+void
+token_clear(struct token *tok)
 {
 	token_rewind(&tok);
 
@@ -72,9 +75,11 @@ void token_clear(struct token *tok)
 	}
 }
 
-void token_push(struct location loc, enum token_type type, char *start, char *end, struct token **prev)
+void
+token_push(struct location loc, enum token_type type, char *start, char *end, struct token **prev)
 {
-	struct token *current = oak_malloc(sizeof (struct token));
+	struct token *current = oak_malloc(sizeof *current);
+	memset(current, 0, sizeof *current);
 	if (*prev) (*prev)->next = current;
 
 	current->type = type;
@@ -93,7 +98,8 @@ void token_push(struct location loc, enum token_type type, char *start, char *en
 	current = current->next;
 }
 
-char *token_get_str(enum token_type type)
+char *
+token_get_str(enum token_type type)
 {
 	char *ret = NULL;
 
@@ -109,7 +115,8 @@ char *token_get_str(enum token_type type)
 	return ret;
 }
 
-void token_write(struct token *tok, FILE *fp)
+void
+token_write(struct token *tok, FILE *fp)
 {
 	fprintf(fp, "\ntype       | data       | file       | index   | length | eol?  | value   \n");
 	fprintf(fp, "--------------------------------------------------------------------------");
