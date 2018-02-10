@@ -306,7 +306,14 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		case OPTYPE_BINARY:
 			if (e->operator->name == OP_CC) {
 				struct symbol *t = si->symbol;
-				push(si, resolve(si->symbol, e->a->val->value)->children[0]);
+				struct symbol *child = resolve(si->symbol, e->a->val->value);
+
+				if (!child) {
+					error_push(si->r, t->tok->loc, ERR_FATAL, "undeclared identifier");
+					return;
+				}
+
+				push(si, child->children[0]);
 				resolve_expr(si, e->b);
 				si->symbol = t;
 				return;

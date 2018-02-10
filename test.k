@@ -503,3 +503,4 @@ pl '$FOO, $BAR, $BAZ'
 # TODO: implement global variables properly
 # TODO: free eval'd modules quickly
 # TODO: rewrite the value manipulators e.g. value_bin(gc, l, r, op)
+# TODO: allow trailing commas in places

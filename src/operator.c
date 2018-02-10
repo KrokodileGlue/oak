@@ -51,6 +51,8 @@ struct operator ops[] = {
 	{ "=~",  "",  2,  ASS_RIGHT, OPTYPE_BINARY   , OP_SQUIGGLEEQ  },
 	{ "+=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY   , OP_ADDEQ       },
 	{ "-=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY   , OP_SUBEQ       },
+	{ "*=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY   , OP_MULEQ       },
+	{ "/=",  "",  2,  ASS_RIGHT, OPTYPE_BINARY   , OP_DIVEQ       },
 	{ ",",   "",  1,  ASS_RIGHT, OPTYPE_BINARY   , OP_COMMA       }
 };
 
