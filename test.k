@@ -485,8 +485,8 @@ for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12']:
 
 # mandel::mandel(1024, 780, 150)
 
-enum FOO, BAR, BAZ
-pl '{FOO}, {BAR}, {BAZ}'
+enum FOO = 5, BAR, BAZ
+pl '$FOO, $BAR, $BAZ'
 
 # TODO: actually implement the tracing garbage collector
 # TODO: regex matches shouldn't survive function calls
