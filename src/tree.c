@@ -335,7 +335,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			ap->depth -= 2;
 			break;
 
-		case OPTYPE_SUBCRIPT:
+		case OPTYPE_SUBSCRIPT:
 			fprintf(ap->f,"(subscript)");
 			ap->depth++; split(ap);
 

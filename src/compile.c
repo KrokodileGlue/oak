@@ -2002,6 +2002,164 @@ compile_for_loop(struct compiler *c, struct statement *s, struct symbol *sym,
 	return start;
 }
 
+static bool
+is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
+{
+	if (!e) return false;
+	bool ret = true;
+
+	switch (e->type) {
+	case EXPR_OPERATOR:
+		switch (e->operator->type) {
+		case OPTYPE_INVALID: assert(false);
+		case OPTYPE_SUBSCRIPT:
+		case OPTYPE_POSTFIX:
+		case OPTYPE_PREFIX:
+		case OPTYPE_FN_CALL:
+		case OPTYPE_BINARY:
+			ret = ret && is_constant_expr(c, sym, e->a)
+				&& is_constant_expr(c, sym, e->b);
+			break;
+
+		case OPTYPE_TERNARY:
+			ret = ret && is_constant_expr(c, sym, e->a)
+				&& is_constant_expr(c, sym, e->b)
+				&& is_constant_expr(c, sym, e->c);
+			break;
+		}
+		break;
+
+	case EXPR_FN_CALL:
+	case EXPR_SUBSCRIPT:
+	case EXPR_MAP:
+		ret = ret && is_constant_expr(c, sym, e->a)
+			&& is_constant_expr(c, sym, e->b);
+		break;
+
+	case EXPR_MATCH:
+		ret = ret && is_constant_expr(c, sym, e->a);
+		for (size_t i = 0; i < e->num && ret; i++)
+			ret = ret && is_constant_expr(c, sym, e->match[i]);
+		break;
+
+	case EXPR_EVAL:
+	case EXPR_LIST_COMPREHENSION:
+	case EXPR_REGEX:
+	case EXPR_VARARGS:
+	case EXPR_FN_DEF:
+	case EXPR_GROUP: ret = false; break;
+
+	case EXPR_BUILTIN:
+	case EXPR_LIST:
+	case EXPR_TABLE:
+		for (size_t i = 0; i < e->num && ret; i++)
+			ret = ret && is_constant_expr(c, sym, e->args[i]);
+		break;
+
+	case EXPR_INVALID: assert(false);
+	case EXPR_SLICE:
+		ret = ret && is_constant_expr(c, sym, e->a)
+			&& is_constant_expr(c, sym, e->b)
+			&& is_constant_expr(c, sym, e->c)
+			&& e->d ? is_constant_expr(c, sym, e->d) : true;
+		break;
+
+	case EXPR_VALUE:
+		switch (e->val->type) {
+		case TOK_IDENTIFIER: {
+			struct symbol *var = resolve(sym, e->val->value);
+			if (var->type == SYM_VAR || var->type == SYM_ARGUMENT
+			    || var->type == SYM_MODULE || var->type == SYM_LABEL) {
+				ret = false;
+			}
+		}break;
+
+		default: ret = true;
+		}
+		break;
+	}
+
+	return ret;
+}
+
+static struct value compile_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e);
+
+static struct value
+compile_constant_operator(struct compiler *c, struct symbol *sym, struct expression *e)
+{
+	struct value v = NIL;
+
+	switch (e->operator->type) {
+	case OPTYPE_INVALID: assert(false);
+	case OPTYPE_BINARY:
+		switch (e->operator->name) {
+		case OP_ADD:
+			v = add_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
+			break;
+
+		default:
+			DOUT("unimplemented constant operator compiler for binary operator of name %d", e->operator->name);
+			assert(false);
+		}
+		break;
+
+	case OPTYPE_TERNARY:
+		break;
+
+	default:
+		DOUT("unimplemented constant operator compiler for operator of type %d", e->operator->type);
+		assert(false);
+	}
+
+	return v;
+}
+
+static struct value
+compile_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
+{
+	struct value v = NIL;
+
+	switch (e->type) {
+	case EXPR_OPERATOR:
+		v = compile_constant_operator(c, sym, e);
+		break;
+
+	case EXPR_FN_CALL:
+	case EXPR_SUBSCRIPT:
+	case EXPR_MAP:
+		break;
+
+	case EXPR_MATCH:
+		break;
+
+	case EXPR_BUILTIN:
+	case EXPR_LIST:
+	case EXPR_TABLE:
+		break;
+
+	case EXPR_INVALID: assert(false);
+	case EXPR_SLICE:
+		break;
+
+	case EXPR_VALUE:
+		switch (e->val->type) {
+		case TOK_INTEGER:
+			v = INT(e->val->integer);
+			break;
+		default:
+			DOUT("unimplemented constant compiler for value of type %d", e->val->type);
+			assert(false);
+		}
+		break;
+
+	default:
+		DOUT("unimplemented constant compiler for expression of type %d", e->type);
+		assert(false);
+	}
+
+	return v;
+}
+
 static int
 compile_statement(struct compiler *c, struct statement *s)
 {
@@ -2267,7 +2425,22 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	case STMT_ENUM: {
 		int cur = 0;
+
 		for (size_t i = 0; i < s->_enum.num; i++) {
+			if (s->_enum.init[i] && is_constant_expr(c, sym, s->_enum.init[i])) {
+				struct value v = compile_constant_expr(c, sym, s->_enum.init[i]);
+
+				if (v.type != VAL_INT) {
+					error_push(c->r, s->_enum.names[i]->loc, ERR_FATAL, "enum initalizer requires integer expression");
+					return -1;
+				}
+
+				cur = v.integer;
+			} else if (s->_enum.init[i]) {
+				error_push(c->r, s->_enum.names[i]->loc, ERR_FATAL, "enum initalizer requires constant expression");
+				return -1;
+			}
+
 			resolve(sym, s->_enum.names[i]->value)->_enum = cur;
 			cur++;
 		}

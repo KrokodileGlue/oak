@@ -485,14 +485,14 @@ for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12']:
 
 # mandel::mandel(1024, 780, 150)
 
-enum FOO = 5, BAR, BAZ
+enum FOO = 5 + 5, BAR, BAZ
 pl '$FOO, $BAR, $BAZ'
 
 # TODO: actually implement the tracing garbage collector
 # TODO: regex matches shouldn't survive function calls
 # TODO: sort should care about arrays with mixed types
 # TODO: lvalue array slices
-# TODO: enums/tags
+# TODO: finish the constant expression compiler
 # TODO: look at how while loops handle regex
 # TODO: fix eval and that stack trace bug
 # TODO: make the whole api thing and build as library
@@ -502,3 +502,4 @@ pl '$FOO, $BAR, $BAZ'
 # TODO: allow _ in numbers and remove all use of strtol
 # TODO: implement global variables properly
 # TODO: free eval'd modules quickly
+# TODO: rewrite the value manipulators e.g. value_bin(gc, l, r, op)
