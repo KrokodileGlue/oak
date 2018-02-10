@@ -25,6 +25,9 @@ struct builtin builtin[] = {
 	{ "chr",     14, BUILTIN_CHR     },
 	{ "ord",     14, BUILTIN_ORD     },
 
+	{ "hex",     14, BUILTIN_HEX     },
+	{ "chomp",   14, BUILTIN_CHOMP   },
+
 	{ "keys",    14, BUILTIN_KEYS    },
 	{ "values",  14, BUILTIN_VALUES  },
 

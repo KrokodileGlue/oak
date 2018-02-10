@@ -75,6 +75,9 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_CHR,      REG_A,     "CHR       " },
 	{ INSTR_ORD,      REG_A,     "ORD       " },
 
+	{ INSTR_HEX,      REG_AB,    "HEX       " },
+	{ INSTR_CHOMP,    REG_AB,    "CHOMP     " },
+
 	{ INSTR_ADD,      REG_ABC,   "ADD       " },
 	{ INSTR_SUB,      REG_ABC,   "SUB       " },
 	{ INSTR_MUL,      REG_ABC,   "MUL       " },

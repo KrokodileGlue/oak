@@ -377,6 +377,8 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	UNARY(LENGTH, LEN);
 	UNARY(SUM, SUM);
 	UNARY(ABS, ABS);
+	UNARY(HEX, HEX);
+	UNARY(CHOMP, CHOMP);
 
 	UNARY(KEYS, KEYS);
 	UNARY(VALUES, VALUES);

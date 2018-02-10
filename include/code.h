@@ -83,6 +83,9 @@ enum instruction_type {
 	INSTR_CHR,
 	INSTR_ORD,
 
+	INSTR_HEX,
+	INSTR_CHOMP,
+
 	INSTR_ADD,
 	INSTR_SUB,
 	INSTR_MUL,

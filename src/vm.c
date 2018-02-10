@@ -1331,6 +1331,54 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.a, v);
 	} break;
 
+	case INSTR_HEX: {
+		struct value integer = GETREG(c.b);
+
+		if (integer.type != VAL_INT) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "hex builtin requires integer argument (got %s)",
+			           value_data[integer.type].body);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = oak_malloc(64);
+		snprintf(vm->gc->str[v.idx], 64, "%"PRIx64, integer.integer);
+
+		SETREG(c.a, v);
+	} break;
+
+	case INSTR_CHOMP: {
+		struct value s = GETREG(c.b);
+
+		if (s.type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "chomp builtin requires string argument (got %s)",
+			           value_data[s.type].body);
+			return;
+		}
+
+		if (!strlen(vm->gc->str[s.idx])) {
+			SETREG(c.a, NIL);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = oak_malloc(strlen(vm->gc->str[s.idx]) + 1);
+		strcpy(vm->gc->str[v.idx], vm->gc->str[s.idx]);
+
+		int i = strlen(vm->gc->str[v.idx]) - 1;
+		while (i && vm->gc->str[v.idx][i] == '\n') i--;
+		if (vm->gc->str[v.idx][i + 1] == '\n')
+			vm->gc->str[v.idx][i + 1] = 0;
+
+		SETREG(c.a, v);
+	} break;
+
 	case INSTR_MIN:
 		if (vm->sp == 1) {
 			SETREG(c.a, min_value(vm->gc, vm->stack[vm->sp--]));
