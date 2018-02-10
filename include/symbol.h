@@ -26,6 +26,7 @@ struct symbol {
 	int labelp;
 	int fp;
 	bool imp;
+	int _enum;
 
 	enum symbol_type {
 		SYM_FN,
@@ -36,6 +37,7 @@ struct symbol {
 		SYM_MODULE,
 		SYM_IMPORTED,
 		SYM_LABEL,
+		SYM_ENUM,
 		SYM_INVALID
 	} type;
 };

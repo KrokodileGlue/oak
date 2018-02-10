@@ -29,6 +29,7 @@ enum statement_type {
 	STMT_DIE,
 	STMT_LABEL,
 	STMT_GOTO,
+	STMT_ENUM,
 	STMT_INVALID
 };
 
@@ -109,6 +110,12 @@ struct statement {
 			struct token *name;
 			struct token *as;
 		} import;
+
+		struct {
+			struct token **names;
+			struct expression **init;
+			size_t num;
+		} _enum;
 
 		char *label;
 		struct expression *expr;

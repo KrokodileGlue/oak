@@ -1219,6 +1219,12 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 		switch (e->val->type) {
 		case TOK_IDENTIFIER: {
 			struct symbol *var = resolve(sym, e->val->value);
+
+			if (var->type != SYM_VAR && var->type != SYM_ARGUMENT) {
+				error_push(c->r, e->tok->loc, ERR_FATAL, "invalid use of identifier in lvalue");
+				return -1;
+			}
+
 			if (var->global)
 				return var->address + NUM_REG;
 			return var->address;
@@ -1307,7 +1313,10 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				return nil(c);
 
 			struct symbol *var = resolve(sym, e->val->value);
-			if (var->type == SYM_FN) {
+
+			if (var->type == SYM_ENUM) {
+				emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, INT(var->_enum)), &e->tok->loc);
+			} else if (var->type == SYM_FN) {
 				struct value v;
 				v.type = VAL_FN;
 				v.num_args = var->num_arguments;
@@ -2253,6 +2262,14 @@ compile_statement(struct compiler *c, struct statement *s)
 			l->label = oak_realloc(l->label, (l->labelp + 1) * sizeof *l->label);
 			l->label[l->labelp++] = c->ip;
 			emit_a(c, INSTR_JMP, -1, &s->tok->loc);
+		}
+	} break;
+
+	case STMT_ENUM: {
+		int cur = 0;
+		for (size_t i = 0; i < s->_enum.num; i++) {
+			resolve(sym, s->_enum.names[i]->value)->_enum = cur;
+			cur++;
 		}
 	} break;
 

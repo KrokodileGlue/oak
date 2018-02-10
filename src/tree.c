@@ -26,6 +26,7 @@ struct statement_data statement_data[] = {
 	{ STMT_DIE      , "die"                  },
 	{ STMT_LABEL    , "label"                },
 	{ STMT_GOTO     , "goto"                 },
+	{ STMT_ENUM     , "enum"                 },
 	{ STMT_INVALID  , "invalid statement"    }
 };
 
@@ -150,6 +151,14 @@ free_stmt(struct statement *s)
 
 		free(s->var_decl.init);
 		free(s->var_decl.names);
+		break;
+
+	case STMT_ENUM:
+		for (size_t i = 0; i < s->_enum.num; i++)
+			free_expr(s->_enum.init[i]);
+
+		free(s->_enum.init);
+		free(s->_enum.names);
 		break;
 
 	case STMT_FOR_LOOP:
@@ -583,6 +592,24 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth--;
 		break;
 
+	case STMT_ENUM:
+		ap->depth++;
+		split(ap);
+
+		for (size_t i = 0; i < s->_enum.num; i++) {
+			if (i == s->_enum.num - 1) join(ap);
+			indent(ap);
+			fprintf(ap->f, "(%s)", s->_enum.names[i]->value);
+			if (s->_enum.num) {
+				ap->depth++;
+				print_expression(ap, s->_enum.init[i]);
+				ap->depth--;
+			}
+		}
+
+		ap->depth--;
+		break;
+
 	case STMT_FOR_LOOP:
 		ap->depth++;
 		split(ap);
@@ -682,8 +709,8 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth++;
 
 		indent(ap);
-		fprintf(ap->f, "import '%s' as '%s'", s->import.name->value,
-		        s->import.as ? s->import.as->value : s->import.name->value);
+		fprintf(ap->f, "import '%s' as '%s'", s->import.name->string,
+		        s->import.as ? s->import.as->string : s->import.name->string);
 
 		ap->depth--;
 		break;

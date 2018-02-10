@@ -732,6 +732,36 @@ parse_import(struct parser *ps)
 }
 
 static struct statement *
+parse_enum(struct parser *ps)
+{
+	struct statement *s = new_statement(ps->tok);
+	s->type = STMT_ENUM;
+	NEXT;
+
+	do {
+		s->_enum.names = oak_realloc(s->_enum.names, (s->_enum.num + 1) * sizeof *s->_enum.names);
+		s->_enum.init = oak_realloc(s->_enum.init, (s->_enum.num + 1) * sizeof *s->_enum.init);
+
+		s->_enum.names[s->_enum.num] = ps->tok;
+		s->_enum.init[s->_enum.num] = NULL;
+
+		NEXT;
+		if (!strcmp(ps->tok->value, "=")) {
+			NEXT;
+			s->_enum.init[s->_enum.num] = parse_expression(ps, 1);
+		}
+
+		s->_enum.num++;
+
+		if (!strcmp(ps->tok->value, ","))
+			expect_symbol(ps, ",");
+		else break;
+	} while (ps->tok->type == TOK_IDENTIFIER);
+
+	return s;
+}
+
+static struct statement *
 parse_stmt(struct parser *ps)
 {
 	struct statement *s = NULL;
@@ -761,6 +791,7 @@ parse_stmt(struct parser *ps)
 		case KEYWORD_WHILE:  s = parse_while(ps);	break;
 		case KEYWORD_DO:     s = parse_do(ps);		break;
 		case KEYWORD_IMPORT: s = parse_import(ps);	break;
+		case KEYWORD_ENUM:   s = parse_enum(ps);      break;
 		case KEYWORD_ELSE:
 			error_push(ps->r, ps->tok->loc, ERR_FATAL, "unmatched `else' statement");
 			NEXT;
@@ -825,29 +856,6 @@ parse_stmt(struct parser *ps)
 	}
 
 	return s;
-}
-
-struct expression *
-parse_isolated_expr(struct token *tok)
-{
-	struct parser *ps = new_parser();
-	ps->tok = tok;
-
-
-	struct expression *expr = parse_expression(ps, 0);
-	if (ps->r->fatal) {
-		error_write(ps->r, stderr);
-		free_parser(ps);
-
-		// TODO: is there a better way to do this?
-		exit(EXIT_FAILURE);
-	} else if (ps->r->pending) {
-		error_write(ps->r, stderr);
-	}
-
-	free_parser(ps);
-
-	return expr;
 }
 
 bool

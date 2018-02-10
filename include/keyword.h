@@ -24,6 +24,7 @@ enum keyword_type {
 	KEYWORD_AS,
 	KEYWORD_WHEN,
 	KEYWORD_GOTO,
+	KEYWORD_ENUM,
 	KEYWORD_INVALID
 };
 

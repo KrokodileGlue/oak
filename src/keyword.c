@@ -26,6 +26,7 @@ struct keyword keywords[] = {
 	{ KEYWORD_AS,      "as"      },
 	{ KEYWORD_WHEN,    "when"    },
 	{ KEYWORD_GOTO,    "goto"    },
+	{ KEYWORD_ENUM,    "enum"    },
 	{ KEYWORD_INVALID, "invalid" },
 };
 

@@ -678,6 +678,20 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		sym->global = si->scope_pointer == 1;
 		break;
 
+	case STMT_ENUM:
+		for (size_t i = 0; i < stmt->_enum.num; i++) {
+			struct symbol *e = new_symbol(stmt->_enum.names[i], si->symbol);
+			e->type = SYM_ENUM;
+			e->name = strclone(stmt->_enum.names[i]->value);
+			e->id = hash(e->name, strlen(e->name));
+			e->scope = -1;
+			add(si, e);
+			resolve_expr(si, stmt->_enum.init[i]);
+		}
+
+		free(sym);
+		return;
+
 	case STMT_GOTO:
 	case STMT_LAST:
 	case STMT_NEXT:
