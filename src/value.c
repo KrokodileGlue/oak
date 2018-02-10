@@ -164,6 +164,16 @@ add_values(struct gc *gc, struct value l, struct value r)
 		char *s = show_value(gc, l);
 		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
 		free(s);
+	} else if (l.type == VAL_ARRAY && r.type == VAL_ARRAY) {
+		ret.type = VAL_ARRAY;
+		ret.idx = gc_alloc(gc, VAL_ARRAY);
+		gc->array[ret.idx] = new_array();
+
+		for (size_t i = 0; i < gc->array[l.idx]->len; i++)
+			array_push(gc->array[ret.idx], gc->array[l.idx]->v[i]);
+
+		for (size_t i = 0; i < gc->array[r.idx]->len; i++)
+			array_push(gc->array[ret.idx], gc->array[r.idx]->v[i]);
 	} else if (l.type == VAL_STR && r.type == VAL_NIL) {
 		ret = copy_value(gc, l);
 	} else if (l.type == VAL_NIL && r.type == VAL_STR) {

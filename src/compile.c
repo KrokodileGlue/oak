@@ -658,11 +658,8 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int stop = compile_expression(c, e->b, sym, false, true);
 
 			int step = alloc_reg(c);
-			struct value v;
-			v.type = VAL_INT;
-			v.integer = 1;
 			emit_ab(c, INSTR_COPYC, step,
-			        constant_table_add(c->ct, v), &e->tok->loc);
+			        constant_table_add(c->ct, INT(1)), &e->tok->loc);
 
 			emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
 		} break;

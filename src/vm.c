@@ -589,14 +589,12 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		if (GETREG(c.a).type == VAL_ARRAY
 		    && GETREG(c.b).type == VAL_INT) {
-			DOUT("thing: %"PRId64, GETREG(c.b).integer);
-			grow_array(vm->gc->array[GETREG(c.a).idx], GETREG(c.b).integer + 1);
-			DOUT("thing: %zu", vm->gc->array[GETREG(c.a).idx]->alloc);
+			int idx = GETREG(c.b).integer;
+			struct array *a = vm->gc->array[GETREG(c.a).idx];
 
-			if (vm->gc->array[GETREG(c.a).idx]->len <= GETREG(c.b).integer)
-				vm->gc->array[GETREG(c.a).idx]->len = GETREG(c.b).integer + 1;
-
-			vm->gc->array[GETREG(c.a).idx]->v[GETREG(c.b).integer] = GETREG(c.c);
+			grow_array(a, idx + 2305);
+			if ((int)a->len < idx) a->len = idx + 1;
+			a->v[idx] = GETREG(c.c);
 		}
 
 		if (GETREG(c.b).type == VAL_STR) {
