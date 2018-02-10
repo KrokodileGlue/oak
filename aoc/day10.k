@@ -19,4 +19,4 @@ fn g (x) {
 }
 var c = f(map { int() - 1 } split(/,/, I(day10.txt)), 1)
 pl c[0] * c[1]
-pl D(g(map { _ - 1 } ord(chomp I(day10.txt)) + [17, 31, 73, 47, 23]))
+pl D(g(map { _ - 1 } ord chomp I(day10.txt) + [17, 31, 73, 47, 23]))
