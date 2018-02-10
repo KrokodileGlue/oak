@@ -12,7 +12,6 @@ struct table {
 	struct bucket {
 		uint64_t *h;
 		char **key;
-		char **name;
 		struct value *val;
 		size_t len;
 	} bucket[TABLE_SIZE];

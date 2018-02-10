@@ -27,6 +27,9 @@ void
 free_table(struct table *t)
 {
 	for (size_t i = 0; i < TABLE_SIZE; i++) {
+		for (size_t j = 0; j < t->bucket[i].len; j++)
+			free(t->bucket[i].key[j]);
+
 		free(t->bucket[i].h);
 		free(t->bucket[i].key);
 		free(t->bucket[i].val);
@@ -50,16 +53,15 @@ table_add(struct table *t, char *key, struct value v)
 		}
 	}
 
-	b->h   = realloc(b->h,   sizeof b->h[0]   * (b->len + 1));
-	b->val = realloc(b->val, sizeof b->val[0] * (b->len + 1));
-	b->key = realloc(b->key, sizeof b->key[0] * (b->len + 1));
+	b->h   = realloc(b->h,   (b->len + 1) * sizeof *b->h);
+	b->val = realloc(b->val, (b->len + 1) * sizeof *b->val);
+	b->key = realloc(b->key, (b->len + 1) * sizeof *b->key);
 
 	b->h  [b->len] = h;
-	b->key[b->len] = key;
+	b->key[b->len] = strclone(key);
 	b->val[b->len] = v;
 
-	b->len++;
-	return b->val[b->len - 1];
+	return b->val[b->len++];
 }
 
 struct value
@@ -71,7 +73,7 @@ table_lookup(struct table *t, char *key)
 	struct bucket *b = t->bucket + idx;
 
 	for (size_t i = 0; i < b->len; i++)
-		if (b->h[i] == h)
+		if (b->h[i] == h && !strcmp(key, b->key[i]))
 			return b->val[i];
 
 	return (struct value){ VAL_NIL, { 0 }, NULL };
