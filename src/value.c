@@ -918,6 +918,71 @@ float_value(struct gc *gc, struct value l)
 }
 
 struct value
+slice_value(struct gc *gc, struct value l, int start, int stop, int step)
+{
+	struct value v;
+	v.type = VAL_ARRAY;
+	v.idx = gc_alloc(gc, VAL_ARRAY);
+	gc->array[v.idx] = new_array();
+
+	if (stop < start && step < 0)
+		for (int64_t i = start; i >= stop; i += step)
+			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
+	else if (start < stop && step < 0)
+		for (int64_t i = stop; i >= start; i += step)
+			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
+	else if (start < stop && step > 0)
+		for (int64_t i = start; i <= stop; i += step)
+			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
+
+	return v;
+}
+
+struct value
+value_range(struct gc *gc, bool real, double start, double stop, double step)
+{
+	struct value v;
+	v.type = VAL_ARRAY;
+	v.idx = gc_alloc(gc, VAL_ARRAY);
+	gc->array[v.idx] = new_array();
+
+	if (fcmp(start, stop)) {
+		array_push(gc->array[v.idx], INT(start));
+		return v;
+	}
+
+	if (start < stop) {
+		if (step <= 0) {
+			return ERR("invalid range; range from %f to %f requires a positive step value (got %f)",
+			           start, stop, step);
+		}
+
+		grow_array(gc->array[v.idx], (stop - start) / step + 1);
+		for (double i = start; i <= stop; i += step) {
+			if (real)
+				array_push(gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
+			else
+				array_push(gc->array[v.idx], (struct value){ VAL_INT, { .integer = (int64_t)i }, 0 });
+		}
+	} else {
+		if (step >= 0) {
+			return ERR("invalid range; range from %f to %f requires a negative step value (got %f)",
+			           start, stop, step);
+		}
+
+		grow_array(gc->array[v.idx], (start - stop) / step + 1);
+		for (double i = start; i >= stop; i += step) {
+			if (real)
+				array_push(gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
+			else
+				array_push(gc->array[v.idx], (struct value){ VAL_INT, { .integer = i }, 0 });
+		}
+	}
+
+	return v;
+}
+
+struct value
 value_translate(struct gc *l, struct gc *r, struct value v)
 {
 	if (l->debug || r->debug) {

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -84,11 +85,11 @@ lc(int c)
 	return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
 }
 
-size_t line_number    (struct location loc);
-size_t column_number  (struct location loc);
-size_t line_len       (struct location loc);
-size_t index_in_line  (struct location loc);
-char *get_line        (struct location loc);
+size_t line_number  (struct location loc);
+size_t column_number(struct location loc);
+size_t line_len     (struct location loc);
+size_t index_in_line(struct location loc);
+char *get_line      (struct location loc);
 void chop_extension(char *str);
 char *add_extension(char *str);
 char *strclone     (const char *str);
@@ -96,10 +97,10 @@ char *strclone     (const char *str);
 void print_escaped_string(FILE *f, char *str, size_t len);
 char *substr(const char *str, size_t x, size_t y);
 
-char *smart_cat      (char *lhs, char *rhs);
-char *new_cat        (char *lhs, char *rhs);
+char *smart_cat(char *lhs, char *rhs);
+char *new_cat  (char *lhs, char *rhs);
 
-void remove_char     (char *lhs, size_t c);
+void remove_char(char *lhs, size_t c);
 
 uint64_t hash(char *d, size_t len);
 char *strsort(const char *s);
@@ -107,5 +108,19 @@ char *strsort(const char *s);
 void *oak_malloc(size_t size);
 void *oak_realloc(void *mem, size_t size);
 char *load_file(const char *path);
+
+static inline char *
+ksprintf(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	char *buf = oak_malloc(512);
+	snprintf(buf, 512, fmt, args);
+
+	va_end(args);
+
+	return buf;
+}
 
 #endif

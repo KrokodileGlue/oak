@@ -48,6 +48,8 @@ struct value {
 			uint16_t module;
 			int64_t integer;
 		};
+
+		char *err;
 	};
 
 	char *name;
@@ -55,7 +57,7 @@ struct value {
 
 #define BOOL(X) ((struct value) { VAL_BOOL, { .boolean = (X) }, NULL})
 #define INT(X)  ((struct value) { VAL_INT,  { .integer = (X) }, NULL})
-#define ERR(X)  ((struct value) { VAL_ERR,  { .integer = 0   }, (X)})
+#define ERR(...) ((struct value) { VAL_ERR, { .err = ksprintf(__VA_ARGS__) }, NULL })
 #define NIL     ((struct value) { VAL_NIL,  { .integer = 0   }, NULL})
 
 #include "error.h"
@@ -98,6 +100,8 @@ struct value dec_value(struct value l);
 struct value neg_value(struct value l);
 struct value abs_value(struct value l);
 struct value flip_value(struct gc *gc, struct value l);
+struct value slice_value(struct gc *gc, struct value l, int start, int stop, int step);
+struct value value_range(struct gc *gc, bool real, double start, double stop, double step);
 
 struct value cmp_values(struct gc *gc, struct value l, struct value r);
 struct value less_values(struct gc *gc, struct value l, struct value r);

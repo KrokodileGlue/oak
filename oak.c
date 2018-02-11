@@ -81,14 +81,16 @@ process_arguments(struct oak *k, int argc, char **argv)
 	return path;
 }
 
-void add_module(struct oak *k, struct module *m)
+void
+add_module(struct oak *k, struct module *m)
 {
 	k->modules = oak_realloc(k->modules, sizeof k->modules[0] * (k->num + 1));
 	m->id = k->num;
 	k->modules[k->num++] = m;
 }
 
-void print_modules(struct oak *k)
+void
+print_modules(struct oak *k)
 {
 	if (k->print_anything) {
 		for (size_t i = 0; i < k->num; i++) {

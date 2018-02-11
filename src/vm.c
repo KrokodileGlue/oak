@@ -514,22 +514,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		int64_t stop = GETREG(c.d).type == VAL_INT ? GETREG(c.d).integer : vm->gc->array[GETREG(c.b).idx]->len - 1;
 		int64_t step = GETREG(c.e).type == VAL_INT ? GETREG(c.e).integer : 1;
 
-		struct value v;
-		v.type = VAL_ARRAY;
-		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[v.idx] = new_array();
-
-		if (stop < start && step < 0)
-			for (int64_t i = start; i >= stop; i += step)
-				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
-		else if (start < stop && step < 0)
-			for (int64_t i = stop; i >= start; i += step)
-				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
-		else if (start < stop && step > 0)
-			for (int64_t i = start; i <= stop; i += step)
-				array_push(vm->gc->array[v.idx], vm->gc->array[GETREG(c.b).idx]->v[labs(i % vm->gc->array[GETREG(c.b).idx]->len)]);
-
-		SETREG(c.a, v);
+		SETREG(c.a, slice_value(vm->gc, GETREG(c.b), start, stop, step));
 	} break;
 
 	case INSTR_PUSHBACK:
@@ -1002,50 +987,10 @@ execute_instr(struct vm *vm, struct instruction c)
 			stop = GETREG(c.c).type == VAL_INT ? (double)GETREG(c.c).integer : GETREG(c.c).real;
 		}
 
-		struct value v;
-		v.type = VAL_ARRAY;
-		v.idx = gc_alloc(vm->gc, VAL_ARRAY);
-		vm->gc->array[v.idx] = new_array();
-
-		if (fcmp(start, stop)) {
-			array_push(vm->gc->array[v.idx], GETREG(c.b));
-			SETREG(c.a, v);
-			return;
-		}
-
-		if (start < stop) {
-			if (step <= 0) {
-				error_push(vm->r, *c.loc, ERR_FATAL,
-				           "invalid range; range from %f to %f requires a positive step value (got %f)",
-				           start, stop, step);
-				return;
-			}
-
-			grow_array(vm->gc->array[v.idx], (stop - start) / step + 1);
-			for (double i = start; i <= stop; i += step) {
-				if (GETREG(c.b).type == VAL_FLOAT || GETREG(c.c).type == VAL_FLOAT)
-					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
-				else
-					array_push(vm->gc->array[v.idx], (struct value){ VAL_INT, { .integer = (int64_t)i }, 0 });
-			}
-		} else {
-			if (step >= 0) {
-				error_push(vm->r, *c.loc, ERR_FATAL,
-				           "invalid range; range from %f to %f requires a negative step value (got %f)",
-				           start, stop, step);
-				return;
-			}
-
-			grow_array(vm->gc->array[v.idx], (start - stop) / step + 1);
-			for (double i = start; i >= stop; i += step) {
-				if (GETREG(c.b).type == VAL_FLOAT || GETREG(c.c).type == VAL_FLOAT)
-					array_push(vm->gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });
-				else
-					array_push(vm->gc->array[v.idx], (struct value){ VAL_INT, { .integer = i }, 0 });
-			}
-		}
-
-		SETREG(c.a, v);
+		SETREG(c.a, value_range(vm->gc,
+		                        GETREG(c.b).type == VAL_FLOAT
+		                        || GETREG(c.c).type == VAL_FLOAT,
+		                        start, stop, step));
 	} break;
 
 	case INSTR_REV:

@@ -592,6 +592,14 @@ print_statement(struct ASTPrinter *ap, struct statement *s)
 		ap->depth--;
 		break;
 
+	case STMT_LABEL:
+	case STMT_GOTO:
+		ap->depth++;
+		indent(ap);
+		fprintf(ap->f, "%s", s->label);
+		ap->depth--;
+		break;
+
 	case STMT_ENUM:
 		ap->depth++;
 		split(ap);
