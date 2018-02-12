@@ -94,18 +94,6 @@ print_debug(struct gc *gc, struct value l)
 	fprintf(stderr, " (%s)", value_data[l.type].body);
 }
 
-static void
-_log(struct gc *gc, const char *msg, struct value l, struct value r)
-{
-	if (gc->debug) {
-		fprintf(stderr, "%s - left: ", msg);
-		print_debug(gc, l);
-		fprintf(stderr, ", right: ");
-		print_debug(gc, r);
-		fputc('\n', stderr);
-	}
-}
-
 struct value
 val_binop(struct gc *gc, struct value l, struct value r, int op)
 {
@@ -251,44 +239,26 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 		BINARY_MATH_OPERATION(v, /) else goto err;
 		break;
 
-	case OP_MORE:
-		BINARY_MATH_OPERATION(v, >) else goto err;
-		return BOOL(is_truthy(gc, v));
+#define MATHOP(X,Y) \
+	case OP_##X: \
+		BINARY_MATH_OPERATION(v, Y) else goto err; \
+		return BOOL(is_truthy(gc, v))
 
-	case OP_LESS:
-		BINARY_MATH_OPERATION(v, <) else goto err;
-		return BOOL(is_truthy(gc, v));
+#define BITOP(X,Y) \
+	case OP_##X: \
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err; \
+		return INT(l.integer Y r.integer)
 
-	case OP_LEQ:
-		BINARY_MATH_OPERATION(v, <=) else goto err;
-		return BOOL(is_truthy(gc, v));
-
-	case OP_GEQ:
-		BINARY_MATH_OPERATION(v, >=) else goto err;
-		return BOOL(is_truthy(gc, v));
-
-	case OP_NOTEQ:
-		return BOOL(!is_truthy(gc, val_binop(gc, l, r, OP_CMP)));
-
-	case OP_LEFT:
-		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
-		return INT(l.integer << r.integer);
-
-	case OP_RIGHT:
-		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
-		return INT(l.integer >> r.integer);
-
-	case OP_BAND:
-		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
-		return INT(l.integer & r.integer);
-
-	case OP_XOR:
-		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
-		return INT(l.integer ^ r.integer);
-
-	case OP_BOR:
-		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
-		return INT(l.integer | r.integer);
+	MATHOP(MORE, >);
+	MATHOP(LESS, <);
+	MATHOP(LEQ, <=);
+	MATHOP(GEQ, >=);
+	MATHOP(NOTEQ, !=);
+	BITOP(LEFT, <<);
+	BITOP(RIGHT, >>);
+	BITOP(BAND, &);
+	BITOP(XOR, ^);
+	BITOP(BOR, |);
 
 	case OP_MOD:
 		if ((l.type == VAL_INT || l.type == VAL_FLOAT)
@@ -341,10 +311,20 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 	           value_data[l.type].body, value_data[r.type].body);
 }
 
+#define LOG(X)	  \
+	do { \
+		if (gc->debug) { \
+			fprintf(stderr, "value operation '"X); \
+			fprintf(stderr, "' on "); \
+			print_debug(gc, l); \
+			fprintf(stderr, "\n"); \
+		} \
+	} while (0)
+
 bool
 is_truthy(struct gc *gc, struct value l)
 {
-	_log(gc, "truthy", l, (struct value){ VAL_NIL, {0}, 0 });
+	LOG("truthy");
 
 	switch (l.type) {
 	case VAL_BOOL:  return l.boolean;
@@ -355,21 +335,23 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
 	case VAL_FN:    return true;
-	case VAL_ERR:   assert(false);
-	case VAL_UNDEF: assert(false);
 	case VAL_TABLE: {
 		int len = 0;
 		for (int i = 0; i < TABLE_SIZE; i++)
 			len += gc->table[l.idx]->bucket[i].len;
 		return !!len;
 	} break;
+
+	case VAL_UNDEF:
+	case VAL_ERR:
+		assert(false);
 	}
 
 	return false;
 }
 
 struct value
-val_unop(struct gc *gc, struct value l, int op)
+val_unop(struct value l, int op)
 {
 	switch (op) {
 	case OP_ADDADD:
@@ -401,7 +383,7 @@ val_unop(struct gc *gc, struct value l, int op)
 struct value
 value_len(struct gc *gc, struct value l)
 {
-	_log(gc, "length", l, (struct value){ VAL_NIL, {0}, 0 });
+	LOG("length");
 
 	struct value ans;
 	ans.type = VAL_INT;
@@ -449,7 +431,7 @@ copy_value(struct gc *gc, struct value l)
 struct value
 flip_value(struct gc *gc, struct value l)
 {
-	_log(gc, "flip", l, (struct value){ VAL_NIL, {0}, 0 });
+	LOG("flip");
 	struct value ans = (struct value){ VAL_BOOL, { 0 }, 0 };
 
 	switch (l.type) {
@@ -495,7 +477,7 @@ qsort_partition(struct gc *gc, struct value l, int begin, int end)
 struct value
 sort_value(struct gc *gc, struct value l)
 {
-	_log(gc, "sort", l, (struct value){ VAL_NIL, {0}, 0 });
+	LOG("sort");
 	struct value ret;
 
 	switch (l.type) {

@@ -206,7 +206,13 @@ main(int argc, char **argv)
 
 	char *path = process_arguments(k, argc, argv);
 	struct module *m = NULL;
-	if (path) m = load_module(k, NULL, load_file(path), path, "*main*", NULL, 0);
+	char *name = NULL;
+
+	if (path) {
+		name = strclone(path);
+		chop_extension(name);
+		m = load_module(k, NULL, load_file(path), path, name, NULL, 0);
+	}
 
 	if (k->eval && m) {
 		push_frame(m->vm);
@@ -225,6 +231,7 @@ main(int argc, char **argv)
 
 	print_modules(k);
 	free_oak(k);
+	free(name);
 
 	return EXIT_SUCCESS;
 }

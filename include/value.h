@@ -75,7 +75,7 @@ struct value_data {
 extern struct value_data value_data[];
 
 struct value val_binop(struct gc *gc, struct value l, struct value r, int op);
-struct value val_unop(struct gc *gc, struct value l, int op);
+struct value val_unop(struct value l, int op);
 
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);

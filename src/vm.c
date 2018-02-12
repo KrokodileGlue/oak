@@ -225,7 +225,7 @@ stacktrace(struct vm *vm)
 #define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
 #define CONST(X) (vm->ct->val[X])
 #define BIN(X) SETREG(c.a, val_binop(vm->gc, GETREG(c.b), GETREG(c.c), (X)))
-#define UN(X) SETREG(c.a, val_unop(vm->gc, GETREG(c.a), (X)))
+#define UN(X) SETREG(c.a, val_unop(GETREG(c.a), (X)))
 
 static void
 pop(struct vm *vm, int reg)
@@ -366,7 +366,7 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_NEG:
-		SETREG(c.a, val_unop(vm->gc, GETREG(c.b), OP_SUB));
+		SETREG(c.a, val_unop(GETREG(c.b), OP_SUB));
 		break;
 
 	case INSTR_LINE:

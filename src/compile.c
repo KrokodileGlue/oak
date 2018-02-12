@@ -2084,7 +2084,7 @@ compile_constant_operator(struct compiler *c, struct symbol *sym, struct express
 			break;
 
 		default:
-			v = val_unop(c->gc, compile_constant_expr(c, sym, e->a), e->operator->name);
+			v = val_unop(compile_constant_expr(c, sym, e->a), e->operator->name);
 		}
 		break;
 
