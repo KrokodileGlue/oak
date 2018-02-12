@@ -2,8 +2,8 @@ fn D (x) = str [hex(>> 4) + hex(& 0xF) for x]
 fn f (x, z) {
 	var h a b = 0 -> 255, 0, 0
 	for 1 -> z: for x {
-		var r = reverse h[a:a + _]
-		if r: for 0 -> _: h[(a +) % 256] = r[]
+		var r = reverse h[a:a +]
+		if r: for 0 ->: h[(a +) % 256] = r[]
 		a += _ + 1 + b++
 	}
 	return h

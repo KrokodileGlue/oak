@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define NEXT if (ps->tok->type != TOK_END) ps->tok = ps->tok->next;
+#define NEXT do { if (ps->tok->type != TOK_END) ps->tok = ps->tok->next; } while (0)
 
 struct parser *
 new_parser()
@@ -270,6 +270,7 @@ parse_expr(struct parser *ps, size_t prec)
 					left->args = oak_realloc(left->args, sizeof left->args[0] * (left->num + 1));
 					left->args[left->num++] = parse_expr(ps, 1);
 					if (!strcmp(ps->tok->value, ",")) NEXT;
+					else break;
 				}
 			}
 
@@ -348,7 +349,7 @@ parse_expr(struct parser *ps, size_t prec)
 			NEXT;
 		} else {
 			free(left);
-			return NULL;
+			left = NULL;
 		}
 	}
 
