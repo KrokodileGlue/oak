@@ -1669,7 +1669,7 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym, bool 
 			c->code[c->next[i]].a = sym->next; \
 		c->np = np; \
 		for (int i = lp; i < c->lp; i++) \
-			c->code[c->last[i]].a = sym->last; \
+			c->code[c->last[i]].a = c->ip; \
 		c->lp = lp; \
 	} while (0)
 

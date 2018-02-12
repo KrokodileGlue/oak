@@ -529,7 +529,7 @@ static bool
 is_regex_start(struct lexer *ls, char *a)
 {
 	/* TODO: comma should be allowed. */
-	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^";
+	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^&";
 
 	if (!*a)       return false;
 	if (!ls->tok)  return false;

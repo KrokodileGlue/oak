@@ -1,4 +1,4 @@
-fn D (x) = str [hex(_ >> 4) + hex(_ & 0xF) for x]
+fn D (x) = str [hex(>> 4) + hex(& 0xF) for x]
 fn f (x, z) {
 	var h a b = 0 -> 255, 0, 0
 	for 1 -> z: for x {
