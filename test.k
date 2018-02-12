@@ -502,5 +502,4 @@ pl '$FOO, $BAR, $BAZ'
 # TODO: allow _ in numbers and remove all use of strtol
 # TODO: implement global variables properly
 # TODO: free eval'd modules quickly
-# TODO: rewrite the value manipulators e.g. value_bin(gc, l, r, op)
 # TODO: allow trailing commas in places

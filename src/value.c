@@ -21,17 +21,17 @@ struct value_data value_data[] = {
 	{ VAL_ERR,   "error"    }
 };
 
-#define BINARY_MATH_OPERATION(x)                                                    \
-	if ((l.type == VAL_INT || l.type == VAL_FLOAT)                              \
-	    && (r.type == VAL_INT || r.type == VAL_FLOAT)) {                        \
-		if (l.type == VAL_FLOAT || r.type == VAL_FLOAT) {                   \
-			ret.type = VAL_FLOAT;                                       \
-			ret.real = (double)(l.type == VAL_INT ? l.integer : l.real) \
-				x (double)(r.type == VAL_INT ? r.integer : r.real); \
-		} else {                                                            \
-			ret.type = VAL_INT;                                         \
-			ret.integer = l.integer x r.integer;                        \
-		}                                                                   \
+#define BINARY_MATH_OPERATION(X,Y)	  \
+	if ((l.type == VAL_INT || l.type == VAL_FLOAT) \
+	    && (r.type == VAL_INT || r.type == VAL_FLOAT)) { \
+		if (l.type == VAL_FLOAT || r.type == VAL_FLOAT) { \
+			(X).type = VAL_FLOAT; \
+			(X).real = (double)(l.type == VAL_INT ? l.integer : l.real) \
+				Y (double)(r.type == VAL_INT ? r.integer : r.real); \
+		} else { \
+			(X).type = VAL_INT; \
+			(X).integer = l.integer Y r.integer; \
+		} \
 	}
 
 char *
@@ -107,402 +107,238 @@ _log(struct gc *gc, const char *msg, struct value l, struct value r)
 }
 
 struct value
-add_values(struct gc *gc, struct value l, struct value r)
+val_binop(struct gc *gc, struct value l, struct value r, int op)
 {
-	_log(gc, "addition", l, r);
+	struct value v;
+	v.type = VAL_NIL;
 
-	struct value ret;
-	ret.type = VAL_NIL;
-
-	if (l.type == VAL_STR && r.type == VAL_STR) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = NULL;
-
-		/*
-		 * We should be careful about messing with memory
-		 * that's owned by the garbage collector.
-		 */
-
-		gc->str[ret.idx] = oak_realloc(gc->str[ret.idx], strlen(gc->str[l.idx]) + strlen(gc->str[r.idx]) + 1);
-
-		strcpy(gc->str[ret.idx], gc->str[l.idx]);
-		strcpy(gc->str[ret.idx] + strlen(gc->str[l.idx]), gc->str[r.idx]);
-	} else if (l.type == VAL_STR && r.type == VAL_INT) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, r);
-		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
-		free(s);
-	} else if (r.type == VAL_STR && l.type == VAL_INT) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, l);
-		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
-		free(s);
-	} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, r);
-		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
-		free(s);
-	} else if (r.type == VAL_STR && l.type == VAL_BOOL) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, l);
-		gc->str[ret.idx] = new_cat(gc->str[r.idx], s);
-		free(s);
-	} else if (l.type == VAL_STR && r.type == VAL_ARRAY) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, r);
-		gc->str[ret.idx] = new_cat(gc->str[l.idx], s);
-		free(s);
-	} else if (l.type == VAL_ARRAY && r.type == VAL_STR) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		char *s = show_value(gc, l);
-		gc->str[ret.idx] = new_cat(s, gc->str[r.idx]);
-		free(s);
-	} else if (l.type == VAL_ARRAY && r.type == VAL_ARRAY) {
-		ret.type = VAL_ARRAY;
-		ret.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->array[ret.idx] = new_array();
-
-		for (size_t i = 0; i < gc->array[l.idx]->len; i++)
-			array_push(gc->array[ret.idx], gc->array[l.idx]->v[i]);
-
-		for (size_t i = 0; i < gc->array[r.idx]->len; i++)
-			array_push(gc->array[ret.idx], gc->array[r.idx]->v[i]);
-	} else if (l.type == VAL_STR && r.type == VAL_NIL) {
-		ret = copy_value(gc, l);
-	} else if (l.type == VAL_NIL && r.type == VAL_STR) {
-		ret = copy_value(gc, r);
-	} else if (l.type == VAL_INT && r.type == VAL_NIL) {
-		ret = copy_value(gc, l);
-	} else if (l.type == VAL_NIL && r.type == VAL_INT) {
-		ret = copy_value(gc, r);
-	} else BINARY_MATH_OPERATION(+) else {
-		return ERR("Invalid operation");
+	if (gc->debug) {
+		fprintf(stderr, "binary operation %d on ", op);
+		print_debug(gc, l);
+		fprintf(stderr, " and ");
+		print_debug(gc, r);
+		fprintf(stderr, "\n");
 	}
 
-	return ret;
-}
+	switch (op) {
+	case OP_ADD:
+		if (l.type == VAL_STR && r.type == VAL_STR) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			gc->str[v.idx] = NULL;
 
-struct value
-sub_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "subtraction", l, r);
+			gc->str[v.idx] = oak_realloc(gc->str[v.idx], strlen(gc->str[l.idx]) + strlen(gc->str[r.idx]) + 1);
 
-	struct value ret;
-	ret.type = VAL_NIL;
+			strcpy(gc->str[v.idx], gc->str[l.idx]);
+			strcpy(gc->str[v.idx] + strlen(gc->str[l.idx]), gc->str[r.idx]);
+		} else if (l.type == VAL_STR && r.type == VAL_INT) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, r);
+			gc->str[v.idx] = new_cat(gc->str[l.idx], s);
+			free(s);
+		} else if (r.type == VAL_STR && l.type == VAL_INT) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, l);
+			gc->str[v.idx] = new_cat(s, gc->str[r.idx]);
+			free(s);
+		} else if (l.type == VAL_STR && r.type == VAL_BOOL) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, r);
+			gc->str[v.idx] = new_cat(gc->str[l.idx], s);
+			free(s);
+		} else if (r.type == VAL_STR && l.type == VAL_BOOL) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, l);
+			gc->str[v.idx] = new_cat(gc->str[r.idx], s);
+			free(s);
+		} else if (l.type == VAL_STR && r.type == VAL_ARRAY) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, r);
+			gc->str[v.idx] = new_cat(gc->str[l.idx], s);
+			free(s);
+		} else if (l.type == VAL_ARRAY && r.type == VAL_STR) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			char *s = show_value(gc, l);
+			gc->str[v.idx] = new_cat(s, gc->str[r.idx]);
+			free(s);
+		} else if (l.type == VAL_ARRAY && r.type == VAL_ARRAY) {
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(gc, VAL_ARRAY);
+			gc->array[v.idx] = new_array();
 
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
+			for (size_t i = 0; i < gc->array[l.idx]->len; i++)
+				array_push(gc->array[v.idx], gc->array[l.idx]->v[i]);
 
-	BINARY_MATH_OPERATION(-) else {
-		assert(false);
-	}
+			for (size_t i = 0; i < gc->array[r.idx]->len; i++)
+				array_push(gc->array[v.idx], gc->array[r.idx]->v[i]);
+		} else if (l.type == VAL_STR && r.type == VAL_NIL) {
+			v = copy_value(gc, l);
+		} else if (l.type == VAL_NIL && r.type == VAL_STR) {
+			v = copy_value(gc, r);
+		} else if (l.type == VAL_INT && r.type == VAL_NIL) {
+			v = copy_value(gc, l);
+		} else if (l.type == VAL_NIL && r.type == VAL_INT) {
+			v = copy_value(gc, r);
+		} else BINARY_MATH_OPERATION(v, +) else goto err;
+		break;
 
-	return ret;
-}
+	case OP_SUB:
+		BINARY_MATH_OPERATION(v, -) else goto err;
+		break;
 
-struct value
-mul_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "multiplication", l, r);
+	case OP_MUL:
+		if (l.type == VAL_STR && r.type == VAL_INT) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			gc->str[v.idx] = oak_malloc(r.integer * strlen(gc->str[l.idx]) + 1);
+			*gc->str[v.idx] = 0;
 
-	struct value ret;
-	ret.type = VAL_NIL;
+			for (int64_t i = 0; i < r.integer; i++)
+				strcat(gc->str[v.idx], gc->str[l.idx]);
+		} else if (l.type == VAL_INT && r.type == VAL_STR) {
+			v.type = VAL_STR;
+			v.idx = gc_alloc(gc, VAL_STR);
+			gc->str[v.idx] = oak_malloc(l.integer * strlen(gc->str[r.idx]) + 1);
+			*gc->str[v.idx] = 0;
 
-	if (l.type == VAL_NIL || r.type == VAL_NIL)
-		return ret;
+			for (int64_t i = 0; i < l.integer; i++)
+				strcat(gc->str[v.idx], gc->str[r.idx]);
+		} else if (l.type == VAL_ARRAY && r.type == VAL_INT) {
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(gc, VAL_ARRAY);
+			gc->array[v.idx] = new_array();
 
-	if (l.type == VAL_STR && r.type == VAL_INT) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = oak_malloc(r.integer * strlen(gc->str[l.idx]) + 1);
-		*gc->str[ret.idx] = 0;
+			for (int64_t i = 0; i < r.integer; i++)
+				for (size_t j = 0; j < gc->array[l.idx]->len; j++)
+					array_push(gc->array[v.idx], copy_value(gc, gc->array[l.idx]->v[j]));
+		} else if (l.type == VAL_INT && r.type == VAL_ARRAY) {
+			v.type = VAL_ARRAY;
+			v.idx = gc_alloc(gc, VAL_ARRAY);
+			gc->array[v.idx] = new_array();
 
-		for (int64_t i = 0; i < r.integer; i++)
-			strcat(gc->str[ret.idx], gc->str[l.idx]);
-	} else if (l.type == VAL_INT && r.type == VAL_STR) {
-		ret.type = VAL_STR;
-		ret.idx = gc_alloc(gc, VAL_STR);
-		gc->str[ret.idx] = oak_malloc(l.integer * strlen(gc->str[r.idx]) + 1);
-		*gc->str[ret.idx] = 0;
+			for (int64_t i = 0; i < l.integer; i++)
+				for (size_t j = 0; j < gc->array[r.idx]->len; j++)
+					array_push(gc->array[v.idx], copy_value(gc, gc->array[r.idx]->v[j]));
+		} else BINARY_MATH_OPERATION(v, *) else goto err;
+		break;
 
-		for (int64_t i = 0; i < l.integer; i++)
-			strcat(gc->str[ret.idx], gc->str[r.idx]);
-	} else if (l.type == VAL_ARRAY && r.type == VAL_INT) {
-		ret.type = VAL_ARRAY;
-		ret.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->array[ret.idx] = new_array();
+	case OP_POW:
+		if (l.type == VAL_INT || r.type == VAL_INT) {
+			if (r.integer == 0) {
+				l.integer = 1;
+				return l;
+			}
 
-		for (int64_t i = 0; i < r.integer; i++)
-			for (size_t j = 0; j < gc->array[l.idx]->len; j++)
-				array_push(gc->array[ret.idx], copy_value(gc, gc->array[l.idx]->v[j]));
-	} else if (l.type == VAL_INT && r.type == VAL_ARRAY) {
-		ret.type = VAL_ARRAY;
-		ret.idx = gc_alloc(gc, VAL_ARRAY);
-		gc->array[ret.idx] = new_array();
+			int64_t base = l.integer;
+			for (int i = 0; i < r.integer - 1; i++)
+				l.integer *= base;
 
-		for (int64_t i = 0; i < l.integer; i++)
-			for (size_t j = 0; j < gc->array[r.idx]->len; j++)
-				array_push(gc->array[ret.idx], copy_value(gc, gc->array[r.idx]->v[j]));
-	} else BINARY_MATH_OPERATION(*) else {
-		assert(false);
-	}
-
-	return ret;
-}
-
-struct value
-pow_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "power", l, r);
-
-	if (l.type == VAL_INT || r.type == VAL_INT) {
-		if (r.integer == 0) {
-			l.integer = 1;
 			return l;
+		} else goto err;
+
+	case OP_DIV:
+		if ((r.type == VAL_INT && r.integer == 0)
+		    || (r.type == VAL_FLOAT && fcmp(r.real, 0))) {
+			return ERR("division by zero");
 		}
 
-		int64_t base = l.integer;
-		for (int i = 0; i < r.integer - 1; i++)
-			l.integer *= base;
-	} else {
-		assert(false);
-	}
+		BINARY_MATH_OPERATION(v, /) else goto err;
+		break;
 
-	return l;
-}
+	case OP_MORE:
+		BINARY_MATH_OPERATION(v, >) else goto err;
+		return BOOL(is_truthy(gc, v));
 
-struct value
-div_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "division", l, r);
+	case OP_LESS:
+		BINARY_MATH_OPERATION(v, <) else goto err;
+		return BOOL(is_truthy(gc, v));
 
-	struct value ret;
-	ret.type = VAL_NIL;
+	case OP_LEQ:
+		BINARY_MATH_OPERATION(v, <=) else goto err;
+		return BOOL(is_truthy(gc, v));
 
-	if ((r.type == VAL_INT && r.integer == 0) || (r.type == VAL_FLOAT && fcmp(r.real, 0))) {
-		return ERR("division by zero");
-	}
+	case OP_GEQ:
+		BINARY_MATH_OPERATION(v, >=) else goto err;
+		return BOOL(is_truthy(gc, v));
 
-	BINARY_MATH_OPERATION(/) else {
-		assert(false);
-	}
+	case OP_NOTEQ:
+		return BOOL(!is_truthy(gc, val_binop(gc, l, r, OP_CMP)));
 
-	return ret;
-}
+	case OP_LEFT:
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
+		return INT(l.integer << r.integer);
 
-struct value
-sleft_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "shift_left", l, r);
-	if (l.type != VAL_INT && r.type != VAL_INT)
-		return ERR("binary << requires integer operands");
-	return INT(l.integer << r.integer);
-}
+	case OP_RIGHT:
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
+		return INT(l.integer >> r.integer);
 
-struct value
-sright_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "shift_right", l, r);
-	if (l.type != VAL_INT && r.type != VAL_INT)
-		return ERR("binary >> requires integer operands");
-	return INT(l.integer >> r.integer);
-}
+	case OP_BAND:
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
+		return INT(l.integer & r.integer);
 
-struct value
-band_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "bitwise_and", l, r);
-	if (l.type != VAL_INT && r.type != VAL_INT)
-		return ERR("binary & requires integer operands");
-	return INT(l.integer & r.integer);
-}
+	case OP_XOR:
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
+		return INT(l.integer ^ r.integer);
 
-struct value
-xor_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "bitwise_xor", l, r);
-	if (l.type != VAL_INT && r.type != VAL_INT)
-		return ERR("binary ^ requires integer operands");
-	return INT(l.integer ^ r.integer);
-}
+	case OP_BOR:
+		if (l.type != VAL_INT && r.type != VAL_INT) goto err;
+		return INT(l.integer | r.integer);
 
-struct value
-bor_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "bitwise_or", l, r);
-	if (l.type != VAL_INT && r.type != VAL_INT)
-		return ERR("binary | requires integer operands");
-	return INT(l.integer | r.integer);
-}
+	case OP_MOD:
+		if ((l.type == VAL_INT || l.type == VAL_FLOAT)
+		    && (r.type == VAL_INT || r.type == VAL_FLOAT)) {
+			if (l.type == VAL_FLOAT || r.type == VAL_FLOAT) {
+				v.type = VAL_FLOAT;
+				v.real = fmod((double)(l.type == VAL_INT ? l.integer : l.real), (double)(r.type == VAL_INT ? r.integer : r.real));
+			} else {
+				v.type = VAL_INT;
+				v.integer = l.integer % r.integer;
+			}
+		} else goto err;
+		break;
 
-struct value
-mod_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "modulus", l, r);
+	case OP_CMP:
+		if (l.type != r.type) return BOOL(false);
+		v.type = VAL_BOOL;
 
-	struct value ret;
-	ret.type = VAL_NIL;
+		switch (l.type) {
+		case VAL_BOOL:  v.boolean = (l.boolean == r.boolean);                break;
+		case VAL_INT:   v.boolean = (l.integer == r.integer);                break;
+		case VAL_FLOAT: v.boolean = fcmp(l.real, r.real);                    break;
+		case VAL_STR:   v.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
+		case VAL_NIL:   v.boolean = (r.type == VAL_NIL);                     break;
+		case VAL_ARRAY:
+			v.boolean = false;
 
-	if ((l.type == VAL_INT || l.type == VAL_FLOAT)
-	    && (r.type == VAL_INT || r.type == VAL_FLOAT)) {
-		if (l.type == VAL_FLOAT || r.type == VAL_FLOAT) {
-			ret.type = VAL_FLOAT;
-			ret.real = fmod((double)(l.type == VAL_INT ? l.integer : l.real), (double)(r.type == VAL_INT ? r.integer : r.real));
-		} else {
-			ret.type = VAL_INT;
-			ret.integer = l.integer % r.integer;
+			if (r.type != VAL_ARRAY || gc->array[l.idx]->len != gc->array[r.idx]->len)
+				return v;
+
+			for (size_t i = 0; i < gc->array[l.idx]->len; i++)
+				if (!is_truthy(gc, val_binop(gc, gc->array[l.idx]->v[i], gc->array[r.idx]->v[i], OP_CMP)))
+					return v;
+
+			v.boolean = true;
+			break;
+
+		default: assert(false);
 		}
-	} else {
-		assert(false);
-	}
-
-	return ret;
-}
-
-struct value
-less_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "lessthan", l, r);
-
-	struct value ret;
-	ret.type = VAL_NIL;
-
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return ret;
-
-	BINARY_MATH_OPERATION(<) else {
-		return ERR("invalid operation");
-	}
-
-	if (ret.type == VAL_INT && ret.integer == 0) {
-		ret.type = VAL_BOOL;
-		ret.boolean = false;
-	} else if (ret.type == VAL_FLOAT && fcmp(ret.real, 0)) {
-		ret.type = VAL_BOOL;
-		ret.boolean = false;
-	} else {
-		ret.type = VAL_BOOL;
-		ret.boolean = true;
-	}
-
-	return ret;
-}
-
-struct value
-leq_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "leq", l, r);
-
-	struct value ret;
-	ret.type = VAL_BOOL;
-
-	BINARY_MATH_OPERATION(<=) else {
-		assert(false);
-	}
-
-	ret.boolean = ret.integer == 0;
-	return ret;
-}
-
-struct value
-geq_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "geq", l, r);
-
-	struct value ret;
-	ret.type = VAL_BOOL;
-
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
-
-	BINARY_MATH_OPERATION(>=) else {
-		return ERR("invalid operation");
-	}
-
-	ret.boolean = ret.integer == 0;
-	return ret;
-}
-
-struct value
-more_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "morethan", l, r);
-
-	struct value ret;
-	ret.type = VAL_NIL;
-
-	if (l.type == VAL_NIL || r.type == VAL_NIL) return NIL;
-
-	BINARY_MATH_OPERATION(>) else {
-		return BOOL(false);
-	}
-
-	struct value ret2;
-	ret2.type = VAL_BOOL;
-	ret2.boolean = is_truthy(gc, ret);
-
-	return ret2;
-}
-
-struct value
-cmp_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "cmp", l, r);
-
-	struct value ret;
-	ret.type = VAL_BOOL;
-
-	if (l.type != r.type) {
-		ret.boolean = false;
-		return ret;
-	}
-
-	switch (l.type) {
-	case VAL_BOOL:  ret.boolean = (l.boolean == r.boolean);                break;
-	case VAL_INT:   ret.boolean = (l.integer == r.integer);                break;
-	case VAL_FLOAT: ret.boolean = fcmp(l.real, r.real);                    break;
-	case VAL_STR:   ret.boolean = !strcmp(gc->str[l.idx], gc->str[r.idx]); break;
-	case VAL_NIL:   ret.boolean = (r.type == VAL_NIL);                     break;
-	case VAL_ARRAY:
-		ret.boolean = false;
-
-		if (r.type != VAL_ARRAY || gc->array[l.idx]->len != gc->array[r.idx]->len)
-			return ret;
-
-		for (size_t i = 0; i < gc->array[l.idx]->len; i++)
-			if (!cmp_values(gc, gc->array[l.idx]->v[i], gc->array[r.idx]->v[i]).boolean)
-				return ret;
-
-		ret.boolean = true;
 		break;
 
 	default:
 		assert(false);
-		break;
 	}
 
-	return ret;
-}
+	return v;
 
-struct value
-and_values(struct gc *gc, struct value l, struct value r)
-{
-	_log(gc, "and", l, r);
-
-	struct value ret;
-	ret.type = VAL_BOOL;
-
-	if (l.type != VAL_BOOL || r.type != VAL_BOOL) {
-		assert(false);
-	}
-
-	ret.boolean = l.boolean && r.boolean;
-
-	return ret;
+ err:
+	return ERR("invalid binary operation on types %s and %s",
+	           value_data[l.type].body, value_data[r.type].body);
 }
 
 bool
@@ -533,27 +369,33 @@ is_truthy(struct gc *gc, struct value l)
 }
 
 struct value
-inc_value(struct value l)
+val_unop(struct gc *gc, struct value l, int op)
 {
-	switch (l.type) {
-	case VAL_INT:   l.integer++;      break;
-	case VAL_FLOAT: l.real++;         break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
+	switch (op) {
+	case OP_ADDADD:
+		if (l.type == VAL_INT) l.integer++;
+		else if (l.type == VAL_FLOAT) l.real++;
+		else goto err;
+		return l;
+
+	case OP_SUBSUB:
+		if (l.type == VAL_INT) l.integer--;
+		else if (l.type == VAL_FLOAT) l.real--;
+		else goto err;
+		return l;
+
+	case OP_SUB:
+		if (l.type == VAL_INT) l.integer = -l.integer;
+		else if (l.type == VAL_FLOAT) l.real = -l.real;
+		else goto err;
+		return l;
 	}
 
-	return l;
-}
+	assert(false);
 
-struct value
-dec_value(struct value l)
-{
-	switch (l.type) {
-	case VAL_INT:   l.integer--; break;
-	case VAL_FLOAT: l.real--;    break;
-	default: return (struct value){ VAL_ERR, { 0 }, 0 };
-	}
-
-	return l;
+ err:
+	return ERR("invalid unary operation on type '%s'",
+	           value_data[l.type].body);
 }
 
 struct value
@@ -634,7 +476,7 @@ qsort_partition(struct gc *gc, struct value l, int begin, int end)
 	int j = begin + 1;
 
 	for (i = begin + 1; i <= end; i++) {
-		if (less_values(gc, gc->array[l.idx]->v[i], gc->array[l.idx]->v[pivot]).boolean) {
+		if (is_truthy(gc, val_binop(gc, gc->array[l.idx]->v[i], gc->array[l.idx]->v[pivot], OP_LESS))) {
 			struct value t = gc->array[l.idx]->v[i];
 			gc->array[l.idx]->v[i] = gc->array[l.idx]->v[j];
 			gc->array[l.idx]->v[j] = t;
@@ -703,7 +545,7 @@ max_value(struct gc *gc, struct value l)
 	struct value m = gc->array[v.idx]->v[0];
 
 	for (unsigned i = 0; i < gc->array[v.idx]->len; i++)
-		if (is_truthy(gc, more_values(gc, gc->array[v.idx]->v[i], m)))
+		if (is_truthy(gc, val_binop(gc, gc->array[v.idx]->v[i], m, OP_MORE)))
 			m = gc->array[v.idx]->v[i];
 
 	return m;
@@ -735,7 +577,7 @@ min_value(struct gc *gc, struct value l)
 	struct value m = gc->array[v.idx]->v[0];
 
 	for (unsigned i = 0; i < gc->array[v.idx]->len; i++)
-		if (is_truthy(gc, less_values(gc, gc->array[v.idx]->v[i], m)))
+		if (is_truthy(gc, val_binop(gc, gc->array[v.idx]->v[i], m, OP_LESS)))
 			m = gc->array[v.idx]->v[i];
 
 	return m;

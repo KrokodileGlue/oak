@@ -342,8 +342,8 @@ match_operator(struct lexer *ls, char *a)
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strncmp(ops[i].body, a, strlen(ops[i].body))
 		    && strlen(ops[i].body) > len
-		    && (is_legal_in_identifier(ops[i].body[strlen(ops[i].body) - 1])
-		        ? !is_legal_in_identifier(a[strlen(ops[i].body)])
+		    && (is_identifier_start(ops[i].body[strlen(ops[i].body) - 1])
+		        ? !is_identifier_start(a[strlen(ops[i].body)])
 		        : true)) {
 			if (ops[i].name == OP_CC && ls->tok->type != TOK_IDENTIFIER)
 				continue;
@@ -377,8 +377,8 @@ parse_secondary_operator(char *a)
 	for (size_t i = 0; i < num_ops(); i++) {
 		if (!strncmp(ops[i].body2, a, strlen(ops[i].body2))
 		    && strlen(ops[i].body2) > len
-		    && (is_legal_in_identifier(ops[i].body[strlen(ops[i].body) - 1])
-		        ? !is_legal_in_identifier(a[strlen(ops[i].body)])
+		    && (is_identifier_start(ops[i].body[strlen(ops[i].body) - 1])
+		        ? !is_identifier_start(a[strlen(ops[i].body)])
 		        : true)) {
 			len = strlen(ops[i].body2);
 		}

@@ -212,20 +212,20 @@ stacktrace(struct vm *vm)
 }
 
 #define GETREG(X) ((X) >= NUM_REG ? vm->frame[1][(X) - NUM_REG] : vm->frame[vm->fp][X])
-/* #define SETREG(X,Y) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (Y)) : (vm->frame[vm->fp][X] = (Y))) */
-
 #define SETREG(X,Y)	  \
 	do { \
 		struct value _ = (Y); \
-		if (_.type == VAL_ERR) \
-			error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL, "ValueError: %s", _.name); \
+		if (_.type == VAL_ERR) { \
+			error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL, "ValueError: %s", _.err); \
+			free(_.err); \
+		} \
 		((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (_)) : (vm->frame[vm->fp][X] = (_))); \
 	} while (0)
 
 #define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
-
 #define CONST(X) (vm->ct->val[X])
-#define BIN(X) SETREG(c.a, X##_values(vm->gc, GETREG(c.b), GETREG(c.c)))
+#define BIN(X) SETREG(c.a, val_binop(vm->gc, GETREG(c.b), GETREG(c.c), (X)))
+#define UN(X) SETREG(c.a, val_unop(vm->gc, GETREG(c.a), (X)))
 
 static void
 pop(struct vm *vm, int reg)
@@ -335,34 +335,38 @@ static inline void
 execute_instr(struct vm *vm, struct instruction c)
 {
 	switch (c.type) {
-	case INSTR_MOV:  SETREG(c.a, GETREG(c.b));              break;
-	case INSTR_JMP:  vm->ip = c.a - 1;                      break;
-	case INSTR_PUSH: push(vm, GETREG(c.a));                 break;
-	case INSTR_POP:  pop(vm, c.a);                          break;
-	case INSTR_CALL: call(vm, GETREG(c.a));                 break;
-	case INSTR_RET:  ret(vm);                               break;
-	case INSTR_ADD:  BIN(add);                              break;
-	case INSTR_SUB:  BIN(sub);                              break;
-	case INSTR_MUL:  BIN(mul);                              break;
-	case INSTR_POW:  BIN(pow);                              break;
-	case INSTR_DIV:  BIN(div);                              break;
-	case INSTR_MOD:  BIN(mod);                              break;
-	case INSTR_CMP:  BIN(cmp);                              break;
-	case INSTR_LESS: BIN(less);                             break;
-	case INSTR_LEQ:  BIN(leq);                              break;
-	case INSTR_GEQ:  BIN(geq);                              break;
-	case INSTR_BAND: BIN(band);                             break;
-	case INSTR_XOR:  BIN(xor);                              break;
-	case INSTR_BOR:  BIN(bor);                              break;
-	case INSTR_MORE: BIN(more);                             break;
-	case INSTR_SLEFT: BIN(sleft);                           break;
-	case INSTR_SRIGHT: BIN(sright);                         break;
-	case INSTR_INC: SETREG(c.a, inc_value(GETREG(c.a)));    break;
-	case INSTR_DEC: SETREG(c.a, dec_value(GETREG(c.a)));    break;
-	case INSTR_MSET: vm->match = c.a;                       break;
+	case INSTR_MOV:  SETREG(c.a, GETREG(c.b)); break;
+	case INSTR_JMP:  vm->ip = c.a - 1;         break;
+	case INSTR_PUSH: push(vm, GETREG(c.a));    break;
+	case INSTR_POP:  pop(vm, c.a);             break;
+	case INSTR_CALL: call(vm, GETREG(c.a));    break;
+	case INSTR_RET:  ret(vm);                  break;
+	case INSTR_ADD:  BIN(OP_ADD);              break;
+	case INSTR_SUB:  BIN(OP_SUB);              break;
+	case INSTR_MUL:  BIN(OP_MUL);              break;
+	case INSTR_POW:  BIN(OP_POW);              break;
+	case INSTR_DIV:  BIN(OP_DIV);              break;
+	case INSTR_MOD:  BIN(OP_MOD);              break;
+	case INSTR_CMP:  BIN(OP_CMP);              break;
+	case INSTR_LESS: BIN(OP_LESS);             break;
+	case INSTR_LEQ:  BIN(OP_LEQ);              break;
+	case INSTR_GEQ:  BIN(OP_GEQ);              break;
+	case INSTR_BAND: BIN(OP_BAND);             break;
+	case INSTR_XOR:  BIN(OP_XOR);              break;
+	case INSTR_BOR:  BIN(OP_BOR);              break;
+	case INSTR_MORE: BIN(OP_MORE);             break;
+	case INSTR_SLEFT: BIN(OP_LEFT);            break;
+	case INSTR_SRIGHT: BIN(OP_RIGHT);          break;
+	case INSTR_INC: UN(OP_ADDADD);             break;
+	case INSTR_DEC: UN(OP_SUBSUB);             break;
+	case INSTR_MSET: vm->match = c.a;          break;
 	case INSTR_MINC:
 		if (vm->match == 65535) vm->match = 0;
 		else vm->match++;
+		break;
+
+	case INSTR_NEG:
+		SETREG(c.a, val_unop(vm->gc, GETREG(c.b), OP_SUB));
 		break;
 
 	case INSTR_LINE:
@@ -370,16 +374,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_CHKSTCK:
-		/* if (vm->sp) */
-		/* 	error_push(vm->r, *c.loc, ERR_FATAL, "invalid number of arguments passed to function (received %d too many)", vm->sp); */
+		if (vm->sp)
+			error_push(vm->r, *c.loc, ERR_FATAL, "invalid number of arguments passed to function (received %d too many)", vm->sp);
 		break;
 
 	case INSTR_FLIP:
 		SETREG(c.a, flip_value(vm->gc, GETREG(c.b)));
-		break;
-
-	case INSTR_NEG:
-		SETREG(c.a, neg_value(GETREG(c.b)));
 		break;
 
 	case INSTR_COPY:
@@ -1038,9 +1038,9 @@ execute_instr(struct vm *vm, struct instruction c)
 
 		for (size_t i = 0; i < vm->gc->array[GETREG(c.b).idx]->len; i++) {
 			if (is_truthy(vm->gc,
-			              cmp_values(vm->gc,
+			              val_binop(vm->gc,
 			                         vm->gc->array[GETREG(c.b).idx]->v[i],
-			                         GETREG(c.c))))
+			                        GETREG(c.c), OP_CMP)))
 				v.integer++;
 		}
 

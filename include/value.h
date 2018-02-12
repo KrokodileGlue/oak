@@ -63,6 +63,7 @@ struct value {
 #include "error.h"
 #include "gc.h"
 #include "array.h"
+#include "operator.h"
 
 struct gc;
 
@@ -73,19 +74,9 @@ struct value_data {
 
 extern struct value_data value_data[];
 
-struct value add_values(struct gc *gc, struct value l, struct value r);
-struct value sub_values(struct gc *gc, struct value l, struct value r);
-struct value mul_values(struct gc *gc, struct value l, struct value r);
-struct value pow_values(struct gc *gc, struct value l, struct value r);
-struct value div_values(struct gc *gc, struct value l, struct value r);
+struct value val_binop(struct gc *gc, struct value l, struct value r, int op);
+struct value val_unop(struct gc *gc, struct value l, int op);
 
-struct value sleft_values(struct gc *gc, struct value l, struct value r);
-struct value sright_values(struct gc *gc, struct value l, struct value r);
-struct value band_values(struct gc *gc, struct value l, struct value r);
-struct value xor_values(struct gc *gc, struct value l, struct value r);
-struct value bor_values(struct gc *gc, struct value l, struct value r);
-
-struct value mod_values(struct gc *gc, struct value l, struct value r);
 struct value copy_value(struct gc *gc, struct value l);
 struct value rev_value(struct gc *gc, struct value l);
 struct value sort_value(struct gc *gc, struct value l);
@@ -95,19 +86,11 @@ struct value uc_value(struct gc *gc, struct value l);
 struct value lc_value(struct gc *gc, struct value l);
 struct value ucfirst_value(struct gc *gc, struct value l);
 struct value lcfirst_value(struct gc *gc, struct value l);
-struct value inc_value(struct value l);
-struct value dec_value(struct value l);
-struct value neg_value(struct value l);
 struct value abs_value(struct value l);
 struct value flip_value(struct gc *gc, struct value l);
 struct value slice_value(struct gc *gc, struct value l, int start, int stop, int step);
 struct value value_range(struct gc *gc, bool real, double start, double stop, double step);
 
-struct value cmp_values(struct gc *gc, struct value l, struct value r);
-struct value less_values(struct gc *gc, struct value l, struct value r);
-struct value leq_values(struct gc *gc, struct value l, struct value r);
-struct value geq_values(struct gc *gc, struct value l, struct value r);
-struct value more_values(struct gc *gc, struct value l, struct value r);
 struct value value_len(struct gc *gc, struct value l);
 struct value value_translate(struct gc *l, struct gc *r, struct value v);
 struct value int_value(struct gc *gc, struct value l);

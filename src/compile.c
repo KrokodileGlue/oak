@@ -739,7 +739,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		OPEQ(MULEQ, MUL);
 		OPEQ(DIVEQ, DIV);
 
-		case OP_EQEQ:
+		case OP_CMP:
 			reg = alloc_reg(c);
 			emit_abc(c, INSTR_CMP, reg,
 			         compile_expression(c, e->a, sym, false, true),
@@ -2062,39 +2062,6 @@ compile_constant_operator(struct compiler *c, struct symbol *sym, struct express
 	case OPTYPE_INVALID: assert(false);
 	case OPTYPE_BINARY:
 		switch (e->operator->name) {
-		case OP_ADD:
-			v = add_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_SUB:
-			v = sub_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_DIV:
-			v = div_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_MUL:
-			v = mul_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_IFF:
-			if (is_truthy(c->gc, compile_constant_expr(c, sym, e->a)))
-				v = compile_constant_expr(c, sym, e->b);
-			break;
-
-		case OP_LEFT:
-			v = sleft_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_RIGHT:
-			v = sright_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_BAND:
-			v = band_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
 		case OP_ARROW: {
 			struct value a = compile_constant_expr(c, sym, e->a);
 			struct value b = compile_constant_expr(c, sym, e->b);
@@ -2105,33 +2072,8 @@ compile_constant_operator(struct compiler *c, struct symbol *sym, struct express
 			v = value_range(c->gc, a.type == VAL_FLOAT || b.type == VAL_FLOAT, start, stop, 1.0);
 		} break;
 
-		case OP_LEQ:
-			v = leq_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_LESS:
-			v = less_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_MORE:
-			v = more_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_GEQ:
-			v = geq_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
-		case OP_NOTEQ:
-			v = neg_value(cmp_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b)));
-			break;
-
-		case OP_EQEQ:
-			v = cmp_values(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b));
-			break;
-
 		default:
-			DOUT("unimplemented constant operator compiler for binary operator of name %d", e->operator->name);
-			assert(false);
+			v = val_binop(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b), e->operator->name);
 		}
 		break;
 
@@ -2141,21 +2083,15 @@ compile_constant_operator(struct compiler *c, struct symbol *sym, struct express
 			v = compile_constant_expr(c, sym, e->a);
 			break;
 
-		case OP_SUB:
-			v = neg_value(compile_constant_expr(c, sym, e->a));
-			break;
-
 		default:
-			DOUT("unimplemented constant operator compiler for binary operator of name %d", e->operator->name);
-			assert(false);
+			v = val_unop(c->gc, compile_constant_expr(c, sym, e->a), e->operator->name);
 		}
 		break;
 
 	case OPTYPE_TERNARY:
 		if (is_truthy(c->gc, compile_constant_expr(c, sym, e->a)))
 			v = compile_constant_expr(c, sym, e->b);
-		else
-			v = compile_constant_expr(c, sym, e->c);
+		else v = compile_constant_expr(c, sym, e->c);
 		break;
 
 	default:

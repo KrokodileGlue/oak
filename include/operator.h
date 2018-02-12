@@ -46,7 +46,7 @@ struct operator {
 		OP_MORE,
 		OP_LEQ,
 		OP_GEQ,
-		OP_EQEQ,
+		OP_CMP,
 		OP_AND,
 		OP_OR,
 		OP_QUESTION,

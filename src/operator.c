@@ -36,7 +36,7 @@ struct operator ops[] = {
 	{ ">",   "",  10, ASS_LEFT,  OPTYPE_BINARY   , OP_MORE        },
 	{ "<=",  "",  10, ASS_LEFT,  OPTYPE_BINARY   , OP_LEQ         },
 	{ ">=",  "",  10, ASS_LEFT,  OPTYPE_BINARY   , OP_GEQ         },
-	{ "==",  "",  9,  ASS_LEFT,  OPTYPE_BINARY   , OP_EQEQ        },
+	{ "==",  "",  9,  ASS_LEFT,  OPTYPE_BINARY   , OP_CMP         },
 	{ "!=",  "",  9,  ASS_LEFT,  OPTYPE_BINARY   , OP_NOTEQ       },
 	{ "iff", "",  8,  ASS_LEFT,  OPTYPE_BINARY   , OP_IFF         },
 

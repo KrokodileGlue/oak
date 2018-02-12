@@ -1,4 +1,4 @@
-var l a b = I(day2.txt), 0, 0
+var l a b = chomp(I(day2.txt)), 0, 0
 
 for split /\n+/, l {
 	var c x y = map { int } _ =~ /\S+/g, 0, 0

@@ -116,10 +116,9 @@ ksprintf(const char *fmt, ...)
 	va_start(args, fmt);
 
 	char *buf = oak_malloc(512);
-	snprintf(buf, 512, fmt, args);
+	vsnprintf(buf, 512, fmt, args);
 
 	va_end(args);
-
 	return buf;
 }
 
