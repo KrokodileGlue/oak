@@ -41,7 +41,7 @@ new_vm(struct module *m, struct oak *k, bool debug)
 	vm->debug = debug;
 	vm->ct    = m->ct;
 	vm->gc    = m->gc;
-	vm->f     = stderr;
+	vm->f     = stdout;
 	vm->k     = k;
 	vm->m     = m;
 

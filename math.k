@@ -37,7 +37,7 @@ fn vec4 (x = 0.0, y = 0.0, z = 0.0, w = 0.0) = vec() + {
 }
 
 fn dot (l, r) = match l.kind {
-	'vec2' => l.x * r.x + l.y * r.y,
-	'vec3' => l.x * r.x + l.y * r.y + l.z * r.z,
-	'vec4' => l.x * r.x + l.y * r.y + l.z * r.z + l.w * r.w
+	VEC2 => l.x * r.x + l.y * r.y,
+	VEC3 => l.x * r.x + l.y * r.y + l.z * r.z,
+	VEC4 => l.x * r.x + l.y * r.y + l.z * r.z + l.w * r.w
 }

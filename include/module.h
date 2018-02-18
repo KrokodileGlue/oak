@@ -40,5 +40,7 @@ struct module {
 
 struct module *new_module(char *text, char *path);
 void free_module(struct module *m);
+struct module *load_module(struct oak *k, struct symbol *parent, char *text, char *path, char *name, struct vm *vm, int stack_base);
+void print_modules(struct oak *k);
 
 #endif

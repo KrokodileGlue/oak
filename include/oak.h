@@ -1,7 +1,6 @@
 #ifndef OAK_H
 #define OAK_H
 
-#include <stdlib.h>
 #include "module.h"
 #include "value.h"
 
@@ -22,12 +21,6 @@ struct oak {
 
 	bool print_everything;
 	bool print_anything;
-
-	/*
-	 * This is never decremented, it only serves to produce unique
-	 * id numbers for blocks. It's placed here instead of in the
-	 * symbolizer because
-	 */
 	int scope;
 
 	struct value *stack;
@@ -36,10 +29,16 @@ struct oak {
 	char *eval;
 };
 
-struct oak *new_oak();
-void free_oak(struct oak *k);
-struct module *load_module(struct oak *k, struct symbol *parent, char *text,
-            char *path, char *name, struct vm *vm, int stack_base);
-char *process_arguments(struct oak *k, int argc, char **argv);
+typedef struct oak oak;
+
+oak *oak_new();
+void oak_free(oak *k);
+char *process_arguments(oak *k, int argc, char **argv);
+struct module *oak_load_module(oak *k, char *path);
+struct module *oak_load_child(oak *k, struct module *m, char *path);
+struct module *oak_load_module2(oak *k, char *text);
+struct module *oak_load_child2(oak *k, struct module *m, char *text);
+void oak_print_modules(oak *k);
+void oak_print_value(FILE *f, struct gc *gc, struct value v);
 
 #endif
