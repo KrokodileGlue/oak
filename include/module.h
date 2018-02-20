@@ -7,6 +7,7 @@
 #include "code.h"
 #include "constant.h"
 #include "gc.h"
+#include "value.h"
 
 struct module {
 	char *name, *text, *path;
@@ -24,6 +25,7 @@ struct module {
 
 	struct vm *vm;
 	struct oak *k;
+	struct value *global;
 
 	uint16_t id;
 	bool child;

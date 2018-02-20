@@ -6,6 +6,7 @@
 #include "module.h"
 #include "oak.h"
 
+/* TODO: clean this structure up. it's massive. */
 struct symbol {
 	uint64_t        id;
 	char           *name;

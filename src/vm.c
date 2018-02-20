@@ -211,7 +211,7 @@ stacktrace(struct vm *vm)
 		fprintf(stderr, "\t--- Truncated ---\n");
 }
 
-#define GETREG(X) ((X) >= NUM_REG ? vm->frame[1][(X) - NUM_REG] : vm->frame[vm->fp][X])
+#define GETREG(X) ((X) >= NUM_REG ? vm->m->global[(X) - NUM_REG] : vm->frame[vm->fp][X])
 #define SETREG(X,Y)	  \
 	do { \
 		struct value _ = (Y); \
@@ -219,7 +219,7 @@ stacktrace(struct vm *vm)
 			error_push(vm->r, *vm->code[vm->ip].loc, ERR_FATAL, "ValueError: %s", _.err); \
 			free(_.err); \
 		} \
-		((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG] = (_)) : (vm->frame[vm->fp][X] = (_))); \
+		((X) >= NUM_REG ? (vm->m->global[(X) - NUM_REG] = (_)) : (vm->frame[vm->fp][X] = (_))); \
 	} while (0)
 
 #define SETR(X,Y,Z) ((X) >= NUM_REG ? (vm->frame[1][(X) - NUM_REG].Y = (Z)) : (vm->frame[vm->fp][X].Y = (Z)))
@@ -778,9 +778,6 @@ execute_instr(struct vm *vm, struct instruction c)
 			if (re->err) {
 				error_push(vm->r, *c.loc, ERR_FATAL, "regex failed at runtime with %d: %s", re->err, re->err_str ? re->err_str : "no message");
 				return;
-				/* fprintf(stderr, "\t%s\n\t", re->pat); */
-				/* for (int i = 0; i < re->loc; i++) fprintf(stderr, " "); */
-				/* fprintf(stderr, "^"); */
 			} else if (ret) {
 				vm->gc->str[v.idx] = ret;
 			} else {

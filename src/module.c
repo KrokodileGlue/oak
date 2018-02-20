@@ -32,6 +32,7 @@ free_module(struct module *m)
 
 	if (!m->child) free_gc(m->gc);
 	if (!m->child) free_constant_table(m->ct);
+	if (!m->child) free(m->global);
 
 	free_vm(m->vm);
 	free(m->text);
@@ -114,6 +115,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 	if (vm) {
 		m->child = true;
 		m->parent = vm->m;
+		m->global = vm->m->global;
 		free_gc(m->gc);
 		m->gc = vm->gc;
 	}

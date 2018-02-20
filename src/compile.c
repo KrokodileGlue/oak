@@ -1184,8 +1184,6 @@ compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym)
 				return -1;
 			}
 
-			if (var->global)
-				return var->address + NUM_REG;
 			return var->address;
 		} break;
 
@@ -1289,9 +1287,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 				v.name = var->name;
 				emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, v), &e->tok->loc);
 			} else if (copy) {
-				emit_ab(c, INSTR_COPY, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
+				emit_ab(c, INSTR_COPY, reg, var->address, &e->tok->loc);
 			} else {
-				emit_ab(c, INSTR_MOV, reg, var->global ? var->address + NUM_REG : var->address, &e->tok->loc);
+				emit_ab(c, INSTR_MOV, reg, var->address, &e->tok->loc);
 			}
 			break;
 
@@ -2216,6 +2214,7 @@ compile_statement(struct compiler *c, struct statement *s)
 		for (size_t i = 0; i < s->var_decl.num; i++) {
 			struct symbol *var_sym = resolve(sym, s->var_decl.names[i]->value);
 			var_sym->address = c->var[c->sp]++;
+			if (var_sym->global) var_sym->address += NUM_REG;
 			int reg = -1;
 
 			reg = s->var_decl.init

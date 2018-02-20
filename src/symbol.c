@@ -55,6 +55,8 @@ static char *sym_str[] = {
 	"argument",
 	"module",
 	"imported",
+	"label",
+	"enum",
 	"invalid"
 };
 
@@ -770,6 +772,11 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 		error_write(si->r, stderr);
 	}
 
+	if (!m->child) {
+		m->global = oak_malloc(si->symbol->num_variables * sizeof *m->global);
+		memset(m->global, 0, si->symbol->num_variables * sizeof *m->global);
+	}
+
 	symbolizer_free(si);
 	m->stage = MODULE_STAGE_SYMBOLIZED;
 
@@ -799,7 +806,8 @@ print_symbol(FILE *f, size_t depth, struct symbol *s)
 	}
 
 	if (s->address != (size_t)-1) {
-		INDENT; fprintf(f, "  address=%zu", s->address);
+		INDENT; fprintf(f, "  address=%zu",
+		                s->global ? s->address - NUM_REG : s->address);
 	}
 
 	INDENT; fprintf(f, "  scope=%d", s->scope);
