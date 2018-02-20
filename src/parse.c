@@ -276,13 +276,6 @@ parse_expr(struct parser *ps, size_t prec)
 
 			expect_symbol(ps, "]");
 		}
-	} else if (!strcmp(ps->tok->value, "map")) {
-		left->type = EXPR_MAP;
-		NEXT;
-		expect_symbol(ps, "{");
-		left->a = parse_expr(ps, 0);
-		expect_symbol(ps, "}");
-		left->b = parse_expr(ps, 1);
 	} else if (!strcmp(ps->tok->value, "eval")) {
 		left->type = EXPR_EVAL;
 		NEXT;
@@ -303,39 +296,48 @@ parse_expr(struct parser *ps, size_t prec)
 		left->bi = bi;
 		NEXT;
 
-		bool paren = !strcmp(ps->tok->value, "(");
-		if (paren) expect_symbol(ps, "(");
+		if (!strcmp(ps->tok->value, "{")) {
+			NEXT;
+			left->num = 2;
+			left->args = oak_malloc(left->num * sizeof *left->args);
+			left->args[0] = parse_expr(ps, 0);
+			expect_symbol(ps, "}");
+			left->args[1] = parse_expr(ps, 1);
+		} else {
+			bool paren = !strcmp(ps->tok->value, "(");
+			if (paren) expect_symbol(ps, "(");
 
-		int prec = paren ? 1 : bi->prec;
+			int prec = paren ? 1 : bi->prec;
 
-		while (true) {
-			struct expression *e = parse_expr(ps, prec);
+			while (true) {
+				struct expression *e = parse_expr(ps, prec);
 
-			if (e) {
-				left->args = oak_realloc(left->args,
-				                         (left->num + 1) * sizeof *left->args);
-				left->args[left->num++] = e;
+				if (e) {
+					left->args = oak_realloc(left->args,
+					                         (left->num + 1) * sizeof *left->args);
+					left->args[left->num++] = e;
+				}
+
+				if (strcmp(ps->tok->value, ",")) break;
+				else expect_symbol(ps, ",");
 			}
 
-			if (strcmp(ps->tok->value, ",")) break;
-			else expect_symbol(ps, ",");
+			ps->tok = ps->tok->prev;
+			if (!strcmp(ps->tok->value, ","))
+				error_push(ps->r, ps->tok->loc, ERR_FATAL, "stray comma");
+			NEXT;
+
+			if (paren) expect_symbol(ps, ")");
 		}
-
-		ps->tok = ps->tok->prev;
-		if (!strcmp(ps->tok->value, ","))
-			error_push(ps->r, ps->tok->loc, ERR_FATAL, "stray comma");
-		NEXT;
-
-		if (paren) expect_symbol(ps, ")");
 	} else if (!strcmp(ps->tok->value, "{")) {
 		free(left);
 		left = parse_table(ps);
 	} else { /* if it's not a prefix operator it must be a value. */
 		if (ps->tok->type == TOK_INTEGER
-			|| ps->tok->type == TOK_STRING
-			|| ps->tok->type == TOK_FLOAT
-			|| ps->tok->type == TOK_IDENTIFIER
-			|| ps->tok->type == TOK_BOOL) {
+		    || ps->tok->type == TOK_STRING
+		    || ps->tok->type == TOK_FLOAT
+		    || ps->tok->type == TOK_IDENTIFIER
+		    || ps->tok->type == TOK_BOOL) {
 			left->type = EXPR_VALUE;
 			left->val = ps->tok;
 			NEXT;

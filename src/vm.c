@@ -484,28 +484,28 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 		break;
 
-#define CHECKREG(X,Y,...)	  \
-		if (Y) { \
+#define CHECKREG(X,...)	  \
+		if (X) { \
 			error_push(vm->r, *c.loc, ERR_FATAL, __VA_ARGS__); \
 			return; \
 		}
 
 	case INSTR_SLICE: {
-		CHECKREG(c.b, GETREG(c.b).type != VAL_ARRAY,
+		CHECKREG(GETREG(c.b).type != VAL_ARRAY,
 		         "array slice requires array operand (got %s)",
 		         value_data[GETREG(c.b).type].body);
 
-		CHECKREG(c.c, GETREG(c.c).type != VAL_INT
+		CHECKREG(GETREG(c.c).type != VAL_INT
 		         && GETREG(c.c).type != VAL_NIL,
 		         "array slice requires integer startpoint (got %s)",
 		         value_data[GETREG(c.c).type].body);
 
-		CHECKREG(c.d, GETREG(c.d).type != VAL_INT
+		CHECKREG(GETREG(c.d).type != VAL_INT
 		         && GETREG(c.d).type != VAL_NIL,
 		         "array slice requires integer endpoint (got %s)",
 		         value_data[GETREG(c.d).type].body);
 
-		CHECKREG(c.e, GETREG(c.e).type != VAL_INT
+		CHECKREG(GETREG(c.e).type != VAL_INT
 		         && GETREG(c.e).type != VAL_NIL,
 		         "array slice requires integer step (got %s)",
 		         value_data[GETREG(c.e).type].body);
@@ -891,6 +891,14 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_SPLIT: {
+		CHECKREG(GETREG(c.c).type != VAL_REGEX,
+		         "split requires regex as its first operand (got %s)",
+		         value_data[GETREG(c.c).type].body);
+
+		CHECKREG(GETREG(c.b).type != VAL_STR,
+		         "split requires string as its second operand (got %s)",
+		         value_data[GETREG(c.b).type].body);
+
 		int len = 0;
 		ktre *re = vm->gc->regex[GETREG(c.c).idx];
 		char *subject = vm->gc->str[GETREG(c.b).idx];

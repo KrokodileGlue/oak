@@ -419,15 +419,6 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth++; join(ap);
 		print_statement(ap, e->s);
 		ap->depth--;
-	} else if (e->type == EXPR_MAP) {
-		fprintf(ap->f, "(map)");
-		ap->depth++; split(ap);
-		indent(ap); fprintf(ap->f, "<expression>"); ap->depth++;
-		print_expression(ap, e->a); ap->depth--;
-		join(ap);
-		indent(ap); fprintf(ap->f, "<list>"); ap->depth++;
-		print_expression(ap, e->b); ap->depth--;
-		ap->depth--;
 	} else if (e->type == EXPR_REGEX) {
 		fprintf(ap->f, "(regular expression)");
 		ap->depth++; split(ap);

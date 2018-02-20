@@ -1,9 +1,12 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+#include <stdbool.h>
+
 struct builtin {
 	char *body;
 	int prec;
+	bool imp;
 
 	enum {
 		BUILTIN_SPLIT,
@@ -14,6 +17,7 @@ struct builtin {
 
 		BUILTIN_REVERSE,
 		BUILTIN_SORT,
+		BUILTIN_MAP,
 		BUILTIN_INT,
 		BUILTIN_FLOAT,
 		BUILTIN_STRING,

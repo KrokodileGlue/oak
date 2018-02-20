@@ -395,32 +395,38 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 		symbolize(si, e->s);
 		break;
 
-	case EXPR_MAP: {
-		resolve_expr(si, e->b);
-
-		push_scope(si, ++si->k->scope);
-		push_block_expr(si, e);
-
-		struct symbol *s = new_symbol(e->tok, si->symbol);
-		s->type = SYM_VAR;
-		s->name = strclone("_");
-		s->id = hash(s->name, strlen(s->name));
-		s->scope = -1;
-		add(si, s);
-
-		resolve_expr(si, e->a);
-
-		pop_scope(si);
-		pop(si);
-	} break;
-
 	case EXPR_EVAL:
 	case EXPR_REGEX:
 	case EXPR_GROUP:
 		break;
 
 	case EXPR_TABLE:
+		for (size_t i = 0; i < e->num; i++)
+			resolve_expr(si, e->args[i]);
+		break;
+
 	case EXPR_BUILTIN:
+		if (e->bi->imp) {
+			push_scope(si, ++si->k->scope);
+			push_block_expr(si, e);
+
+			struct symbol *s = new_symbol(e->tok, si->symbol);
+			s->type = SYM_VAR;
+			s->name = strclone("_");
+			s->id = hash(s->name, strlen(s->name));
+			s->scope = -1;
+			add(si, s);
+
+			if (e->num) resolve_expr(si, e->args[0]);
+
+			pop_scope(si);
+			pop(si);
+
+			for (size_t i = 1; i < e->num; i++)
+				resolve_expr(si, e->args[i]);
+			break;
+		}
+
 		for (size_t i = 0; i < e->num; i++)
 			resolve_expr(si, e->args[i]);
 		break;

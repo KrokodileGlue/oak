@@ -557,6 +557,45 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 	} break;
 
+	case BUILTIN_MAP: {
+		reg = alloc_reg(c);
+
+		struct value v;
+		v.type = VAL_ARRAY;
+		v.idx = gc_alloc(c->gc, VAL_ARRAY);
+		c->gc->array[v.idx] = new_array();
+		emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
+
+		int iter = alloc_reg(c);
+
+		v.type = VAL_INT;
+		v.integer = -1;
+
+		/* TODO: name these better. */
+		int expr = compile_expression(c, e->b, sym, false, true);
+		emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &e->tok->loc);
+		size_t start = c->ip;
+		emit_a(c, INSTR_INC, iter, &e->tok->loc);
+		int len = alloc_reg(c);
+		emit_ab(c, INSTR_LEN, len, expr, &e->tok->loc);
+		int cond = alloc_reg(c);
+		emit_abc(c, INSTR_LESS, cond, iter, len, &e->tok->loc);
+		emit_a(c, INSTR_COND, cond, &e->tok->loc);
+
+		size_t a = c->ip;
+		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &e->tok->loc);
+		emit_a(c, INSTR_PUSHIMP, temp, &e->tok->loc);
+
+		int thing = compile_expression(c, e->a, sym, false, true);
+		emit_ab(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
+
+		emit_(c, INSTR_POPIMP, &e->tok->loc);
+		emit_a(c, INSTR_JMP, start, &e->tok->loc);
+		c->code[a].a = c->ip;
+	} break;
+
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",
 		     e->bi->body);
@@ -1483,44 +1522,6 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym,
 		emit_abcde(c, INSTR_SLICE, reg, array, B, C, D, &e->tok->loc);
 	} break;
 
-	case EXPR_MAP: {
-		reg = alloc_reg(c);
-
-		struct value v;
-		v.type = VAL_ARRAY;
-		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->array[v.idx] = new_array();
-		emit_ab(c, INSTR_COPYC, reg, constant_table_add(c->ct, v), &e->tok->loc);
-
-		int iter = alloc_reg(c);
-
-		v.type = VAL_INT;
-		v.integer = -1;
-
-		int expr = compile_expression(c, e->b, sym, false, true);
-		emit_ab(c, INSTR_COPYC, iter, constant_table_add(c->ct, v), &e->tok->loc);
-		size_t start = c->ip;
-		emit_a(c, INSTR_INC, iter, &e->tok->loc);
-		int len = alloc_reg(c);
-		emit_ab(c, INSTR_LEN, len, expr, &e->tok->loc);
-		int cond = alloc_reg(c);
-		emit_abc(c, INSTR_LESS, cond, iter, len, &e->tok->loc);
-		emit_a(c, INSTR_COND, cond, &e->tok->loc);
-
-		size_t a = c->ip;
-		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
-		int temp = alloc_reg(c);
-		emit_abc(c, INSTR_SUBSCR, temp, expr, iter, &e->tok->loc);
-		emit_a(c, INSTR_PUSHIMP, temp, &e->tok->loc);
-
-		int thing = compile_expression(c, e->a, sym, false, true);
-		emit_ab(c, INSTR_PUSHBACK, reg, thing, &e->tok->loc);
-
-		emit_(c, INSTR_POPIMP, &e->tok->loc);
-		emit_a(c, INSTR_JMP, start, &e->tok->loc);
-		c->code[a].a = c->ip;
-	} break;
-
 	case EXPR_REGEX: {
 		int t = alloc_reg(c);
 		emit_ab(c, INSTR_COPYC, t, add_constant(c, e->val), &e->tok->loc);
@@ -2009,7 +2010,6 @@ is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
 
 	case EXPR_BUILTIN:
 	case EXPR_MATCH:
-	case EXPR_MAP:
 	case EXPR_EVAL:
 	case EXPR_LIST_COMPREHENSION:
 	case EXPR_REGEX:
