@@ -7,6 +7,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_MOV,      REG_AB,    "MOV       " },
 	{ INSTR_COPY,     REG_AB,    "COPY      " },
 	{ INSTR_COPYC,    REG_AB,    "COPYC     " },
+	{ INSTR_MOVC,     REG_AB,    "MOVC      " },
 
 	{ INSTR_JMP,      REG_A,     "JMP       " },
 	{ INSTR_ESCAPE,   REG_A,     "ESCAPE    " },
@@ -74,6 +75,7 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_CHR,      REG_A,     "CHR       " },
 	{ INSTR_ORD,      REG_A,     "ORD       " },
+	{ INSTR_RJUST,    REG_ABC,   "RJUST     " },
 
 	{ INSTR_HEX,      REG_AB,    "HEX       " },
 	{ INSTR_CHOMP,    REG_AB,    "CHOMP     " },

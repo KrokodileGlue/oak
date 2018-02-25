@@ -6,7 +6,7 @@
 #include "module.h"
 #include "oak.h"
 
-/* TODO: clean this structure up. it's massive. */
+/* TODO: clean this structure up. it's massive and stupid. */
 struct symbol {
 	uint64_t        id;
 	char           *name;
@@ -48,11 +48,8 @@ struct symbolizer {
 	struct reporter *r;
 	struct oak      *k;
 
-	int             *scope_stack;
-	int              fp;
-
-	/* The index of the top of the scope stack. */
-	int              scope_pointer;
+	int *scope_stack;
+	int fp, sp;
 };
 
 struct symbolizer *new_symbolizer(struct oak *k);

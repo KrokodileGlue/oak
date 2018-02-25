@@ -334,6 +334,7 @@ is_truthy(struct gc *gc, struct value l)
 	case VAL_FLOAT: return !fcmp(l.real, 0.0);
 	case VAL_REGEX: return !!gc->regex[l.idx]->num_matches;
 	case VAL_NIL:   return false;
+	case VAL_ERR:   return false; break;
 	case VAL_FN:    return true;
 	case VAL_TABLE: {
 		int len = 0;
@@ -343,7 +344,6 @@ is_truthy(struct gc *gc, struct value l)
 	} break;
 
 	case VAL_UNDEF:
-	case VAL_ERR:
 		assert(false);
 	}
 
@@ -447,6 +447,7 @@ flip_value(struct gc *gc, struct value l)
 	return ans;
 }
 
+/* TODO: errors propagate badly around here */
 static void
 qsort_partition(struct gc *gc, struct value l, int begin, int end)
 {
@@ -794,7 +795,7 @@ value_range(struct gc *gc, bool real, double start, double stop, double step)
 			           start, stop, step);
 		}
 
-		grow_array(gc->array[v.idx], (start - stop) / step + 1);
+		grow_array(gc->array[v.idx], (start - stop) / -step + 1);
 		for (double i = start; i >= stop; i += step) {
 			if (real)
 				array_push(gc->array[v.idx], (struct value){ VAL_FLOAT, { .real = i }, 0 });

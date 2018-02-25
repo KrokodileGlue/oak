@@ -296,7 +296,7 @@ parse_expr(struct parser *ps, size_t prec)
 		left->bi = bi;
 		NEXT;
 
-		if (!strcmp(ps->tok->value, "{")) {
+		if (bi->curly && !strcmp(ps->tok->value, "{")) {
 			NEXT;
 			left->num = 2;
 			left->args = oak_malloc(left->num * sizeof *left->args);
@@ -668,7 +668,7 @@ parse_ret(struct parser *ps)
 	s->type = STMT_RET;
 
 	NEXT;
-	s->expr = parse_expression(ps, 0);
+	s->ret.expr = parse_expression(ps, 0);
 	expect_terminator(ps);
 
 	return s;

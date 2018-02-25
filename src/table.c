@@ -76,5 +76,5 @@ table_lookup(struct table *t, char *key)
 		if (b->h[i] == h && !strcmp(key, b->key[i]))
 			return b->val[i];
 
-	return (struct value){ VAL_NIL, { 0 }, NULL };
+	return NIL;
 }

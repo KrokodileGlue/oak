@@ -6,8 +6,9 @@
 struct builtin {
 	char *body;
 	int prec;
-	bool imp;
+	bool imp, curly;
 
+	/* TODO: eval should be a builtin */
 	enum {
 		BUILTIN_SPLIT,
 		BUILTIN_JOIN,
@@ -30,6 +31,7 @@ struct builtin {
 
 		BUILTIN_CHR,
 		BUILTIN_ORD,
+		BUILTIN_RJUST,
 
 		BUILTIN_HEX,
 		BUILTIN_CHOMP,

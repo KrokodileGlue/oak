@@ -7,7 +7,7 @@
 #include "oak.h"
 
 /* This is kinda retarded. */
-#define MAX_CALL_DEPTH 1024
+#define MAX_CALL_DEPTH 8192
 
 /* TODO: refucktor frames */
 

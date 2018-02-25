@@ -488,6 +488,16 @@ for ['a1 b2 c3', 'a4 b5 c6', 'a7 b8 c9', 'a10 b11 c12']:
 enum FOO = 5 + 5, BAR, BAZ
 pl '$FOO, $BAR, $BAZ'
 
+pl join ', ', range(8, 1, -1)
+
+# eval "pl qwerty * 2"
+# var qwerty
+
+pl rjust('test', 10)
+pl rjust(5, 10)
+pl rjust('test', 2)
+
+# TODO: fix the api design
 # TODO: actually implement the tracing garbage collector
 # TODO: regex matches shouldn't survive function calls
 # TODO: sort should care about arrays with mixed types
@@ -495,11 +505,17 @@ pl '$FOO, $BAR, $BAZ'
 # TODO: finish the constant expression compiler
 # TODO: look at how while loops handle regex
 # TODO: fix eval and that stack trace bug
-# TODO: make the whole api thing and build as library
 # TODO: bindings and ffi
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
 # TODO: allow _ in numbers and remove all use of strtol
-# TODO: implement global variables properly
 # TODO: free eval'd modules quickly
 # TODO: allow trailing commas in places
+# TODO: fix failed assertion when using a nonexistent variable in a
+#       string interpolation
+# TODO: fix the error message doubling problem, e.g.:
+# 	var qwerty; # and why is this semicolon necessary?
+# 	eval "pl qwerty * 2"
+# TODO: for some reason these two lines are not equal:
+#       if foo: for f(x): if bar[_] == foo { return _ }
+#       if foo: for f(x): if bar[_] == foo: return _

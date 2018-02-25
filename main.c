@@ -1,4 +1,4 @@
-#include <oak/oak.h>
+#include "include/oak.h"
 #include <stdlib.h>
 
 char *
@@ -89,7 +89,7 @@ load_file(const char *path)
 	return b;
 
  err:
-	fclose(f);
+	if (f) fclose(f);
 	return NULL;
 }
 

@@ -15,6 +15,7 @@ enum instruction_type {
 	INSTR_MOV,
 	INSTR_COPY,
 	INSTR_COPYC,
+	INSTR_MOVC,
 
 	INSTR_JMP,
 	INSTR_ESCAPE,
@@ -82,6 +83,7 @@ enum instruction_type {
 
 	INSTR_CHR,
 	INSTR_ORD,
+	INSTR_RJUST,
 
 	INSTR_HEX,
 	INSTR_CHOMP,

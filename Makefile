@@ -15,7 +15,7 @@ DEP := $(OBJ:.o=.d)
 
 all: $(TARGET)
 	cp $(TARGET) lib$(NAME).so
-	$(CC) main.c -I include -L$(shell pwd) -Wl,-rpath $(shell pwd) -l$(NAME) -lm -o $(NAME)
+	$(CC) main.c -I include -L$(shell pwd) -Wl,-rpath $(shell pwd) -l$(NAME) -lm -o $(NAME) -g
 
 debug: all
 debug: CFLAGS += -g -O0

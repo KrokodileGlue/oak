@@ -37,7 +37,6 @@ void
 grow_array(struct array *a, size_t size)
 {
 	assert(size < SIZE_MAX / 2);
-
 	if (size <= a->alloc) return;
 
 	if (size > (a->alloc * 2)) {
@@ -46,7 +45,7 @@ grow_array(struct array *a, size_t size)
 		for (size_t i = a->alloc; i < size; i++)
 			a->v[i] = NIL;
 
-		a->alloc += size;
+		a->alloc = size;
 		return;
 	}
 

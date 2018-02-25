@@ -55,6 +55,7 @@ struct operator {
 		OP_SUBEQ,
 		OP_MULEQ,
 		OP_DIVEQ,
+		OP_DOTEQ,
 		OP_COMMA,
 		OP_NOTEQ,
 		OP_MODMOD,

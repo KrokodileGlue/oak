@@ -103,14 +103,14 @@ set_last(struct symbol *sym, int last)
 static void
 push_scope(struct symbolizer *si, int scope)
 {
-	si->scope_stack = realloc(si->scope_stack, sizeof si->scope_stack[0] * (si->scope_pointer + 1));
-	si->scope_stack[si->scope_pointer++] = scope;
+	si->scope_stack = oak_realloc(si->scope_stack, (si->sp + 1) * sizeof *si->scope_stack);
+	si->scope_stack[si->sp++] = scope;
 }
 
 static void
 pop_scope(struct symbolizer *si)
 {
-	si->scope_pointer--;
+	si->sp--;
 }
 
 static void
@@ -250,8 +250,8 @@ push_block(struct symbolizer *si, struct statement *stmt)
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
 	sym->fp = si->fp;
-	sym->scope  = si->scope_stack[si->scope_pointer - 1];
-	stmt->scope = si->scope_stack[si->scope_pointer - 1];
+	sym->scope  = si->scope_stack[si->sp - 1];
+	stmt->scope = si->scope_stack[si->sp - 1];
 
 	add(si, sym);
 	push(si, sym);
@@ -267,7 +267,7 @@ push_block_expr(struct symbolizer *si, struct expression *expr)
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
 	sym->fp = si->fp;
-	sym->scope  = si->scope_stack[si->scope_pointer - 1];
+	sym->scope  = si->scope_stack[si->sp - 1];
 
 	add(si, sym);
 	push(si, sym);
@@ -284,8 +284,8 @@ block(struct symbolizer *si, struct statement *stmt)
 	sym->type = SYM_BLOCK;
 	sym->parent = si->symbol;
 	sym->fp = si->fp;
-	sym->scope = si->scope_stack[si->scope_pointer - 1];
-	stmt->scope = si->scope_stack[si->scope_pointer - 1];
+	sym->scope = si->scope_stack[si->sp - 1];
+	stmt->scope = si->scope_stack[si->sp - 1];
 	add(si, sym);
 
 	push(si, sym);
@@ -467,8 +467,8 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	if (!stmt) return;
 
 	struct symbol *sym = new_symbol(stmt->tok, si->symbol);
-	sym->scope  = si->scope_stack[si->scope_pointer - 1];
-	stmt->scope = si->scope_stack[si->scope_pointer - 1];
+	sym->scope  = si->scope_stack[si->sp - 1];
+	stmt->scope = si->scope_stack[si->sp - 1];
 	sym->parent = si->symbol;
 	sym->fp     = si->fp;
 	resolve_expr(si, stmt->condition);
@@ -485,7 +485,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		}
 
 		push_scope(si, ++si->k->scope);
-		stmt->scope = si->scope_stack[si->scope_pointer - 1];
+		stmt->scope = si->scope_stack[si->sp - 1];
 
 		sym->name = strclone(stmt->fn_def.name);
 		sym->type = SYM_FN;
@@ -495,7 +495,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		 * function calls n stuff.
 		 */
 		sym->id = hash(sym->name, strlen(sym->name));
-		sym->scope = si->scope_stack[si->scope_pointer - 1];
+		sym->scope = si->scope_stack[si->sp - 1];
 		push(si, sym);
 
 		for (size_t i = 0; i < stmt->fn_def.num; i++) {
@@ -522,7 +522,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			if (STATEMENT->var_decl.init) resolve_expr(si, STATEMENT->var_decl.init[i]);                  \
 			struct symbol *redefinition = resolve(si->symbol, STATEMENT->var_decl.names[i]->value);       \
 			                                                                                              \
-			if (redefinition && redefinition->parent->scope == si->scope_stack[si->scope_pointer - 1]) {  \
+			if (redefinition && redefinition->parent->scope == si->scope_stack[si->sp - 1]) {  \
 				error_push(si->r, STATEMENT->tok->loc, ERR_FATAL, "redeclaration of identifier `%s'", \
 				           STATEMENT->var_decl.names[i]->value);                                      \
 				error_push(si->r, redefinition->tok->loc, ERR_NOTE, "previously defined here");       \
@@ -534,7 +534,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 			s->id = hash(s->name, strlen(s->name));                                                       \
 			s->scope = -1;                                                                                \
 			s->parent = si->symbol;                                                                       \
-			s->global = si->scope_pointer == 1;                                                           \
+			s->global = si->sp == 1;                                                           \
 			add(si, s);                                                                                   \
 		}                                                                                                     \
 
@@ -561,7 +561,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	} break;
 
 	case STMT_IF_STMT: {
-		push_scope(si, si->scope_stack[si->scope_pointer - 1]);
+		push_scope(si, si->scope_stack[si->sp - 1]);
 
 		resolve_expr(si, stmt->if_stmt.cond);
 		si->k->scope++; block(si, stmt->if_stmt.then);
@@ -633,7 +633,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 	case STMT_FOR_LOOP: { // TODO: figure out the scopes for the rest of these things.
 		push_scope(si, ++si->k->scope);
 		push_block(si, stmt);
-		stmt->scope = si->scope_stack[si->scope_pointer - 1];
+		stmt->scope = si->scope_stack[si->sp - 1];
 
 		if (stmt->for_loop.a->type == STMT_VAR_DECL)
 			inc_variable_count(si->symbol);
@@ -690,7 +690,7 @@ symbolize(struct symbolizer *si, struct statement *stmt)
 		sym->name = strclone(stmt->label);
 		sym->scope = si->k->scope;
 		sym->parent = si->symbol;
-		sym->global = si->scope_pointer == 1;
+		sym->global = si->sp == 1;
 		break;
 
 	case STMT_ENUM:
@@ -780,7 +780,8 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 
 	if (!m->child) {
 		m->global = oak_malloc(si->symbol->num_variables * sizeof *m->global);
-		memset(m->global, 0, si->symbol->num_variables * sizeof *m->global);
+		for (size_t i = 0; i < si->symbol->num_variables; i++)
+			m->global[i].type = VAL_UNDEF;
 	}
 
 	symbolizer_free(si);
