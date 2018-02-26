@@ -723,19 +723,12 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_MATCH: {
-		if (getreg(vm, c.c).type != VAL_REGEX) {
-			error_push(vm->r, *c.loc, ERR_FATAL,
-			           "attempt to apply match to non regular expression value (got %s)",
-			           value_data[getreg(vm, c.c).type].body);
-			return;
-		}
-
-		if (getreg(vm, c.b).type != VAL_STR) {
-			error_push(vm->r, *c.loc, ERR_FATAL,
-			           "attempt to apply regular expression to non-string value (got %s)",
-			           value_data[getreg(vm, c.b).type].body);
-			return;
-		}
+		CHECKREG(getreg(vm, c.c).type != VAL_REGEX,
+		         "attempt to apply match to non regular expression value (got %s)",
+		         value_data[getreg(vm, c.c).type].body);
+		CHECKREG(getreg(vm, c.b).type != VAL_STR,
+		         "attempt to apply regular expression to non-string value (got %s)",
+		         value_data[getreg(vm, c.b).type].body);
 
 		free(vm->subject);
 		vm->subject = NULL;

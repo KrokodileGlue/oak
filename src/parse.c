@@ -517,7 +517,7 @@ parse_fn_def(struct parser *ps)
 		expect_symbol(ps, "=");
 		struct statement *body = new_statement(ps->tok);
 		body->type = STMT_RET;
-		body->ret.expr = parse_expression(ps, 0);
+		body->ret.expr = parse_expression(ps, 1);
 		s->fn_def.body = body;
 	} else {
 		s->fn_def.body = parse_stmt(ps);

@@ -173,6 +173,16 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 			v = copy_value(gc, l);
 		} else if (l.type == VAL_NIL && r.type == VAL_INT) {
 			v = copy_value(gc, r);
+		} else if (l.type == VAL_TABLE && r.type == VAL_TABLE) {
+			v.type = VAL_TABLE;
+			v.idx = gc_alloc(gc, VAL_TABLE);
+			gc->table[v.idx] = copy_table(gc->table[l.idx]);
+
+			for (int i = 0; i < TABLE_SIZE; i++) {
+				struct bucket b = gc->table[r.idx]->bucket[i];
+				for (size_t j = 0; j < b.len; j++)
+					table_add(gc->table[v.idx], b.key[j], b.val[j]);
+			}
 		} else BINARY_MATH_OPERATION(v, +) else goto err;
 		break;
 
@@ -836,6 +846,10 @@ value_translate(struct gc *l, struct gc *r, struct value v)
 
 		case VAL_REGEX:
 			l->regex[ret.idx] = ktre_copy(r->regex[v.idx]);
+			break;
+
+		case VAL_TABLE:
+			l->table[ret.idx] = copy_table(r->table[v.idx]);
 			break;
 
 		default: assert(false);

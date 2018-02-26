@@ -179,11 +179,6 @@ resolve(struct symbol *sym, char *name)
 		if (sym->id == h && !strcmp(sym->name, name))
 			return sym;
 
-		if (sym->type == SYM_FN) {
-			while (sym->type != SYM_MODULE) sym = sym->parent;
-			continue;
-		}
-
 		sym = sym->parent;
 	}
 

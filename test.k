@@ -281,11 +281,11 @@ fn Boat (name = 'U.S.S. Nameless', attack = 20) = {
 		pl 'The ', self.name, ' takes ',        damage, ' damage!'
 		pl 'The ', self.name, ' now has ', self.health, ' health.'
 
-		self.alive = (self.health >= 0)
+		self.alive = (self.health > 0)
 	},
 
 	is-alive = fn (self) {
-		self.alive = (self.health >= 0)
+		self.alive = (self.health > 0)
 		pl self.alive ? 'The ' + self.name + ' is still kicking.'
 			      : 'The ' + self.name + ' is dead! RIP!'
 	},

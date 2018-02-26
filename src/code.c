@@ -24,7 +24,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_PUSHBACK, REG_AB,    "PUSHBACK  " },
 	{ INSTR_ASET,     REG_ABC,   "ASET      " },
 	{ INSTR_DEREF,    REG_ABC,   "DEREF     " },
-	{ INSTR_SUBSCR,   REG_ABCD,  "SUBSCR    " },
+	{ INSTR_SUBSCR,   REG_ABC,   "SUBSCR    " },
 	{ INSTR_SLICE,    REG_ABCDE, "SLICE     " },
 
 	{ INSTR_MATCH,    REG_ABC,   "MATCH     " },
