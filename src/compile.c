@@ -626,11 +626,49 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 }
 
 static int
+write_variable(struct compiler *c, struct expression *e, struct symbol *sym, int rhs)
+{
+	int reg = -1, r = alloc_reg(c);
+	emit_ab(c, INSTR_COPY, r, rhs, &e->tok->loc);
+
+	if (e->a->type == EXPR_SUBSCRIPT) {
+		emit_abc(c, INSTR_ASET,
+		         compile_lvalue(c, e->a->a, sym),
+		         compile_expression(c, e->a->b, sym),
+		         reg = r,
+		         &e->tok->loc);
+	} else if (e->a->type == EXPR_OPERATOR
+	           && e->a->operator->type == OPTYPE_BINARY
+	           && e->a->operator->name == OP_PERIOD) {
+		struct value key;
+		key.type = VAL_STR;
+		key.idx = gc_alloc(c->gc, VAL_STR);
+		c->gc->str[key.idx] = strclone(e->a->b->val->value);
+
+		int keyreg = alloc_reg(c);
+		emit_ab(c, INSTR_COPYC, keyreg,
+		        constant_table_add(c->ct, key), &e->tok->loc);
+
+		reg = compile_lvalue(c, e->a->a, sym);
+		emit_abc(c, INSTR_ASET,
+		         reg, keyreg, r,
+		         &e->tok->loc);
+		reg = r;
+	} else {
+		int addr = compile_lvalue(c, e->a, sym);
+		emit_ab(c, INSTR_MOV, addr, r, &e->tok->loc);
+		reg = r;
+	}
+
+	return reg;
+}
+
+static int
 compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int reg = -1;
 
-#define o(X,Y)	  \
+#define BIN(X,Y)	  \
 	case OP_##X: \
 		emit_abc(c, INSTR_##Y, reg = alloc_reg(c), \
 		         compile_expression(c, e->a, sym), \
@@ -641,17 +679,30 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 	switch (e->operator->type) {
 	case OPTYPE_BINARY:
 		switch (e->operator->name) {
-			o(ADD, ADD);
-			o(MUL, MUL);
-			o(DIV, DIV);
-			o(SUB, SUB);
-			o(MOD, MOD);
-			o(LEFT, SLEFT);
-			o(RIGHT, SRIGHT);
+			BIN(ADD, ADD);
+			BIN(MUL, MUL);
+			BIN(DIV, DIV);
+			BIN(SUB, SUB);
+			BIN(MOD, MOD);
+			BIN(LEFT, SLEFT);
+			BIN(RIGHT, SRIGHT);
 
-			o(BAND, BAND);
-			o(XOR, XOR);
-			o(BOR, BOR);
+			BIN(BAND, BAND);
+			BIN(XOR, XOR);
+			BIN(BOR, BOR);
+			BIN(CMP, CMP);
+			BIN(LESS, LESS);
+			BIN(MORE, MORE);
+			BIN(LEQ, LEQ);
+			BIN(GEQ, GEQ);
+
+		case OP_NOTEQ: {
+			int temp = alloc_reg(c);
+			emit_abc(c, INSTR_CMP, temp,
+			         compile_expression(c, e->a, sym),
+			         compile_expression(c, e->b, sym), &e->tok->loc);
+			emit_ab(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
+		} break;
 
 		case OP_CC:
 			emit_ab(c, INSTR_MOV,
@@ -661,39 +712,9 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			        &e->tok->loc);
 			break;
 
-		case OP_EQ: {
-			int rhs = alloc_reg(c);
-			emit_ab(c, INSTR_COPY, rhs, compile_expression(c, e->b, sym), &e->tok->loc);
-
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				emit_abc(c, INSTR_ASET,
-				         compile_lvalue(c, e->a->a, sym),
-				         compile_expression(c, e->a->b, sym),
-				         reg = rhs,
-				         &e->tok->loc);
-			} else if (e->a->type == EXPR_OPERATOR
-			      && e->a->operator->type == OPTYPE_BINARY
-			      && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = compile_lvalue(c, e->a->a, sym);
-				emit_abc(c, INSTR_ASET,
-				         reg, keyreg, rhs,
-				         &e->tok->loc);
-				reg = rhs;
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				emit_ab(c, INSTR_MOV, addr, rhs, &e->tok->loc);
-				reg = rhs;
-			}
-		} break;
+		case OP_EQ:
+			write_variable(c, e, sym, reg = compile_expression(c, e->b, sym));
+			break;
 
 		case OP_AND: {
 			reg = alloc_reg(c);
@@ -712,187 +733,6 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			c->code[a].a = c->ip;
 			c->code[b].a = c->ip;
 		} break;
-
-		case OP_ARROW: {
-			int start = compile_expression(c, e->a, sym);
-			int stop = compile_expression(c, e->b, sym);
-
-			int step = alloc_reg(c);
-			emit_ab(c, INSTR_COPYC, step,
-			        constant_table_add(c->ct, INT(1)), &e->tok->loc);
-
-			emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
-		} break;
-
-		case OP_IFF: {
-			reg = alloc_reg(c);
-			emit_a(c, INSTR_COND, compile_expression(c, e->b, sym), &e->tok->loc);
-			size_t a = c->ip;
-			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
-			emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->a, sym), &e->tok->loc);
-			size_t b = c->ip;
-			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
-			c->code[a].a = c->ip;
-			emit_ab(c, INSTR_MOV, reg, nil(c), &e->tok->loc);
-			c->code[b].a = c->ip;
-		} break;
-
-#define OPEQ(X,Y)	  \
-	case OP_##X: \
-	if (e->a->type == EXPR_SUBSCRIPT) { \
-		int keyreg = -1; \
-		reg = alloc_reg(c); \
-		emit_abc(c, INSTR_SUBSCR, \
-		         reg, \
-		         compile_expression(c, e->a->a, sym), \
-		         keyreg = compile_expression(c, e->a->b, sym), \
-		         &e->tok->loc); \
-	  \
-		int n = compile_lvalue(c, e->a->a, sym); \
-		int sum = alloc_reg(c); \
-		emit_abc(c, INSTR_##Y, sum, reg, compile_expression(c, e->b, sym), &e->tok->loc); \
-		emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc); \
-	  \
-		reg = n; \
-	} else if (e->a->type == EXPR_OPERATOR \
-	           && e->a->operator->type == OPTYPE_BINARY \
-	           && e->a->operator->name == OP_PERIOD) { \
-		struct value key; \
-		key.type = VAL_STR; \
-		key.idx = gc_alloc(c->gc, VAL_STR); \
-		c->gc->str[key.idx] = strclone(e->a->b->val->value); \
-	  \
-		int keyreg = alloc_reg(c); \
-		emit_ab(c, INSTR_MOVC, keyreg, \
-		        constant_table_add(c->ct, key), &e->tok->loc); \
-	  \
-		reg = alloc_reg(c); \
-	  \
-		emit_abc(c, INSTR_SUBSCR, \
-		         reg, \
-		         compile_expression(c, e->a->a, sym), \
-		         keyreg, \
-		         &e->tok->loc); \
-	  \
-		int n = compile_lvalue(c, e->a->a, sym); \
-		int sum = alloc_reg(c); \
-		emit_abc(c, INSTR_##Y, sum, reg, compile_expression(c, e->b, sym), &e->tok->loc); \
-		emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc); \
-	  \
-		reg = n; \
-	} else { \
-		int addr = compile_lvalue(c, e->a, sym); \
-		int n = alloc_reg(c); \
-		emit_ab(c, INSTR_MOV, n, addr, &e->tok->loc); \
-		emit_abc(c, INSTR_##Y, addr, n, compile_expression(c, e->b, sym), &e->tok->loc); \
-	  \
-		reg = addr; \
-	} \
-	break
-
-		OPEQ(ADDEQ, ADD);
-		OPEQ(SUBEQ, SUB);
-		OPEQ(MULEQ, MUL);
-		OPEQ(DIVEQ, DIV);
-
-		case OP_DOTEQ:
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				int keyreg = -1;
-				reg = alloc_reg(c);
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg = compile_expression(c, e->a->b, sym),
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-				int x = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, x, compile_expression(c, e->b, sym), &e->tok->loc);
-				emit_abc(c, INSTR_ADD, sum, reg, x, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-
-				reg = x;
-			} else if (e->a->type == EXPR_OPERATOR
-			           && e->a->operator->type == OPTYPE_BINARY
-			           && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_MOVC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg,
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-				int x = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, x, compile_expression(c, e->b, sym), &e->tok->loc);
-				emit_abc(c, INSTR_ADD, sum, reg, x, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-				reg = x;
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				int n = alloc_reg(c);
-				int x = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, x, compile_expression(c, e->b, sym), &e->tok->loc);
-				emit_ab(c, INSTR_MOV, n, addr, &e->tok->loc);
-				emit_abc(c, INSTR_ADD, addr, n, x, &e->tok->loc);
-				reg = x;
-			}
-			break;
-
-		case OP_CMP:
-			reg = alloc_reg(c);
-			emit_abc(c, INSTR_CMP, reg,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			break;
-
-		case OP_NOTEQ: {
-			int temp = alloc_reg(c);
-			emit_abc(c, INSTR_CMP, temp,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			emit_ab(c, INSTR_FLIP, reg = alloc_reg(c), temp, &e->tok->loc);
-		} break;
-
-		case OP_LESS:
-			reg = alloc_reg(c);
-			emit_abc(c, INSTR_LESS, reg,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			break;
-
-		case OP_LEQ:
-			reg = alloc_reg(c);
-			emit_abc(c, INSTR_LEQ, reg,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			break;
-
-		case OP_GEQ:
-			reg = alloc_reg(c);
-			emit_abc(c, INSTR_GEQ, reg,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			break;
-
-		case OP_MORE:
-			reg = alloc_reg(c);
-			emit_abc(c, INSTR_MORE, reg,
-			         compile_expression(c, e->a, sym),
-			         compile_expression(c, e->b, sym), &e->tok->loc);
-			break;
 
 		case OP_OR: {
 			reg = alloc_reg(c);
@@ -923,6 +763,48 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 
 			c->code[_b].a = c->ip;
 			c->code[_c].a = c->ip;
+		} break;
+
+		case OP_ARROW: {
+			int start = compile_expression(c, e->a, sym);
+			int stop = compile_expression(c, e->b, sym);
+
+			int step = alloc_reg(c);
+			emit_ab(c, INSTR_COPYC, step,
+			        constant_table_add(c->ct, INT(1)), &e->tok->loc);
+
+			emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
+		} break;
+
+		case OP_IFF: {
+			reg = alloc_reg(c);
+			emit_a(c, INSTR_COND, compile_expression(c, e->b, sym), &e->tok->loc);
+			size_t a = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			emit_ab(c, INSTR_MOV, reg, compile_expression(c, e->a, sym), &e->tok->loc);
+			size_t b = c->ip;
+			emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+			c->code[a].a = c->ip;
+			emit_ab(c, INSTR_MOV, reg, nil(c), &e->tok->loc);
+			c->code[b].a = c->ip;
+		} break;
+
+#define OPEQ(X,Y)	  \
+	case OP_##X: { \
+		reg = alloc_reg(c); \
+		emit_abc(c, INSTR_##Y, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym), &e->tok->loc); \
+		write_variable(c, e, sym, reg); \
+	} break
+
+		OPEQ(ADDEQ, ADD);
+		OPEQ(SUBEQ, SUB);
+		OPEQ(MULEQ, MUL);
+		OPEQ(DIVEQ, DIV);
+
+		case OP_DOTEQ: {
+			int t = alloc_reg(c);
+			emit_abc(c, INSTR_ADD, t, compile_expression(c, e->a, sym), reg = compile_expression(c, e->b, sym), &e->tok->loc);
+			write_variable(c, e, sym, t);
 		} break;
 
 		case OP_COMMA:
@@ -1018,115 +900,16 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 		break;
 
+#define PRE(X,Y)	  \
+		case OP_##X: { \
+			emit_a(c, INSTR_##Y, reg = compile_expression(c, e->a, sym), &e->tok->loc); \
+			write_variable(c, e, sym, reg); \
+		} break
+
 	case OPTYPE_PREFIX:
 		switch (e->operator->name) {
-		case OP_ADDADD: {
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				int keyreg = -1;
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg = compile_expression(c, e->a->b, sym),
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-
-				reg = sum;
-			} else if (e->a->type == EXPR_OPERATOR
-			           && e->a->operator->type == OPTYPE_BINARY
-			           && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg,
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-
-				reg = sum;
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				emit_a(c, INSTR_INC, addr, &e->tok->loc);
-				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
-			}
-		} break;
-
-		case OP_SUBSUB: {
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				int keyreg = -1;
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg = compile_expression(c, e->a->b, sym),
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-
-				reg = sum;
-			} else if (e->a->type == EXPR_OPERATOR
-			           && e->a->operator->type == OPTYPE_BINARY
-			           && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg,
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-
-				reg = sum;
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
-				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
-			}
-		} break;
+		PRE(ADDADD, INC);
+		PRE(SUBSUB, DEC);
 
 		case OP_SUB:
 			reg = alloc_reg(c);
@@ -1148,107 +931,19 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 		break;
 
+#define POST(X,Y)	  \
+		case OP_##X: { \
+			reg = compile_expression(c, e->a, sym); \
+			int t = alloc_reg(c); \
+			emit_ab(c, INSTR_COPY, t, reg, &e->tok->loc); \
+			emit_a(c, INSTR_##Y, t, &e->tok->loc); \
+			write_variable(c, e, sym, t); \
+		} break
+
 	case OPTYPE_POSTFIX:
 		switch (e->operator->name) {
-		case OP_ADDADD: {
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				int keyreg = -1;
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg = compile_expression(c, e->a->b, sym),
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-			} else if (e->a->type == EXPR_OPERATOR
-			           && e->a->operator->type == OPTYPE_BINARY
-			           && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg,
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_INC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
-				emit_a(c, INSTR_INC, addr, &e->tok->loc);
-			}
-		} break;
-
-		case OP_SUBSUB: {
-			if (e->a->type == EXPR_SUBSCRIPT) {
-				int keyreg = -1;
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg = compile_expression(c, e->a->b, sym),
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-			} else if (e->a->type == EXPR_OPERATOR
-			           && e->a->operator->type == OPTYPE_BINARY
-			           && e->a->operator->name == OP_PERIOD) {
-				struct value key;
-				key.type = VAL_STR;
-				key.idx = gc_alloc(c->gc, VAL_STR);
-				c->gc->str[key.idx] = strclone(e->a->b->val->value);
-
-				int keyreg = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, keyreg,
-				        constant_table_add(c->ct, key), &e->tok->loc);
-
-				reg = alloc_reg(c);
-
-				emit_abc(c, INSTR_SUBSCR,
-				         reg,
-				         compile_expression(c, e->a->a, sym),
-				         keyreg,
-				         &e->tok->loc);
-
-				int n = compile_lvalue(c, e->a->a, sym);
-				int sum = alloc_reg(c);
-
-				emit_ab(c, INSTR_MOV, sum, reg, &e->tok->loc);
-				emit_a(c, INSTR_DEC, sum, &e->tok->loc);
-				emit_abc(c, INSTR_ASET, n, keyreg, sum, &e->tok->loc);
-			} else {
-				int addr = compile_lvalue(c, e->a, sym);
-				emit_ab(c, INSTR_MOV, reg = alloc_reg(c), addr, &e->tok->loc);
-				emit_a(c, INSTR_DEC, addr, &e->tok->loc);
-			}
-		} break;
+			POST(ADDADD, INC);
+			POST(SUBSUB, DEC);
 
 		default:
 			DOUT("unimplemented compiler for postfix operator `%s'",
@@ -1746,6 +1441,7 @@ compile_expr(struct compiler *c, struct expression *e, struct symbol *sym)
 		c->lp = lp; \
 	} while (0)
 
+/* jesus christ */
 static int
 compile_for_loop(struct compiler *c, struct statement *s, struct symbol *sym,
                  int lp, int np)
@@ -2036,6 +1732,7 @@ compile_for_loop(struct compiler *c, struct statement *s, struct symbol *sym,
 	return start;
 }
 
+/* TODO: move constant expression compilation into a new file */
 static bool
 is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
 {
@@ -2292,7 +1989,7 @@ compile_statement(struct compiler *c, struct statement *s)
 				? compile_expr(c, s->var_decl.init[i], sym)
 				: nil(c);
 
-			emit_ab(c, INSTR_MOV, var_sym->address, reg, &s->tok->loc);
+			emit_ab(c, INSTR_COPY, var_sym->address, reg, &s->tok->loc);
 		}
 		break;
 
