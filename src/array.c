@@ -33,6 +33,17 @@ array_push(struct array *a, struct value r)
 	a->v[a->len++] = r;
 }
 
+struct value
+array_pop(struct array *a)
+{
+	if (a->len > 0) {
+		a->len--;
+		return a->v[a->len];
+	}
+
+	return NIL;
+}
+
 void
 grow_array(struct array *a, size_t size)
 {

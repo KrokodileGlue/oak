@@ -605,14 +605,18 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_APUSH: {
-		if (getreg(vm, c.a).type != VAL_ARRAY) {
-			error_push(vm->r, *c.loc, ERR_FATAL,
-			           "push builtin requires array as its lefthand argument (got %s)",
-			           value_data[getreg(vm, c.a).type].body);
-			return;
-		}
+		CHECKREG(getreg(vm, c.a).type != VAL_ARRAY,
+		         "push builtin requires array as its lefthand argument (got %s)",
+		         value_data[getreg(vm, c.a).type].body);
 
 		array_push(vm->gc->array[getreg(vm, c.a).idx], copy_value(vm->gc, getreg(vm, c.b)));
+	} break;
+
+	case INSTR_APOP: {
+		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY,
+		         "pop builtin requires array operand (got %s)",
+		         value_data[getreg(vm, c.b).type].body);
+		SETREG(c.a, array_pop(vm->gc->array[getreg(vm, c.b).idx]));
 	} break;
 
 	case INSTR_INS: {

@@ -497,6 +497,21 @@ pl rjust('test', 10)
 pl rjust(5, 10)
 pl rjust('test', 2)
 
+pl min(0, 1, 2, 3, -1, 4, 5, 6)
+pl min([0, 1, 2, 3, -1, 4, 5, 6])
+
+var ejflioeshnfj = 0 -> 10
+push ejflioeshnfj, 11
+
+pl join ', ', ejflioeshnfj
+pop ejflioeshnfj
+pl join ', ', ejflioeshnfj
+pop ejflioeshnfj
+pl join ', ', ejflioeshnfj
+pop ejflioeshnfj
+
+pl pop([]) == nil
+
 # TODO: fix the api design
 # TODO: actually implement the tracing garbage collector
 # TODO: regex matches shouldn't survive function calls

@@ -300,25 +300,6 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		emit_abcd(c, INSTR_RANGE, reg = alloc_reg(c), start, stop, step, &e->tok->loc);
 	} break;
 
-	case BUILTIN_PUSH: {
-		CHECKARGS(e->num != 1 && e->num != 2);
-
-		if (e->num == 2) {
-			emit_ab(c, INSTR_APUSH,
-			        reg = compile_lvalue(c, e->args[0], sym),
-			        compile_expression(c, e->args[1], sym),
-			        &e->tok->loc);
-		} else {
-			int imp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
-
-			emit_ab(c, INSTR_APUSH,
-			        reg = compile_lvalue(c, e->args[0], sym),
-			        imp,
-			        &e->tok->loc);
-		}
-	} break;
-
 	case BUILTIN_INSERT: {
 		CHECKARGS(e->num != 2 && e->num != 3);
 
@@ -337,72 +318,24 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		}
 	} break;
 
-	case BUILTIN_COUNT: {
+	case BUILTIN_PUSH: {
 		CHECKARGS(e->num != 1 && e->num != 2);
 
 		if (e->num == 2) {
-			emit_abc(c, INSTR_COUNT, reg = alloc_reg(c),
-			         compile_expression(c, e->args[0], sym),
-			         compile_expression(c, e->args[1], sym),
-			         &e->tok->loc);
+			emit_ab(c, INSTR_APUSH,
+			        reg = compile_lvalue(c, e->args[0], sym),
+			        compile_expression(c, e->args[1], sym),
+			        &e->tok->loc);
 		} else {
 			int imp = alloc_reg(c);
 			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
 
-			emit_abc(c, INSTR_COUNT, reg = alloc_reg(c),
-			         imp,
-			         compile_expression(c, e->args[0], sym),
-			         &e->tok->loc);
+			emit_ab(c, INSTR_APUSH,
+			        reg = compile_lvalue(c, e->args[0], sym),
+			        imp,
+			        &e->tok->loc);
 		}
 	} break;
-
-	case BUILTIN_RJUST: {
-		CHECKARGS(e->num != 1 && e->num != 2);
-
-		if (e->num == 2) {
-			emit_abc(c, INSTR_RJUST, reg = alloc_reg(c),
-			         compile_expression(c, e->args[0], sym),
-			         compile_expression(c, e->args[1], sym),
-			         &e->tok->loc);
-		} else {
-			int imp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);
-
-			emit_abc(c, INSTR_RJUST, reg = alloc_reg(c),
-			         imp,
-			         compile_expression(c, e->args[0], sym),
-			         &e->tok->loc);
-		}
-	} break;
-
-#define UNARY(X,Y)	  \
-	case BUILTIN_##X: { \
-		int arg = -1; \
-		if (e->num == 0) { \
-			arg = alloc_reg(c); \
-			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc); \
-		} else { \
-			CHECKARGS(e->num != 1); \
-			arg = compile_expression(c, e->args[0], sym); \
-		} \
-		emit_ab(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc);\
-	} break
-
-	UNARY(REVERSE, REV);
-	UNARY(SORT, SORT);
-	UNARY(UC, UC);
-	UNARY(LC, LC);
-	UNARY(UCFIRST, UCFIRST);
-	UNARY(LCFIRST, LCFIRST);
-	UNARY(TYPE, TYPE);
-	UNARY(LENGTH, LEN);
-	UNARY(SUM, SUM);
-	UNARY(ABS, ABS);
-	UNARY(HEX, HEX);
-	UNARY(CHOMP, CHOMP);
-
-	UNARY(KEYS, KEYS);
-	UNARY(VALUES, VALUES);
 
 	case BUILTIN_SAY: {
 		int arg = -1;
@@ -437,144 +370,6 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		emit_(c, INSTR_LINE, &e->tok->loc);
 		reg = arg;
-	} break;
-
-	case BUILTIN_INT: {
-		CHECKARGS(e->num != 1 && e->num != 0);
-		int arg = -1;
-
-		if (e->num == 0) {
-			arg = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
-		} else {
-			arg = compile_expression(c, e->args[0], sym);
-		}
-
-		reg = alloc_reg(c);
-		emit_ab(c, INSTR_INT, reg, arg, &e->tok->loc);
-	} break;
-
-	case BUILTIN_FLOAT: {
-		CHECKARGS(e->num != 1 && e->num != 0);
-		int arg = -1;
-
-		if (e->num == 0) {
-			arg = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
-		} else {
-			arg = compile_expression(c, e->args[0], sym);
-		}
-
-		reg = alloc_reg(c);
-		emit_ab(c, INSTR_FLOAT, reg, arg, &e->tok->loc);
-	} break;
-
-	case BUILTIN_STRING: {
-		CHECKARGS(e->num != 1 && e->num != 0);
-		int arg = -1;
-
-		if (e->num == 0) {
-			arg = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc);
-		} else {
-			arg = compile_expression(c, e->args[0], sym);
-		}
-
-		reg = alloc_reg(c);
-		emit_ab(c, INSTR_STR, reg, arg, &e->tok->loc);
-	} break;
-
-	/* TODO: clean these up with macros */
-	case BUILTIN_MIN: {
-		reg = alloc_reg(c);
-
-		if (e->num == 0) {
-			int temp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
-			emit_a(c, INSTR_MIN, reg, &e->tok->loc);
-		} else {
-			int arg[e->num];
-
-			for (int i = e->num - 1; i >= 0; i--) {
-				arg[i] = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym), &e->tok->loc);
-			}
-
-			for (int i = e->num - 1; i >= 0; i--)
-				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
-
-			emit_a(c, INSTR_MIN, reg, &e->tok->loc);
-		}
-	} break;
-
-	case BUILTIN_MAX: {
-		reg = alloc_reg(c);
-
-		if (e->num == 0) {
-			int temp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
-			emit_a(c, INSTR_MAX, reg, &e->tok->loc);
-		} else {
-			int arg[e->num];
-
-			for (int i = e->num - 1; i >= 0; i--) {
-				arg[i] = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym), &e->tok->loc);
-			}
-
-			for (int i = e->num - 1; i >= 0; i--)
-				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
-
-			emit_a(c, INSTR_MAX, reg, &e->tok->loc);
-		}
-	} break;
-
-	case BUILTIN_CHR: {
-		reg = alloc_reg(c);
-
-		if (e->num == 0) {
-			int temp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
-			emit_a(c, INSTR_CHR, reg, &e->tok->loc);
-		} else {
-			int arg[e->num];
-
-			for (int i = e->num - 1; i >= 0; i--) {
-				arg[i] = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym), &e->tok->loc);
-			}
-
-			for (int i = e->num - 1; i >= 0; i--)
-				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
-
-			emit_a(c, INSTR_CHR, reg, &e->tok->loc);
-		}
-	} break;
-
-	case BUILTIN_ORD: {
-		reg = alloc_reg(c);
-
-		if (e->num == 0) {
-			int temp = alloc_reg(c);
-			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc);
-			emit_a(c, INSTR_PUSH, temp, &e->tok->loc);
-			emit_a(c, INSTR_ORD, reg, &e->tok->loc);
-		} else {
-			int arg[e->num];
-
-			for (int i = e->num - 1; i >= 0; i--) {
-				arg[i] = alloc_reg(c);
-				emit_ab(c, INSTR_MOV, arg[i], compile_expression(c, e->args[i], sym), &e->tok->loc);
-			}
-
-			for (int i = e->num - 1; i >= 0; i--)
-				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc);
-
-			emit_a(c, INSTR_ORD, reg, &e->tok->loc);
-		}
 	} break;
 
 	case BUILTIN_MAP: {
@@ -615,6 +410,103 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 		emit_a(c, INSTR_JMP, start, &e->tok->loc);
 		c->code[a].a = c->ip;
 	} break;
+
+#define UNARY(X,Y)	  \
+	case BUILTIN_##X: { \
+		int arg = -1; \
+		if (e->num == 0) { \
+			arg = alloc_reg(c); \
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc); \
+		} else { \
+			CHECKARGS(e->num != 1); \
+			arg = compile_expression(c, e->args[0], sym); \
+		} \
+		emit_ab(c, INSTR_##Y, reg = alloc_reg(c), arg, &e->tok->loc); \
+	} break
+
+#define CONVERTY(X,Y)	  \
+	case BUILTIN_##X: { \
+		CHECKARGS(e->num != 1 && e->num != 0); \
+		int arg = -1; \
+		if (e->num == 0) { \
+			arg = alloc_reg(c); \
+			emit_a(c, INSTR_GETIMP, arg, &e->tok->loc); \
+		} else { \
+			arg = compile_expression(c, e->args[0], sym); \
+		} \
+		reg = alloc_reg(c); \
+		emit_ab(c, INSTR_##Y, reg, arg, &e->tok->loc); \
+	} break
+
+
+#define STRETCHY(X,Y)	  \
+	case BUILTIN_##X: { \
+		reg = alloc_reg(c); \
+		if (e->num == 0) { \
+			int temp = alloc_reg(c); \
+			emit_a(c, INSTR_GETIMP, temp, &e->tok->loc); \
+			emit_a(c, INSTR_PUSH, temp, &e->tok->loc); \
+			emit_a(c, INSTR_##Y, reg, &e->tok->loc); \
+		} else { \
+			int arg[e->num]; \
+			for (int i = e->num - 1; i >= 0; i--) { \
+				arg[i] = alloc_reg(c); \
+				emit_ab(c, INSTR_MOV, arg[i], \
+				        compile_expression(c, e->args[i], sym), \
+				        &e->tok->loc); \
+			} \
+			for (int i = e->num - 1; i >= 0; i--) \
+				emit_a(c, INSTR_PUSH, arg[i], &e->tok->loc); \
+			emit_a(c, INSTR_##Y, reg, &e->tok->loc); \
+		} \
+	} break
+
+#define ARRAYLIKE(X,Y)\
+	case BUILTIN_##X: {\
+		CHECKARGS(e->num != 1 && e->num != 2);\
+		if (e->num == 2) {\
+			emit_abc(c, INSTR_##Y, reg = alloc_reg(c),\
+			         compile_expression(c, e->args[0], sym),\
+			         compile_expression(c, e->args[1], sym),\
+			         &e->tok->loc);\
+		} else {\
+			int imp = alloc_reg(c);\
+			emit_a(c, INSTR_GETIMP, imp, &e->tok->loc);\
+			emit_abc(c, INSTR_##Y, reg = alloc_reg(c),\
+			         imp,\
+			         compile_expression(c, e->args[0], sym),\
+			         &e->tok->loc);\
+		}\
+	} break
+
+	ARRAYLIKE(COUNT, COUNT);
+	ARRAYLIKE(RJUST, RJUST);
+
+	UNARY(POP, APOP);
+	UNARY(REVERSE, REV);
+	UNARY(SORT, SORT);
+	UNARY(UC, UC);
+	UNARY(LC, LC);
+	UNARY(UCFIRST, UCFIRST);
+	UNARY(LCFIRST, LCFIRST);
+	UNARY(TYPE, TYPE);
+	UNARY(LENGTH, LEN);
+	UNARY(SUM, SUM);
+	UNARY(ABS, ABS);
+	UNARY(HEX, HEX);
+	UNARY(CHOMP, CHOMP);
+
+	UNARY(KEYS, KEYS);
+	UNARY(VALUES, VALUES);
+
+	CONVERTY(INT, INT);
+	CONVERTY(FLOAT, FLOAT);
+	CONVERTY(STRING, STR);
+
+	STRETCHY(MIN, MIN);
+	STRETCHY(MAX, MAX);
+	STRETCHY(CHR, CHR);
+	STRETCHY(ORD, ORD);
 
 	default:
 		DOUT("unimplemented compiler for builtin `%s'",
