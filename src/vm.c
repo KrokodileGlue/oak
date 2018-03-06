@@ -79,9 +79,9 @@ static void
 push(struct vm *vm, struct value v)
 {
 	if (vm->debug) {
-		fprintf(stderr, "pushing value ");
+		printf("pushing value ");
 		print_debug(vm->gc, v);
-		fprintf(stderr, " in module `%s'\n", vm->m->name);
+		printf(" in module `%s'\n", vm->m->name);
 	}
 
 	vm->sp++;
@@ -114,7 +114,7 @@ call(struct vm *vm, struct value v)
 	}
 
 	if (vm->debug)
-		fprintf(stderr, "<function call : %s@%s : %p : %zu argument%s>\n",
+		printf("<function call : %s@%s : %p : %zu argument%s>\n",
 		        v.name ? v.name : "*function*",
 		        vm->k->modules[v.module]->name,
 		        (void *)&vm->code[vm->ip], vm->sp,
@@ -194,22 +194,22 @@ ret(struct vm *vm)
 static void
 stacktrace(struct vm *vm)
 {
-	fprintf(stderr, "Stack trace:\n");
+	printf("Stack trace:\n");
 	size_t depth = 0;
 	if (vm->csp > 10) depth = vm->csp - 10;
 
 	for (size_t i = vm->csp; i > depth; i--) {
 		struct instruction c = vm->code[vm->callstack[i]];
-		fprintf(stderr, "\t%2zu: <`%10s' : %p : %d argument%s>",
+		printf("\t%2zu: <`%10s' : %p : %d argument%s>",
 		        i, vm->calls[i].name, (void *)&vm->code[vm->callstack[i]],
 		        vm->args[i], vm->args[i] == 1 ? "" : "s");
-		fprintf(stderr, " @%"PRIu64" ", vm->calls[i].integer);
-		fprintf(stderr, "%s:%zu:%zu\n",
+		printf(" @%"PRIu64" ", vm->calls[i].integer);
+		printf("%s:%zu:%zu\n",
 		        c.loc->file, line_number(*c.loc), column_number(*c.loc));
 	}
 
 	if (depth != 0)
-		fprintf(stderr, "\t--- Truncated ---\n");
+		printf("\t--- Truncated ---\n");
 }
 
 static inline struct value
@@ -241,8 +241,11 @@ getreg(struct vm *vm, int n)
 static void
 pop(struct vm *vm, int reg)
 {
-	if (vm->sp)
-		SETREG(reg, vm->stack[vm->sp--]);
+	if (vm->sp) {
+		struct value v = vm->stack[vm->sp--];
+		if (v.type != VAL_TABLE) v = copy_value(vm->gc, v);
+		SETREG(reg, v);
+	}
 }
 
 static int
@@ -258,7 +261,7 @@ find_undef(struct vm *vm)
 static struct value
 eval(struct vm *vm, char *s, int scope, struct location loc, int stack_base)
 {
-	if (vm->debug) fprintf(stderr, "<evaluating '%s'>\n", s);
+	if (vm->debug) printf("<evaluating '%s'>\n", s);
 	struct module *m = load_module(vm->k,
 	                               find_from_scope(vm->m->sym, scope),
 	                               strclone(s),
@@ -347,30 +350,30 @@ execute_instr(struct vm *vm, struct instruction c)
 {
 	switch (c.type) {
 	case INSTR_MOV:  SETREG(c.a, getreg(vm, c.b)); break;
-	case INSTR_JMP:  vm->ip = c.a - 1;         break;
+	case INSTR_JMP:  vm->ip = c.a - 1;             break;
 	case INSTR_PUSH: push(vm, getreg(vm, c.a));    break;
-	case INSTR_POP:  pop(vm, c.a);             break;
+	case INSTR_POP:  pop(vm, c.a);                 break;
 	case INSTR_CALL: call(vm, getreg(vm, c.a));    break;
-	case INSTR_RET:  ret(vm);                  break;
-	case INSTR_ADD:  BIN(OP_ADD);              break;
-	case INSTR_SUB:  BIN(OP_SUB);              break;
-	case INSTR_MUL:  BIN(OP_MUL);              break;
-	case INSTR_POW:  BIN(OP_POW);              break;
-	case INSTR_DIV:  BIN(OP_DIV);              break;
-	case INSTR_MOD:  BIN(OP_MOD);              break;
-	case INSTR_CMP:  BIN(OP_CMP);              break;
-	case INSTR_LESS: BIN(OP_LESS);             break;
-	case INSTR_LEQ:  BIN(OP_LEQ);              break;
-	case INSTR_GEQ:  BIN(OP_GEQ);              break;
-	case INSTR_BAND: BIN(OP_BAND);             break;
-	case INSTR_XOR:  BIN(OP_XOR);              break;
-	case INSTR_BOR:  BIN(OP_BOR);              break;
-	case INSTR_MORE: BIN(OP_MORE);             break;
-	case INSTR_SLEFT: BIN(OP_LEFT);            break;
-	case INSTR_SRIGHT: BIN(OP_RIGHT);          break;
-	case INSTR_INC: UN(OP_ADDADD);             break;
-	case INSTR_DEC: UN(OP_SUBSUB);             break;
-	case INSTR_MSET: vm->match = c.a;          break;
+	case INSTR_RET:  ret(vm);                      break;
+	case INSTR_ADD:  BIN(OP_ADD);                  break;
+	case INSTR_SUB:  BIN(OP_SUB);                  break;
+	case INSTR_MUL:  BIN(OP_MUL);                  break;
+	case INSTR_POW:  BIN(OP_POW);                  break;
+	case INSTR_DIV:  BIN(OP_DIV);                  break;
+	case INSTR_MOD:  BIN(OP_MOD);                  break;
+	case INSTR_CMP:  BIN(OP_CMP);                  break;
+	case INSTR_LESS: BIN(OP_LESS);                 break;
+	case INSTR_LEQ:  BIN(OP_LEQ);                  break;
+	case INSTR_GEQ:  BIN(OP_GEQ);                  break;
+	case INSTR_BAND: BIN(OP_BAND);                 break;
+	case INSTR_XOR:  BIN(OP_XOR);                  break;
+	case INSTR_BOR:  BIN(OP_BOR);                  break;
+	case INSTR_MORE: BIN(OP_MORE);                 break;
+	case INSTR_SLEFT: BIN(OP_LEFT);                break;
+	case INSTR_SRIGHT: BIN(OP_RIGHT);              break;
+	case INSTR_INC: UN(OP_ADDADD);                 break;
+	case INSTR_DEC: UN(OP_SUBSUB);                 break;
+	case INSTR_MSET: vm->match = c.a;              break;
 	case INSTR_MINC:
 		if (vm->match == 65535) vm->match = 0;
 		else vm->match++;
@@ -385,8 +388,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		break;
 
 	case INSTR_CHKSTCK:
-		if (vm->sp)
-			error_push(vm->r, *c.loc, ERR_FATAL, "invalid number of arguments passed to function (received %d too many)", vm->sp);
+		/* if (vm->sp) */
+		/* 	error_push(vm->r, *c.loc, ERR_FATAL, "invalid number of arguments passed to function (received %d too many)", vm->sp); */
 		break;
 
 	case INSTR_FLIP:
@@ -508,7 +511,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 	case INSTR_SLICE: {
-		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY,
+		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY
+		         && getreg(vm, c.b).type != VAL_STR,
 		         "array slice requires array operand (got %s)",
 		         value_data[getreg(vm, c.b).type].body);
 
@@ -528,7 +532,11 @@ execute_instr(struct vm *vm, struct instruction c)
 		         value_data[getreg(vm, c.e).type].body);
 
 		int64_t start = getreg(vm, c.c).type == VAL_INT ? getreg(vm, c.c).integer : 0;
-		int64_t stop = getreg(vm, c.d).type == VAL_INT ? getreg(vm, c.d).integer : vm->gc->array[getreg(vm, c.b).idx]->len - 1;
+		int64_t stop = getreg(vm, c.d).type == VAL_INT
+			? getreg(vm, c.d).integer
+			: (getreg(vm, c.b).type == VAL_STR
+			   ? strlen(vm->gc->str[getreg(vm, c.b).idx]) - 1
+			   : vm->gc->array[getreg(vm, c.b).idx]->len - 1);
 		int64_t step = getreg(vm, c.e).type == VAL_INT ? getreg(vm, c.e).integer : 1;
 
 		SETREG(c.a, slice_value(vm->gc, getreg(vm, c.b), start, stop, step));
@@ -597,11 +605,14 @@ execute_instr(struct vm *vm, struct instruction c)
 		}
 
 		/* TODO: is this all right? */
-		if (getreg(vm, c.b).type == VAL_STR) {
+		if (getreg(vm, c.a).type == VAL_TABLE
+		    && getreg(vm, c.b).type == VAL_STR) {
 			table_add(vm->gc->table[getreg(vm, c.a).idx],
 			          vm->gc->str[getreg(vm, c.b).idx],
 			          getreg(vm, c.c));
 		}
+
+		/* TODO: make sure something happened */
 		break;
 
 	case INSTR_APUSH: {
@@ -617,6 +628,13 @@ execute_instr(struct vm *vm, struct instruction c)
 		         "pop builtin requires array operand (got %s)",
 		         value_data[getreg(vm, c.b).type].body);
 		SETREG(c.a, array_pop(vm->gc->array[getreg(vm, c.b).idx]));
+	} break;
+
+	case INSTR_SHIFT: {
+		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY,
+		         "shift builtin requires array operand (got %s)",
+		         value_data[getreg(vm, c.b).type].body);
+		SETREG(c.a, array_shift(vm->gc->array[getreg(vm, c.b).idx]));
 	} break;
 
 	case INSTR_INS: {
@@ -638,10 +656,22 @@ execute_instr(struct vm *vm, struct instruction c)
 	} break;
 
 	case INSTR_DEREF:
-		/* TODO: TABLES! */
+		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY
+		         && getreg(vm, c.b).type != VAL_TABLE,
+		         "subscript requires array or table operand");
+		CHECKREG(getreg(vm, c.b).type == VAL_ARRAY
+		         && getreg(vm, c.c).integer < 0,
+		         "subscript on array requires positive index");
+		CHECKREG(getreg(vm, c.b).type == VAL_TABLE
+		         && getreg(vm, c.c).type != VAL_STR,
+		         "subscript on table requires string key");
 
-		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY, "subscript requires array operand");
-		CHECKREG(getreg(vm, c.c).integer < 0, "subscript requires positive index");
+		if (getreg(vm, c.b).type == VAL_TABLE) {
+			SETREG(c.a,
+			       table_lookup(vm->gc->table[getreg(vm, c.b).idx],
+			                    vm->gc->str[getreg(vm, c.c).idx]));
+			return;
+		}
 
 		/*
 		 * This is necessary because we might want to add a
@@ -651,7 +681,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		grow_array(vm->gc->array[getreg(vm, c.b).idx], getreg(vm, c.c).integer + 1);
 
 		if (getreg(vm, c.c).integer < vm->gc->array[getreg(vm, c.b).idx]->len &&
-		    vm->gc->array[getreg(vm, c.b).idx]->v[getreg(vm, c.c).integer].type == VAL_ARRAY) {
+		    (vm->gc->array[getreg(vm, c.b).idx]->v[getreg(vm, c.c).integer].type == VAL_ARRAY
+		    || vm->gc->array[getreg(vm, c.b).idx]->v[getreg(vm, c.c).integer].type == VAL_TABLE)) {
 			SETREG(c.a, vm->gc->array[getreg(vm, c.b).idx]->v
 			       [getreg(vm, c.c).integer]);
 		} else {
@@ -673,7 +704,7 @@ execute_instr(struct vm *vm, struct instruction c)
 
 	case INSTR_PRINT:
 		if (vm->k->talkative) print_value(vm->f, vm->gc, getreg(vm, c.a));
-		if (vm->debug && vm->k->talkative) fputc('\n', stderr);
+		if (vm->debug && vm->k->talkative) putchar('\n');
 		break;
 
 	case INSTR_COND:
@@ -1403,6 +1434,56 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.a, v);
 	} break;
 
+	case INSTR_TRIM: {
+		struct value s = getreg(vm, c.b);
+
+		if (s.type != VAL_STR) {
+			error_push(vm->r, *c.loc, ERR_FATAL,
+			           "trim builtin requires string argument (got %s)",
+			           value_data[s.type].body);
+			return;
+		}
+
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(vm->gc, VAL_STR);
+		vm->gc->str[v.idx] = oak_malloc(strlen(vm->gc->str[s.idx]) + 1);
+		char *a = vm->gc->str[s.idx];
+		while (isspace(*a) && *a) a++;
+		strcpy(vm->gc->str[v.idx], a);
+
+		if (!strlen(a)) {
+			SETREG(c.a, NIL);
+			return;
+		}
+
+		int i = strlen(vm->gc->str[v.idx]) - 1;
+		while (i && vm->gc->str[v.idx][i] == '\n') i--;
+		if (vm->gc->str[v.idx][i + 1] == '\n')
+			vm->gc->str[v.idx][i + 1] = 0;
+
+		SETREG(c.a, v);
+	} break;
+
+	case INSTR_LASTOF: {
+		CHECKREG(getreg(vm, c.b).type != VAL_ARRAY
+		         && getreg(vm, c.b).type != VAL_STR,
+		         "lastof builtin requires array or string operand");
+
+		if (getreg(vm, c.b).type == VAL_ARRAY) {
+			struct array *a = vm->gc->array[getreg(vm, c.b).idx];
+			if (a->len == 0) SETREG(c.a, NIL);
+			else SETREG(c.a, a->v[a->len - 1]);
+		} else if (getreg(vm, c.b).type == VAL_STR) {
+			char *s = vm->gc->str[getreg(vm, c.b).idx];
+			if (strlen(s) == 0)
+				SETREG(c.a, NIL);
+			else
+				SETREG(c.a, make_string(vm->gc,
+			                        chrtostr(s[strlen(s) - 1])));
+		} else assert(false);
+	} break;
+
 	case INSTR_MIN:
 		if (vm->sp == 1) {
 			SETREG(c.a, min_value(vm->gc, vm->stack[vm->sp--]));
@@ -1492,7 +1573,7 @@ execute(struct vm *vm, int64_t ip)
 	}
 
 	if (vm->r->pending) {
-		error_write(vm->r, stderr);
+		error_write(vm->r, stdout);
 		if (vm->csp) stacktrace(vm);
 	}
 }
@@ -1501,6 +1582,6 @@ void
 vm_panic(struct vm *vm)
 {
 	/* TODO: clean up memory stuff */
-	error_write(vm->r, stderr);
+	error_write(vm->r, stdout);
 	exit(EXIT_FAILURE);
 }

@@ -12,6 +12,43 @@
 
 #include "location.h"
 
+size_t line_number  (struct location loc);
+size_t column_number(struct location loc);
+size_t line_len     (struct location loc);
+size_t index_in_line(struct location loc);
+char *get_line      (struct location loc);
+void chop_extension(char *str);
+char *add_extension(char *str);
+char *strclone     (const char *str);
+
+void print_escaped_string(FILE *f, char *str, size_t len);
+char *substr(const char *str, size_t x, size_t y);
+
+char *smart_cat(char *lhs, char *rhs);
+char *new_cat  (char *lhs, char *rhs);
+
+void remove_char(char *lhs, size_t c);
+
+uint64_t hash(char *d, size_t len);
+char *strsort(const char *s);
+
+void *oak_malloc(size_t size);
+void *oak_realloc(void *mem, size_t size);
+char *load_file(const char *path);
+
+static inline char *
+ksprintf(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	char *buf = oak_malloc(512);
+	vsnprintf(buf, 512, fmt, args);
+
+	va_end(args);
+	return buf;
+}
+
 /* TODO: This is really, really dumb. I think. */
 #define EPSILON 0.001
 #define fcmp(a,b) (fabs(a - b) <= EPSILON * fabs(a))
@@ -22,6 +59,7 @@
 		fprintf(stderr, "oak: "__FILE__":%d: ", __LINE__); \
 		fprintf(stderr, __VA_ARGS__); \
 		fputc('\n', stderr);                  \
+		fflush(stderr); \
 	} while (0)
 
 static inline bool
@@ -85,41 +123,13 @@ lc(int c)
 	return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
 }
 
-size_t line_number  (struct location loc);
-size_t column_number(struct location loc);
-size_t line_len     (struct location loc);
-size_t index_in_line(struct location loc);
-char *get_line      (struct location loc);
-void chop_extension(char *str);
-char *add_extension(char *str);
-char *strclone     (const char *str);
-
-void print_escaped_string(FILE *f, char *str, size_t len);
-char *substr(const char *str, size_t x, size_t y);
-
-char *smart_cat(char *lhs, char *rhs);
-char *new_cat  (char *lhs, char *rhs);
-
-void remove_char(char *lhs, size_t c);
-
-uint64_t hash(char *d, size_t len);
-char *strsort(const char *s);
-
-void *oak_malloc(size_t size);
-void *oak_realloc(void *mem, size_t size);
-char *load_file(const char *path);
-
 static inline char *
-ksprintf(const char *fmt, ...)
+chrtostr(char c)
 {
-	va_list args;
-	va_start(args, fmt);
-
-	char *buf = oak_malloc(512);
-	vsnprintf(buf, 512, fmt, args);
-
-	va_end(args);
-	return buf;
+	char *s = oak_malloc(2);
+	*s = c;
+	s[1] = 0;
+	return s;
 }
 
 #endif

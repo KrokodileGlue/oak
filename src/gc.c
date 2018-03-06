@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "util.h"
+#include "constant.h"
 #include "gc.h"
 #include "array.h"
 

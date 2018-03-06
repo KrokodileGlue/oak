@@ -44,6 +44,18 @@ array_pop(struct array *a)
 	return NIL;
 }
 
+struct value
+array_shift(struct array *a)
+{
+	if (a->len > 0) {
+		struct value v = a->v[0];
+		memmove(a->v, a->v + 1, (--a->len) * sizeof *a->v);
+		return v;
+	}
+
+	return NIL;
+}
+
 void
 grow_array(struct array *a, size_t size)
 {

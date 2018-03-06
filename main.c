@@ -35,7 +35,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 		if (!strcmp(argv[i], "-p"))  k->print_everything = true;
 		if (!strcmp(argv[i], "-e")) {
 			if (k->eval) {
-				fprintf(stderr, "oak: invalid options; received multiple -e\n");
+				printf("oak: invalid options; received multiple -e\n");
 				exit(EXIT_FAILURE);
 			}
 
@@ -46,7 +46,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 
 		if (argv[i][0] != '-')  {
 			if (path) {
-				fprintf(stderr, "oak: invalid options; received multiple input files; '%s' and '%s'\n", path, argv[i]);
+				printf("oak: invalid options; received multiple input files; '%s' and '%s'\n", path, argv[i]);
 				exit(EXIT_FAILURE);
 			} else {
 				path = argv[i];
@@ -61,7 +61,7 @@ process_arguments(struct oak *k, int argc, char **argv)
 	k->talkative = !k->talkative;
 
 	if (!path && !k->eval) {
-		fprintf(stderr, "oak: invalid options; did not receive an input file\n");
+		printf("oak: invalid options; did not receive an input file\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -108,13 +108,13 @@ main(int argc, char **argv)
 
 	if (k->eval && m) {
 		oak_load_child2(k, m, k->eval);
-		oak_print_value(stderr, m->gc, k->stack[k->sp - 1]);
+		oak_print_value(stdout, m->gc, k->stack[k->sp - 1]);
 		putchar('\n');
 	} else if (k->eval) {
 		struct module *e = oak_load_module2(k, k->eval);
 
 		if (e) {
-			print_value(stderr, e->gc, k->stack[k->sp - 1]);
+			print_value(stdout, e->gc, k->stack[k->sp - 1]);
 			putchar('\n');
 		}
 	}

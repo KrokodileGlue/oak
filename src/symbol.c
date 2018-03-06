@@ -202,11 +202,6 @@ local_resolve(struct symbol *sym, char *name)
 			}
 		}
 
-		if (sym->type == SYM_FN) {
-			while (sym->type != SYM_MODULE) sym = sym->parent;
-			continue;
-		}
-
 		sym = sym->parent;
 	}
 
@@ -728,7 +723,7 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 
 	if (!m->tree || !m->tree[0]) {
 		error_push(si->r, (struct location){ m->text, m->path, 0, 0 }, ERR_FATAL, "empty modules are not permitted");
-		error_write(si->r, stderr);
+		error_write(si->r, stdout);
 		symbolizer_free(si);
 		return false;
 	}
@@ -765,12 +760,12 @@ symbolize_module(struct module *m, struct oak *k, struct symbol *parent)
 	m->sym = sym;
 
 	if (si->r->fatal) {
-		error_write(si->r, stderr);
+		error_write(si->r, stdout);
 		if (!m->child) free_symbol(sym);
 		symbolizer_free(si);
 		return false;
 	} else if (si->r->pending) {
-		error_write(si->r, stderr);
+		error_write(si->r, stdout);
 	}
 
 	if (!m->child) {

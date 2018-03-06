@@ -3,6 +3,7 @@
 #include <inttypes.h>
 
 #include "constant.h"
+#include "constexpr.h"
 #include "compile.h"
 #include "tree.h"
 #include "keyword.h"
@@ -133,77 +134,6 @@ alloc_reg(struct compiler *c)
 	return c->stack_top[c->sp]++;
 }
 
-static struct value
-make_value_from_token(struct compiler *c, struct token *tok)
-{
-	struct value v;
-
-	switch (tok->type) {
-	case TOK_STRING: {
-		v.type = VAL_STR;
-		v.idx = gc_alloc(c->gc, VAL_STR);
-		c->gc->str[v.idx] = oak_malloc(strlen(tok->string) + 1);
-		strcpy(c->gc->str[v.idx], tok->string);
-	} break;
-
-	case TOK_INTEGER:
-		v.type = VAL_INT;
-		v.integer = tok->integer;
-		break;
-
-	case TOK_FLOAT:
-		v.type = VAL_FLOAT;
-		v.real = tok->floating;
-		break;
-
-	case TOK_BOOL:
-		v.type = VAL_BOOL;
-		v.boolean = tok->boolean;
-		break;
-
-	case TOK_REGEX: {
-		int opt = 0;
-		int e = 0;
-
-		for (size_t i = 0; i < strlen(tok->flags); i++) {
-			switch (tok->flags[i]) {
-			case 'i': opt |= KTRE_INSENSITIVE; break;
-			case 'g': opt |= KTRE_GLOBAL;      break;
-			case 's': opt |= KTRE_MULTILINE;   break;
-			case 'c': opt |= KTRE_CONTINUE;    break;
-			case 'e': e++;                     break;
-			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
-			}
-		}
-
-		v.type = VAL_REGEX;
-		v.idx = gc_alloc(c->gc, VAL_REGEX);
-		v.e = e;
-		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
-
-		if (c->gc->regex[v.idx]->err) {
-			error_push(c->r, tok->loc, ERR_FATAL,
-			           "regex failed to compile with error code %d: %s",
-			           c->gc->regex[v.idx]->err,
-			           c->gc->regex[v.idx]->err_str
-			           ? c->gc->regex[v.idx]->err_str
-			           : "no error message");
-		}
-	} break;
-
-	case TOK_GROUP:
-		v.type = VAL_INT;
-		v.integer = tok->integer;
-		break;
-
-	default:
-		DOUT("unimplemented token-to-value converter for token of type %d", tok->type);
-		assert(false);
-	}
-
-	return v;
-}
-
 static int
 add_constant(struct compiler *c, struct token *tok)
 {
@@ -236,8 +166,6 @@ count_imp(struct symbol *top, struct symbol *base)
 static int compile_expression(struct compiler *c, struct expression *e, struct symbol *sym);
 static int compile_lvalue(struct compiler *c, struct expression *e, struct symbol *sym);
 static int compile_statement(struct compiler *c, struct statement *s);
-static bool is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e);
-static struct value compile_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e);
 
 #define CHECKARGS(X)	  \
 	do { \
@@ -483,6 +411,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	ARRAYLIKE(RJUST, RJUST);
 
 	UNARY(POP, APOP);
+	UNARY(SHIFT, SHIFT);
 	UNARY(REVERSE, REV);
 	UNARY(SORT, SORT);
 	UNARY(UC, UC);
@@ -495,6 +424,8 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 	UNARY(ABS, ABS);
 	UNARY(HEX, HEX);
 	UNARY(CHOMP, CHOMP);
+	UNARY(TRIM, TRIM);
+	UNARY(LASTOF, LASTOF);
 
 	UNARY(KEYS, KEYS);
 	UNARY(VALUES, VALUES);
@@ -523,31 +454,30 @@ write_variable(struct compiler *c, struct expression *e, struct symbol *sym, int
 	int reg = -1, r = alloc_reg(c);
 	emit_ab(c, INSTR_COPY, r, rhs, &e->tok->loc);
 
-	if (e->a->type == EXPR_SUBSCRIPT) {
+	if (e->type == EXPR_SUBSCRIPT) {
 		emit_abc(c, INSTR_ASET,
-		         compile_lvalue(c, e->a->a, sym),
-		         compile_expression(c, e->a->b, sym),
+		         compile_lvalue(c, e->a, sym),
+		         compile_expression(c, e->b, sym),
 		         reg = r,
 		         &e->tok->loc);
-	} else if (e->a->type == EXPR_OPERATOR
-	           && e->a->operator->type == OPTYPE_BINARY
-	           && e->a->operator->name == OP_PERIOD) {
+	} else if (e->type == EXPR_OPERATOR
+	           && e->operator->type == OPTYPE_BINARY
+	           && e->operator->name == OP_PERIOD) {
 		struct value key;
 		key.type = VAL_STR;
 		key.idx = gc_alloc(c->gc, VAL_STR);
-		c->gc->str[key.idx] = strclone(e->a->b->val->value);
+		c->gc->str[key.idx] = strclone(e->b->val->value);
 
 		int keyreg = alloc_reg(c);
 		emit_ab(c, INSTR_COPYC, keyreg,
 		        constant_table_add(c->ct, key), &e->tok->loc);
 
-		reg = compile_lvalue(c, e->a->a, sym);
 		emit_abc(c, INSTR_ASET,
-		         reg, keyreg, r,
+		         compile_lvalue(c, e->a, sym), keyreg, r,
 		         &e->tok->loc);
 		reg = r;
 	} else {
-		int addr = compile_lvalue(c, e->a, sym);
+		int addr = compile_lvalue(c, e, sym);
 		emit_ab(c, INSTR_MOV, addr, r, &e->tok->loc);
 		reg = r;
 	}
@@ -605,7 +535,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			break;
 
 		case OP_EQ:
-			write_variable(c, e, sym, reg = compile_expression(c, e->b, sym));
+			write_variable(c, e->a, sym, reg = compile_expression(c, e->b, sym));
 			break;
 
 		case OP_AND: {
@@ -685,7 +615,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 	case OP_##X: { \
 		reg = alloc_reg(c); \
 		emit_abc(c, INSTR_##Y, reg, compile_expression(c, e->a, sym), compile_expression(c, e->b, sym), &e->tok->loc); \
-		write_variable(c, e, sym, reg); \
+		write_variable(c, e->a, sym, reg); \
 	} break
 
 		OPEQ(ADDEQ, ADD);
@@ -696,7 +626,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		case OP_DOTEQ: {
 			int t = alloc_reg(c);
 			emit_abc(c, INSTR_ADD, t, compile_expression(c, e->a, sym), reg = compile_expression(c, e->b, sym), &e->tok->loc);
-			write_variable(c, e, sym, t);
+			write_variable(c, e->a, sym, t);
 		} break;
 
 		case OP_COMMA:
@@ -756,9 +686,6 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 		} break;
 
 		case OP_SQUIGGLEEQ: {
-			int var = -1;
-			reg = alloc_reg(c);
-
 			if (e->b->type != EXPR_REGEX) {
 				error_push(c->r, e->tok->loc, ERR_FATAL,
 				           "operator requires regex righthand argument");
@@ -766,20 +693,25 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			}
 
 			if (e->b->val->substitution) {
-				var = compile_lvalue(c, e->a, sym);
-				reg = var;
-				int string = alloc_reg(c), re = alloc_reg(c);
-				emit_ab(c, INSTR_COPYC, re, add_constant(c, e->b->val), &e->tok->loc);
+				int temp = alloc_reg(c);
+				emit_ab(c, INSTR_COPY, temp, compile_expression(c, e->a, sym), &e->tok->loc);
+				reg = temp;
 
+				/* Load stuff. */
+				int str = alloc_reg(c), re = alloc_reg(c);
+				emit_ab(c, INSTR_COPYC, re, add_constant(c, e->b->val), &e->tok->loc);
 				struct value v;
 				v.type = VAL_STR;
 				v.idx = gc_alloc(c->gc, VAL_STR);
 				c->gc->str[v.idx] = strclone(e->b->val->substitution);
-				emit_ab(c, INSTR_COPYC, string, constant_table_add(c->ct, v), &e->tok->loc);
-				emit_abcd(c, INSTR_SUBST, reg,
-				          re, string, sym->scope, &e->tok->loc);
+				emit_ab(c, INSTR_COPYC, str, constant_table_add(c->ct, v), &e->tok->loc);
+
+				emit_abcd(c, INSTR_SUBST, temp,
+				          re, str, sym->scope, &e->tok->loc);
+				write_variable(c, e->a, sym, temp);
 			} else {
 				int re = alloc_reg(c);
+				reg = alloc_reg(c);
 				emit_ab(c, INSTR_COPYC, re, add_constant(c, e->b->val), &e->tok->loc);
 				emit_abc(c, INSTR_MATCH, reg, compile_expression(c, e->a, sym), re, &e->b->tok->loc);
 			}
@@ -795,7 +727,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 #define PRE(X,Y)	  \
 		case OP_##X: { \
 			emit_a(c, INSTR_##Y, reg = compile_expression(c, e->a, sym), &e->tok->loc); \
-			write_variable(c, e, sym, reg); \
+			write_variable(c, e->a, sym, reg); \
 		} break
 
 	case OPTYPE_PREFIX:
@@ -829,7 +761,7 @@ compile_operator(struct compiler *c, struct expression *e, struct symbol *sym)
 			int t = alloc_reg(c); \
 			emit_ab(c, INSTR_COPY, t, reg, &e->tok->loc); \
 			emit_a(c, INSTR_##Y, t, &e->tok->loc); \
-			write_variable(c, e, sym, t); \
+			write_variable(c, e->a, sym, t); \
 		} break
 
 	case OPTYPE_POSTFIX:
@@ -980,6 +912,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 				return nil(c);
 
 			struct symbol *var = resolve(sym, e->val->value);
+			assert(var);
 
 			if (var->type == SYM_ENUM) {
 				emit_ab(c, INSTR_COPYC, reg = alloc_reg(c), constant_table_add(c->ct, INT(var->_enum)), &e->tok->loc);
@@ -1047,6 +980,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		break;
 	} break;
 
+	/* TODO: clean this up */
 	case EXPR_MATCH: {
 		reg = nil(c);
 		int last = -1;
@@ -1097,8 +1031,9 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 				}
 
 				if (e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->type == STMT_EXPR) {
+					struct statement *it = e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1];
 					emit_ab(c, INSTR_MOV, reg,
-					        compile_expression(c, e->bodies[i]->block.stmts[e->bodies[i]->block.num - 1]->expr, sym),
+					        compile_expression(c, it->expr, find_from_scope(sym, it->scope)),
 					        &e->tok->loc);
 				} else {
 					reg = nil(c);
@@ -1133,10 +1068,28 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 		if (e->a->type == EXPR_OPERATOR
 		    && e->a->operator->type == OPTYPE_BINARY
 		    && e->a->operator->name == OP_PERIOD) {
-			emit_a(c, INSTR_PUSH, compile_expression(c, e->a->a, sym), &e->tok->loc);
-		}
+			int table = compile_expression(c, e->a->a, sym);
+			emit_a(c, INSTR_PUSH, table, &e->tok->loc);
 
-		emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym), &e->tok->loc);
+			/*
+			 * TODO: Make sure everyone using key or
+			 * keyreg are properly checking that the thing
+			 * is an identifier!
+			 */
+			struct value key;
+			key.type = VAL_STR;
+			key.idx = gc_alloc(c->gc, VAL_STR);
+			c->gc->str[key.idx] = strclone(e->a->b->tok->value);
+
+			int keyreg = alloc_reg(c);
+			emit_ab(c, INSTR_MOVC, keyreg,
+			        constant_table_add(c->ct, key), &e->tok->loc);
+
+			int fn = alloc_reg(c);
+			emit_abc(c, INSTR_SUBSCR, fn, table, keyreg, &e->tok->loc);
+			emit_a(c, INSTR_CALL, fn, &e->tok->loc);
+		} else emit_a(c, INSTR_CALL, compile_expression(c, e->a, sym), &e->tok->loc);
+
 		emit_a(c, INSTR_POP, reg = alloc_reg(c), &e->tok->loc);
 	} break;
 
@@ -1205,7 +1158,7 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 
 	case EXPR_EVAL: {
 		if (c->debug)
-			fprintf(stderr, "compiling eval with %d\n", sym->scope);
+			printf("compiling eval with %d\n", sym->scope);
 		struct value v;
 		v.type = VAL_INT;
 		v.integer = sym->scope;
@@ -1624,205 +1577,6 @@ compile_for_loop(struct compiler *c, struct statement *s, struct symbol *sym,
 	return start;
 }
 
-/* TODO: move constant expression compilation into a new file */
-static bool
-is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
-{
-	if (!e) return false;
-	bool ret = true;
-
-	switch (e->type) {
-	case EXPR_OPERATOR:
-		switch (e->operator->type) {
-		case OPTYPE_INVALID: assert(false);
-		case OPTYPE_FN_CALL:
-		case OPTYPE_BINARY:
-			if (e->operator->name == OP_CC) ret = false;
-			else ret = is_constant_expr(c, sym, e->a)
-				     && is_constant_expr(c, sym, e->b);
-			break;
-
-		case OPTYPE_SUBSCRIPT:
-			ret = is_constant_expr(c, sym, e->a)
-				&& is_constant_expr(c, sym, e->b)
-				&& e->c ? is_constant_expr(c, sym, e->c) : true
-				&& e->d ? is_constant_expr(c, sym, e->d) : true;
-			break;
-
-		case OPTYPE_POSTFIX:
-		case OPTYPE_PREFIX:
-			ret = is_constant_expr(c, sym, e->a);
-			break;
-
-		case OPTYPE_TERNARY:
-			ret = is_constant_expr(c, sym, e->a)
-				&& is_constant_expr(c, sym, e->b)
-				&& is_constant_expr(c, sym, e->c);
-			break;
-		}
-		break;
-
-	case EXPR_FN_CALL:
-	case EXPR_SUBSCRIPT:
-		ret = is_constant_expr(c, sym, e->a)
-			&& is_constant_expr(c, sym, e->b);
-		break;
-
-	case EXPR_BUILTIN:
-	case EXPR_MATCH:
-	case EXPR_EVAL:
-	case EXPR_LIST_COMPREHENSION:
-	case EXPR_REGEX:
-	case EXPR_VARARGS:
-	case EXPR_FN_DEF:
-	case EXPR_GROUP: ret = false; break;
-
-	case EXPR_LIST:
-	case EXPR_TABLE:
-		for (size_t i = 0; i < e->num && ret; i++)
-			ret = is_constant_expr(c, sym, e->args[i]);
-		break;
-
-	case EXPR_INVALID: assert(false);
-	case EXPR_SLICE:
-		ret = is_constant_expr(c, sym, e->a)
-			&& e->b ? is_constant_expr(c, sym, e->b) : true
-			&& e->c ? is_constant_expr(c, sym, e->c) : true
-			&& e->d ? is_constant_expr(c, sym, e->d) : true;
-		break;
-
-	case EXPR_VALUE:
-		switch (e->val->type) {
-		case TOK_IDENTIFIER: {
-			struct symbol *var = resolve(sym, e->val->value);
-			if (!var) ret = false;
-			else if (var->type != SYM_ENUM) ret = false;
-		} break;
-
-		case TOK_STRING:
-			ret = !e->val->is_interpolatable;
-			break;
-
-		default: ret = true;
-		}
-		break;
-	}
-
-	return ret;
-}
-
-static struct value
-compile_constant_operator(struct compiler *c, struct symbol *sym, struct expression *e)
-{
-	struct value v = NIL;
-
-	switch (e->operator->type) {
-	case OPTYPE_INVALID: assert(false);
-	case OPTYPE_BINARY:
-		switch (e->operator->name) {
-		case OP_ARROW: {
-			struct value a = compile_constant_expr(c, sym, e->a);
-			struct value b = compile_constant_expr(c, sym, e->b);
-
-			double start = a.type == VAL_INT ? (double)a.integer : a.real;
-			double stop = b.type == VAL_INT ? (double)b.integer : b.real;
-
-			v = value_range(c->gc, a.type == VAL_FLOAT || b.type == VAL_FLOAT, start, stop, 1.0);
-		} break;
-
-		default:
-			v = val_binop(c->gc, compile_constant_expr(c, sym, e->a), compile_constant_expr(c, sym, e->b), e->operator->name);
-		}
-		break;
-
-	case OPTYPE_PREFIX:
-		switch (e->operator->name) {
-		case OP_ADD:
-			v = compile_constant_expr(c, sym, e->a);
-			break;
-
-		default:
-			v = val_unop(compile_constant_expr(c, sym, e->a), e->operator->name);
-		}
-		break;
-
-	case OPTYPE_TERNARY:
-		if (is_truthy(c->gc, compile_constant_expr(c, sym, e->a)))
-			v = compile_constant_expr(c, sym, e->b);
-		else v = compile_constant_expr(c, sym, e->c);
-		break;
-
-	default:
-		DOUT("unimplemented constant operator compiler for operator of type %d", e->operator->type);
-		assert(false);
-	}
-
-	return v;
-}
-
-static struct value
-compile_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
-{
-	assert(e);
-	struct value v = NIL;
-
-	switch (e->type) {
-	case EXPR_OPERATOR:
-		v = compile_constant_operator(c, sym, e);
-		break;
-
-	case EXPR_LIST:
-		v.type = VAL_ARRAY;
-		v.idx = gc_alloc(c->gc, VAL_ARRAY);
-		c->gc->array[v.idx] = new_array();
-
-		for (size_t i = 0; i < e->num; i++)
-			array_push(c->gc->array[v.idx], compile_constant_expr(c, sym, e->args[i]));
-		break;
-
-	case EXPR_TABLE:
-		v.type = VAL_TABLE;
-		v.idx = gc_alloc(c->gc, VAL_TABLE);
-		c->gc->table[v.idx] = new_table();
-
-		for (size_t i = 0; i < e->num; i++)
-			table_add(c->gc->table[v.idx], e->keys[i]->value, compile_constant_expr(c, sym, e->args[i]));
-		break;
-
-	case EXPR_VALUE:
-		switch (e->val->type) {
-		case TOK_IDENTIFIER: {
-			struct symbol *var = resolve(sym, e->val->value);
-
-			if (var->type == SYM_ENUM) v = INT(var->_enum);
-			else assert(false);
-		} break;
-
-		default:
-			v = make_value_from_token(c, e->val);
-		}
-		break;
-
-	case EXPR_SLICE: {
-		struct value a = compile_constant_expr(c, sym, e->a);
-		struct value C = e->b ? compile_constant_expr(c, sym, e->b) : INT(0);
-		struct value d = e->c ? compile_constant_expr(c, sym, e->c) : INT(c->gc->array[a.idx]->len);
-		struct value E = e->d ? compile_constant_expr(c, sym, e->d) : INT(1);
-
-		int64_t start = C.type == VAL_INT ? C.integer : 0;
-		int64_t stop = d.type == VAL_INT ? d.integer : c->gc->array[a.idx]->len - 1;
-		int64_t step = E.type == VAL_INT ? E.integer : 1;
-		v = slice_value(c->gc, a, start, stop, step);
-	} break;
-
-	default:
-		DOUT("unimplemented constant compiler for expression of type %d", e->type);
-		assert(false);
-	}
-
-	return v;
-}
-
 static int
 compile_statement(struct compiler *c, struct statement *s)
 {
@@ -1831,7 +1585,7 @@ compile_statement(struct compiler *c, struct statement *s)
 
 	struct symbol *sym = find_from_scope(c->m->sym, s->scope);
 	if (c->debug) {
-		fprintf(stderr, "%d> compiling %d (%s) in `%s' (%d)\n", c->sym->scope, s->type,
+		printf("%d> compiling %d (%s) in `%s' (%d)\n", c->sym->scope, s->type,
 		        statement_data[s->type].body, sym->name, sym->scope);
 	}
 
@@ -2187,11 +1941,11 @@ compile(struct module *m, struct constant_table *ct, struct symbol *sym,
 	}
 
 	if (c->r->fatal) {
-		error_write(c->r, stderr);
+		error_write(c->r, stdout);
 		free_compiler(c);
 		return false;
 	} else if (c->r->pending) {
-		error_write(c->r, stderr);
+		error_write(c->r, stdout);
 	}
 
 	free_compiler(c);

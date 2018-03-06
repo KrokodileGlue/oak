@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ktre.h"
 
@@ -64,6 +65,7 @@ struct value {
 #include "gc.h"
 #include "array.h"
 #include "operator.h"
+#include "compile.h"
 
 struct gc;
 
@@ -100,4 +102,8 @@ bool is_truthy(struct gc *gc, struct value l);
 void print_value(FILE *f, struct gc *gc, struct value val);
 char *show_value(struct gc *gc, struct value val);
 void print_debug(struct gc *gc, struct value l);
+struct value make_value_from_token(struct compiler *c, struct token *tok);
+
+struct value make_string(struct gc *gc, const char *s);
+
 #endif

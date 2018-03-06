@@ -48,6 +48,7 @@ enum instruction_type {
 	INSTR_RANGE,
 	INSTR_APUSH,
 	INSTR_APOP,
+	INSTR_SHIFT,
 	INSTR_INS,
 	INSTR_REV,
 	INSTR_SORT,
@@ -88,6 +89,9 @@ enum instruction_type {
 
 	INSTR_HEX,
 	INSTR_CHOMP,
+	INSTR_TRIM,
+
+	INSTR_LASTOF,
 
 	INSTR_ADD,
 	INSTR_SUB,

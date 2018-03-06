@@ -6,6 +6,7 @@
 
 #include "util.h"
 #include "value.h"
+#include "token.h"
 
 struct value_data value_data[] = {
 	{ VAL_STR,   "string"   },
@@ -77,6 +78,17 @@ show_value(struct gc *gc, struct value val)
 		snprintf(str, cap, "REGEX(%p)", (void *)gc->regex[val.idx]);
 		break;
 
+	case VAL_TABLE:
+		/* TODO: This is really bad and buggy and overflowey. */
+		for (int i = 0; i < TABLE_SIZE; i++) {
+			for (size_t j = 0; j < gc->table[val.idx]->bucket[i].len; j++) {
+				char *temp = show_value(gc, gc->table[val.idx]->bucket[i].val[j]);
+				strcat(str, temp);
+				free(temp);
+			}
+		}
+		break;
+
 	default:
 		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);
@@ -88,10 +100,10 @@ show_value(struct gc *gc, struct value val)
 void
 print_debug(struct gc *gc, struct value l)
 {
-	fputc('\'', stderr);
-	print_value(stderr, gc, l);
-	fputc('\'', stderr);
-	fprintf(stderr, " (%s)", value_data[l.type].body);
+	putchar('\'');
+	print_value(stdout, gc, l);
+	putchar('\'');
+	printf(" (%s)", value_data[l.type].body);
 }
 
 struct value
@@ -101,11 +113,11 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 	v.type = VAL_NIL;
 
 	if (gc->debug) {
-		fprintf(stderr, "binary operation %d on ", op);
+		printf("binary operation %d on ", op);
 		print_debug(gc, l);
-		fprintf(stderr, " and ");
+		printf(" and ");
 		print_debug(gc, r);
-		fprintf(stderr, "\n");
+		printf("\n");
 	}
 
 	switch (op) {
@@ -324,10 +336,10 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 #define LOG(X)	  \
 	do { \
 		if (gc->debug) { \
-			fprintf(stderr, "value operation '"X); \
-			fprintf(stderr, "' on "); \
+			printf("value operation '"X); \
+			printf("' on "); \
 			print_debug(gc, l); \
-			fprintf(stderr, "\n"); \
+			printf("\n"); \
 		} \
 	} while (0)
 
@@ -402,7 +414,9 @@ value_len(struct gc *gc, struct value l)
 	case VAL_STR:   ans.integer = strlen(gc->str[l.idx]); break;
 	case VAL_ARRAY: ans.integer = gc->array[l.idx]->len;  break;
 	case VAL_NIL:   ans.integer = 0;                      break;
-	default: assert(false); break;
+	default:
+		return ERR("invalid unary operation on type '%s'",
+		           value_data[l.type].body);
 	}
 
 	return ans;
@@ -755,18 +769,41 @@ float_value(struct gc *gc, struct value l)
 struct value
 slice_value(struct gc *gc, struct value l, int start, int stop, int step)
 {
+	if (l.type == VAL_STR) {
+		struct value v;
+		v.type = VAL_STR;
+		v.idx = gc_alloc(gc, VAL_STR);
+		char *a = gc->str[v.idx] = oak_malloc(labs((stop - start) / step) + 3);
+
+		if (stop < 0)
+			stop = (stop % strlen(gc->str[l.idx])) + 1;
+
+		if (stop < start && step < 0)
+			for (int64_t i = start; i >= stop; i += step)
+				*a++ = gc->str[l.idx][labs(i) % strlen(gc->str[l.idx])];
+		else if (start < stop && step < 0)
+			for (int64_t i = stop; i >= start; i += step)
+				*a++ = gc->str[l.idx][labs(i) % strlen(gc->str[l.idx])];
+		else if (start < stop && step > 0)
+			for (int64_t i = start; i <= stop; i += step)
+				*a++ = gc->str[l.idx][labs(i) % strlen(gc->str[l.idx])];
+
+		*a = 0;
+		return v;
+	}
+
 	struct value v;
 	v.type = VAL_ARRAY;
 	v.idx = gc_alloc(gc, VAL_ARRAY);
 	gc->array[v.idx] = new_array();
 
-	if (stop < start && step < 0)
+	if (stop <= start && step < 0)
 		for (int64_t i = start; i >= stop; i += step)
 			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
-	else if (start < stop && step < 0)
+	else if (start <= stop && step < 0)
 		for (int64_t i = stop; i >= start; i += step)
 			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
-	else if (start < stop && step > 0)
+	else if (start <= stop && step > 0)
 		for (int64_t i = start; i <= stop; i += step)
 			array_push(gc->array[v.idx], gc->array[l.idx]->v[labs(i % gc->array[l.idx]->len)]);
 
@@ -821,9 +858,9 @@ struct value
 value_translate(struct gc *l, struct gc *r, struct value v)
 {
 	if (l->debug || r->debug) {
-		fprintf(stderr, "translating ");
+		printf("translating ");
 		print_debug(r, v);
-		fprintf(stderr, " from %p to %p\n", (void *)r, (void *)l);
+		printf(" from %p to %p\n", (void *)r, (void *)l);
 	}
 
 	if (l == r) return v;
@@ -909,4 +946,85 @@ print_value(FILE *f, struct gc *gc, struct value val)
 		DOUT("unimplemented printer for value of type %d", val.type);
 		assert(false);
 	}
+}
+
+struct value
+make_value_from_token(struct compiler *c, struct token *tok)
+{
+	struct value v;
+
+	switch (tok->type) {
+	case TOK_STRING: {
+		v.type = VAL_STR;
+		v.idx = gc_alloc(c->gc, VAL_STR);
+		c->gc->str[v.idx] = oak_malloc(strlen(tok->string) + 1);
+		strcpy(c->gc->str[v.idx], tok->string);
+	} break;
+
+	case TOK_INTEGER:
+		v.type = VAL_INT;
+		v.integer = tok->integer;
+		break;
+
+	case TOK_FLOAT:
+		v.type = VAL_FLOAT;
+		v.real = tok->floating;
+		break;
+
+	case TOK_BOOL:
+		v.type = VAL_BOOL;
+		v.boolean = tok->boolean;
+		break;
+
+	case TOK_REGEX: {
+		int opt = 0;
+		int e = 0;
+
+		for (size_t i = 0; i < strlen(tok->flags); i++) {
+			switch (tok->flags[i]) {
+			case 'i': opt |= KTRE_INSENSITIVE; break;
+			case 'g': opt |= KTRE_GLOBAL;      break;
+			case 's': opt |= KTRE_MULTILINE;   break;
+			case 'c': opt |= KTRE_CONTINUE;    break;
+			case 'e': e++;                     break;
+			default: error_push(c->r, tok->loc, ERR_FATAL, "unrecognized flag `%c'", tok->flags[i]);
+			}
+		}
+
+		v.type = VAL_REGEX;
+		v.idx = gc_alloc(c->gc, VAL_REGEX);
+		v.e = e;
+		c->gc->regex[v.idx] = ktre_compile(tok->regex, opt | KTRE_UNANCHORED);
+
+		if (c->gc->regex[v.idx]->err) {
+			error_push(c->r, tok->loc, ERR_FATAL,
+			           "regex failed to compile with error code %d: %s",
+			           c->gc->regex[v.idx]->err,
+			           c->gc->regex[v.idx]->err_str
+			           ? c->gc->regex[v.idx]->err_str
+			           : "no error message");
+		}
+	} break;
+
+	case TOK_GROUP:
+		v.type = VAL_INT;
+		v.integer = tok->integer;
+		break;
+
+	default:
+		DOUT("unimplemented token-to-value converter for token of type %d", tok->type);
+		assert(false);
+	}
+
+	return v;
+}
+
+struct value
+make_string(struct gc *gc, const char *s)
+{
+	struct value v;
+	v.type = VAL_STR;
+	v.idx = gc_alloc(gc, VAL_STR);
+	strcpy(gc->str[v.idx], s);
+	return v;
 }

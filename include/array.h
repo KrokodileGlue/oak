@@ -13,6 +13,7 @@ struct array {
 
 struct array *new_array();
 struct value array_pop(struct array *a);
+struct value array_shift(struct array *a);
 void free_array(struct array *a);
 void grow_array(struct array *a, size_t size);
 void array_push(struct array *a, struct value r);

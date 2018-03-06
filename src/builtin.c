@@ -9,6 +9,7 @@ struct builtin builtin[] = {
 	{ "range",   1,  false, false, BUILTIN_RANGE   },
 	{ "push",    1,  false, false, BUILTIN_PUSH    },
 	{ "pop",     1,  false, false, BUILTIN_POP     },
+	{ "shift",   1,  false, false, BUILTIN_SHIFT   },
 	{ "insert",  1,  false, false, BUILTIN_INSERT  },
 
 	{ "reverse", 14, false, false, BUILTIN_REVERSE },
@@ -30,6 +31,9 @@ struct builtin builtin[] = {
 
 	{ "hex",     14, false, false, BUILTIN_HEX     },
 	{ "chomp",   14, false, false, BUILTIN_CHOMP   },
+	{ "trim",    14, false, false, BUILTIN_TRIM    },
+
+	{ "lastof",  14, false, false, BUILTIN_LASTOF  },
 
 	{ "keys",    14, false, false, BUILTIN_KEYS    },
 	{ "values",  14, false, false, BUILTIN_VALUES  },

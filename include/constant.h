@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "value.h"
+#include "gc.h"
 
 struct constant_table {
 	struct value *val;

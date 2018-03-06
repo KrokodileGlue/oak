@@ -40,6 +40,7 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_RANGE,    REG_ABCD,  "RANGE     " },
 	{ INSTR_APUSH,    REG_AB,    "APUSH     " },
 	{ INSTR_APOP,     REG_AB,    "APOP      " },
+	{ INSTR_SHIFT,    REG_AB,    "SHIFT     " },
 	{ INSTR_INS,      REG_ABC,   "INS       " },
 	{ INSTR_REV,      REG_AB,    "REV       " },
 	{ INSTR_SORT,     REG_AB,    "SORT      " },
@@ -80,6 +81,9 @@ struct instruction_data instruction_data[] = {
 
 	{ INSTR_HEX,      REG_AB,    "HEX       " },
 	{ INSTR_CHOMP,    REG_AB,    "CHOMP     " },
+	{ INSTR_TRIM,     REG_AB,    "TRIM      " },
+
+	{ INSTR_LASTOF,   REG_AB,    "LASTOF    " },
 
 	{ INSTR_ADD,      REG_ABC,   "ADD       " },
 	{ INSTR_SUB,      REG_ABC,   "SUB       " },

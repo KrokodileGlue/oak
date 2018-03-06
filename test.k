@@ -513,6 +513,8 @@ pop ejflioeshnfj
 pl pop([]) == nil
 
 # TODO: fix the api design
+# TODO: standard library -- i/o
+# TODO: fully lexical scope (nested functions)
 # TODO: actually implement the tracing garbage collector
 # TODO: regex matches shouldn't survive function calls
 # TODO: sort should care about arrays with mixed types
@@ -526,11 +528,26 @@ pl pop([]) == nil
 # TODO: allow _ in numbers and remove all use of strtol
 # TODO: free eval'd modules quickly
 # TODO: allow trailing commas in places
-# TODO: fix failed assertion when using a nonexistent variable in a
-#       string interpolation
+# TODO: fix failed assertion when using a nonexistent
+#       variable in a string interpolation
 # TODO: fix the error message doubling problem, e.g.:
 # 	var qwerty; # and why is this semicolon necessary?
 # 	eval "pl qwerty * 2"
 # TODO: for some reason these two lines are not equal:
 #       if foo: for f(x): if bar[_] == foo { return _ }
 #       if foo: for f(x): if bar[_] == foo: return _
+# TODO: ternary operator should behave cool-ly
+# TODO: (+)(0 -> 9)
+# TODO: add `if` to list comprehensions
+# TODO: operator overloading/constructors
+# TODO: `in` operator
+# TODO: module modes
+# TODO: make the interpreter installation rule link against the
+#       installed library
+# TODO: repl
+# TODO: for some reason
+#       'string' => str(n.body =~ /[^\"]+/),
+#       works as intended, but
+#       'string' => n.body[1:-1],
+#       does not (it's important that the context is a
+#       match expression i think).

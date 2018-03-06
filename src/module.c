@@ -58,42 +58,42 @@ print_modules(struct oak *k)
 		for (size_t i = 0; i < k->num; i++) {
 			struct module *m = k->modules[i];
 
-			if (i != 0) fputc('\n', stderr);
-			fprintf(stderr, "============================== module `%s' ==============================", m->name);
+			if (i != 0) putchar('\n');
+			printf("============================== module `%s' ==============================", m->name);
 
 			if (m->stage >= MODULE_STAGE_EMPTY
 			    && (k->print_input || k->print_everything))
-				fprintf(stderr, "\n%s", m->text);
+				printf("\n%s", m->text);
 
 			if (m->stage >= MODULE_STAGE_LEXED
 			    && (k->print_tokens || k->print_everything))
-				token_write(m->tok, stderr);
+				token_write(m->tok, stdout);
 
 			if (m->stage >= MODULE_STAGE_PARSED
 			    && (k->print_ast || k->print_everything))
-				print_ast(stderr, m->tree);
+				print_ast(stdout, m->tree);
 
 			if (m->stage >= MODULE_STAGE_SYMBOLIZED
 			    && (k->print_symbol_table || k->print_everything)) {
 				if (m->child)
-					fprintf(stderr,
+					fprintf(stdout,
 					        "\nnot printing symbol table - module is a child of `%s'.",
 					        m->parent->name);
-				else print_symbol(stderr, 0, m->sym);
+				else print_symbol(stdout, 0, m->sym);
 			}
 
 			if (m->stage >= MODULE_STAGE_COMPILED
 			    && (k->print_code || k->print_everything)) {
 				if (m->child)
-					fprintf(stderr,
+					fprintf(stdout,
 					        "\nnot printing constant table - module is a child of `%s'.",
 					        m->parent->name);
-				else print_constant_table(stderr, m->gc, m->ct);
-				print_code(stderr, m->code, m->num_instr);
+				else print_constant_table(stdout, m->gc, m->ct);
+				print_code(stdout, m->code, m->num_instr);
 			}
 		}
 
-		fputc('\n', stderr);
+		putchar('\n');
 	}
 }
 
@@ -102,7 +102,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
             char *path, char *name, struct vm *vm, int stack_base)
 {
 	if (!text) {
-		fprintf(stderr, "Could not load file %s\n", path);
+		printf("Could not load file %s\n", path);
 		return NULL;
 	}
 

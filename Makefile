@@ -32,6 +32,7 @@ install:
 	ln -sf /usr/local/lib/$(TARGET) /usr/local/lib/lib$(NAME).so
 	rsync -av include/* /usr/local/include/oak/
 	ldconfig
+	cp $(NAME) /usr/local/bin/$(NAME)
 
 clean:
 	${RM} ${TARGET} ${OBJ} $(SRC:.c=.d)

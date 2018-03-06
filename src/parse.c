@@ -56,7 +56,7 @@ expect_symbol(struct parser *ps, char *sym)
 static void
 expect_terminator(struct parser *ps)
 {
-	if (strcmp(ps->tok->value, ";") && strcmp(ps->tok->value, "}") && strcmp(ps->tok->value, "when") && !ps->tok->prev->is_line_end) {
+	if (strcmp(ps->tok->value, ";") && strcmp(ps->tok->value, "}") && strcmp(ps->tok->value, "when")  && ps->tok->type != TOK_KEYWORD && !ps->tok->prev->is_line_end) {
 		if (ps->tok->type == TOK_END) {
 			struct token *tok = ps->tok->prev;
 
@@ -880,7 +880,7 @@ parse(struct module *m)
 	m->num_nodes = num;
 
 	if (ps->r->fatal) {
-		error_write(ps->r, stderr);
+		error_write(ps->r, stdout);
 
 		for (size_t i = 0; i < num; i++)
 			free_stmt(tree[i]);
@@ -889,7 +889,7 @@ parse(struct module *m)
 		free_parser(ps);
 		return false;
 	} else if (ps->r->pending) {
-		error_write(ps->r, stderr);
+		error_write(ps->r, stdout);
 	}
 
 	free_parser(ps);

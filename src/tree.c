@@ -205,7 +205,7 @@ free_stmt(struct statement *s)
 		break;
 
 	default:
-		fprintf(stderr, "unimplemented free for statement of type %d (%s)\n",
+		printf("unimplemented free for statement of type %d (%s)\n",
 		        s->type, statement_data[s->type].body);
 	}
 
@@ -350,7 +350,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			break;
 
 		case OPTYPE_INVALID:
-			fprintf(stderr, "\noak: internal error; an invalid operator node was encountered.\n");
+			printf("\noak: internal error; an invalid operator node was encountered.\n");
 			assert(false);
 			break;
 		}
@@ -379,7 +379,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 			break;
 
 		default:
-			fprintf(stderr, "impossible value token %d\n", e->type);
+			printf("impossible value token %d\n", e->type);
 			assert(false);
 		}
 	} else if (e->type == EXPR_LIST) {
@@ -465,12 +465,13 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 		for (size_t i = 0; i < e->num; i++) {
 			if (i == e->num - 1) join(ap);
-			indent(ap); fprintf(stderr, "<case %zu>", i);
+			indent(ap); printf("<case %zu>", i);
 			ap->depth++;
 			split(ap);
 			print_expression(ap, e->match[i]);
 			join(ap);
-			print_expression(ap, e->args[i]);
+			e->args[i] ? print_expression(ap, e->args[i])
+				: print_statement(ap, e->bodies[i]);
 			ap->depth--;
 		}
 
@@ -481,7 +482,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 
 		for (size_t i = 0; i < e->num; i++) {
 			if (i == e->num - 1) join(ap);
-			indent(ap); fprintf(stderr, "<key %s>", e->keys[i]->value);
+			indent(ap); printf("<key %s>", e->keys[i]->value);
 			ap->depth++; join(ap);
 			print_expression(ap, e->args[i]);
 			ap->depth--;
@@ -496,7 +497,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		print_expression(ap, e->c);
 		ap->depth--;
 	} else {
-		fputc('\n', stderr);
+		putchar('\n');
 		DOUT("impossible expression type %d\n", e->type);
 		assert(false);
 	}

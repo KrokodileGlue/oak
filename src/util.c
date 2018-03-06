@@ -215,7 +215,7 @@ oak_malloc(size_t size)
 	void *ptr = malloc(size);
 
 	if (!ptr) {
-		fprintf(stderr, "out of memory\n");
+		printf("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -228,7 +228,7 @@ oak_realloc(void *mem, size_t size)
 	void *ptr = realloc(mem, size);
 
 	if (!ptr && size) {
-		fprintf(stderr, "out of memory\n");
+		printf("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -252,7 +252,7 @@ load_file(const char *path)
 
 		len = fread(buf, 1, len, file);
 		if (ferror(file) != 0) {
-			fprintf(stderr, "could not read file %s", path);
+			printf("could not read file %s", path);
 			return NULL;
 		} else buf[len++] = 0;
 	}

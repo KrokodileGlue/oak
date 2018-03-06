@@ -529,7 +529,7 @@ static bool
 is_regex_start(struct lexer *ls, char *a)
 {
 	/* TODO: comma should be allowed. */
-	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^&";
+	static char *forbid = ",{}[]\'\"!:-+()><;*%=?^&.";
 
 	if (!*a)       return false;
 	if (!ls->tok)  return false;
@@ -677,12 +677,12 @@ tokenize(struct module *m)
 	token_rewind(&ls->tok);
 
 	if (ls->r->fatal) {
-		error_write(ls->r, stderr);
+		error_write(ls->r, stdout);
 		token_clear(ls->tok);
 		free_lexer(ls);
 		return false;
 	} else if (ls->r->pending) {
-		error_write(ls->r, stderr);
+		error_write(ls->r, stdout);
 	}
 
 	m->tok = ls->tok;
