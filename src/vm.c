@@ -864,6 +864,7 @@ execute_instr(struct vm *vm, struct instruction c)
 						vm->subject = NULL;
 						free(subject);
 						free(a);
+						free(s);
 						return;
 					}
 

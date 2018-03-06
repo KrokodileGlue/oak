@@ -468,12 +468,13 @@ parse_regex(struct lexer *ls, char *a)
 	ls->tok->regex = oak_malloc(b - a + 1);
 	strncpy(ls->tok->regex, a + 1, b - a);
 	ls->tok->regex[b - a] = 0;
-	b += 2;
+	if (*b) { b++; } if (*b) { b++; }
 	a = b;
 
 	if (type == REGEX_SUBSTITUTION) {
 		while (*b && *b != '\n') {
 			if (*b == delim) {
+				/* TODO: remove \'s */
 				if (!(b[-1] == '\\' && b[-2] != '\\'))
 					break;
 			}
@@ -483,7 +484,7 @@ parse_regex(struct lexer *ls, char *a)
 		ls->tok->substitution = oak_malloc(b - a + 1);
 		strncpy(ls->tok->substitution, a, b - a);
 		ls->tok->substitution[b - a] = 0;
-		b++;
+		if (*b) b++;
 		a = b;
 	}
 

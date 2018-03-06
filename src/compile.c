@@ -182,6 +182,7 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 {
 	int reg = -1;
 
+	/* TODO: check that stuff like e->args[0] exist before using */
 	switch (e->bi->name) {
 	case BUILTIN_SPLIT: {
 		int subject = -1;
@@ -195,6 +196,11 @@ compile_builtin(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		if (e->args[0]->type == EXPR_REGEX)
 			e->args[0]->val->flags = smart_cat(e->args[0]->val->flags, "g");
+		else {
+			error_push(c->r, e->tok->loc, ERR_FATAL,
+			           "split builtin requires regex first argument");
+			return -1;
+		}
 
 		int re = alloc_reg(c);
 		emit_ab(c, INSTR_COPYC, re, add_constant(c, e->args[0]->val), &e->tok->loc);

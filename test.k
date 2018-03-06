@@ -220,7 +220,7 @@ string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dic
 pl string =~ s/[aeiouy]+/"'o'"/eegi
 
 string = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dictum.'
-pl string =~ s/(\w)(\w+)/uc $1 + join('-', split ||, $2)/egi
+pl string =~ s/(\w)(\w+)/uc $1 + join('-', split ~~, $2)/egi
 
 eval 'var __ = "this is an eval-scoped variable."; pl __'
 
@@ -511,6 +511,15 @@ pl join ', ', ejflioeshnfj
 pop ejflioeshnfj
 
 pl pop([]) == nil
+
+pl (+)(0 -> 9)
+pl (0 + 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9)
+
+pl (-)(0 -> 9)
+pl (0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9)
+
+pl (|)(0 -> 9)
+pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 
 # TODO: fix the api design
 # TODO: standard library -- i/o
