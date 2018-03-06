@@ -47,6 +47,11 @@ is_constant_expr(struct compiler *c, struct symbol *sym, struct expression *e)
 			&& is_constant_expr(c, sym, e->b);
 		break;
 
+	/*
+	 * Some of these are only forbidden because they'd _really_
+	 * annoying to implement.
+	 */
+	case EXPR_MUTATOR:
 	case EXPR_BUILTIN:
 	case EXPR_MATCH:
 	case EXPR_EVAL:

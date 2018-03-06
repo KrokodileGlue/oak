@@ -11,6 +11,7 @@
 #include "token.h"
 #include "lexer.h"
 #include "parse.h"
+#include "operator.h"
 
 static struct compiler *
 new_compiler()
@@ -1114,6 +1115,56 @@ compile_expression(struct compiler *c, struct expression *e, struct symbol *sym)
 
 		for (size_t i = 0; i < e->num; i++)
 			emit_ab(c, INSTR_PUSHBACK, reg, compile_expression(c, e->args[i], sym), &e->tok->loc);
+	} break;
+
+	/*
+	 * TODO: maybe all of the jump calculations and patching the
+	 * compiler does should be done with some kind of framework?
+	 */
+	case EXPR_MUTATOR: {
+		reg = alloc_reg(c);
+		int idx = alloc_reg(c);
+		int arr = compile_expression(c, e->a, sym);
+
+		emit_ab(c, INSTR_MOVC, idx,
+		        constant_table_add(c->ct, INT(1)), &e->tok->loc);
+
+		int zero = alloc_reg(c);
+		emit_ab(c, INSTR_MOVC, zero,
+		        constant_table_add(c->ct, INT(0)), &e->tok->loc);
+
+		emit_abc(c, INSTR_SUBSCR, reg, arr, zero, &e->tok->loc);
+
+		/* Loop condition */
+		int A = c->ip;
+		int len = alloc_reg(c);
+		emit_ab(c, INSTR_LEN, len, arr, &e->tok->loc);
+		int cond = alloc_reg(c);
+		emit_abc(c, INSTR_LESS, cond, idx, len, &e->tok->loc);
+		emit_a(c, INSTR_COND, cond, &e->tok->loc);
+
+		int B = c->ip;
+		emit_a(c, INSTR_JMP, -1, &e->tok->loc);
+
+		/* Loop body */
+		enum instruction_type instr = INSTR_NOP;
+		for (int i = 0; i < (int)num_binop_instr(); i++)
+			if (binop_instr[i].name == e->operator->name) {
+				instr = binop_instr[i].instr; break;
+			}
+
+		if (instr == INSTR_NOP)
+			error_push(c->r, e->tok->loc, ERR_FATAL,
+			           "invalid operator in array mutator");
+
+		int temp = alloc_reg(c);
+		emit_abc(c, INSTR_SUBSCR, temp, arr, idx, &e->tok->loc);
+		emit_abc(c, instr, reg, reg, temp, &e->tok->loc);
+		emit_a(c, INSTR_INC, idx, &e->tok->loc);
+
+		/* Loop end */
+		emit_a(c, INSTR_JMP, A, &e->tok->loc);
+		c->code[B].a = c->ip;
 	} break;
 
 	case EXPR_SUBSCRIPT: {

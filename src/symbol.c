@@ -421,6 +421,10 @@ resolve_expr(struct symbolizer *si, struct expression *e)
 			resolve_expr(si, e->args[i]);
 		break;
 
+	case EXPR_MUTATOR:
+		resolve_expr(si, e->a);
+		break;
+
 	case EXPR_MATCH:
 		resolve_expr(si, e->a);
 

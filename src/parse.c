@@ -216,7 +216,20 @@ parse_expr(struct parser *ps, size_t prec)
 	struct expression *left = new_expression(ps->tok);
 	struct operator *op = get_prefix_op(ps);
 
-	if (!strcmp(ps->tok->value, "fn")) {
+	if (!strcmp(ps->tok->value, "(")
+	    && ps->tok->next && ps->tok->next->type == TOK_SYMBOL
+	    && ps->tok->next->next && !strcmp(ps->tok->next->next->value, ")")) {
+		NEXT;
+		left->type = EXPR_MUTATOR;
+		left->operator = get_infix_op(ps);
+		NEXT; NEXT;
+
+		if (!left->operator)
+			error_push(ps->r, ps->tok->loc, ERR_FATAL, "wang");
+
+		/* This precedence value is copied from the prefix - operator. */
+		left->a = parse_expr(ps, 14);
+	} else if (!strcmp(ps->tok->value, "fn")) {
 		left->type = EXPR_FN_DEF;
 		left->s = parse_fn_def(ps);
 	} else if (op || !strcmp(ps->tok->value, "(")) {

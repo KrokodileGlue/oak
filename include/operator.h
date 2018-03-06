@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "code.h"
+
 struct operator {
 	char   *body;
 	char   *body2;
@@ -29,7 +31,7 @@ struct operator {
 		OPTYPE_INVALID
 	} type;
 
-	enum {
+	enum operator_name {
 		OP_LBRACE,
 		OP_PERIOD,
 		OP_LBRACK,
@@ -73,6 +75,18 @@ struct operator {
 };
 
 extern struct operator ops[];
+
+/*
+ * Array mutators generate repetitive bytecode, so it's convenient to
+ * associate each binary operator with the instruction that carries
+ * out its operation in the vm.
+ */
+extern struct operator_instr {
+	enum operator_name name;
+	enum instruction_type instr;
+} binop_instr[];
+
 size_t num_ops();
+size_t num_binop_instr();
 
 #endif

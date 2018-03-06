@@ -62,7 +62,7 @@ free_expr(struct expression *e)
 	if (!e) return;
 
 	if (e->type == EXPR_VALUE) {
-		/* don't free the tokens here */
+		/* Tokens are free'd elsewhere. */
 	} else if (e->type == EXPR_FN_CALL) {
 		free_expr(e->a);
 
@@ -270,7 +270,7 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 	if (!e) return;
 	indent(ap);
 
-	/* Why is this not a switch? */
+	/* TODO: Why is this not a switch? */
 	if (e->type == EXPR_OPERATOR || e->type == EXPR_FN_CALL || e->type == EXPR_SUBSCRIPT) {
 		struct operator *op = e->operator;
 
@@ -455,7 +455,10 @@ print_expression(struct ASTPrinter *ap, struct expression *e)
 		ap->depth--;
 	} else if (e->type == EXPR_EVAL) {
 		fprintf(ap->f, "(eval)");
-		ap->depth++; split(ap);
+		ap->depth++; print_expression(ap, e->a); ap->depth--;
+	} else if (e->type == EXPR_MUTATOR) {
+		fprintf(ap->f, "(array mutator %d)", ops[e->operator->name].name);
+		ap->depth++;
 		print_expression(ap, e->a);
 		ap->depth--;
 	} else if (e->type == EXPR_MATCH) {

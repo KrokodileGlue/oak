@@ -141,6 +141,7 @@ struct expression {
 		EXPR_VARARGS,
 		EXPR_MATCH,
 		EXPR_SLICE,
+		EXPR_MUTATOR,
 		EXPR_INVALID
 	} type;
 

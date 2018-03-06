@@ -535,8 +535,8 @@ execute_instr(struct vm *vm, struct instruction c)
 		int64_t stop = getreg(vm, c.d).type == VAL_INT
 			? getreg(vm, c.d).integer
 			: (getreg(vm, c.b).type == VAL_STR
-			   ? strlen(vm->gc->str[getreg(vm, c.b).idx]) - 1
-			   : vm->gc->array[getreg(vm, c.b).idx]->len - 1);
+			   ? (int)strlen(vm->gc->str[getreg(vm, c.b).idx]) - 1
+			   : (int)vm->gc->array[getreg(vm, c.b).idx]->len - 1);
 		int64_t step = getreg(vm, c.e).type == VAL_INT ? getreg(vm, c.e).integer : 1;
 
 		SETREG(c.a, slice_value(vm->gc, getreg(vm, c.b), start, stop, step));

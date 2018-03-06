@@ -57,8 +57,46 @@ struct operator ops[] = {
 	{ ",",   "",  1,  ASS_RIGHT, OPTYPE_BINARY   , OP_COMMA       }
 };
 
+/*
+ * TODO: merge instructions for binary operators into a single
+ * INSTR_BINOP or something.
+ */
+struct operator_instr binop_instr[] = {
+	{ OP_ADD, INSTR_ADD },
+	{ OP_SUB, INSTR_SUB },
+	{ OP_MUL, INSTR_MUL },
+	{ OP_DIV, INSTR_DIV },
+	{ OP_POW, INSTR_POW },
+	{ OP_MOD, INSTR_MOD },
+
+	{ OP_LESS, INSTR_LESS },
+	{ OP_MORE, INSTR_MORE },
+	{ OP_LEQ, INSTR_LEQ },
+	{ OP_GEQ, INSTR_GEQ },
+	{ OP_CMP, INSTR_CMP },
+
+	{ OP_XOR, INSTR_XOR },
+	{ OP_BOR, INSTR_BOR },
+	{ OP_BAND, INSTR_BAND },
+
+	{ OP_LEFT, INSTR_SLEFT },
+	{ OP_RIGHT, INSTR_SRIGHT },
+
+	/* Invalid in array mutators */
+	{ OP_NOTEQ, INSTR_NOP }, /* TODO: this should be allowed */
+	{ OP_IFF, INSTR_NOP },
+	{ OP_COMMA, INSTR_NOP },
+	{ OP_MODMOD, INSTR_NOP },
+	{ OP_CC, INSTR_NOP }
+};
+
 size_t
 num_ops()
 {
 	return sizeof ops / sizeof *ops;
+}
+
+size_t num_binop_instr()
+{
+	return sizeof binop_instr / sizeof *binop_instr;
 }
