@@ -546,7 +546,6 @@ pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 #       if foo: for f(x): if bar[_] == foo { return _ }
 #       if foo: for f(x): if bar[_] == foo: return _
 # TODO: ternary operator should behave cool-ly
-# TODO: (+)(0 -> 9)
 # TODO: add `if` to list comprehensions
 # TODO: operator overloading/constructors
 # TODO: `in` operator
