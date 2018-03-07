@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	}
 
 	if (m && module_argc) {
-		for (int i = 0; i < module_argc; i++) {
+		for (int i = module_argc - 1; i >= 0; i--) {
 			struct value v = oak_make_string(k, module_argv[i]);
 			oak_pusharg(k, v);
 		}

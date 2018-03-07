@@ -521,9 +521,7 @@ pl (0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9)
 pl (|)(0 -> 9)
 pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 
-fn main (x = ...)
-	for 0 -> x:
-		pl 'arg $_: ', x[]
+fn main (x = ...) for 0 -> x: pl 'arg $_: ', x[]
 
 # TODO: fix the api design
 # TODO: standard library -- i/o
@@ -563,4 +561,4 @@ fn main (x = ...)
 #       'string' => n.body[1:-1],
 #       does not (it's important that the context is a
 #       match expression i think).
-# TODO: main function
+# TODO: make int builtin convert floats to ints

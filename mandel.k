@@ -29,4 +29,5 @@ fn mandel (width, height, offset) {
 	}
 }
 
-# mandel(1024, 780, 150)
+fn main (argv = ...)
+	mandel(int(argv[0]), int(argv[1]), 150) # 1024x780 is good
