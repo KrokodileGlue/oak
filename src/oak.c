@@ -78,3 +78,29 @@ oak_print_value(FILE *f, struct gc *gc, struct value v)
 {
 	print_value(f, gc, v);
 }
+
+struct value
+oak_make_string(struct oak *k, const char *s)
+{
+	struct value v;
+	v.type = VAL_STR;
+	v.idx = gc_alloc(k->main->gc, VAL_STR);
+	k->main->gc->str[v.idx] = oak_malloc(strlen(s) + 1);
+	strcpy(k->main->gc->str[v.idx], s);
+	return v;
+}
+
+void
+oak_pusharg(struct oak *k, struct value v)
+{
+	push(k->main->vm, v);
+}
+
+void
+oak_callglobal(struct oak *k, const char *s)
+{
+	struct symbol *sym = resolve(k->main->sym, s);
+	if (!sym || sym->type != SYM_FN) return;
+	push_frame(k->main->vm);
+	execute(k->main->vm, sym->address);
+}

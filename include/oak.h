@@ -6,6 +6,7 @@
 
 struct oak {
 	struct module **modules;
+	struct module *main;
 	uint16_t num;
 
 	bool debug;
@@ -40,5 +41,9 @@ struct module *oak_load_module2(oak *k, char *text);
 struct module *oak_load_child2(oak *k, struct module *m, char *text);
 void oak_print_modules(oak *k);
 void oak_print_value(FILE *f, struct gc *gc, struct value v);
+
+struct value oak_make_string(struct oak *k, const char *s);
+void oak_pusharg(struct oak *k, struct value v);
+void oak_callglobal(struct oak *k, const char *s);
 
 #endif

@@ -177,7 +177,7 @@ add_extension(char *str)
 }
 
 uint64_t
-hash(char *d, size_t len)
+hash(const char *d, size_t len)
 {
 	uint64_t hash = 5381;
 

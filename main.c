@@ -1,6 +1,9 @@
 #include "include/oak.h"
 #include <stdlib.h>
 
+char **module_argv = NULL;
+int module_argc = -1;
+
 char *
 strclone(const char *str)
 {
@@ -12,8 +15,7 @@ strclone(const char *str)
 void
 chop_extension(char *a)
 {
-	while (*a != '.' && *a) a++;
-	*a = 0;
+	while (*a != '.' && *a) a++; *a = 0;
 }
 
 char *
@@ -45,12 +47,10 @@ process_arguments(struct oak *k, int argc, char **argv)
 		}
 
 		if (argv[i][0] != '-')  {
-			if (path) {
-				printf("oak: invalid options; received multiple input files; '%s' and '%s'\n", path, argv[i]);
-				exit(EXIT_FAILURE);
-			} else {
-				path = argv[i];
-			}
+			path = argv[i++];
+			module_argv = argv + i;
+			module_argc = argc - i;
+			break;
 		}
 	}
 
@@ -117,6 +117,14 @@ main(int argc, char **argv)
 			print_value(stdout, e->gc, k->stack[k->sp - 1]);
 			putchar('\n');
 		}
+	}
+
+	if (m && module_argc) {
+		for (int i = 0; i < module_argc; i++) {
+			struct value v = oak_make_string(k, module_argv[i]);
+			oak_pusharg(k, v);
+		}
+		oak_callglobal(k, "main");
 	}
 
 	oak_print_modules(k);

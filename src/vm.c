@@ -75,7 +75,7 @@ pop_frame(struct vm *vm)
 	vm->fp--;
 }
 
-static void
+void
 push(struct vm *vm, struct value v)
 {
 	if (vm->debug) {
@@ -312,7 +312,7 @@ static char *parse_interpolation(struct vm *vm, char *input, int *len)
 		input++;
 
 		int i = 0;
-		while (input[i] && isalnum(input[i])) i++;
+		while (input[i] && is_legal_in_identifier(input[i])) i++;
 
 		e = oak_realloc(e, i + 1);
 		strncpy(e, input, i);
@@ -1127,7 +1127,7 @@ execute_instr(struct vm *vm, struct instruction c)
 			if (a[i] == '{' && a[i + 1] == '{') {
 				i++;
 				s = smart_cat(s, "{");
-			} else if (a[i] == '{' || (a[i] == '$' && isalnum(a[i + 1]))) {
+			} else if (a[i] == '{' || (a[i] == '$' && is_identifier_start(a[i + 1]))) {
 				char *e = parse_interpolation(vm, a + i, &i);
 
 				if (vm->r->pending) {

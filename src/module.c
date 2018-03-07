@@ -111,6 +111,7 @@ load_module(struct oak *k, struct symbol *parent, char *text,
 			return free(text), k->modules[i];
 
 	struct module *m = new_module(text, path);
+	if (!k->num) k->main = m;
 
 	if (vm) {
 		m->child = true;

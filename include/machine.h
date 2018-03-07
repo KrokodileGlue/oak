@@ -53,4 +53,6 @@ struct vm {
 	struct module *m;
 };
 
+void push(struct vm *vm, struct value v);
+
 #endif

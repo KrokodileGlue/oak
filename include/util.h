@@ -29,7 +29,7 @@ char *new_cat  (char *lhs, char *rhs);
 
 void remove_char(char *lhs, size_t c);
 
-uint64_t hash(char *d, size_t len);
+uint64_t hash(const char *d, size_t len);
 char *strsort(const char *s);
 
 void *oak_malloc(size_t size);

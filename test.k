@@ -521,6 +521,10 @@ pl (0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9)
 pl (|)(0 -> 9)
 pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 
+fn main (x = ...)
+	for 0 -> x:
+		pl 'arg $_: ', x[]
+
 # TODO: fix the api design
 # TODO: standard library -- i/o
 # TODO: fully lexical scope (nested functions)
@@ -535,7 +539,7 @@ pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 # TODO: json parser (in an actual module, but in C)
 # TODO: add delete builtin
 # TODO: allow _ in numbers and remove all use of strtol
-# TODO: free eval'd modules quickly
+# TODO: free eval'd modules quickly -- bitmap allocator
 # TODO: allow trailing commas in places
 # TODO: fix failed assertion when using a nonexistent
 #       variable in a string interpolation
@@ -559,3 +563,4 @@ pl (0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
 #       'string' => n.body[1:-1],
 #       does not (it's important that the context is a
 #       match expression i think).
+# TODO: main function
