@@ -18,7 +18,6 @@ struct builtin builtin[] = {
 	{ "int",     14, false, false, BUILTIN_INT     },
 	{ "float",   14, false, false, BUILTIN_FLOAT   },
 	{ "str",     14, false, false, BUILTIN_STRING  },
-	{ "sum",     14, false, false, BUILTIN_SUM     },
 	{ "abs",     14, false, false, BUILTIN_ABS     },
 	{ "count",   14, false, false, BUILTIN_COUNT   },
 

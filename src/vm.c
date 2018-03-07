@@ -1057,35 +1057,6 @@ execute_instr(struct vm *vm, struct instruction c)
 		SETREG(c.a, sort_value(vm->gc, getreg(vm, c.b)));
 		break;
 
-	case INSTR_SUM: {
-		if (getreg(vm, c.b).type != VAL_ARRAY) {
-			error_push(vm->r, *c.loc, ERR_FATAL,
-			           "sum builtin requires array operand (got %s)",
-			           value_data[getreg(vm, c.b).type].body);
-			return;
-		}
-
-		struct value v;
-		v.type = VAL_FLOAT;
-		v.real = 0;
-
-		for (size_t i = 0; i < vm->gc->array[getreg(vm, c.b).idx]->len; i++) {
-			if (vm->gc->array[getreg(vm, c.b).idx]->v[i].type == VAL_INT)
-				v.real += vm->gc->array[getreg(vm, c.b).idx]->v[i].integer;
-
-			if (vm->gc->array[getreg(vm, c.b).idx]->v[i].type == VAL_FLOAT)
-				v.real += vm->gc->array[getreg(vm, c.b).idx]->v[i].real;
-
-			if (vm->gc->array[getreg(vm, c.b).idx]->v[i].type == VAL_BOOL)
-				v.real += vm->gc->array[getreg(vm, c.b).idx]->v[i].boolean;
-		}
-
-		if (v.real == (int)v.real)
-			v = INT((int)v.real);
-
-		SETREG(c.a, v);
-	} break;
-
 	case INSTR_COUNT: {
 		if (getreg(vm, c.b).type != VAL_ARRAY) {
 			error_push(vm->r, *c.loc, ERR_FATAL,

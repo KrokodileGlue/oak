@@ -44,7 +44,6 @@ struct instruction_data instruction_data[] = {
 	{ INSTR_INS,      REG_ABC,   "INS       " },
 	{ INSTR_REV,      REG_AB,    "REV       " },
 	{ INSTR_SORT,     REG_AB,    "SORT      " },
-	{ INSTR_SUM,      REG_AB,    "SUM       " },
 	{ INSTR_ABS,      REG_AB,    "ABS       " },
 	{ INSTR_COUNT,    REG_ABC,   "COUNT     " },
 

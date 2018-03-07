@@ -177,14 +177,12 @@ val_binop(struct gc *gc, struct value l, struct value r, int op)
 
 			for (size_t i = 0; i < gc->array[r.idx]->len; i++)
 				array_push(gc->array[v.idx], gc->array[r.idx]->v[i]);
-		} else if (l.type == VAL_STR && r.type == VAL_NIL) {
-			v = copy_value(gc, l);
-		} else if (l.type == VAL_NIL && r.type == VAL_STR) {
+		} else if (l.type == VAL_NIL) {
 			v = copy_value(gc, r);
-		} else if (l.type == VAL_INT && r.type == VAL_NIL) {
+		} else if (r.type == VAL_NIL) {
 			v = copy_value(gc, l);
-		} else if (l.type == VAL_NIL && r.type == VAL_INT) {
-			v = copy_value(gc, r);
+		} else if (l.type == VAL_BOOL && r.type == VAL_BOOL) {
+			v = BOOL(l.boolean || r.boolean);
 		} else if (l.type == VAL_TABLE && r.type == VAL_TABLE) {
 			v.type = VAL_TABLE;
 			v.idx = gc_alloc(gc, VAL_TABLE);

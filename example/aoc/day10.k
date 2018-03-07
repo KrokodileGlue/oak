@@ -10,7 +10,7 @@ fn f (x, z) {
 }
 fn g (x) {
 	var h r t = f(x, 64), [], 0
-	for var i = 0; i < length h; i += 16: push r, (^)h[i:i+15]
+	for range(0, length(h), 16): push r, (^)h[_:_+15]
 	return r
 }
 var c = f(map { int() - 1 } split(/,/, I(day10.txt)), 1)

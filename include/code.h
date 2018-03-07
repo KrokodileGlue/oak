@@ -52,7 +52,6 @@ enum instruction_type {
 	INSTR_INS,
 	INSTR_REV,
 	INSTR_SORT,
-	INSTR_SUM,
 	INSTR_ABS,
 	INSTR_COUNT,
 

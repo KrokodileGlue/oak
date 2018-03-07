@@ -21,7 +21,7 @@ fn g (x) {
 }
 
 var a = ''
-pl sum [
+pl (+) [
 	length (
 		(a .= str (map { [_ & 2 ** i ? '#' : '.' for var i in range(7, 0, -1)] }
 			g(map { _ - 1 } ord ('stpzcrnm-' + _)
